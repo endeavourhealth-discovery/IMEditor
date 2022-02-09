@@ -15,7 +15,6 @@ export default createStore({
     currentUser: {} as User,
     isLoggedIn: false as boolean,
     snomedLicenseAccepted: localStorage.getItem("snomedLicenseAccepted") as string,
-    historyCount: 0 as number,
     blockedIris: [] as string[],
     filterOptions: {
       status: [] as EntityReferenceNode[],
@@ -65,9 +64,6 @@ export default createStore({
     updateSnomedLicenseAccepted(state, status: string) {
       state.snomedLicenseAccepted = status;
       localStorage.setItem("snomedLicenseAccepted", status);
-    },
-    updateHistoryCount(state, count) {
-      state.historyCount = count;
     }
   },
   actions: {

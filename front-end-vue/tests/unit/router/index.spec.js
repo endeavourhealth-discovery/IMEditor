@@ -95,7 +95,7 @@ describe("router", () => {
     it("routes to login if false", async () => {
       router.push({ name: "UserEdit" });
       await flushPromises();
-      expect(wrapper.vm.$route.path).toBe("/user/login");
+      expect(wrapper.vm.$route.path).toBe("/login?returnUrl=VUE_APP_EDITOR");
     });
   });
 
@@ -123,9 +123,9 @@ describe("router", () => {
     });
 
     it("routes to login if false", async () => {
-      router.push({ name: "UserEdit" });
+      router.push({ name: "Editor" });
       await flushPromises();
-      expect(wrapper.vm.$route.path).toBe("/user/my-account/edit");
+      expect(wrapper.vm.$route.path).toBe("/editor");
     });
   });
 
@@ -160,7 +160,7 @@ describe("router", () => {
     });
   });
 
-  describe("router ___ concept", () => {
+  describe("router ___ entity", () => {
     let wrapper;
 
     beforeEach(async () => {
@@ -184,45 +184,12 @@ describe("router", () => {
       jest.clearAllMocks();
     });
 
-    it("updates conceptIri on concept routing", async () => {
-      router.push({ name: "Concept", params: { selectedIri: "http://snomed.info/sct#298382003" } });
+    it("updates editorIri on entity routing", async () => {
+      router.push({ name: "Editor", params: { selectedIri: "http://snomed.info/sct#298382003" } });
       await flushPromises();
       expect(store.commit).toHaveBeenCalledTimes(1);
-      expect(store.commit).toHaveBeenCalledWith("updateConceptIri", "http://snomed.info/sct#298382003");
-      expect(wrapper.vm.$route.path).toBe("/concept/http:%2F%2Fsnomed.info%2Fsct%23298382003");
-    });
-  });
-
-  describe("router ___ individual", () => {
-    let wrapper;
-
-    beforeEach(async () => {
-      jest.resetAllMocks();
-      window.sessionStorage.clear();
-      store.state.snomedLicenseAccepted = "true";
-      store.commit = jest.fn();
-      store.dispatch = jest.fn().mockResolvedValue({ authenticated: true });
-      router.push("/");
-      await router.isReady();
-
-      wrapper = shallowMount(App, {
-        global: {
-          components: { Toast },
-          plugins: [router, store]
-        }
-      });
-
-      await flushPromises();
-      await wrapper.vm.$nextTick();
-      jest.clearAllMocks();
-    });
-
-    it("updates instanceIri on individual routing", async () => {
-      router.push({ name: "Individual", params: { selectedIri: "http://snomed.info/sct#298382003" } });
-      await flushPromises();
-      expect(store.commit).toHaveBeenCalledTimes(1);
-      expect(store.commit).toHaveBeenCalledWith("updateInstanceIri", "http://snomed.info/sct#298382003");
-      expect(wrapper.vm.$route.path).toBe("/catalogue/individual/http:%2F%2Fsnomed.info%2Fsct%23298382003");
+      expect(store.commit).toHaveBeenCalledWith("updateEditorIri", "http://snomed.info/sct#298382003");
+      expect(wrapper.vm.$route.path).toBe("/editor/http:%2F%2Fsnomed.info%2Fsct%23298382003");
     });
   });
 });

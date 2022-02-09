@@ -1,54 +1,56 @@
 <template>
-  <SideNav />
-  <ConfirmDialog></ConfirmDialog>
-  <div id="editor-main-container">
-    <div class="loading-container p-d-flex p-flex-row p-jc-center p-ai-center" v-if="loading">
-      <ProgressSpinner />
-    </div>
-    <div v-else class="panel-buttons-container">
-      <Panel :header="'Editor: ' + iri">
-        <div class="content-json-container">
-          <div class="content">
-            <TabView v-model:activeIndex="active">
-              <TabPanel header="Summary">
-                <div class="panel-content" id="summary-editor-container" :style="contentHeight">
-                  <SummaryEditor
-                    v-if="active === 0 && isObjectHasKeysWrapper(conceptUpdated)"
-                    :updatedConcept="conceptUpdated"
-                    @concept-updated="updateConcept"
-                  />
-                </div>
-              </TabPanel>
-              <TabPanel header="Parents">
-                <div class="panel-content" id="parents-editor-container" :style="contentHeight">
-                  <ParentsEditor
-                    v-if="active === 1 && isObjectHasKeysWrapper(conceptUpdated)"
-                    :updatedConcept="conceptUpdated"
-                    @concept-updated="updateConcept"
-                  />
-                </div>
-              </TabPanel>
-              <TabPanel v-if="isValueSet" header="Members">
-                <div class="panel-content" id="member-editor-container" :style="contentHeight">
-                  <MemberEditor
-                    v-if="active === 2"
-                    :updatedMembers="conceptUpdated['http://endhealth.info/im#definition'] ? conceptUpdated['http://endhealth.info/im#definition'] : {}"
-                    @concept-updated="updateConcept"
-                  />
-                </div>
-              </TabPanel>
-            </TabView>
+  <div id="topbar-editor-container">
+    <TopBar />
+    <ConfirmDialog></ConfirmDialog>
+    <div id="editor-main-container">
+      <div class="loading-container p-d-flex p-flex-row p-jc-center p-ai-center" v-if="loading">
+        <ProgressSpinner />
+      </div>
+      <div v-else class="panel-buttons-container">
+        <Panel :header="'Editor: ' + iri">
+          <div class="content-json-container">
+            <div class="content">
+              <TabView v-model:activeIndex="active">
+                <TabPanel header="Summary">
+                  <div class="panel-content" id="summary-editor-container" :style="contentHeight">
+                    <SummaryEditor
+                      v-if="active === 0 && isObjectHasKeysWrapper(conceptUpdated)"
+                      :updatedConcept="conceptUpdated"
+                      @concept-updated="updateConcept"
+                    />
+                  </div>
+                </TabPanel>
+                <TabPanel header="Parents">
+                  <div class="panel-content" id="parents-editor-container" :style="contentHeight">
+                    <ParentsEditor
+                      v-if="active === 1 && isObjectHasKeysWrapper(conceptUpdated)"
+                      :updatedConcept="conceptUpdated"
+                      @concept-updated="updateConcept"
+                    />
+                  </div>
+                </TabPanel>
+                <TabPanel v-if="isValueSet" header="Members">
+                  <div class="panel-content" id="member-editor-container" :style="contentHeight">
+                    <MemberEditor
+                      v-if="active === 2"
+                      :updatedMembers="conceptUpdated['http://endhealth.info/im#definition'] ? conceptUpdated['http://endhealth.info/im#definition'] : {}"
+                      @concept-updated="updateConcept"
+                    />
+                  </div>
+                </TabPanel>
+              </TabView>
+            </div>
+            <div v-if="contentHeight" class="json-container" :style="contentHeight">
+              <span>JSON viewer</span>
+              <VueJsonPretty v-if="isObjectHasKeysWrapper(conceptUpdated)" class="json" :path="'res'" :data="conceptUpdated" @click="handleClick" />
+            </div>
           </div>
-          <div v-if="contentHeight" class="json-container" :style="contentHeight">
-            <span>JSON viewer</span>
-            <VueJsonPretty v-if="isObjectHasKeysWrapper(conceptUpdated)" class="json" :path="'res'" :data="conceptUpdated" @click="handleClick" />
-          </div>
+        </Panel>
+        <div class="button-bar p-d-flex p-flex-row p-jc-end" id="editor-button-bar">
+          <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
+          <Button icon="pi pi-refresh" label="Reset" class="p-button-warning" @click="refreshEditor" />
+          <Button icon="pi pi-check" label="Save" class="save-button" @click="submit" />
         </div>
-      </Panel>
-      <div class="button-bar p-d-flex p-flex-row p-jc-end" id="editor-button-bar">
-        <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
-        <Button icon="pi pi-refresh" label="Reset" class="p-button-warning" @click="refreshEditor" />
-        <Button icon="pi pi-check" label="Save" class="save-button" @click="submit" />
       </div>
     </div>
   </div>
@@ -56,7 +58,6 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import SideNav from "@/components/edit/SideNav.vue";
 import SummaryEditor from "@/components/edit/SummaryEditor.vue";
 import EntityService from "@/services/EntityService";
 import ConfirmDialog from "primevue/confirmdialog";
@@ -68,16 +69,17 @@ import { isObjectHasKeys } from "@/helpers/DataTypeCheckers";
 import { getContainerElementOptimalHeight } from "@/helpers/GetContainerElementOptimalHeight";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
+import TopBar from "@/components/TopBar.vue";
 
 export default defineComponent({
   name: "Editor",
   components: {
-    SideNav,
     ConfirmDialog,
     SummaryEditor,
     MemberEditor,
     VueJsonPretty,
-    ParentsEditor
+    ParentsEditor,
+    TopBar
   },
   beforeRouteLeave(to, from, next) {
     if (this.checkForChanges()) {
@@ -174,21 +176,15 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@media screen and (max-width: 1439px) {
-  #editor-main-container {
-    width: 92vw;
-  }
-}
-
-@media screen and (min-width: 1440px) {
-  #editor-main-container {
-    width: calc(100vw - 115px);
-  }
+#topbar-editor-container {
+  height: 100vh;
+  width: 100vw;
+  overflow: auto;
 }
 
 #editor-main-container {
-  margin: 1rem;
-  height: calc(100vh - 2rem);
+  width: 100%;
+  height: calc(100% - 93.81px - 1rem);
   overflow-y: auto;
 }
 

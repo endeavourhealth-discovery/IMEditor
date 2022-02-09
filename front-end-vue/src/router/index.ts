@@ -9,29 +9,29 @@ const APP_TITLE = "Information Model";
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
-    name: "Editor",
+    name: "Home",
     component: Editor,
     children: [
+      // {
+      //   path: "/editor",
+      //   name: "Editor",
+      //   component: Editor
+      // meta: {
+      //   requiresAuth: true
+      // }
+      // },
       {
-        path: "/editor",
-        name: "Editor",
-        component: Editor,
-        meta: {
-          requiresAuth: true
-        }
-      },
-      {
-        path: "/editor/:iri",
+        path: "/editor/:selectedIri",
         name: "Edit",
-        component: Editor,
-        meta: {
-          requiresAuth: true
-        }
+        component: Editor
+        // meta: {
+        //   requiresAuth: true
+        // }
       }
-    ],
-    meta: {
-      requiresAuth: true
-    }
+    ]
+    // meta: {
+    //   requiresAuth: true
+    // }
   },
   {
     path: "/snomedLicense",
@@ -58,7 +58,7 @@ router.beforeEach((to, from, next) => {
       console.log("auth guard user authenticated:" + res.authenticated);
       if (!res.authenticated) {
         console.log("redirecting to login");
-        window.location.href = "http://auth.endhealth.info.login";
+        window.location.href = process.env.VUE_APP_AUTH_URL + "login?returnUrl=VUE_APP_EDITOR";
       } else {
         next();
       }

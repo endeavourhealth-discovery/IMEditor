@@ -4,7 +4,7 @@ module.exports = {
   transform: {
     "^.+\\.vue$": "vue-jest"
   },
-  transformIgnorePatterns: ["<rootDir>/node_modules/(?!primevue|d3|d3-array|internmap|delaunator|robust-predicates)"],
+  transformIgnorePatterns: ["<rootDir>/node_modules/(?!primevue|d3|d3-array|internmap|delaunator|robust-predicates|vue-json-pretty)"],
   collectCoverage: true,
   collectCoverageFrom: [
     "src/**/*.{js,vue,ts}",

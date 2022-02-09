@@ -1,7 +1,7 @@
-import { DefinitionType } from "./DefinitionType";
+import { ComponentType } from "./ComponentType";
 
 export interface NextComponentSummary {
-  previousComponentType: DefinitionType;
+  previousComponentType: ComponentType;
   previousPosition: number;
-  parentGroup?: DefinitionType;
+  parentGroup?: ComponentType;
 }

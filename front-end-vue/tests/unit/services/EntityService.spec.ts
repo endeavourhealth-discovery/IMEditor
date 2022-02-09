@@ -187,13 +187,6 @@ describe("EntityService.ts ___ axios success", () => {
     expect(result).toBe("axios get return");
   });
 
-  it("can get entity graph", async () => {
-    const result = await EntityService.getEntityGraph("testIri");
-    expect(axios.get).toHaveBeenCalledTimes(1);
-    expect(axios.get).toHaveBeenCalledWith(api + "api/entity/public/graph", { params: { iri: "testIri" } });
-    expect(result).toBe("axios get return");
-  });
-
   it("can get entity term codes", async () => {
     const result = await EntityService.getEntityTermCodes("testIri");
     expect(axios.get).toHaveBeenCalledTimes(1);
@@ -233,14 +226,6 @@ describe("EntityService.ts ___ axios success", () => {
     const result = await EntityService.getEntitySummary("testIri");
     expect(axios.get).toHaveBeenCalledTimes(1);
     expect(axios.get).toHaveBeenCalledWith(api + "api/entity/public/summary", { params: { iri: "testIri" } });
-    expect(result).toBe("axios get return");
-  });
-
-  //obsolete, to be deleted on editor branch merge
-  it("can get entity", async () => {
-    const result = await EntityService.getEntity("testIri");
-    expect(axios.get).toHaveBeenCalledTimes(1);
-    expect(axios.get).toHaveBeenCalledWith(api + "api/public/entity", { params: { iri: "testIri" } });
     expect(result).toBe("axios get return");
   });
 
@@ -359,13 +344,6 @@ describe("EntityService.ts ___ axios fail", () => {
     expect(result).toStrictEqual({});
   });
 
-  it("can get entity graph", async () => {
-    const result = await EntityService.getEntityGraph("testIri");
-    expect(axios.get).toHaveBeenCalledTimes(1);
-    expect(axios.get).toHaveBeenCalledWith(api + "api/entity/public/graph", { params: { iri: "testIri" } });
-    expect(result).toStrictEqual({});
-  });
-
   it("can get entity term codes", async () => {
     const result = await EntityService.getEntityTermCodes("testIri");
     expect(axios.get).toHaveBeenCalledTimes(1);
@@ -405,14 +383,6 @@ describe("EntityService.ts ___ axios fail", () => {
     const result = await EntityService.getEntitySummary("testIri");
     expect(axios.get).toHaveBeenCalledTimes(1);
     expect(axios.get).toHaveBeenCalledWith(api + "api/entity/public/summary", { params: { iri: "testIri" } });
-    expect(result).toStrictEqual({});
-  });
-
-  //obsolete, to be deleted on editor branch merge
-  it("can get entity", async () => {
-    const result = await EntityService.getEntity("testIri");
-    expect(axios.get).toHaveBeenCalledTimes(1);
-    expect(axios.get).toHaveBeenCalledWith(api + "api/public/entity", { params: { iri: "testIri" } });
     expect(result).toStrictEqual({});
   });
 
