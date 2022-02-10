@@ -15,6 +15,7 @@ export default createStore({
     currentUser: {} as User,
     isLoggedIn: false as boolean,
     snomedLicenseAccepted: localStorage.getItem("snomedLicenseAccepted") as string,
+    editorIri: "",
     blockedIris: [] as string[],
     filterOptions: {
       status: [] as EntityReferenceNode[],
@@ -64,6 +65,9 @@ export default createStore({
     updateSnomedLicenseAccepted(state, status: string) {
       state.snomedLicenseAccepted = status;
       localStorage.setItem("snomedLicenseAccepted", status);
+    },
+    updateEditorIri(state, iri) {
+      state.editorIri = iri;
     }
   },
   actions: {

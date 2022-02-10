@@ -11,22 +11,24 @@ const routes: Array<RouteRecordRaw> = [
     path: "/",
     name: "Home",
     component: Editor,
+    // redirect: {name: "Creator"},
     children: [
       // {
       //   path: "/editor",
-      //   name: "Editor",
-      //   component: Editor
+      //   name: "Creator",
+      //   component: Creator
       // meta: {
       //   requiresAuth: true
       // }
       // },
       {
         path: "/editor/:selectedIri",
-        name: "Edit",
-        component: Editor
-        // meta: {
-        //   requiresAuth: true
-        // }
+        name: "Editor",
+        component: Editor,
+        meta: {
+          requiresAuth: true,
+          requiresLicense: true
+        }
       }
     ]
     // meta: {
@@ -51,7 +53,7 @@ router.beforeEach((to, from, next) => {
     return;
   }
   if (to.name?.toString() == "Editor") {
-    store.commit("updateEditorIri", to.params.selectedIri as string);
+    store.commit("updateEditorIri", iri);
   }
   if (to.matched.some(record => record.meta.requiresAuth)) {
     store.dispatch("authenticateCurrentUser").then(res => {
@@ -60,18 +62,18 @@ router.beforeEach((to, from, next) => {
         console.log("redirecting to login");
         window.location.href = process.env.VUE_APP_AUTH_URL + "login?returnUrl=VUE_APP_EDITOR";
       } else {
-        next();
+        if (to.matched.some(record => record.meta.requiresLicense)) {
+          console.log("snomed license accepted:" + store.state.snomedLicenseAccepted);
+          if (store.state.snomedLicenseAccepted !== "true") {
+            next({
+              path: "/snomedLicense"
+            });
+          } else {
+            next();
+          }
+        }
       }
     });
-  } else if (to.matched.some(record => record.meta.requiresLicense)) {
-    console.log("snomed license accepted:" + store.state.snomedLicenseAccepted);
-    if (store.state.snomedLicenseAccepted !== "true") {
-      next({
-        path: "/snomedLicense"
-      });
-    } else {
-      next();
-    }
   } else {
     next();
   }

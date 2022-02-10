@@ -7,7 +7,7 @@
         <ProgressSpinner />
       </div>
       <div v-else class="panel-buttons-container">
-        <Panel :header="'Editor: ' + iri">
+        <Panel :header="'Editor: ' + editorIri">
           <div class="content-json-container">
             <div class="content">
               <TabView v-model:activeIndex="active">
@@ -70,6 +70,7 @@ import { getContainerElementOptimalHeight } from "@/helpers/GetContainerElementO
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import TopBar from "@/components/TopBar.vue";
+import { mapState } from "vuex";
 
 export default defineComponent({
   name: "Editor",
@@ -98,11 +99,11 @@ export default defineComponent({
   computed: {
     isValueSet(): any {
       return isValueSet(this.conceptUpdated[RDF.TYPE]);
-    }
+    },
+    ...mapState(["editorIri"])
   },
   data() {
     return {
-      iri: this.$route.params.iri?.toString(),
       conceptOriginal: {} as any,
       conceptUpdated: {} as any,
       active: 0,
@@ -127,8 +128,8 @@ export default defineComponent({
     },
 
     async fetchConceptData(): Promise<void> {
-      if (this.iri) {
-        const fullEntity = await EntityService.getFullEntity(this.iri);
+      if (this.editorIri) {
+        const fullEntity = await EntityService.getFullEntity(this.editorIri);
         if (fullEntity) {
           this.conceptOriginal = fullEntity;
           this.conceptUpdated = JSON.parse(JSON.stringify(fullEntity));

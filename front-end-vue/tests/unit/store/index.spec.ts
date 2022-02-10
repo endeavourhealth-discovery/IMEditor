@@ -25,6 +25,7 @@ describe("state", () => {
       "currentUser",
       "isLoggedIn",
       "snomedLicenseAccepted",
+      "editorIri",
       "blockedIris",
       "filterOptions",
       "selectedFilters",
@@ -34,6 +35,7 @@ describe("state", () => {
     expect(store.state.currentUser).toEqual({});
     expect(store.state.isLoggedIn).toBeFalsy();
     expect(store.state.snomedLicenseAccepted).toBeNull();
+    expect(store.state.editorIri).toBe("");
     expect(store.state.blockedIris).toStrictEqual([]);
     expect(store.state.selectedFilters).toEqual({
       status: [],
@@ -75,6 +77,12 @@ describe("mutations", () => {
     const testBool = "true";
     store.commit("updateSnomedLicenseAccepted", testBool);
     expect(store.state.snomedLicenseAccepted).toBe("true");
+  });
+
+  it("can updateEditorIri", () => {
+    const testIri = "testIri";
+    store.commit("updateEditorIri", testIri);
+    expect(store.state.editorIri).toBe("testIri");
   });
 
   it("can update blockedIris", () => {

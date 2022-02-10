@@ -19,7 +19,7 @@ describe("router", () => {
       jest.resetAllMocks();
       window.sessionStorage.clear();
       store.commit("updateSnomedLicenseAccepted", "false");
-      store.dispatch = jest.fn().mockResolvedValue({ authenticated: false });
+      store.dispatch = jest.fn().mockResolvedValue({ authenticated: true });
       router.push("/");
       await router.isReady();
 
@@ -35,7 +35,9 @@ describe("router", () => {
       jest.clearAllMocks();
     });
 
-    it("routes to snomedLicense if snomedAccepted ___ false", () => {
+    it("routes to snomedLicense if snomedAccepted ___ false", async () => {
+      router.push({ name: "Editor", params: { selectedIri: "http://snomed.info/sct#298382003" } });
+      await flushPromises();
       expect(wrapper.vm.$route.path).toBe("/snomedLicense");
       store.commit("updateSnomedLicenseAccepted", "true");
     });
@@ -48,7 +50,7 @@ describe("router", () => {
       jest.resetAllMocks();
       window.sessionStorage.clear();
       store.commit("updateSnomedLicenseAccepted", "true");
-      store.dispatch = jest.fn().mockResolvedValue({ authenticated: false });
+      store.dispatch = jest.fn().mockResolvedValue({ authenticated: true });
       router.push("/");
       await router.isReady();
 
@@ -64,8 +66,10 @@ describe("router", () => {
       jest.clearAllMocks();
     });
 
-    it("routes to home if snomedAccepted ___ true", () => {
-      expect(wrapper.vm.$route.path).toBe("/");
+    it("routes to home if snomedAccepted ___ true", async () => {
+      router.push({ name: "Editor", params: { selectedIri: "http://snomed.info/sct#298382003" } });
+      await flushPromises();
+      expect(wrapper.vm.$route.path).toBe("/editor/http:%2F%2Fsnomed.info%2Fsct%23298382003");
     });
   });
 
@@ -92,10 +96,15 @@ describe("router", () => {
       jest.clearAllMocks();
     });
 
-    it("routes to login if false", async () => {
-      router.push({ name: "UserEdit" });
+    it("routes to login if auth false", async () => {
+      let mockLocation = { href: "" };
+      let location = window.location;
+      delete window.location;
+      window.location = mockLocation;
+      router.push({ name: "Editor", params: { selectedIri: "http://snomed.info/sct#298382003" } });
       await flushPromises();
-      expect(wrapper.vm.$route.path).toBe("/login?returnUrl=VUE_APP_EDITOR");
+      expect(window.location.href).toBe(process.env.VUE_APP_AUTH_URL + "login?returnUrl=VUE_APP_EDITOR");
+      window.location = location;
     });
   });
 
@@ -122,10 +131,10 @@ describe("router", () => {
       jest.clearAllMocks();
     });
 
-    it("routes to login if false", async () => {
-      router.push({ name: "Editor" });
+    it("routes to path if auth true", async () => {
+      router.push({ name: "Editor", params: { selectedIri: "http://snomed.info/sct#298382003" } });
       await flushPromises();
-      expect(wrapper.vm.$route.path).toBe("/editor");
+      expect(wrapper.vm.$route.path).toBe("/editor/http:%2F%2Fsnomed.info%2Fsct%23298382003");
     });
   });
 
@@ -154,7 +163,7 @@ describe("router", () => {
     });
 
     it("doesn't route if iri is blocked", async () => {
-      router.push({ name: "Concept", params: { selectedIri: "http://www.w3.org/2001/XMLSchema#string" } });
+      router.push({ name: "Editor", params: { selectedIri: "http://www.w3.org/2001/XMLSchema#string" } });
       await flushPromises();
       expect(wrapper.vm.$route.path).toBe("/");
     });
