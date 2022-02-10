@@ -131,7 +131,7 @@ export default defineComponent({
     },
 
     async addNextOptions(data: NextComponentSummary): Promise<void> {
-      const nextOptionsComponent = genNextOptions(data.previousPosition, data.previousComponentType, data.parentGroup);
+      const nextOptionsComponent = genNextOptions(data.previousPosition, data.previousComponentType, BuilderType.PARENT, data.parentGroup);
       if (data.previousPosition !== this.parentsBuild.length - 1 && this.parentsBuild[data.previousPosition + 1].type === ComponentType.ADD_NEXT) {
         this.parentsBuild[data.previousPosition + 1] = nextOptionsComponent;
       } else {

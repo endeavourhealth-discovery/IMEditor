@@ -205,7 +205,7 @@ export default defineComponent({
     },
 
     async addNextOptionsWrapper(data: NextComponentSummary): Promise<void> {
-      const nextOptionsComponent = addNextOptions(data, this.membersBuild);
+      const nextOptionsComponent = addNextOptions(data, this.membersBuild, BuilderType.MEMBER);
       await this.$nextTick();
       scrollIntoView(nextOptionsComponent);
     },

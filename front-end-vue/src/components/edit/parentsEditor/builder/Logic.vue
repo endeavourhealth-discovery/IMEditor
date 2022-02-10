@@ -179,7 +179,7 @@ export default defineComponent({
     },
 
     async addNextOptionsWrapper(data: NextComponentSummary): Promise<void> {
-      const nextOptionsComponent = addNextOptions(data, this.logicBuild);
+      const nextOptionsComponent = addNextOptions(data, this.logicBuild, this.builderType);
       await this.$nextTick();
       scrollIntoView(nextOptionsComponent);
     },

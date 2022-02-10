@@ -95,6 +95,7 @@ export default createStore({
           commit("updateIsLoggedIn", true);
           const loggedInUser = res.user;
           commit("updateCurrentUser", loggedInUser);
+          console.log(loggedInUser);
           result.authenticated = true;
         } else {
           dispatch("logoutCurrentUser").then(resLogout => {

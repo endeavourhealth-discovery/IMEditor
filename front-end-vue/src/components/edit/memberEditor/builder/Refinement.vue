@@ -160,7 +160,7 @@ export default defineComponent({
     },
 
     async addNextOptionsWrapper(data: NextComponentSummary): Promise<void> {
-      const nextOptionsComponent = addNextOptions(data, this.refinementBuild);
+      const nextOptionsComponent = addNextOptions(data, this.refinementBuild, this.builderType);
       await this.$nextTick();
       scrollIntoView(nextOptionsComponent);
     },

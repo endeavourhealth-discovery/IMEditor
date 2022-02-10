@@ -115,8 +115,13 @@ export function updateItem(itemToUpdate: ComponentDetails, build: ComponentDetai
   build[index] = itemToUpdate;
 }
 
-export function addNextOptions(previousComponent: NextComponentSummary, build: ComponentDetails[]): ComponentDetails {
-  const nextOptionsComponent = genNextOptions(previousComponent.previousPosition, previousComponent.previousComponentType, previousComponent.parentGroup);
+export function addNextOptions(previousComponent: NextComponentSummary, build: ComponentDetails[], builderType: BuilderType): ComponentDetails {
+  const nextOptionsComponent = genNextOptions(
+    previousComponent.previousPosition,
+    previousComponent.previousComponentType,
+    builderType,
+    previousComponent.parentGroup
+  );
   if (previousComponent.previousPosition !== build.length - 1 && build[previousComponent.previousPosition + 1].type === ComponentType.ADD_NEXT) {
     build[previousComponent.previousPosition + 1] = nextOptionsComponent;
   } else {
