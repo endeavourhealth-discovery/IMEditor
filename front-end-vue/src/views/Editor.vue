@@ -100,7 +100,7 @@ export default defineComponent({
     isValueSet(): any {
       return isValueSet(this.conceptUpdated[RDF.TYPE]);
     },
-    ...mapState(["editorIri"])
+    ...mapState(["editorIri", "editorSavedEntity"])
   },
   data() {
     return {
@@ -132,7 +132,11 @@ export default defineComponent({
         const fullEntity = await EntityService.getFullEntity(this.editorIri);
         if (fullEntity) {
           this.conceptOriginal = fullEntity;
-          this.conceptUpdated = JSON.parse(JSON.stringify(fullEntity));
+          if (isObjectHasKeys(this.editorSavedEntity, ["@id"]) && this.editorSavedEntity["@id"] === this.editorIri) {
+            this.conceptUpdated = this.editorSavedEntity;
+          } else {
+            this.conceptUpdated = JSON.parse(JSON.stringify(fullEntity));
+          }
         }
       }
     },
