@@ -84,6 +84,8 @@ import { TopBar } from "im-library";
 import { ImLibrarySample } from "im-library";
 import { ImLibrarySample2 } from "im-library";
 
+import { ComponentB } from "my-lib/src/index";
+
 Amplify.configure(awsconfig);
 Auth.configure(awsconfig);
 
@@ -148,7 +150,8 @@ const app = createApp(App)
   .component("AutoComplete", AutoComplete)
   .component("TopBar", TopBar)
   .component("ImLibrarySample", ImLibrarySample)
-  .component("ImLibrarySample2", ImLibrarySample2);
+  .component("ImLibrarySample2", ImLibrarySample2)
+  .component("ComponentB", ComponentB);
 
 const vm = app.mount("#app");
 
