@@ -1,6 +1,6 @@
 <template>
   <div id="topbar-editor-container">
-    <TopBar />
+    <TopBar :currentUser="currentUser" :isLoggedIn="false" />
     <ConfirmDialog></ConfirmDialog>
     <div id="editor-main-container">
       <div class="loading-container p-d-flex p-flex-row p-jc-center p-ai-center" v-if="loading">
@@ -69,7 +69,6 @@ import { isObjectHasKeys } from "@/helpers/DataTypeCheckers";
 import { getContainerElementOptimalHeight } from "@/helpers/GetContainerElementOptimalHeight";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
-import TopBar from "@/components/TopBar.vue";
 import { mapState } from "vuex";
 
 export default defineComponent({
@@ -79,8 +78,7 @@ export default defineComponent({
     SummaryEditor,
     MemberEditor,
     VueJsonPretty,
-    ParentsEditor,
-    TopBar
+    ParentsEditor
   },
   beforeRouteLeave(to, from, next) {
     if (this.checkForChanges()) {
@@ -100,7 +98,7 @@ export default defineComponent({
     isValueSet(): any {
       return isValueSet(this.conceptUpdated[RDF.TYPE]);
     },
-    ...mapState(["editorIri", "editorSavedEntity"])
+    ...mapState(["editorIri", "editorSavedEntity", "currentUser"])
   },
   data() {
     return {

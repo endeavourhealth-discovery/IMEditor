@@ -80,6 +80,9 @@ import { Amplify, Auth } from "aws-amplify";
 import awsconfig from "./aws-exports";
 import axios from "axios";
 import { isObjectHasKeys } from "./helpers/DataTypeCheckers";
+import { TopBar } from "im-library";
+import { ImLibrarySample } from "im-library";
+import { ImLibrarySample2 } from "im-library";
 
 Amplify.configure(awsconfig);
 Auth.configure(awsconfig);
@@ -142,7 +145,10 @@ const app = createApp(App)
   .component("ConfirmPopup", ConfirmPopup)
   .component("InputSwitch", InputSwitch)
   .component("Tag", Tag)
-  .component("AutoComplete", AutoComplete);
+  .component("AutoComplete", AutoComplete)
+  .component("TopBar", TopBar)
+  .component("ImLibrarySample", ImLibrarySample)
+  .component("ImLibrarySample2", ImLibrarySample2);
 
 const vm = app.mount("#app");
 
