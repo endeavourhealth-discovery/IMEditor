@@ -26,6 +26,7 @@ describe("state", () => {
       "isLoggedIn",
       "snomedLicenseAccepted",
       "editorIri",
+      "editorSavedEntity",
       "blockedIris",
       "filterOptions",
       "selectedFilters",
@@ -35,7 +36,7 @@ describe("state", () => {
     expect(store.state.currentUser).toEqual({});
     expect(store.state.isLoggedIn).toBeFalsy();
     expect(store.state.snomedLicenseAccepted).toBeNull();
-    expect(store.state.editorIri).toBe("");
+    expect(store.state.editorIri).toBeNull();
     expect(store.state.blockedIris).toStrictEqual([]);
     expect(store.state.selectedFilters).toEqual({
       status: [],

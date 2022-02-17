@@ -68,9 +68,11 @@ export default createStore({
       localStorage.setItem("snomedLicenseAccepted", status);
     },
     updateEditorIri(state, iri) {
+      state.editorIri = iri;
       localStorage.setItem("editorSelectedIri", iri);
     },
     updateEditorSavedEntity(state, entity) {
+      state.editorSavedEntity = entity;
       localStorage.setItem("editorSavedEntity", entity);
     }
   },
