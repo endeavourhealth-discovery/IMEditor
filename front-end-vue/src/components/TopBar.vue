@@ -153,34 +153,34 @@ export default defineComponent({
         {
           label: "Login",
           icon: "fa fa-fw fa-user",
-          url: process.env.VUE_APP_AUTH_URL + "login?returnUrl=VUE_APP_EDITOR"
+          url: import.meta.env.VITE_AUTH_URL + "login?returnUrl=VITE_EDITOR"
         },
         {
           label: "Register",
           icon: "fa fa-fw fa-user-plus",
-          url: process.env.VUE_APP_AUTH_URL + "register?returnUrl=VUE_APP_EDITOR"
+          url: import.meta.env.VITE_AUTH_URL + "register?returnUrl=VITE_EDITOR"
         }
       ] as LoginItem[],
       accountItems: [
         {
           label: "My account",
           icon: "fa fa-fw fa-user",
-          url: process.env.VUE_APP_AUTH_URL + "my-account?returnUrl=VUE_APP_EDITOR"
+          url: import.meta.env.VITE_AUTH_URL + "my-account?returnUrl=VITE_EDITOR"
         },
         {
           label: "Edit account",
           icon: "fa fa-fw fa-user-edit",
-          url: process.env.VUE_APP_AUTH_URL + "my-account/edit?returnUrl=VUE_APP_EDITOR"
+          url: import.meta.env.VITE_AUTH_URL + "my-account/edit?returnUrl=VITE_EDITOR"
         },
         {
           label: "Change password",
           icon: "fa fa-fw fa-user-lock",
-          url: process.env.VUE_APP_AUTH_URL + "my-account/password-edit?returnUrl=VUE_APP_EDITOR"
+          url: import.meta.env.VITE_AUTH_URL + "my-account/password-edit?returnUrl=VITE_EDITOR"
         },
         {
           label: "Logout",
           icon: "fa fa-fw fa-sign-out-alt",
-          url: process.env.VUE_APP_AUTH_URL + "logout?returnUrl=VUE_APP_EDITOR"
+          url: import.meta.env.VITE_AUTH_URL + "logout?returnUrl=VITE_EDITOR"
         }
       ] as AccountItem[]
     };

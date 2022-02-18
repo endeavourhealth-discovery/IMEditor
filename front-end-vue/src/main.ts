@@ -80,11 +80,10 @@ import { Amplify, Auth } from "aws-amplify";
 import awsconfig from "./aws-exports";
 import axios from "axios";
 import { isObjectHasKeys } from "./helpers/DataTypeCheckers";
-import { TopBar } from "im-library";
-import { ImLibrarySample } from "im-library";
-import { ImLibrarySample2 } from "im-library";
 
-import { ComponentB } from "my-lib/src/index";
+// IMLibrary imports
+import "my-lib/dist/style.css";
+import { ComponentB } from "my-lib";
 
 Amplify.configure(awsconfig);
 Auth.configure(awsconfig);
@@ -148,15 +147,12 @@ const app = createApp(App)
   .component("InputSwitch", InputSwitch)
   .component("Tag", Tag)
   .component("AutoComplete", AutoComplete)
-  .component("TopBar", TopBar)
-  .component("ImLibrarySample", ImLibrarySample)
-  .component("ImLibrarySample2", ImLibrarySample2)
   .component("ComponentB", ComponentB);
 
 const vm = app.mount("#app");
 
 axios.interceptors.request.use(async request => {
-  if (store.state.isLoggedIn && process.env.VUE_APP_API && request.url?.startsWith(process.env.VUE_APP_API)) {
+  if (store.state.isLoggedIn && import.meta.env.VITE_API && request.url?.startsWith(import.meta.env.VITE_API as string)) {
     request.headers.Authorization = "Bearer " + (await Auth.currentSession()).getIdToken().getJwtToken();
   }
   return request;

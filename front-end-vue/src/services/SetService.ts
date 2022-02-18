@@ -3,7 +3,7 @@ import { SearchResponse } from "@/models/entityServiceTypes/EntityServiceTypes";
 import { SimpleMapIri } from "@/models/mappings/SimpleMapIri";
 
 export default class SetService {
-  static api = process.env.VUE_APP_API;
+  static api = import.meta.env.VITE_API;
 
   public static async download(conceptIri: string, expanded: boolean, v1: boolean) {
     return await axios.get(this.api + "api/set/public/download", {

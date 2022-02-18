@@ -103,7 +103,7 @@ describe("router", () => {
       window.location = mockLocation;
       router.push({ name: "Editor", params: { selectedIri: "http://snomed.info/sct#298382003" } });
       await flushPromises();
-      expect(window.location.href).toBe(process.env.VUE_APP_AUTH_URL + "login?returnUrl=VUE_APP_EDITOR");
+      expect(window.location.href).toBe(import.meta.env.VITE_AUTH_URL + "login?returnUrl=VITE_EDITOR");
       window.location = location;
     });
   });

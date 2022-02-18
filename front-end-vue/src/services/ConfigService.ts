@@ -4,7 +4,7 @@ import { DefinitionConfig } from "@/models/configs/DefinitionConfig";
 import { DashboardLayout } from "@/models/configs/DashboardLayout";
 
 export default class ConfigService {
-  static api = process.env.VUE_APP_API;
+  static api = import.meta.env.VITE_API;
 
   public static async getComponentLayout(name: string): Promise<DefinitionConfig[]> {
     try {

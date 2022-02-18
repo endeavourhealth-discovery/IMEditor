@@ -8,10 +8,11 @@ module.exports = {
     filename: "app.js"
   },
   resolve: {
-    // symlinks: false,
+    symlinks: false,
     alias: {
       primevue: path.resolve(__dirname, "node_modules/primevue"),
-      vue: path.resolve(__dirname, "node_modules/vue")
+      vue: path.resolve(__dirname, "node_modules/vue"),
+      dedupe: ["vue"]
     }
   }
 };

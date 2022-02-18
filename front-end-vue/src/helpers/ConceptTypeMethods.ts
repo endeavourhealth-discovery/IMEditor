@@ -54,7 +54,7 @@ export function getFAIconFromType(conceptTypes: TTIriRef[]): string[] {
   return ["far", "lightbulb"];
 }
 
-const palette = require("../../node_modules/google-palette");
+import * as palette from "../../node_modules/google-palette";
 export function getColourFromType(conceptTypes: TTIriRef[]): string {
   const bgs = palette("tol-rainbow", 6);
   const bgsFixed = bgs.map((color: string) => "#" + color + "88");

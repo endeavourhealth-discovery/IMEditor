@@ -12,7 +12,7 @@ import { Namespace } from "@/models/Namespace";
 import { FiltersAsIris } from "@/models/FiltersAsIris";
 
 export default class EntityService {
-  static api = process.env.VUE_APP_API;
+  static api = import.meta.env.VITE_API;
 
   public static async downloadConcept(iri: string, format: string): Promise<any> {
     try {
@@ -30,7 +30,7 @@ export default class EntityService {
 
   public static async getFullExportSet(iri: string): Promise<any> {
     const client = axios.create({
-      baseURL: process.env.VUE_APP_API,
+      baseURL: import.meta.env.VITE_API,
       timeout: 0
     });
 

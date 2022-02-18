@@ -1,6 +1,6 @@
 <template>
   <div id="topbar-editor-container">
-    <TopBar :currentUser="currentUser" :isLoggedIn="false" />
+    <!-- <TopBar :currentUser="currentUser" :isLoggedIn="false" /> -->
     <ComponentB />
     <ConfirmDialog></ConfirmDialog>
     <div id="editor-main-container">
