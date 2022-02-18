@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 files:
   - source: /front-end-vue/dist
-    destination: //opt/tomcat/webapps/IMEditor
+    destination: //opt/tomcat/webapps/editor
 hooks:
   BeforeInstall:
     - location: aws_scripts/cleanup
