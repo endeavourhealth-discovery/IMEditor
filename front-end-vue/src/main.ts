@@ -82,8 +82,8 @@ import axios from "axios";
 import { isObjectHasKeys } from "./helpers/DataTypeCheckers";
 
 // IMLibrary imports
-import "my-lib/dist/style.css";
-import { ComponentB } from "my-lib";
+import "im-library/dist/style.css";
+import { TopBar } from "im-library";
 
 Amplify.configure(awsconfig);
 Auth.configure(awsconfig);
@@ -147,7 +147,7 @@ const app = createApp(App)
   .component("InputSwitch", InputSwitch)
   .component("Tag", Tag)
   .component("AutoComplete", AutoComplete)
-  .component("ComponentB", ComponentB);
+  .component("TopBar", TopBar);
 
 const vm = app.mount("#app");
 
