@@ -28,7 +28,6 @@ import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/Sea
 import { ConceptSummary } from "@/models/search/ConceptSummary";
 import { ComponentDetails } from "@/models/definition/ComponentDetails";
 import { mapState } from "vuex";
-import { isArrayHasLength, isObjectHasKeys } from "@/helpers/DataTypeCheckers";
 import { TTIriRef } from "@/models/TripleTree";
 import { SearchRequest } from "@/models/search/SearchRequest";
 import { SortBy } from "@/models/search/SortBy";
@@ -39,7 +38,11 @@ import EntityService from "@/services/EntityService";
 import { ComponentType } from "@/models/definition/ComponentType";
 import { NextComponentSummary } from "@/models/definition/NextComponentSummary";
 import { BuilderType } from "@/models/definition/BuilderType";
-import { Vocabulary } from "im-library";
+import { Vocabulary, Helpers } from "im-library";
+const {
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
+} = Helpers;
+const { IM } = Vocabulary;
 
 export default defineComponent({
   name: "Quantifier",
@@ -112,7 +115,7 @@ export default defineComponent({
         });
 
         searchRequest.typeFilter = [];
-        searchRequest.typeFilter.push(Vocabulary.IM.CONCEPT);
+        searchRequest.typeFilter.push(IM.CONCEPT);
         if (isObjectHasKeys(this.request, ["cancel", "msg"])) {
           await this.request.cancel({ status: 499, message: "Search cancelled by user" });
         }

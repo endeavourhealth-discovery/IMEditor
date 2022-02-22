@@ -1,4 +1,6 @@
-import { getContainerElementOptimalHeight } from "@/helpers/GetContainerElementOptimalHeight";
+import { Helpers } from "im-library";
+const { ContainerDimensionGetters } = Helpers;
+const { getContainerElementOptimalHeight } = ContainerDimensionGetters;
 
 describe("GetContainerElementOptimalHeight", () => {
   let mockElement;

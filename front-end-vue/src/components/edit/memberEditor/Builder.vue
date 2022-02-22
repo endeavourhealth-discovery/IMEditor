@@ -27,33 +27,27 @@
 </template>
 
 <script lang="ts">
-import { isArrayHasLength, isObjectHasKeys } from "@/helpers/DataTypeCheckers";
 import { TTIriRef } from "@/models/TripleTree";
 import { defineComponent, PropType } from "@vue/runtime-core";
 import { ComponentType } from "@/models/definition/ComponentType";
 import { ComponentDetails } from "@/models/definition/ComponentDetails";
 import EntityService from "@/services/EntityService";
-import { isValueSet } from "@/helpers/ConceptTypeMethods";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
 import Logic from "@/components/edit/memberEditor/builder/Logic.vue";
 import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
 import { NextComponentSummary } from "@/models/definition/NextComponentSummary";
 import Refinement from "@/components/edit/memberEditor/builder/Refinement.vue";
-import {
-  generateNewComponent,
-  genNextOptions,
-  updatePositions,
-  deleteItem,
-  updateItem,
-  addNextOptions,
-  scrollIntoView,
-  addItem
-} from "@/helpers/EditorBuilderJsonMethods";
 import { mapState } from "vuex";
 import { EntityReferenceNode } from "@/models/EntityReferenceNode";
 import { BuilderType } from "@/models/definition/BuilderType";
-import { Vocabulary } from "im-library";
+import { Vocabulary, Helpers } from "im-library";
+const {
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
+  EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, deleteItem, updateItem, scrollIntoView, addItem, addNextOptions },
+  ConceptTypeMethods: { isValueSet }
+} = Helpers;
+const { IM, SHACL, RDF } = Vocabulary;
 
 export default defineComponent({
   name: "Builder",
@@ -80,9 +74,9 @@ export default defineComponent({
       membersAsNode: {} as any,
       loading: true,
       logicOptions: [
-        { iri: Vocabulary.SHACL.AND, name: "AND" },
-        { iri: Vocabulary.SHACL.OR, name: "OR" },
-        { iri: Vocabulary.SHACL.NOT, name: "NOT" }
+        { iri: SHACL.AND, name: "AND" },
+        { iri: SHACL.OR, name: "OR" },
+        { iri: SHACL.NOT, name: "NOT" }
       ] as { iri: string; name: string }[]
     };
   },
@@ -140,11 +134,10 @@ export default defineComponent({
     },
 
     async processIri(iri: TTIriRef, position: number): Promise<any> {
-      const types = await EntityService.getPartialEntity(iri["@id"], [Vocabulary.RDF.TYPE]);
+      const types = await EntityService.getPartialEntity(iri["@id"], [RDF.TYPE]);
       if (isValueSet(types)) {
         const typeOptions = this.filterOptions.types.filter(
-          (type: EntityReferenceNode) =>
-            type["@id"] === Vocabulary.IM.VALUE_SET || type["@id"] === Vocabulary.IM.CONCEPT_SET || type["@id"] === Vocabulary.IM.CONCEPT_SET_GROUP
+          (type: EntityReferenceNode) => type["@id"] === IM.VALUE_SET || type["@id"] === IM.CONCEPT_SET || type["@id"] === IM.CONCEPT_SET_GROUP
         );
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         return generateNewComponent(
@@ -154,7 +147,7 @@ export default defineComponent({
           BuilderType.MEMBER
         );
       } else {
-        const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === Vocabulary.IM.CONCEPT);
+        const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === IM.CONCEPT);
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         return generateNewComponent(
           ComponentType.ENTITY,
@@ -167,7 +160,7 @@ export default defineComponent({
 
     processObject(item: any, position: number): any {
       for (const [key, value] of Object.entries(item)) {
-        if (key === Vocabulary.SHACL.AND || key === Vocabulary.SHACL.OR || key === Vocabulary.SHACL.NOT) {
+        if (key === SHACL.AND || key === SHACL.OR || key === SHACL.NOT) {
           return generateNewComponent(
             ComponentType.LOGIC,
             position,
@@ -213,10 +206,7 @@ export default defineComponent({
       if (data.selectedType === ComponentType.ENTITY) {
         const typeOptions = this.filterOptions.types.filter(
           (type: EntityReferenceNode) =>
-            type["@id"] === Vocabulary.IM.VALUE_SET ||
-            type["@id"] === Vocabulary.IM.CONCEPT_SET ||
-            type["@id"] === Vocabulary.IM.CONCEPT_SET_GROUP ||
-            type["@id"] === Vocabulary.IM.CONCEPT
+            type["@id"] === IM.VALUE_SET || type["@id"] === IM.CONCEPT_SET || type["@id"] === IM.CONCEPT_SET_GROUP || type["@id"] === IM.CONCEPT
         );
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Member" };

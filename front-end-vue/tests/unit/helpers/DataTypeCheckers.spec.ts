@@ -1,4 +1,6 @@
-import { isArrayHasLength, isObjectHasKeys, isObject } from "@/helpers/DataTypeCheckers";
+import { Helpers } from "im-library";
+const { DataTypeCheckers } = Helpers;
+const { isArrayHasLength, isObject, isObjectHasKeys } = DataTypeCheckers;
 
 describe("DataTypeCheckers.ts ___", () => {
   describe("isArrayHasLength", () => {

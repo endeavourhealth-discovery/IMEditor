@@ -27,7 +27,6 @@
 </template>
 
 <script lang="ts">
-import { isArrayHasLength, isObjectHasKeys } from "@/helpers/DataTypeCheckers";
 import { TTIriRef } from "@/models/TripleTree";
 import { defineComponent, PropType } from "@vue/runtime-core";
 import { ComponentType } from "@/models/definition/ComponentType";
@@ -35,8 +34,12 @@ import { ComponentDetails } from "@/models/definition/ComponentDetails";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import { NextComponentSummary } from "@/models/definition/NextComponentSummary";
 import Logic from "@/components/edit/parentsEditor/builder/Logic.vue";
-import { generateNewComponent, genNextOptions, updatePositions } from "@/helpers/EditorBuilderJsonMethods";
 import { BuilderType } from "@/models/definition/BuilderType";
+import { Helpers } from "im-library";
+const {
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
+  EditorBuilderJsonMethods: { generateNewComponent, genNextOptions, addItem, addNextOptions, scrollIntoView, deleteItem, updateItem, updatePositions }
+} = Helpers;
 
 export default defineComponent({
   name: "Builder",

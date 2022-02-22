@@ -74,9 +74,12 @@
 <script lang="ts">
 import EntityService from "@/services/EntityService";
 import { defineComponent } from "@vue/runtime-core";
-import { isArrayHasLength, isObjectHasKeys } from "@/helpers/DataTypeCheckers";
 import { mapState } from "vuex";
-import { Vocabulary } from "im-library";
+import { Vocabulary, Helpers } from "im-library";
+const {
+  DataTypeCheckers: { isObjectHasKeys, isArrayHasLength }
+} = Helpers;
+const { IM, RDF, RDFS } = Vocabulary;
 
 export default defineComponent({
   name: "SummaryEditor",
@@ -119,8 +122,8 @@ export default defineComponent({
     async getFilterOptions(): Promise<void> {
       if (!(isObjectHasKeys(this.filterOptions) && isArrayHasLength(this.filterOptions.schemes))) {
         const schemeOptions = await EntityService.getNamespaces();
-        const typeOptions = await EntityService.getEntityChildren(Vocabulary.IM.MODELLING_ENTITY_TYPE);
-        const statusOptions = await EntityService.getEntityChildren(Vocabulary.IM.STATUS);
+        const typeOptions = await EntityService.getEntityChildren(IM.MODELLING_ENTITY_TYPE);
+        const statusOptions = await EntityService.getEntityChildren(IM.STATUS);
 
         this.$store.commit("updateFilterOptions", {
           status: statusOptions,
@@ -133,13 +136,13 @@ export default defineComponent({
     processEntity() {
       if (!this.updatedConcept) return;
       if (isObjectHasKeys(this.updatedConcept, ["@id"])) this.iri = this.updatedConcept["@id"];
-      if (isObjectHasKeys(this.updatedConcept, [Vocabulary.RDFS.LABEL])) this.name = this.updatedConcept[Vocabulary.RDFS.LABEL];
-      if (isObjectHasKeys(this.updatedConcept, [Vocabulary.IM.HAS_STATUS])) {
-        const found = this.filterOptions.status.find((item: any) => item["@id"] === this.updatedConcept[Vocabulary.IM.HAS_STATUS][0]["@id"]);
+      if (isObjectHasKeys(this.updatedConcept, [RDFS.LABEL])) this.name = this.updatedConcept[RDFS.LABEL];
+      if (isObjectHasKeys(this.updatedConcept, [IM.HAS_STATUS])) {
+        const found = this.filterOptions.status.find((item: any) => item["@id"] === this.updatedConcept[IM.HAS_STATUS][0]["@id"]);
         this.status = found ? found : "";
       }
-      if (isObjectHasKeys(this.updatedConcept, [Vocabulary.RDF.TYPE])) {
-        this.updatedConcept[Vocabulary.RDF.TYPE].forEach((type: any) => {
+      if (isObjectHasKeys(this.updatedConcept, [RDF.TYPE])) {
+        this.updatedConcept[RDF.TYPE].forEach((type: any) => {
           const found = this.filterOptions.types.find((option: any) => option["@id"] === type["@id"]);
           if (found && !this.types.includes(found)) this.types.push(found);
         });
@@ -147,7 +150,7 @@ export default defineComponent({
       const found = this.filterOptions.schemes.find((scheme: any) => scheme.iri === this.iri.substring(0, this.iri.indexOf("#") + 1));
       this.scheme = found ? found : "";
       this.code = this.iri.substring(this.iri.indexOf("#") + 1);
-      if (isObjectHasKeys(this.updatedConcept, [Vocabulary.RDFS.COMMENT])) this.description = this.updatedConcept[Vocabulary.RDFS.COMMENT];
+      if (isObjectHasKeys(this.updatedConcept, [RDFS.COMMENT])) this.description = this.updatedConcept[RDFS.COMMENT];
     },
 
     updateEntity(data: any) {

@@ -17,7 +17,10 @@
 import { defineComponent } from "vue";
 import Builder from "@/components/edit/memberEditor/Builder.vue";
 import EclInput from "@/components/edit/memberEditor/EclInput.vue";
-import { isArrayHasLength } from "@/helpers/DataTypeCheckers";
+import { Helpers } from "im-library";
+const {
+  DataTypeCheckers: { isArrayHasLength }
+} = Helpers;
 
 export default defineComponent({
   name: "MemberEditor",

@@ -38,22 +38,16 @@ import AddNext from "@/components/edit/parentsEditor/builder/AddNext.vue";
 import { NextComponentSummary } from "@/models/definition/NextComponentSummary";
 import { ComponentDetails } from "@/models/definition/ComponentDetails";
 import { ComponentType } from "@/models/definition/ComponentType";
-import { isArrayHasLength, isObjectHasKeys } from "@/helpers/DataTypeCheckers";
 import { TTIriRef } from "@/models/TripleTree";
-import {
-  addItem,
-  addNextOptions,
-  deleteItem,
-  generateNewComponent,
-  genNextOptions,
-  scrollIntoView,
-  updateItem,
-  updatePositions
-} from "@/helpers/EditorBuilderJsonMethods";
 import { mapState } from "vuex";
 import { EntityReferenceNode } from "@/models/EntityReferenceNode";
 import { BuilderType } from "@/models/definition/BuilderType";
-import { Vocabulary } from "im-library";
+import { Vocabulary, Helpers } from "im-library";
+const {
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
+  EditorBuilderJsonMethods: { addItem, addNextOptions, generateNewComponent, genNextOptions, updateItem, deleteItem, scrollIntoView }
+} = Helpers;
+const { IM } = Vocabulary;
 
 export default defineComponent({
   name: "Logic",
@@ -96,7 +90,7 @@ export default defineComponent({
   },
   data() {
     return {
-      options: [{ iri: Vocabulary.IM.IS_CONTAINED_IN, name: "Contained in" }] as { iri: string; name: string }[],
+      options: [{ iri: IM.IS_CONTAINED_IN, name: "Contained in" }] as { iri: string; name: string }[],
       selected: {} as { iri: string; name: string },
       logicBuild: [] as any[],
       loading: true
@@ -128,9 +122,7 @@ export default defineComponent({
     },
 
     processIri(iri: TTIriRef, position: number) {
-      const typeOptions = this.filterOptions.types.filter(
-        (type: EntityReferenceNode) => type["@id"] === Vocabulary.IM.CONCEPT || type["@id"] === Vocabulary.IM.CONCEPT_SET
-      );
+      const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === IM.CONCEPT || type["@id"] === IM.CONCEPT_SET);
       const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
       return generateNewComponent(
         ComponentType.ENTITY,
@@ -174,7 +166,7 @@ export default defineComponent({
     addItemWrapper(data: { selectedType: ComponentType; position: number; value: any }): void {
       if (data.selectedType === ComponentType.ENTITY) {
         const typeOptions = this.filterOptions.types.filter(
-          (type: EntityReferenceNode) => type["@id"] === Vocabulary.IM.CONCEPT || type["@id"] === Vocabulary.IM.CONCEPT_SET
+          (type: EntityReferenceNode) => type["@id"] === Vocabulary.IM.CONCEPT || type["@id"] === IM.CONCEPT_SET
         );
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Parent" };

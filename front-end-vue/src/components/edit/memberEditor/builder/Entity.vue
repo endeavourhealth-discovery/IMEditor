@@ -29,7 +29,6 @@ import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/Sea
 import { ConceptSummary } from "@/models/search/ConceptSummary";
 import { ComponentDetails } from "@/models/definition/ComponentDetails";
 import { mapState } from "vuex";
-import { isArrayHasLength, isObjectHasKeys } from "@/helpers/DataTypeCheckers";
 import { TTIriRef } from "@/models/TripleTree";
 import { SearchRequest } from "@/models/search/SearchRequest";
 import { SortBy } from "@/models/search/SortBy";
@@ -41,6 +40,10 @@ import { ComponentType } from "@/models/definition/ComponentType";
 import { NextComponentSummary } from "@/models/definition/NextComponentSummary";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import { BuilderType } from "@/models/definition/BuilderType";
+import { Helpers } from "im-library";
+const {
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
+} = Helpers;
 
 export default defineComponent({
   name: "Entity",

@@ -1,5 +1,8 @@
-import {isOfTypes, isValueSet, isProperty, getColourFromType, getFAIconFromType} from "@/helpers/ConceptTypeMethods";
-import { IM } from "@/vocabulary/IM";
+import { Vocabulary, Helpers } from "im-library";
+
+const { IM } = Vocabulary;
+const { ConceptTypeMethods } = Helpers;
+const { isOfTypes, isProperty, isValueSet, getFAIconFromType, getColourFromType } = ConceptTypeMethods;
 
 describe("ConceptTypeMethods", () => {
   const testConceptType = [{ "@id": "http://endhealth.info/im#Concept", name: "Concept" }];

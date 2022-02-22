@@ -63,13 +63,16 @@ import EntityService from "@/services/EntityService";
 import ConfirmDialog from "primevue/confirmdialog";
 import MemberEditor from "@/components/edit/MemberEditor.vue";
 import ParentsEditor from "@/components/edit/ParentsEditor.vue";
-import { isValueSet } from "@/helpers/ConceptTypeMethods";
-import { isObjectHasKeys } from "@/helpers/DataTypeCheckers";
-import { getContainerElementOptimalHeight } from "@/helpers/GetContainerElementOptimalHeight";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import { mapState } from "vuex";
-import { Vocabulary } from "im-library";
+import { Vocabulary, Helpers } from "im-library";
+const { IM } = Vocabulary;
+const {
+  ConceptTypeMethods: { isValueSet },
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
+  ContainerDimensionGetters: { getContainerElementOptimalHeight }
+} = Helpers;
 
 export default defineComponent({
   name: "Editor",

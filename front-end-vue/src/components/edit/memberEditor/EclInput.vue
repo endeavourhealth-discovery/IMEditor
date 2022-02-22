@@ -13,12 +13,15 @@
 </template>
 
 <script lang="ts">
-import { isArrayHasLength, isObjectHasKeys } from "@/helpers/DataTypeCheckers";
 import { TTIriRef } from "@/models/TripleTree";
 import SetService from "@/services/SetService";
 import { defineComponent } from "@vue/runtime-core";
 import axios from "axios";
 import EclResults from "@/components/edit/memberEditor/EclResults.vue";
+import { Helpers } from "im-library";
+const {
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
+} = Helpers;
 
 export default defineComponent({
   name: "EclInput",

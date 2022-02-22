@@ -79,11 +79,14 @@ import AutoComplete from "primevue/autocomplete";
 import { Amplify, Auth } from "aws-amplify";
 import awsconfig from "./aws-exports";
 import axios from "axios";
-import { isObjectHasKeys } from "./helpers/DataTypeCheckers";
 
 // IMLibrary imports
 import "im-library/dist/style.css";
 import { TopBar } from "im-library";
+import { Helpers } from "im-library";
+const {
+  DataTypeCheckers: { isObjectHasKeys }
+} = Helpers;
 
 Amplify.configure(awsconfig);
 Auth.configure(awsconfig);

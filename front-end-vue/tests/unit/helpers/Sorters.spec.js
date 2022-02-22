@@ -1,4 +1,6 @@
-import { byScheme, byPriority, byLabel, byName, byPosition, byOrder } from "@/helpers/Sorters";
+import { Helpers } from "im-library";
+const { Sorters } = Helpers;
+const { byLabel, byName, byOrder, byPosition, byPriority, byScheme } = Sorters;
 
 describe("Sorters", () => {
   describe("byScheme", () => {

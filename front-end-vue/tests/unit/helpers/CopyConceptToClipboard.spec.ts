@@ -1,4 +1,6 @@
-import { copyConceptToClipboard, conceptObjectToCopyString } from "@/helpers/CopyConceptToClipboard";
+import { Helpers } from "im-library";
+const { CopyConceptToClipboard } = Helpers;
+const { conceptObjectToCopyString, copyConceptToClipboard } = CopyConceptToClipboard;
 import LoggerService from "@/services/LoggerService";
 
 describe("CopyConceptToClipboard", () => {

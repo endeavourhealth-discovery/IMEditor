@@ -84,9 +84,13 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "@vue/runtime-core";
-import { getColourFromType, getFAIconFromType } from "@/helpers/ConceptTypeMethods";
 import { ConceptSummary } from "@/models/search/ConceptSummary";
 import { TTIriRef } from "@/models/TripleTree";
+import { Helpers } from "im-library";
+const {
+  ConceptTypeMethods: { getFAIconFromType, getColourFromType }
+} = Helpers;
+
 export default defineComponent({
   name: "SearchMiniOverlay",
   props: {

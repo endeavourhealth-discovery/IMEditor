@@ -42,8 +42,12 @@ import { defineComponent } from "vue";
 import { mapState } from "vuex";
 import { Namespace } from "@/models/Namespace";
 import { EntityReferenceNode } from "@/models/EntityReferenceNode";
-import { isArrayHasLength } from "@/helpers/DataTypeCheckers";
-import { NAMESPACES } from "@/vocabulary/NAMESPACES";
+import { Vocabulary } from "im-library";
+import { Helpers } from "im-library";
+const {
+  DataTypeCheckers: { isArrayHasLength }
+} = Helpers;
+
 export default defineComponent({
   name: "Filters",
   props: { search: { type: Function, required: true } },
@@ -116,10 +120,10 @@ export default defineComponent({
       });
     },
     setLegacy(include: boolean): void {
-      const emisScheme = this.selectedSchemes.findIndex(scheme => scheme.iri === NAMESPACES.EMIS);
+      const emisScheme = this.selectedSchemes.findIndex(scheme => scheme.iri === Vocabulary.NAMESPACES.EMIS);
       if (include) {
         if (emisScheme === -1) {
-          const found = this.filterOptions.schemes.find((scheme: Namespace) => scheme.iri === NAMESPACES.EMIS);
+          const found = this.filterOptions.schemes.find((scheme: Namespace) => scheme.iri === Vocabulary.NAMESPACES.EMIS);
           if (found) this.selectedSchemes.push(found);
         }
       } else {

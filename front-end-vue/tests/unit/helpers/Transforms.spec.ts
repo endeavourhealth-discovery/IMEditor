@@ -1,4 +1,6 @@
-import { ttValueToString, ttArrayToString, ttIriToString, ttNodeToString, bundleToText } from "@/helpers/Transforms";
+import { Helpers } from "im-library";
+const { Transforms } = Helpers;
+const { ttArrayToString, ttIriToString, ttNodeToString, ttValueToString, bundleToText } = Transforms;
 
 const url = window.location.origin;
 

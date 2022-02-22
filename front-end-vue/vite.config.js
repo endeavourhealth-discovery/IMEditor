@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [vue()],
   optimizeDeps: {
     esbuildOptions: {
-      plugins: [esbuildCommonjs(["./node_modules/google-palette"])]
+      plugins: [esbuildCommonjs(["google-palette"])]
     }
   },
   resolve: {
