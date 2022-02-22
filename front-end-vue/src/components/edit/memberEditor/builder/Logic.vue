@@ -39,7 +39,6 @@ import { NextComponentSummary } from "@/models/definition/NextComponentSummary";
 import { ComponentDetails } from "@/models/definition/ComponentDetails";
 import { ComponentType } from "@/models/definition/ComponentType";
 import { BuilderType } from "@/models/definition/BuilderType";
-import { SHACL } from "@/vocabulary/SHACL";
 import { isArrayHasLength, isObjectHasKeys } from "@/helpers/DataTypeCheckers";
 import { TTIriRef } from "@/models/TripleTree";
 import Refinement from "@/components/edit/memberEditor/builder/Refinement.vue";
@@ -54,8 +53,8 @@ import {
   updatePositions
 } from "@/helpers/EditorBuilderJsonMethods";
 import { mapState } from "vuex";
-import { IM } from "@/vocabulary/IM";
 import { EntityReferenceNode } from "@/models/EntityReferenceNode";
+import { Vocabulary } from "im-library";
 
 export default defineComponent({
   name: "Logic",
@@ -129,7 +128,11 @@ export default defineComponent({
 
     async processChild(child: any, position: number) {
       if (isObjectHasKeys(child, ["@id"])) return await this.processIri(child, position);
-      else if (isObjectHasKeys(child, [SHACL.AND]) || isObjectHasKeys(child, [SHACL.OR]) || isObjectHasKeys(child, [SHACL.NOT]))
+      else if (
+        isObjectHasKeys(child, [Vocabulary.SHACL.AND]) ||
+        isObjectHasKeys(child, [Vocabulary.SHACL.OR]) ||
+        isObjectHasKeys(child, [Vocabulary.SHACL.NOT])
+      )
         return this.processLogic(child, position);
       else return this.processRefinement(child, position);
     },
@@ -143,7 +146,10 @@ export default defineComponent({
     async processIri(iri: TTIriRef, position: number) {
       const typeOptions = this.filterOptions.types.filter(
         (type: EntityReferenceNode) =>
-          type["@id"] === IM.VALUE_SET || type["@id"] === IM.CONCEPT_SET || type["@id"] === IM.CONCEPT_SET_GROUP || type["@id"] === IM.CONCEPT
+          type["@id"] === Vocabulary.IM.VALUE_SET ||
+          type["@id"] === Vocabulary.IM.CONCEPT_SET ||
+          type["@id"] === Vocabulary.IM.CONCEPT_SET_GROUP ||
+          type["@id"] === Vocabulary.IM.CONCEPT
       );
       const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
       return generateNewComponent(
@@ -195,7 +201,10 @@ export default defineComponent({
       if (data.selectedType === ComponentType.ENTITY) {
         const typeOptions = this.filterOptions.types.filter(
           (type: EntityReferenceNode) =>
-            type["@id"] === IM.VALUE_SET || type["@id"] === IM.CONCEPT_SET || type["@id"] === IM.CONCEPT_SET_GROUP || type["@id"] === IM.CONCEPT
+            type["@id"] === Vocabulary.IM.VALUE_SET ||
+            type["@id"] === Vocabulary.IM.CONCEPT_SET ||
+            type["@id"] === Vocabulary.IM.CONCEPT_SET_GROUP ||
+            type["@id"] === Vocabulary.IM.CONCEPT
         );
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Member" };

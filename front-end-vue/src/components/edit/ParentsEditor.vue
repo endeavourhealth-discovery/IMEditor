@@ -11,9 +11,9 @@
 
 <script lang="ts">
 import { isObjectHasKeys } from "@/helpers/DataTypeCheckers";
-import { IM } from "@/vocabulary/IM";
 import { defineComponent } from "@vue/runtime-core";
 import Builder from "@/components/edit/parentsEditor/Builder.vue";
+import { Vocabulary } from "im-library";
 
 export default defineComponent({
   name: "ParentsEditor",
@@ -40,7 +40,8 @@ export default defineComponent({
   methods: {
     getParents() {
       this.loading = true;
-      if (isObjectHasKeys(this.updatedConcept, [IM.IS_CONTAINED_IN])) this.parents[IM.IS_CONTAINED_IN] = this.updatedConcept[IM.IS_CONTAINED_IN];
+      if (isObjectHasKeys(this.updatedConcept, [Vocabulary.IM.IS_CONTAINED_IN]))
+        this.parents[Vocabulary.IM.IS_CONTAINED_IN] = this.updatedConcept[Vocabulary.IM.IS_CONTAINED_IN];
       this.loading = false;
     },
 

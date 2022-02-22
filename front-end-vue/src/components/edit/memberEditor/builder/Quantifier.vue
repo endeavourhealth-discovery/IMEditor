@@ -38,8 +38,8 @@ import axios from "axios";
 import EntityService from "@/services/EntityService";
 import { ComponentType } from "@/models/definition/ComponentType";
 import { NextComponentSummary } from "@/models/definition/NextComponentSummary";
-import { IM } from "@/vocabulary/IM";
 import { BuilderType } from "@/models/definition/BuilderType";
+import { Vocabulary } from "im-library";
 
 export default defineComponent({
   name: "Quantifier",
@@ -112,7 +112,7 @@ export default defineComponent({
         });
 
         searchRequest.typeFilter = [];
-        searchRequest.typeFilter.push(IM.CONCEPT);
+        searchRequest.typeFilter.push(Vocabulary.IM.CONCEPT);
         if (isObjectHasKeys(this.request, ["cancel", "msg"])) {
           await this.request.cancel({ status: 499, message: "Search cancelled by user" });
         }

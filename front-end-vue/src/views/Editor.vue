@@ -1,6 +1,5 @@
 <template>
   <div id="topbar-editor-container">
-    <!-- <TopBar :currentUser="currentUser" :isLoggedIn="false" /> -->
     <TopBar :isLoggedIn="isLoggedIn" :currentUser="currentUser" />
     <ConfirmDialog></ConfirmDialog>
     <div id="editor-main-container">
@@ -65,12 +64,12 @@ import ConfirmDialog from "primevue/confirmdialog";
 import MemberEditor from "@/components/edit/MemberEditor.vue";
 import ParentsEditor from "@/components/edit/ParentsEditor.vue";
 import { isValueSet } from "@/helpers/ConceptTypeMethods";
-import { RDF } from "@/vocabulary/RDF";
 import { isObjectHasKeys } from "@/helpers/DataTypeCheckers";
 import { getContainerElementOptimalHeight } from "@/helpers/GetContainerElementOptimalHeight";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import { mapState } from "vuex";
+import { Vocabulary } from "im-library";
 
 export default defineComponent({
   name: "Editor",
@@ -97,9 +96,9 @@ export default defineComponent({
   },
   computed: {
     isValueSet(): any {
-      return isValueSet(this.conceptUpdated[RDF.TYPE]);
+      return isValueSet(this.conceptUpdated[Vocabulary.RDF.TYPE]);
     },
-    ...mapState(["editorIri", "editorSavedEntity", "currentUser"])
+    ...mapState(["editorIri", "editorSavedEntity", "currentUser", "isLoggedIn"])
   },
   data() {
     return {

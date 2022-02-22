@@ -50,10 +50,9 @@ import {
   updatePositions
 } from "@/helpers/EditorBuilderJsonMethods";
 import { EntityReferenceNode } from "@/models/EntityReferenceNode";
-import { RDF } from "@/vocabulary/RDF";
 import EntityService from "@/services/EntityService";
-import { RDFS } from "@/vocabulary/RDFS";
 import { BuilderType } from "@/models/definition/BuilderType";
+import { Vocabulary } from "im-library";
 
 export default defineComponent({
   name: "Refinement",
@@ -96,9 +95,9 @@ export default defineComponent({
       if (!this.hasData(this.value)) this.createDefaultBuild();
       else {
         let position = 0;
-        const typeOptions = [{ "@id": RDF.PROPERTY }];
+        const typeOptions = [{ "@id": Vocabulary.RDF.PROPERTY }];
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
-        const propertyName = (await EntityService.getPartialEntity(this.value.propertyIri, [RDFS.LABEL]))[RDFS.LABEL];
+        const propertyName = (await EntityService.getPartialEntity(this.value.propertyIri, [Vocabulary.RDFS.LABEL]))[Vocabulary.RDFS.LABEL];
         const property = generateNewComponent(
           ComponentType.ENTITY,
           position,
@@ -133,7 +132,7 @@ export default defineComponent({
 
     createDefaultBuild() {
       this.refinementBuild = [];
-      const propertyTypeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === RDF.PROPERTY);
+      const propertyTypeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === Vocabulary.RDF.PROPERTY);
       const propertyOptions = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: propertyTypeOptions };
       const property = generateNewComponent(
         ComponentType.ENTITY,
@@ -167,7 +166,7 @@ export default defineComponent({
 
     addItemWrapper(data: { selectedType: ComponentType; position: number; value: any }): void {
       if (data.selectedType === ComponentType.ENTITY) {
-        const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === RDF.PROPERTY);
+        const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === Vocabulary.RDF.PROPERTY);
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Property" };
       }

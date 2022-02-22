@@ -29,12 +29,10 @@
 <script lang="ts">
 import { isArrayHasLength, isObjectHasKeys } from "@/helpers/DataTypeCheckers";
 import { TTIriRef } from "@/models/TripleTree";
-import { SHACL } from "@/vocabulary/SHACL";
 import { defineComponent, PropType } from "@vue/runtime-core";
 import { ComponentType } from "@/models/definition/ComponentType";
 import { ComponentDetails } from "@/models/definition/ComponentDetails";
 import EntityService from "@/services/EntityService";
-import { RDF } from "@/vocabulary/RDF";
 import { isValueSet } from "@/helpers/ConceptTypeMethods";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
@@ -54,8 +52,8 @@ import {
 } from "@/helpers/EditorBuilderJsonMethods";
 import { mapState } from "vuex";
 import { EntityReferenceNode } from "@/models/EntityReferenceNode";
-import { IM } from "@/vocabulary/IM";
 import { BuilderType } from "@/models/definition/BuilderType";
+import { Vocabulary } from "im-library";
 
 export default defineComponent({
   name: "Builder",
@@ -82,9 +80,9 @@ export default defineComponent({
       membersAsNode: {} as any,
       loading: true,
       logicOptions: [
-        { iri: SHACL.AND, name: "AND" },
-        { iri: SHACL.OR, name: "OR" },
-        { iri: SHACL.NOT, name: "NOT" }
+        { iri: Vocabulary.SHACL.AND, name: "AND" },
+        { iri: Vocabulary.SHACL.OR, name: "OR" },
+        { iri: Vocabulary.SHACL.NOT, name: "NOT" }
       ] as { iri: string; name: string }[]
     };
   },
@@ -142,10 +140,11 @@ export default defineComponent({
     },
 
     async processIri(iri: TTIriRef, position: number): Promise<any> {
-      const types = await EntityService.getPartialEntity(iri["@id"], [RDF.TYPE]);
+      const types = await EntityService.getPartialEntity(iri["@id"], [Vocabulary.RDF.TYPE]);
       if (isValueSet(types)) {
         const typeOptions = this.filterOptions.types.filter(
-          (type: EntityReferenceNode) => type["@id"] === IM.VALUE_SET || type["@id"] === IM.CONCEPT_SET || type["@id"] === IM.CONCEPT_SET_GROUP
+          (type: EntityReferenceNode) =>
+            type["@id"] === Vocabulary.IM.VALUE_SET || type["@id"] === Vocabulary.IM.CONCEPT_SET || type["@id"] === Vocabulary.IM.CONCEPT_SET_GROUP
         );
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         return generateNewComponent(
@@ -155,7 +154,7 @@ export default defineComponent({
           BuilderType.MEMBER
         );
       } else {
-        const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === IM.CONCEPT);
+        const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === Vocabulary.IM.CONCEPT);
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         return generateNewComponent(
           ComponentType.ENTITY,
@@ -168,7 +167,7 @@ export default defineComponent({
 
     processObject(item: any, position: number): any {
       for (const [key, value] of Object.entries(item)) {
-        if (key === SHACL.AND || key === SHACL.OR || key === SHACL.NOT) {
+        if (key === Vocabulary.SHACL.AND || key === Vocabulary.SHACL.OR || key === Vocabulary.SHACL.NOT) {
           return generateNewComponent(
             ComponentType.LOGIC,
             position,
@@ -214,7 +213,10 @@ export default defineComponent({
       if (data.selectedType === ComponentType.ENTITY) {
         const typeOptions = this.filterOptions.types.filter(
           (type: EntityReferenceNode) =>
-            type["@id"] === IM.VALUE_SET || type["@id"] === IM.CONCEPT_SET || type["@id"] === IM.CONCEPT_SET_GROUP || type["@id"] === IM.CONCEPT
+            type["@id"] === Vocabulary.IM.VALUE_SET ||
+            type["@id"] === Vocabulary.IM.CONCEPT_SET ||
+            type["@id"] === Vocabulary.IM.CONCEPT_SET_GROUP ||
+            type["@id"] === Vocabulary.IM.CONCEPT
         );
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Member" };
