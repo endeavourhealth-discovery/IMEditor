@@ -67,7 +67,7 @@ import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers } from "im-library";
-const { IM } = Vocabulary;
+const { IM, RDF } = Vocabulary;
 const {
   ConceptTypeMethods: { isValueSet },
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
@@ -99,7 +99,7 @@ export default defineComponent({
   },
   computed: {
     isValueSet(): any {
-      return isValueSet(this.conceptUpdated[Vocabulary.RDF.TYPE]);
+      return isValueSet(this.conceptUpdated[RDF.TYPE]);
     },
     ...mapState(["editorIri", "editorSavedEntity", "currentUser", "isLoggedIn"])
   },

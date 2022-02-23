@@ -42,8 +42,7 @@ import { defineComponent } from "vue";
 import { mapState } from "vuex";
 import { Namespace } from "@/models/Namespace";
 import { EntityReferenceNode } from "@/models/EntityReferenceNode";
-import { Vocabulary } from "im-library";
-import { Helpers } from "im-library";
+import { Vocabulary, Helpers } from "im-library";
 const {
   DataTypeCheckers: { isArrayHasLength }
 } = Helpers;

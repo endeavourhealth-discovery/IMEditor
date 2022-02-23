@@ -26,24 +26,19 @@
 <script lang="ts">
 import { defineComponent, PropType } from "@vue/runtime-core";
 import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/SearchMiniOverlay.vue";
-import { ConceptSummary } from "@/models/search/ConceptSummary";
-import { ComponentDetails } from "@/models/definition/ComponentDetails";
 import { mapState } from "vuex";
-import { TTIriRef } from "@/models/TripleTree";
-import { SearchRequest } from "@/models/search/SearchRequest";
-import { SortBy } from "@/models/search/SortBy";
-import { Namespace } from "@/models/Namespace";
-import { EntityReferenceNode } from "@/models/EntityReferenceNode";
 import axios from "axios";
 import EntityService from "@/services/EntityService";
-import { ComponentType } from "@/models/definition/ComponentType";
-import { NextComponentSummary } from "@/models/definition/NextComponentSummary";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
-import { BuilderType } from "@/models/definition/BuilderType";
-import { Helpers } from "im-library";
+import { Namespace, TTIriRef, EntityReferenceNode, ComponentDetails, NextComponentSummary } from "im-library/src/interfaces/Interfaces";
+import { Helpers, Models, Enums } from "im-library";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
 } = Helpers;
+const { ComponentType, BuilderType, SortBy } = Enums;
+const {
+  Search: { ConceptSummary, SearchRequest }
+} = Models;
 
 export default defineComponent({
   name: "Entity",
@@ -54,13 +49,13 @@ export default defineComponent({
       type: Object as PropType<{
         filterOptions: { status: EntityReferenceNode[]; schemes: Namespace[]; types: EntityReferenceNode[] };
         entity: TTIriRef | undefined;
-        type: ComponentType;
+        type: typeof ComponentType;
         label: string;
       }>,
       required: true
     },
     last: { type: Boolean, required: true },
-    builderType: { type: String as PropType<BuilderType>, required: true }
+    builderType: { type: String as PropType<typeof BuilderType>, required: true }
   },
   emits: {
     updateClicked: (payload: ComponentDetails) => true,
@@ -87,7 +82,7 @@ export default defineComponent({
       request: {} as { cancel: any; msg: string },
       selectedResult: {} as TTIriRef,
       searchTerm: "",
-      searchResults: [] as ConceptSummary[],
+      searchResults: [] as typeof ConceptSummary[],
       label: ""
     };
   },
@@ -133,7 +128,7 @@ export default defineComponent({
       }
     },
 
-    setFilters(searchRequest: SearchRequest) {
+    setFilters(searchRequest: typeof SearchRequest) {
       let options = {} as { status: EntityReferenceNode[]; schemes: Namespace[]; types: EntityReferenceNode[] };
       if (this.value && isObjectHasKeys(this.value.filterOptions)) {
         options = this.value.filterOptions;
@@ -153,7 +148,7 @@ export default defineComponent({
       }
     },
 
-    async fetchSearchResults(searchRequest: SearchRequest, cancelToken: any) {
+    async fetchSearchResults(searchRequest: typeof SearchRequest, cancelToken: any) {
       const result = await EntityService.advancedSearch(searchRequest, cancelToken);
       if (result && isArrayHasLength(result)) {
         this.searchResults = result;
@@ -177,7 +172,7 @@ export default defineComponent({
       return false;
     },
 
-    updateSelectedResult(data: ConceptSummary | TTIriRef) {
+    updateSelectedResult(data: typeof ConceptSummary | TTIriRef) {
       if (!isObjectHasKeys(data)) return;
       if (this.isTTIriRef(data)) {
         this.selectedResult = data;
