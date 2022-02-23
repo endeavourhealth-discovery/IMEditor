@@ -1,4 +1,7 @@
-import { SearchRequest } from "@/models/search/SearchRequest";
+import { Models } from "im-library";
+const {
+  Search: { SearchRequest }
+} = Models;
 import EntityService from "@/services/EntityService";
 import SetService from "@/services/SetService";
 import axios from "axios";

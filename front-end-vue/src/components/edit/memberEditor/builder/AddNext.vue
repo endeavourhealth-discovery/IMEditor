@@ -9,10 +9,9 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "@vue/runtime-core";
-import { ComponentDetails } from "@/models/definition/ComponentDetails";
-import { NextComponentSummary } from "@/models/definition/NextComponentSummary";
-import { ComponentType } from "@/models/definition/ComponentType";
-import { BuilderType } from "@/models/definition/BuilderType";
+import { Enums } from "im-library";
+import { NextComponentSummary, ComponentDetails } from "im-library/src/interfaces/Interfaces";
+const { BuilderType, ComponentType } = Enums;
 
 export default defineComponent({
   name: "AddNext",
@@ -24,10 +23,10 @@ export default defineComponent({
       type: Object as PropType<NextComponentSummary>,
       required: true
     },
-    builderType: { type: String as PropType<BuilderType>, required: true }
+    builderType: { type: String as PropType<typeof BuilderType>, required: true }
   },
   emits: {
-    addClicked: (payload: { selectedType: ComponentType; position: number }) => true,
+    addClicked: (payload: { selectedType: typeof ComponentType; position: number }) => true,
     deleteClicked: (payload: ComponentDetails) => true
   },
   watch: {
@@ -43,11 +42,11 @@ export default defineComponent({
   },
   data() {
     return {
-      options: [] as ComponentType[]
+      options: [] as typeof ComponentType[]
     };
   },
   methods: {
-    addItem(selectedOption: ComponentType) {
+    addItem(selectedOption: typeof ComponentType) {
       this.$emit("addClicked", {
         selectedType: selectedOption,
         position: this.value.previousPosition + 1

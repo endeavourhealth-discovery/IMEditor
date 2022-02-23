@@ -35,20 +35,16 @@ import { defineComponent, PropType } from "vue";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
 import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
-import { NextComponentSummary } from "@/models/definition/NextComponentSummary";
-import { ComponentDetails } from "@/models/definition/ComponentDetails";
-import { ComponentType } from "@/models/definition/ComponentType";
-import { BuilderType } from "@/models/definition/BuilderType";
-import { TTIriRef } from "@/models/TripleTree";
 import Refinement from "@/components/edit/memberEditor/builder/Refinement.vue";
 import { mapState } from "vuex";
-import { EntityReferenceNode } from "@/models/EntityReferenceNode";
-import { Vocabulary, Helpers } from "im-library";
+import { Vocabulary, Helpers, Enums } from "im-library";
+import { EntityReferenceNode, TTIriRef, ComponentDetails, NextComponentSummary } from "im-library/src/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, deleteItem, updateItem, addItem, addNextOptions, scrollIntoView }
 } = Helpers;
 const { SHACL, IM } = Vocabulary;
+const { BuilderType, ComponentType } = Enums;
 
 export default defineComponent({
   name: "Logic",
@@ -60,7 +56,7 @@ export default defineComponent({
       required: true
     },
     last: { type: Boolean, required: true },
-    builderType: { type: String as PropType<BuilderType>, required: true }
+    builderType: { type: String as PropType<typeof BuilderType>, required: true }
   },
   components: { AddDeleteButtons, AddNext, Entity, Refinement },
   emits: {
@@ -184,7 +180,7 @@ export default defineComponent({
       updateItem(data, this.logicBuild);
     },
 
-    addItemWrapper(data: { selectedType: ComponentType; position: number; value: any }): void {
+    addItemWrapper(data: { selectedType: typeof ComponentType; position: number; value: any }): void {
       if (data.selectedType === ComponentType.ENTITY) {
         const typeOptions = this.filterOptions.types.filter(
           (type: EntityReferenceNode) =>

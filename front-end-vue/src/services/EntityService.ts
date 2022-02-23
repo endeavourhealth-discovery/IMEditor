@@ -1,15 +1,21 @@
 import { SearchRequest } from "@/models/search/SearchRequest";
 import axios, { CancelToken } from "axios";
-import { EntityReferenceNode } from "@/models/EntityReferenceNode";
-import { PartialBundle } from "@/models/entityServiceTypes/EntityServiceTypes";
-import { EntityDefinitionDto } from "@/models/EntityDefinitionDto";
-import { TTBundle, TTIriRef } from "@/models/TripleTree";
-import { ExportValueSet } from "@/models/members/ExportValueSet";
-import { TermCode } from "@/models/terms/TermCode";
-import { DataModelProperty } from "@/models/properties/DataModelProperty";
-import { ConceptSummary } from "@/models/search/ConceptSummary";
-import { Namespace } from "@/models/Namespace";
-import { FiltersAsIris } from "@/models/FiltersAsIris";
+import {
+  FiltersAsIris,
+  Namespace,
+  DataModelProperty,
+  TermCode,
+  ExportValueSet,
+  TTBundle,
+  TTIriRef,
+  EntityDefinitionDto,
+  PartialBundle,
+  EntityReferenceNode
+} from "im-library/src/interfaces/Interfaces";
+import { Models } from "im-library";
+const {
+  Search: { ConceptSummary }
+} = Models;
 
 export default class EntityService {
   static api = import.meta.env.VITE_API;
@@ -116,13 +122,13 @@ export default class EntityService {
     }
   }
 
-  public static async advancedSearch(request: SearchRequest, cancelToken: CancelToken): Promise<ConceptSummary[]> {
+  public static async advancedSearch(request: SearchRequest, cancelToken: CancelToken): Promise<typeof ConceptSummary[]> {
     try {
       return await axios.post(this.api + "api/entity/public/search", request, {
         cancelToken: cancelToken
       });
     } catch (error) {
-      return [] as ConceptSummary[];
+      return [] as typeof ConceptSummary[];
     }
   }
 
@@ -240,13 +246,13 @@ export default class EntityService {
     }
   }
 
-  public static async getEntitySummary(iri: string): Promise<ConceptSummary> {
+  public static async getEntitySummary(iri: string): Promise<typeof ConceptSummary> {
     try {
       return await axios.get(this.api + "api/entity/public/summary", {
         params: { iri: iri }
       });
     } catch (error) {
-      return {} as ConceptSummary;
+      return {} as typeof ConceptSummary;
     }
   }
 

@@ -13,7 +13,7 @@
 </template>
 
 <script lang="ts">
-import { TTIriRef } from "@/models/TripleTree";
+import { TTIriRef } from "im-library/src/interfaces/Interfaces";
 import SetService from "@/services/SetService";
 import { defineComponent } from "@vue/runtime-core";
 import axios from "axios";

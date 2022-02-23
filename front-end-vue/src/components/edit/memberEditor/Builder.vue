@@ -27,27 +27,23 @@
 </template>
 
 <script lang="ts">
-import { TTIriRef } from "@/models/TripleTree";
 import { defineComponent, PropType } from "@vue/runtime-core";
-import { ComponentType } from "@/models/definition/ComponentType";
-import { ComponentDetails } from "@/models/definition/ComponentDetails";
 import EntityService from "@/services/EntityService";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
 import Logic from "@/components/edit/memberEditor/builder/Logic.vue";
 import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
-import { NextComponentSummary } from "@/models/definition/NextComponentSummary";
 import Refinement from "@/components/edit/memberEditor/builder/Refinement.vue";
 import { mapState } from "vuex";
-import { EntityReferenceNode } from "@/models/EntityReferenceNode";
-import { BuilderType } from "@/models/definition/BuilderType";
-import { Vocabulary, Helpers } from "im-library";
+import { Vocabulary, Helpers, Enums } from "im-library";
+import { NextComponentSummary, EntityReferenceNode, ComponentDetails, TTIriRef } from "im-library/src/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, deleteItem, updateItem, scrollIntoView, addItem, addNextOptions },
   ConceptTypeMethods: { isValueSet }
 } = Helpers;
 const { IM, SHACL, RDF } = Vocabulary;
+const { BuilderType, ComponentType } = Enums;
 
 export default defineComponent({
   name: "Builder",

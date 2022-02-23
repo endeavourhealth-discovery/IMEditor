@@ -29,17 +29,15 @@
 <script lang="ts">
 import { TTIriRef } from "@/models/TripleTree";
 import { defineComponent, PropType } from "@vue/runtime-core";
-import { ComponentType } from "@/models/definition/ComponentType";
-import { ComponentDetails } from "@/models/definition/ComponentDetails";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
-import { NextComponentSummary } from "@/models/definition/NextComponentSummary";
 import Logic from "@/components/edit/parentsEditor/builder/Logic.vue";
-import { BuilderType } from "@/models/definition/BuilderType";
-import { Helpers } from "im-library";
+import { Helpers, Enums } from "im-library";
+import { NextComponentSummary, ComponentDetails } from "im-library/src/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   EditorBuilderJsonMethods: { generateNewComponent, genNextOptions, addItem, addNextOptions, scrollIntoView, deleteItem, updateItem, updatePositions }
 } = Helpers;
+const { ComponentType, BuilderType } = Enums;
 
 export default defineComponent({
   name: "Builder",
@@ -146,7 +144,7 @@ export default defineComponent({
       itemToScrollTo?.scrollIntoView();
     },
 
-    addItem(data: { selectedType: ComponentType; position: number; value: any }): void {
+    addItem(data: { selectedType: typeof ComponentType; position: number; value: any }): void {
       const newComponent = generateNewComponent(data.selectedType, data.position, data.value, BuilderType.PARENT);
       if (!newComponent) return;
       this.parentsBuild[data.position] = newComponent;

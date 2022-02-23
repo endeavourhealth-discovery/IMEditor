@@ -1,18 +1,16 @@
 import { createStore } from "vuex";
-import { HistoryItem } from "../models/HistoryItem";
-import { User } from "../models/user/User";
+import { HistoryItem, Namespace, EntityReferenceNode } from "im-library/src/interfaces/Interfaces";
+import { Models } from "im-library";
+const { User, CustomAlert } = Models;
 import AuthService from "@/services/AuthService";
 import LoggerService from "@/services/LoggerService";
-import { Namespace } from "@/models/Namespace";
-import { EntityReferenceNode } from "@/models/EntityReferenceNode";
 import ConfigService from "@/services/ConfigService";
-import { CustomAlert } from "@/models/user/CustomAlert";
 
 export default createStore({
   // update stateType.ts when adding new state!
   state: {
     history: [] as HistoryItem[],
-    currentUser: {} as User,
+    currentUser: {} as typeof User,
     isLoggedIn: false as boolean,
     snomedLicenseAccepted: localStorage.getItem("snomedLicenseAccepted") as string,
     editorIri: localStorage.getItem("editorSelectedIri") as string,

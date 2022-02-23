@@ -40,9 +40,8 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { mapState } from "vuex";
-import { Namespace } from "@/models/Namespace";
-import { EntityReferenceNode } from "@/models/EntityReferenceNode";
 import { Vocabulary, Helpers } from "im-library";
+import { Namespace, EntityReferenceNode } from "im-library/src/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength }
 } = Helpers;

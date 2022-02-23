@@ -1,13 +1,16 @@
-import { User } from "@/models/user/User";
 import store from "@/store/index";
 import EntityService from "@/services/EntityService";
 import { flushPromises } from "@vue/test-utils";
 import LoggerService from "@/services/LoggerService";
-import { SearchRequest } from "@/models/search/SearchRequest";
 import AuthService from "@/services/AuthService";
-import { CustomAlert } from "@/models/user/CustomAlert";
-import { IM } from "@/vocabulary/IM";
 import ConfigService from "@/services/ConfigService";
+import { Vocabulary, Models } from "im-library";
+const { IM } = Vocabulary;
+const {
+  User,
+  Search: { SearchRequest },
+  CustomAlert
+} = Models;
 
 describe("state", () => {
   beforeEach(() => {

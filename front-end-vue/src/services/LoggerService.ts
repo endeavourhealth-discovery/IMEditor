@@ -1,4 +1,4 @@
-import { ToastType } from "@/models/services/ToastType";
+import { ToastType } from "im-library/src/interfaces/Interfaces";
 
 export default {
   // for toast functionality, LoggerService should be called within Vue toast operation

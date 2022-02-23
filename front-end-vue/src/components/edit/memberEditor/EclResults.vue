@@ -103,7 +103,7 @@
 </template>
 
 <script lang="ts">
-import { SimpleMapIri } from "@/models/mappings/SimpleMapIri";
+import { SimpleMapIri } from "im-library/src/interfaces/Interfaces";
 import { defineComponent, PropType } from "@vue/runtime-core";
 
 export default defineComponent({

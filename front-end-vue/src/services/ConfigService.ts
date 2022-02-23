@@ -1,7 +1,5 @@
 import axios from "axios";
-import { FilterDefaultsConfig } from "@/models/configs/FilterDefaultsConfig";
-import { DefinitionConfig } from "@/models/configs/DefinitionConfig";
-import { DashboardLayout } from "@/models/configs/DashboardLayout";
+import { DashboardLayout, DefinitionConfig, FilterDefaultsConfig } from "im-library/src/interfaces/Interfaces";
 
 export default class ConfigService {
   static api = import.meta.env.VITE_API;

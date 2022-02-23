@@ -84,25 +84,27 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "@vue/runtime-core";
-import { ConceptSummary } from "@/models/search/ConceptSummary";
-import { TTIriRef } from "@/models/TripleTree";
-import { Helpers } from "im-library";
+import { Helpers, Models } from "im-library";
+import { TTIriRef } from "im-library/src/interfaces/Interfaces";
 const {
   ConceptTypeMethods: { getFAIconFromType, getColourFromType }
 } = Helpers;
+const {
+  Search: { ConceptSummary }
+} = Models;
 
 export default defineComponent({
   name: "SearchMiniOverlay",
   props: {
     searchTerm: { type: String, required: false },
-    searchResults: { type: Array as PropType<Array<ConceptSummary>>, required: false },
+    searchResults: { type: Array as PropType<Array<typeof ConceptSummary>>, required: false },
     loading: { type: Boolean, required: true }
   },
-  emits: { searchResultSelected: (payload: ConceptSummary) => true },
+  emits: { searchResultSelected: (payload: typeof ConceptSummary) => true },
   data() {
     return {
-      selectedResult: {} as ConceptSummary,
-      hoveredResult: {} as ConceptSummary
+      selectedResult: {} as typeof ConceptSummary,
+      hoveredResult: {} as typeof ConceptSummary
     };
   },
   methods: {
@@ -126,7 +128,7 @@ export default defineComponent({
       const x = this.$refs.detailsOP as any;
       x.hide();
     },
-    showDetailsOverlay(event: any, data: ConceptSummary) {
+    showDetailsOverlay(event: any, data: typeof ConceptSummary) {
       this.hoveredResult = data;
       if (this.hoveredResult.name === "ANY") {
         return;
@@ -134,7 +136,7 @@ export default defineComponent({
       const x = this.$refs.detailsOP as any;
       x.show(event, event.target);
     },
-    getConceptTypes(concept: ConceptSummary): any {
+    getConceptTypes(concept: typeof ConceptSummary): any {
       return concept.entityType
         .map(function(type: any) {
           return type.name;
