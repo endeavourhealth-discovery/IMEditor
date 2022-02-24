@@ -3,25 +3,25 @@
     <ProgressSpinner />
   </div>
   <div v-else class="p-fluid editor-grid">
-    <div class="p-field float-label-container iri">
+    <div class="field float-label-container iri">
       <span class="p-float-label">
         <InputText class="p-inputtext-lg" v-model="updateIri" type="text" @input="updateEntity({ '@id': iri })" disabled />
         <label for="Iri">Iri</label>
       </span>
     </div>
-    <div class="p-field float-label-container name">
+    <div class="field float-label-container name">
       <span class="p-float-label">
         <InputText class="p-inputtext-lg" v-model="name" type="text" @input="updateEntity({ 'http://www.w3.org/2000/01/rdf-schema#label': name })" />
         <label for="Name">Name</label>
       </span>
     </div>
-    <div class="p-field float-label-container code">
+    <div class="field float-label-container code">
       <span class="p-float-label">
         <InputText class="p-inputtext-lg" v-model="code" type="text" @input="updateEntity({ '@id': updateIri, 'http://endhealth.info/im#code': code })" />
         <label for="Code">Code</label>
       </span>
     </div>
-    <div class="p-field float-label-container description">
+    <div class="field float-label-container description">
       <span class="p-float-label">
         <Textarea
           class="p-inputtext-lg"
@@ -32,13 +32,13 @@
         <label for="address">Description</label>
       </span>
     </div>
-    <div class="p-field float-label-container version">
+    <div class="field float-label-container version">
       <span class="p-float-label">
         <InputText class="p-inputtext-lg" v-model="version" type="text" @input="updateEntity" disabled />
         <label for="Version">Version</label>
       </span>
     </div>
-    <div class="p-field float-label-container status">
+    <div class="field float-label-container status">
       <span class="p-float-label">
         <Dropdown
           class="p-inputtext-lg"
@@ -50,13 +50,13 @@
         <label>Status</label>
       </span>
     </div>
-    <div class="p-field float-label-container scheme">
+    <div class="field float-label-container scheme">
       <span class="p-float-label">
         <Dropdown class="p-inputtext-lg" v-model="scheme" :options="filterOptions.schemes" optionLabel="name" @change="updateEntity({ '@id': updateIri })" />
         <label>Scheme</label>
       </span>
     </div>
-    <div class="p-field float-label-container type">
+    <div class="field float-label-container type">
       <span class="p-float-label">
         <MultiSelect
           class="p-inputtext-lg"
@@ -225,7 +225,7 @@ export default defineComponent({
   grid-area: imlang;
 }
 
-.p-field {
+.field {
   height: fit-content;
 }
 

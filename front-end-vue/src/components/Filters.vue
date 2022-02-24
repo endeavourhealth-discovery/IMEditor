@@ -6,7 +6,7 @@
     </div>
   </div>
 
-  <div class="p-field">
+  <div class="field">
     <div class="p-inputgroup">
       <span class="p-float-label">
         <MultiSelect id="status" v-model="selectedStatus" @change="checkForSearch" :options="filterOptions.status" optionLabel="name" display="chip" />
@@ -16,7 +16,7 @@
     </div>
   </div>
 
-  <div class="p-field">
+  <div class="field">
     <div class="p-inputgroup">
       <span class="p-float-label">
         <MultiSelect id="scheme" v-model="selectedSchemes" @change="checkForSearch" :options="filterOptions.schemes" optionLabel="name" display="chip" />
@@ -26,7 +26,7 @@
     </div>
   </div>
 
-  <div class="p-field">
+  <div class="field">
     <div class="p-inputgroup">
       <span class="p-float-label">
         <MultiSelect id="conceptType" v-model="selectedTypes" @change="checkForSearch" :options="filterOptions.types" optionLabel="name" display="chip" />
@@ -142,7 +142,7 @@ export default defineComponent({
 label {
   font-size: 1rem !important;
 }
-.p-field {
+.field {
   margin-top: 2rem;
 }
 .quick-filters-container {

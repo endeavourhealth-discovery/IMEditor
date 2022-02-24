@@ -1,5 +1,5 @@
 <template>
-  <div id="ecl-results-container" class="p-field">
+  <div id="ecl-results-container" class="field">
     <div v-if="loading" class="flex flex-row justify-content-center">
       <div class="p-text-center">
         <ProgressSpinner />
