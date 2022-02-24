@@ -1,7 +1,7 @@
 <template>
   <div id="members-builder-container">
     <h3>Members builder</h3>
-    <div v-if="loading" class="p-d-flex p-flex-row p-jc-center">
+    <div v-if="loading" class="flex flex-row justify-content-center">
       <div class="p-text-center">
         <ProgressSpinner />
       </div>

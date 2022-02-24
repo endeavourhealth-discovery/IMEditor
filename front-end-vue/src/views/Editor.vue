@@ -3,7 +3,7 @@
     <TopBar :isLoggedIn="isLoggedIn" :currentUser="currentUser" />
     <ConfirmDialog></ConfirmDialog>
     <div id="editor-main-container">
-      <div class="loading-container p-d-flex p-flex-row p-jc-center p-ai-center" v-if="loading">
+      <div class="loading-container flex flex-row justify-content-center align-items-center" v-if="loading">
         <ProgressSpinner />
       </div>
       <div v-else class="panel-buttons-container">
@@ -46,7 +46,7 @@
             </div>
           </div>
         </Panel>
-        <div class="button-bar p-d-flex p-flex-row p-jc-end" id="editor-button-bar">
+        <div class="button-bar flex flex-row justify-content-end" id="editor-button-bar">
           <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
           <Button icon="pi pi-refresh" label="Reset" class="p-button-warning" @click="refreshEditor" />
           <Button icon="pi pi-check" label="Save" class="save-button" @click="submit" />

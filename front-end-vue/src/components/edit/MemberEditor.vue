@@ -1,5 +1,5 @@
 <template>
-  <div class="loading-container p-d-flex p-flex-row p-jc-center p-ai-center" v-if="loading">
+  <div class="loading-container flex flex-row justify-content-center align-items-center" v-if="loading">
     <ProgressSpinner />
   </div>
   <div v-else class="member-editor">
