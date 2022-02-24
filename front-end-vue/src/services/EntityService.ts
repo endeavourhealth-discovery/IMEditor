@@ -1,4 +1,3 @@
-import { SearchRequest } from "@/models/search/SearchRequest";
 import axios, { CancelToken } from "axios";
 import {
   FiltersAsIris,
@@ -11,10 +10,10 @@ import {
   EntityDefinitionDto,
   PartialBundle,
   EntityReferenceNode
-} from "im-library/src/interfaces/Interfaces";
+} from "im-library/dist/types/interfaces/Interfaces";
 import { Models } from "im-library";
 const {
-  Search: { ConceptSummary }
+  Search: { ConceptSummary, SearchRequest }
 } = Models;
 
 export default class EntityService {
@@ -36,7 +35,7 @@ export default class EntityService {
 
   public static async getFullExportSet(iri: string): Promise<any> {
     const client = axios.create({
-      baseURL: import.meta.env.VITE_API,
+      baseURL: import.meta.env.VITE_API as string,
       timeout: 0
     });
 
@@ -122,7 +121,7 @@ export default class EntityService {
     }
   }
 
-  public static async advancedSearch(request: SearchRequest, cancelToken: CancelToken): Promise<typeof ConceptSummary[]> {
+  public static async advancedSearch(request: Models.Search.SearchRequest, cancelToken: CancelToken): Promise<Models.Search.ConceptSummary[]> {
     try {
       return await axios.post(this.api + "api/entity/public/search", request, {
         cancelToken: cancelToken

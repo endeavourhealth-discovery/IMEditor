@@ -85,7 +85,7 @@
 <script lang="ts">
 import { defineComponent, PropType } from "@vue/runtime-core";
 import { Helpers, Models } from "im-library";
-import { TTIriRef } from "im-library/src/interfaces/Interfaces";
+import { TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 const {
   ConceptTypeMethods: { getFAIconFromType, getColourFromType }
 } = Helpers;
@@ -136,7 +136,7 @@ export default defineComponent({
       const x = this.$refs.detailsOP as any;
       x.show(event, event.target);
     },
-    getConceptTypes(concept: typeof ConceptSummary): any {
+    getConceptTypes(concept: Models.Search.ConceptSummary): any {
       return concept.entityType
         .map(function(type: any) {
           return type.name;

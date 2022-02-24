@@ -10,7 +10,7 @@
 <script lang="ts">
 import { defineComponent, PropType } from "@vue/runtime-core";
 import { Enums } from "im-library";
-import { NextComponentSummary, ComponentDetails } from "im-library/src/interfaces/Interfaces";
+import { NextComponentSummary, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 const { BuilderType, ComponentType } = Enums;
 
 export default defineComponent({
@@ -23,10 +23,10 @@ export default defineComponent({
       type: Object as PropType<NextComponentSummary>,
       required: true
     },
-    builderType: { type: String as PropType<typeof BuilderType>, required: true }
+    builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
-    addClicked: (payload: { selectedType: typeof ComponentType; position: number }) => true,
+    addClicked: (payload: { selectedType: Enums.ComponentType; position: number }) => true,
     deleteClicked: (payload: ComponentDetails) => true
   },
   watch: {
@@ -42,11 +42,11 @@ export default defineComponent({
   },
   data() {
     return {
-      options: [] as typeof ComponentType[]
+      options: [] as Enums.ComponentType[]
     };
   },
   methods: {
-    addItem(selectedOption: typeof ComponentType) {
+    addItem(selectedOption: Enums.ComponentType) {
       this.$emit("addClicked", {
         selectedType: selectedOption,
         position: this.value.previousPosition + 1

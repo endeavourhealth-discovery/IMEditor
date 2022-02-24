@@ -30,7 +30,7 @@ import { mapState } from "vuex";
 import axios from "axios";
 import EntityService from "@/services/EntityService";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
-import { Namespace, TTIriRef, EntityReferenceNode, ComponentDetails, NextComponentSummary } from "im-library/src/interfaces/Interfaces";
+import { Namespace, TTIriRef, EntityReferenceNode, ComponentDetails, NextComponentSummary } from "im-library/dist/types/interfaces/Interfaces";
 import { Helpers, Models, Enums } from "im-library";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
@@ -49,13 +49,13 @@ export default defineComponent({
       type: Object as PropType<{
         filterOptions: { status: EntityReferenceNode[]; schemes: Namespace[]; types: EntityReferenceNode[] };
         entity: TTIriRef | undefined;
-        type: typeof ComponentType;
+        type: Enums.ComponentType;
         label: string;
       }>,
       required: true
     },
     last: { type: Boolean, required: true },
-    builderType: { type: String as PropType<typeof BuilderType>, required: true }
+    builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
     updateClicked: (payload: ComponentDetails) => true,
@@ -82,7 +82,7 @@ export default defineComponent({
       request: {} as { cancel: any; msg: string },
       selectedResult: {} as TTIriRef,
       searchTerm: "",
-      searchResults: [] as typeof ConceptSummary[],
+      searchResults: [] as Models.Search.ConceptSummary[],
       label: ""
     };
   },
@@ -128,7 +128,7 @@ export default defineComponent({
       }
     },
 
-    setFilters(searchRequest: typeof SearchRequest) {
+    setFilters(searchRequest: Models.Search.SearchRequest) {
       let options = {} as { status: EntityReferenceNode[]; schemes: Namespace[]; types: EntityReferenceNode[] };
       if (this.value && isObjectHasKeys(this.value.filterOptions)) {
         options = this.value.filterOptions;
@@ -148,7 +148,7 @@ export default defineComponent({
       }
     },
 
-    async fetchSearchResults(searchRequest: typeof SearchRequest, cancelToken: any) {
+    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, cancelToken: any) {
       const result = await EntityService.advancedSearch(searchRequest, cancelToken);
       if (result && isArrayHasLength(result)) {
         this.searchResults = result;
@@ -172,7 +172,7 @@ export default defineComponent({
       return false;
     },
 
-    updateSelectedResult(data: typeof ConceptSummary | TTIriRef) {
+    updateSelectedResult(data: Models.Search.ConceptSummary | TTIriRef) {
       if (!isObjectHasKeys(data)) return;
       if (this.isTTIriRef(data)) {
         this.selectedResult = data;

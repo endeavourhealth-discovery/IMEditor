@@ -29,7 +29,7 @@ import { mapState } from "vuex";
 import axios from "axios";
 import EntityService from "@/services/EntityService";
 import { Vocabulary, Helpers, Enums, Models } from "im-library";
-import { NextComponentSummary, EntityReferenceNode, Namespace, TTIriRef, ComponentDetails } from "im-library/src/interfaces/Interfaces";
+import { NextComponentSummary, EntityReferenceNode, Namespace, TTIriRef, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
 } = Helpers;
@@ -46,7 +46,7 @@ export default defineComponent({
     position: { type: Number, required: true },
     value: { type: Object as PropType<{ propertyIri: string; quantifier: TTIriRef }>, required: false },
     last: { type: Boolean, required: true },
-    builderType: { type: String as PropType<typeof BuilderType>, required: true }
+    builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
     updateClicked: (payload: ComponentDetails) => true,
@@ -72,7 +72,7 @@ export default defineComponent({
       request: {} as { cancel: any; msg: string },
       selectedResult: {} as TTIriRef,
       searchTerm: "",
-      searchResults: [] as typeof ConceptSummary[]
+      searchResults: [] as Models.Search.ConceptSummary[]
     };
   },
   methods: {
@@ -121,7 +121,7 @@ export default defineComponent({
       }
     },
 
-    async fetchSearchResults(searchRequest: typeof SearchRequest, cancelToken: any) {
+    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, cancelToken: any) {
       const result = await EntityService.advancedSearch(searchRequest, cancelToken);
       if (result && isArrayHasLength(result)) {
         this.searchResults = result;
@@ -145,12 +145,12 @@ export default defineComponent({
       return false;
     },
 
-    isConceptSummary(data: any): data is typeof ConceptSummary {
-      if ((data as typeof ConceptSummary).iri) return true;
+    isConceptSummary(data: any): data is Models.Search.ConceptSummary {
+      if ((data as Models.Search.ConceptSummary).iri) return true;
       return false;
     },
 
-    updateSelectedResult(quantifier: typeof ConceptSummary | TTIriRef) {
+    updateSelectedResult(quantifier: Models.Search.ConceptSummary | TTIriRef) {
       if (!quantifier) return;
       if (this.isConceptSummary(quantifier)) this.selectedResult = { "@id": quantifier.iri, name: quantifier.name };
       else this.selectedResult = quantifier;

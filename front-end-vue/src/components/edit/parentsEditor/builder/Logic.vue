@@ -37,7 +37,7 @@ import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
 import AddNext from "@/components/edit/parentsEditor/builder/AddNext.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums } from "im-library";
-import { ComponentDetails, NextComponentSummary, TTIriRef, EntityReferenceNode } from "im-library/src/interfaces/Interfaces";
+import { ComponentDetails, NextComponentSummary, TTIriRef, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   EditorBuilderJsonMethods: { addItem, addNextOptions, generateNewComponent, genNextOptions, updateItem, deleteItem, scrollIntoView }
@@ -52,7 +52,7 @@ export default defineComponent({
     position: { type: Number, required: true },
     value: { type: Object as PropType<{ iri: string; children: PropType<Array<any>> | undefined }>, required: false },
     last: { type: Boolean, required: true },
-    builderType: { type: String as PropType<typeof BuilderType>, required: true }
+    builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   components: { AddDeleteButtons, AddNext, Entity },
   computed: mapState(["filterOptions"]),
@@ -159,7 +159,7 @@ export default defineComponent({
       updateItem(data, this.logicBuild);
     },
 
-    addItemWrapper(data: { selectedType: typeof ComponentType; position: number; value: any }): void {
+    addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
       if (data.selectedType === ComponentType.ENTITY) {
         const typeOptions = this.filterOptions.types.filter(
           (type: EntityReferenceNode) => type["@id"] === Vocabulary.IM.CONCEPT || type["@id"] === IM.CONCEPT_SET

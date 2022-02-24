@@ -38,7 +38,7 @@ import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
 import Refinement from "@/components/edit/memberEditor/builder/Refinement.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums } from "im-library";
-import { EntityReferenceNode, TTIriRef, ComponentDetails, NextComponentSummary } from "im-library/src/interfaces/Interfaces";
+import { EntityReferenceNode, TTIriRef, ComponentDetails, NextComponentSummary } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, deleteItem, updateItem, addItem, addNextOptions, scrollIntoView }
@@ -56,7 +56,7 @@ export default defineComponent({
       required: true
     },
     last: { type: Boolean, required: true },
-    builderType: { type: String as PropType<typeof BuilderType>, required: true }
+    builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   components: { AddDeleteButtons, AddNext, Entity, Refinement },
   emits: {
@@ -180,7 +180,7 @@ export default defineComponent({
       updateItem(data, this.logicBuild);
     },
 
-    addItemWrapper(data: { selectedType: typeof ComponentType; position: number; value: any }): void {
+    addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
       if (data.selectedType === ComponentType.ENTITY) {
         const typeOptions = this.filterOptions.types.filter(
           (type: EntityReferenceNode) =>

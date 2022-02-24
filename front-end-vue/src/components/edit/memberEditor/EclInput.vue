@@ -13,7 +13,7 @@
 </template>
 
 <script lang="ts">
-import { TTIriRef } from "im-library/src/interfaces/Interfaces";
+import { TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 import SetService from "@/services/SetService";
 import { defineComponent } from "@vue/runtime-core";
 import axios from "axios";

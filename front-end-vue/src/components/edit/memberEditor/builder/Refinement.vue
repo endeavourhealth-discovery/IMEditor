@@ -37,14 +37,13 @@ import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
 import Quantifier from "@/components/edit/memberEditor/builder/Quantifier.vue";
 import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
 import EntityService from "@/services/EntityService";
-import { BuilderType } from "@/models/definition/BuilderType";
 import { Vocabulary, Helpers, Enums } from "im-library";
-import { EntityReferenceNode, NextComponentSummary, ComponentDetails } from "im-library/src/interfaces/Interfaces";
+import { EntityReferenceNode, NextComponentSummary, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 const {
   EditorBuilderJsonMethods: { generateNewComponent, genNextOptions, updateItem, deleteItem, addItem, addNextOptions, scrollIntoView }
 } = Helpers;
 const { RDFS, RDF } = Vocabulary;
-const { ComponentType } = Enums;
+const { ComponentType, BuilderType } = Enums;
 
 export default defineComponent({
   name: "Refinement",
@@ -53,7 +52,7 @@ export default defineComponent({
     position: { type: Number, required: true },
     value: { type: Object as PropType<{ propertyIri: string; children: any[] }>, required: false },
     last: { type: Boolean, required: true },
-    builderType: { type: String as PropType<BuilderType>, required: true }
+    builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
     updateClicked: (payload: ComponentDetails) => true,
@@ -156,7 +155,7 @@ export default defineComponent({
       scrollIntoView(nextOptionsComponent);
     },
 
-    addItemWrapper(data: { selectedType: typeof ComponentType; position: number; value: any }): void {
+    addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
       if (data.selectedType === ComponentType.ENTITY) {
         const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === RDF.PROPERTY);
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };

@@ -27,12 +27,11 @@
 </template>
 
 <script lang="ts">
-import { TTIriRef } from "@/models/TripleTree";
 import { defineComponent, PropType } from "@vue/runtime-core";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import Logic from "@/components/edit/parentsEditor/builder/Logic.vue";
 import { Helpers, Enums } from "im-library";
-import { NextComponentSummary, ComponentDetails } from "im-library/src/interfaces/Interfaces";
+import { NextComponentSummary, ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   EditorBuilderJsonMethods: { generateNewComponent, genNextOptions, addItem, addNextOptions, scrollIntoView, deleteItem, updateItem, updatePositions }
@@ -144,7 +143,7 @@ export default defineComponent({
       itemToScrollTo?.scrollIntoView();
     },
 
-    addItem(data: { selectedType: typeof ComponentType; position: number; value: any }): void {
+    addItem(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
       const newComponent = generateNewComponent(data.selectedType, data.position, data.value, BuilderType.PARENT);
       if (!newComponent) return;
       this.parentsBuild[data.position] = newComponent;

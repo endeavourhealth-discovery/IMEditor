@@ -1,5 +1,5 @@
 import { createStore } from "vuex";
-import { HistoryItem, Namespace, EntityReferenceNode } from "im-library/src/interfaces/Interfaces";
+import { HistoryItem, Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
 import { Models } from "im-library";
 const { User, CustomAlert } = Models;
 import AuthService from "@/services/AuthService";

@@ -1,5 +1,5 @@
 import axios, { CancelToken } from "axios";
-import { SimpleMapIri, SearchResponse } from "im-library/src/interfaces/Interfaces";
+import { SimpleMapIri, SearchResponse } from "im-library/dist/types/interfaces/Interfaces";
 
 export default class SetService {
   static api = import.meta.env.VITE_API;

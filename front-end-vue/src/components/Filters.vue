@@ -41,7 +41,7 @@
 import { defineComponent } from "vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers } from "im-library";
-import { Namespace, EntityReferenceNode } from "im-library/src/interfaces/Interfaces";
+import { Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength }
 } = Helpers;

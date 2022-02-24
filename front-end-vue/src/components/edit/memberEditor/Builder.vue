@@ -36,7 +36,7 @@ import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
 import Refinement from "@/components/edit/memberEditor/builder/Refinement.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums } from "im-library";
-import { NextComponentSummary, EntityReferenceNode, ComponentDetails, TTIriRef } from "im-library/src/interfaces/Interfaces";
+import { NextComponentSummary, EntityReferenceNode, ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, deleteItem, updateItem, scrollIntoView, addItem, addNextOptions },
@@ -198,7 +198,7 @@ export default defineComponent({
       scrollIntoView(nextOptionsComponent);
     },
 
-    addItemWrapper(data: { selectedType: ComponentType; position: number; value: any }): void {
+    addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
       if (data.selectedType === ComponentType.ENTITY) {
         const typeOptions = this.filterOptions.types.filter(
           (type: EntityReferenceNode) =>
