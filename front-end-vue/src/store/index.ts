@@ -10,7 +10,7 @@ export default createStore({
   // update stateType.ts when adding new state!
   state: {
     history: [] as HistoryItem[],
-    currentUser: {} as typeof User,
+    currentUser: {} as Models.User,
     isLoggedIn: false as boolean,
     snomedLicenseAccepted: localStorage.getItem("snomedLicenseAccepted") as string,
     editorIri: localStorage.getItem("editorSelectedIri") as string,
@@ -66,9 +66,11 @@ export default createStore({
       localStorage.setItem("snomedLicenseAccepted", status);
     },
     updateEditorIri(state, iri) {
+      state.editorIri = iri;
       localStorage.setItem("editorSelectedIri", iri);
     },
     updateEditorSavedEntity(state, entity) {
+      state.editorSavedEntity = entity;
       localStorage.setItem("editorSavedEntity", entity);
     }
   },
