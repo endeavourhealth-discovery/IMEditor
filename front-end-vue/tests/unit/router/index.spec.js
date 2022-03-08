@@ -6,20 +6,20 @@ import { flushPromises, shallowMount } from "@vue/test-utils";
 
 describe("router", () => {
   beforeEach(() => {
-    console.log = jest.fn();
+    console.log = vi.fn();
   });
 
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
   describe("router ___ no snomed", () => {
     let wrapper;
 
     beforeEach(async () => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
       window.sessionStorage.clear();
       store.commit("updateSnomedLicenseAccepted", "false");
-      store.dispatch = jest.fn().mockResolvedValue({ authenticated: true });
+      store.dispatch = vi.fn().mockResolvedValue({ authenticated: true });
       router.push("/");
       await router.isReady();
 
@@ -32,7 +32,7 @@ describe("router", () => {
 
       await flushPromises();
       await wrapper.vm.$nextTick();
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     it("routes to snomedLicense if snomedAccepted ___ false", async () => {
@@ -47,10 +47,10 @@ describe("router", () => {
     let wrapper;
 
     beforeEach(async () => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
       window.sessionStorage.clear();
       store.commit("updateSnomedLicenseAccepted", "true");
-      store.dispatch = jest.fn().mockResolvedValue({ authenticated: true });
+      store.dispatch = vi.fn().mockResolvedValue({ authenticated: true });
       router.push("/");
       await router.isReady();
 
@@ -63,7 +63,7 @@ describe("router", () => {
 
       await flushPromises();
       await wrapper.vm.$nextTick();
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     it("routes to home if snomedAccepted ___ true", async () => {
@@ -77,10 +77,10 @@ describe("router", () => {
     let wrapper;
 
     beforeEach(async () => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
       window.sessionStorage.clear();
       store.state.snomedLicenseAccepted = "true";
-      store.dispatch = jest.fn().mockResolvedValue({ authenticated: false });
+      store.dispatch = vi.fn().mockResolvedValue({ authenticated: false });
       router.push("/");
       await router.isReady();
 
@@ -93,7 +93,7 @@ describe("router", () => {
 
       await flushPromises();
       await wrapper.vm.$nextTick();
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     it("routes to login if auth false", async () => {
@@ -103,7 +103,7 @@ describe("router", () => {
       window.location = mockLocation;
       router.push({ name: "Editor", params: { selectedIri: "http://snomed.info/sct#298382003" } });
       await flushPromises();
-      expect(window.location.href).toBe(import.meta.env.VITE_AUTH_URL + "login?returnUrl=VITE_EDITOR");
+      expect(window.location.href).toBe(import.meta.env.VITE_AUTH_URL + "login?returnUrl=VITE_EDITOR_URL");
       window.location = location;
     });
   });
@@ -112,10 +112,10 @@ describe("router", () => {
     let wrapper;
 
     beforeEach(async () => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
       window.sessionStorage.clear();
       store.state.snomedLicenseAccepted = "true";
-      store.dispatch = jest.fn().mockResolvedValue({ authenticated: true });
+      store.dispatch = vi.fn().mockResolvedValue({ authenticated: true });
       router.push("/");
       await router.isReady();
 
@@ -128,7 +128,7 @@ describe("router", () => {
 
       await flushPromises();
       await wrapper.vm.$nextTick();
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     it("routes to path if auth true", async () => {
@@ -142,11 +142,11 @@ describe("router", () => {
     let wrapper;
 
     beforeEach(async () => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
       window.sessionStorage.clear();
       store.state.snomedLicenseAccepted = "true";
       store.state.blockedIris = ["http://www.w3.org/2001/XMLSchema#string"];
-      store.dispatch = jest.fn().mockResolvedValue({ authenticated: true });
+      store.dispatch = vi.fn().mockResolvedValue({ authenticated: true });
       router.push("/");
       await router.isReady();
 
@@ -159,7 +159,7 @@ describe("router", () => {
 
       await flushPromises();
       await wrapper.vm.$nextTick();
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     it("doesn't route if iri is blocked", async () => {
@@ -173,11 +173,11 @@ describe("router", () => {
     let wrapper;
 
     beforeEach(async () => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
       window.sessionStorage.clear();
       store.state.snomedLicenseAccepted = "true";
-      store.commit = jest.fn();
-      store.dispatch = jest.fn().mockResolvedValue({ authenticated: true });
+      store.commit = vi.fn();
+      store.dispatch = vi.fn().mockResolvedValue({ authenticated: true });
       router.push("/");
       await router.isReady();
 
@@ -190,7 +190,7 @@ describe("router", () => {
 
       await flushPromises();
       await wrapper.vm.$nextTick();
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     it("updates editorIri on entity routing", async () => {

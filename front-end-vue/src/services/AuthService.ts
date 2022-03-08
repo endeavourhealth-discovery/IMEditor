@@ -3,7 +3,7 @@ import { Models } from "im-library";
 const { User, CustomAlert } = Models;
 
 export default {
-  async signOut(): Promise<typeof CustomAlert> {
+  async signOut(): Promise<Models.CustomAlert> {
     try {
       await Auth.signOut({ global: true });
       return new CustomAlert(200, "Logged out successfully");
@@ -12,7 +12,7 @@ export default {
     }
   },
 
-  async getCurrentAuthenticatedUser(): Promise<typeof CustomAlert> {
+  async getCurrentAuthenticatedUser(): Promise<Models.CustomAlert> {
     try {
       const cognitoUser = await Auth.currentAuthenticatedUser();
       const authenticatedUser = new User(
