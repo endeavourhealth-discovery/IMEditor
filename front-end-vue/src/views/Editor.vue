@@ -1,6 +1,6 @@
 <template>
   <div id="topbar-editor-container">
-    <TopBar :isLoggedIn="isLoggedIn" :currentUser="currentUser" />
+    <TopBar />
     <ConfirmDialog></ConfirmDialog>
     <div id="editor-main-container">
       <div class="loading-container flex flex-row justify-content-center align-items-center" v-if="loading">

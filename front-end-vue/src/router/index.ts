@@ -1,6 +1,6 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import Editor from "../views/Editor.vue";
-import SnomedLicense from "../views/SnomedLicense.vue";
+import { SnomedLicense } from "im-library";
 import store from "@/store/index";
 import { nextTick } from "vue";
 
@@ -47,7 +47,12 @@ const router = createRouter({
   routes
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
+  const currentUrl = import.meta.env.VITE_EDITOR_URL + "/#" + to.path;
+  if (to.path !== "/snomedLicense") {
+    store.commit("updateSnomedReturnUrl", currentUrl);
+    store.commit("updateAuthReturnUrl", currentUrl);
+  }
   const iri = to.params.selectedIri as string;
   if (iri && store.state.blockedIris.includes(iri)) {
     return;
@@ -56,11 +61,11 @@ router.beforeEach((to, from, next) => {
     store.commit("updateEditorIri", iri);
   }
   if (to.matched.some(record => record.meta.requiresAuth)) {
-    store.dispatch("authenticateCurrentUser").then(res => {
+    await store.dispatch("authenticateCurrentUser").then(res => {
       console.log("auth guard user authenticated:" + res.authenticated);
       if (!res.authenticated) {
         console.log("redirecting to login");
-        window.location.href = import.meta.env.VITE_AUTH_URL + "login?returnUrl=VITE_EDITOR";
+        window.location.href = import.meta.env.VITE_AUTH_URL + "login?returnUrl=" + currentUrl;
       } else {
         if (to.matched.some(record => record.meta.requiresLicense)) {
           console.log("snomed license accepted:" + store.state.snomedLicenseAccepted);

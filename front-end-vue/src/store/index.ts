@@ -14,6 +14,8 @@ export default createStore({
     isLoggedIn: false as boolean,
     snomedLicenseAccepted: localStorage.getItem("snomedLicenseAccepted") as string,
     editorIri: localStorage.getItem("editorSelectedIri") as string,
+    snomedReturnUrl: "",
+    authReturnUrl: "",
     editorSavedEntity: localStorage.getItem("editorUpdatedEntity") as any,
     blockedIris: [] as string[],
     filterOptions: {
@@ -68,6 +70,12 @@ export default createStore({
     updateEditorIri(state, iri) {
       state.editorIri = iri;
       localStorage.setItem("editorSelectedIri", iri);
+    },
+    updateSnomedReturnUrl(state, url) {
+      state.snomedReturnUrl = url;
+    },
+    updateAuthReturnUrl(state, url) {
+      state.authReturnUrl = url;
     },
     updateEditorSavedEntity(state, entity) {
       state.editorSavedEntity = entity;
