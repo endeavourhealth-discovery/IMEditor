@@ -103,7 +103,7 @@ describe("router", () => {
       window.location = mockLocation;
       router.push({ name: "Editor", params: { selectedIri: "http://snomed.info/sct#298382003" } });
       await flushPromises();
-      expect(window.location.href).toBe(import.meta.env.VITE_AUTH_URL + "login?returnUrl=VITE_EDITOR_URL");
+      expect(window.location.href).toBe(import.meta.env.VITE_AUTH_URL + "login?returnUrl=" + import.meta.env.VITE_EDITOR_URL + "/#/editor/http:%2F%2Fsnomed.info%2Fsct%23298382003");
       window.location = location;
     });
   });
@@ -196,7 +196,7 @@ describe("router", () => {
     it("updates editorIri on entity routing", async () => {
       router.push({ name: "Editor", params: { selectedIri: "http://snomed.info/sct#298382003" } });
       await flushPromises();
-      expect(store.commit).toHaveBeenCalledTimes(1);
+      expect(store.commit).toHaveBeenCalledTimes(3);
       expect(store.commit).toHaveBeenCalledWith("updateEditorIri", "http://snomed.info/sct#298382003");
       expect(wrapper.vm.$route.path).toBe("/editor/http:%2F%2Fsnomed.info%2Fsct%23298382003");
     });

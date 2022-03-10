@@ -17,4 +17,4 @@ pluginManagement {
 
 rootProject.name = 'IMEditor'
 
-include 'front-end-vue'
+include 'im-editor'

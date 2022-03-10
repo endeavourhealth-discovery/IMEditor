@@ -1,5 +1,5 @@
 {
-  "name": "front-end-vue",
+  "name": "im-editor",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -22,7 +22,7 @@
     "aws-amplify": "^3.4.3",
     "axios": "^0.21.1",
     "google-palette": "^1.1.0",
-    "im-library": "file:../../IMLibrary",
+    "im-library": "https://github.com/endeavourhealth-discovery/IMLibrary/blob/main/im-library-1.0.0.tgz?raw=true",
     "path": "^0.12.7",
     "primeflex": "^3.1.2",
     "primeicons": "^5.0.0",

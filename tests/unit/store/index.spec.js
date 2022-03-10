@@ -30,6 +30,8 @@ describe("state", () => {
       "isLoggedIn",
       "snomedLicenseAccepted",
       "editorIri",
+      "snomedReturnUrl",
+      "authReturnUrl",
       "editorSavedEntity",
       "blockedIris",
       "filterOptions",
