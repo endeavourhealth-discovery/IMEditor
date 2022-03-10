@@ -4,7 +4,7 @@ import { SnomedLicense } from "im-library";
 import store from "@/store/index";
 import { nextTick } from "vue";
 
-const APP_TITLE = "Information Model";
+const APP_TITLE = "IM Editor";
 
 const routes: Array<RouteRecordRaw> = [
   {
