@@ -11,13 +11,13 @@ import {
   PartialBundle,
   EntityReferenceNode
 } from "im-library/dist/types/interfaces/Interfaces";
-import { Models } from "im-library";
+import { Models, Env } from "im-library";
 const {
   Search: { ConceptSummary, SearchRequest }
 } = Models;
 
 export default class EntityService {
-  static api = import.meta.env.VITE_API;
+  static api = Env.api;
 
   public static async downloadConcept(iri: string, format: string): Promise<any> {
     try {
@@ -35,7 +35,7 @@ export default class EntityService {
 
   public static async getFullExportSet(iri: string): Promise<any> {
     const client = axios.create({
-      baseURL: import.meta.env.VITE_API as string,
+      baseURL: Env.api as string,
       timeout: 0
     });
 

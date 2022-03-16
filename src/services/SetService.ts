@@ -1,8 +1,9 @@
 import axios, { CancelToken } from "axios";
 import { SimpleMapIri, SearchResponse } from "im-library/dist/types/interfaces/Interfaces";
+import {Env} from "im-library";
 
 export default class SetService {
-  static api = import.meta.env.VITE_API;
+  static api = Env.api;
 
   public static async download(conceptIri: string, expanded: boolean, v1: boolean) {
     return await axios.get(this.api + "api/set/public/download", {
