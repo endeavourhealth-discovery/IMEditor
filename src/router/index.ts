@@ -1,6 +1,6 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import Editor from "../views/Editor.vue";
-import { SnomedLicense } from "im-library";
+import { SnomedLicense, Env } from "im-library";
 import store from "@/store/index";
 import { nextTick } from "vue";
 
@@ -48,7 +48,7 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-  const currentUrl = import.meta.env.VITE_EDITOR_URL + "/#" + to.path;
+  const currentUrl = Env.editorUrl + "/#" + to.path;
   if (to.path !== "/snomedLicense") {
     store.commit("updateSnomedReturnUrl", currentUrl);
     store.commit("updateAuthReturnUrl", currentUrl);
@@ -65,7 +65,7 @@ router.beforeEach(async (to, from, next) => {
       console.log("auth guard user authenticated:" + res.authenticated);
       if (!res.authenticated) {
         console.log("redirecting to login");
-        window.location.href = import.meta.env.VITE_AUTH_URL + "login?returnUrl=" + currentUrl;
+        window.location.href = Env.authUrl + "login?returnUrl=" + currentUrl;
       } else {
         if (to.matched.some(record => record.meta.requiresLicense)) {
           console.log("snomed license accepted:" + store.state.snomedLicenseAccepted);

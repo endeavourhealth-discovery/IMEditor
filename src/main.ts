@@ -82,8 +82,7 @@ import axios from "axios";
 
 // IMLibrary imports
 import "im-library/dist/style.css";
-import { TopBar } from "im-library";
-import { Helpers } from "im-library";
+import { TopBar, Helpers, Env } from "im-library";
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
@@ -155,7 +154,7 @@ const app = createApp(App)
 const vm = app.mount("#app");
 
 axios.interceptors.request.use(async request => {
-  if (store.state.isLoggedIn && import.meta.env.VITE_API && request.url?.startsWith(import.meta.env.VITE_API as string)) {
+  if (store.state.isLoggedIn && Env.api && request.url?.startsWith(Env.api)) {
     request.headers.Authorization = "Bearer " + (await Auth.currentSession()).getIdToken().getJwtToken();
   }
   return request;

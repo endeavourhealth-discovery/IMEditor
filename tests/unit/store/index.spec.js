@@ -1,10 +1,8 @@
 import store from "@/store/index";
-import EntityService from "@/services/EntityService";
 import { flushPromises } from "@vue/test-utils";
-import LoggerService from "@/services/LoggerService";
 import AuthService from "@/services/AuthService";
 import ConfigService from "@/services/ConfigService";
-import { Vocabulary, Models } from "im-library";
+import { Vocabulary, Models, LoggerService } from "im-library";
 import { expect } from "vitest";
 const { IM } = Vocabulary;
 const {

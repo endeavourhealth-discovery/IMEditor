@@ -3,6 +3,7 @@ import App from "@/App.vue";
 import Toast from "primevue/toast";
 import store from "@/store/index";
 import { flushPromises, shallowMount } from "@vue/test-utils";
+import {Env} from "im-library";
 
 describe("router", () => {
   beforeEach(() => {
@@ -103,7 +104,7 @@ describe("router", () => {
       window.location = mockLocation;
       router.push({ name: "Editor", params: { selectedIri: "http://snomed.info/sct#298382003" } });
       await flushPromises();
-      expect(window.location.href).toBe(import.meta.env.VITE_AUTH_URL + "login?returnUrl=" + import.meta.env.VITE_EDITOR_URL + "/#/editor/http:%2F%2Fsnomed.info%2Fsct%23298382003");
+      expect(window.location.href).toBe(Env.authUrl + "login?returnUrl=" + Env.editorUrl + "/#/editor/http:%2F%2Fsnomed.info%2Fsct%23298382003");
       window.location = location;
     });
   });
