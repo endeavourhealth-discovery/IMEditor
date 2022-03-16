@@ -1,6 +1,10 @@
 <template>
   <div id="topbar-editor-container">
-    <TopBar />
+    <TopBar>
+      <template #content>
+        <span class="title"><strong>IM Editor:</strong></span>
+      </template>
+    </TopBar>
     <ConfirmDialog></ConfirmDialog>
     <div id="editor-main-container">
       <div class="loading-container flex flex-row justify-content-center align-items-center" v-if="loading">
@@ -237,6 +241,10 @@ export default defineComponent({
 
 .panel-content {
   overflow-y: auto;
+}
+
+.title {
+  font-size: 2rem;
 }
 
 #editor-button-bar {
