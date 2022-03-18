@@ -48,7 +48,7 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-  const currentUrl = Env.editorUrl + "/#" + to.path;
+  const currentUrl = Env.editorUrl + "#" + to.path;
   if (to.path !== "/snomedLicense") {
     store.commit("updateSnomedReturnUrl", currentUrl);
     store.commit("updateAuthReturnUrl", currentUrl);
