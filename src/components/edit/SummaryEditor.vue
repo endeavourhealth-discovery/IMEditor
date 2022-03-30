@@ -190,6 +190,7 @@ export default defineComponent({
     "imlang imlang imlang";
   column-gap: 7px;
   height: 100%;
+  width: 100%;
   align-content: start;
 }
 

@@ -174,7 +174,7 @@ export default defineComponent({
 
     setContentHeight(): void {
       this.contentHeight =
-        "height: " + getContainerElementOptimalHeight("editor-main-container", ["p-panel-header", "p-tabview-nav", "button-bar"], true, 4, 4) + ";";
+        "height: " + getContainerElementOptimalHeight("editor-main-container", ["p-panel-header", "p-tabview-nav-container", "button-bar"], true, 4, 1) + ";";
     },
 
     handleClick(data: any) {
@@ -187,20 +187,23 @@ export default defineComponent({
 
 <style scoped>
 #topbar-editor-container {
-  height: 100vh;
-  width: 100vw;
+  height: 100%;
+  width: 100%;
   overflow: auto;
 }
 
 #editor-main-container {
   width: 100%;
-  height: calc(100% - 93.81px - 1rem);
+  height: calc(100% - 3.5rem);
   overflow-y: auto;
 }
 
 .panel-buttons-container {
   height: 100%;
   width: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: space-between;
 }
 
 .loading-container {
@@ -237,6 +240,16 @@ export default defineComponent({
 
 .placeholder {
   height: 100%;
+}
+
+.p-panel {
+  display: flex;
+  flex-flow: column nowrap;
+  flex-grow: 100;
+}
+
+.p-panel .p-toggleable-content {
+  flex-grow: 100;
 }
 
 .panel-content {
