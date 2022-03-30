@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import Editor from "../views/Editor.vue";
+import Mapper from "../views/Mapper.vue";
 import { SnomedLicense, Env } from "im-library";
 import store from "@/store/index";
 import { nextTick } from "vue";
@@ -34,6 +35,15 @@ const routes: Array<RouteRecordRaw> = [
     // meta: {
     //   requiresAuth: true
     // }
+  },
+  {
+    path: "/mapper",
+    name: "Mapper",
+    component: Mapper,
+    meta: {
+      requiresAuth: true,
+      requiresLicense: true
+    }
   },
   {
     path: "/snomedLicense",

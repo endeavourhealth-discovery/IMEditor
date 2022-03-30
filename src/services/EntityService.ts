@@ -19,6 +19,27 @@ const {
 export default class EntityService {
   static api = Env.api;
 
+  public static async getUnassigned() {
+    try {
+      return await axios.get(this.api + "api/entity/public/unassigned");
+    } catch (error) {
+      return {} as any;
+    }
+  }
+
+  public static async getMappingSuggestions(iri: string, name: string) {
+    try {
+      return await axios.get(this.api + "api/entity/public/mappingSuggestions", {
+        params: {
+          iri: iri,
+          name: name
+        }
+      });
+    } catch (error) {
+      return {} as any;
+    }
+  }
+
   public static async downloadConcept(iri: string, format: string): Promise<any> {
     try {
       return await axios.get(this.api + "api/entity/public/exportConcept", {
