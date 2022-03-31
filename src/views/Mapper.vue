@@ -13,15 +13,7 @@
       <div v-else class="mapper-panel-buttons-container">
         <div class="grid grid-nogutter">
           <div class="col-2">
-            <Listbox
-              v-model="selected"
-              :options="unassigned"
-              optionLabel="name"
-              listStyle="height:95%;"
-              :filter="true"
-              filterPlaceholder="Search"
-              @change="onChange"
-            />
+            <Listbox v-model="selected" :options="unassigned" optionLabel="name" listStyle="height:95%;" :filter="true" filterPlaceholder="Search" />
           </div>
           <div class="col">
             <TabView :lazy="true" class="tabView">
@@ -30,31 +22,28 @@
               </TabPanel>
               <TabPanel header="Suggestions">
                 <DataTable
-                  :value="suggestions"
+                  :value="selected.suggestions"
                   v-model:expandedRows="expandedRows"
                   v-model:selection="selectedSuggestions"
                   dataKey="name"
                   responsiveLayout="scroll"
+                  @rowExpand="onRowExpand"
                 >
                   <Column selectionMode="multiple" headerStyle="width: 3em"></Column>
                   <Column :expander="true" headerStyle="width: 3rem" />
                   <Column field="name" header="Name">
                     <template #body="{data}">
-                      {{ data["http://www.w3.org/2000/01/rdf-schema#label"] }}
+                      {{ data.name }}
                     </template>
                   </Column>
-                  <Column field="type" header="Type">
+                  <Column field="iri" header="Iri">
                     <template #body="{data}">
-                      {{ data?.["http://www.w3.org/1999/02/22-rdf-syntax-ns#type"]?.map(type => type.name).join(", ") }}
+                      {{ data["@id"] }}
                     </template>
                   </Column>
-                  <Column field="code" header="Code">
-                    <template #body="{data}">
-                      {{ data["http://endhealth.info/im#code"] }}
-                    </template></Column
-                  >
+
                   <template #expansion="{data}">
-                    <VueJsonPretty class="suggestion-json" :data="data" />
+                    <VueJsonPretty v-if="data.expandView" class="suggestion-json" :data="data.expandView" />
                   </template>
                 </DataTable>
               </TabPanel>
@@ -65,10 +54,35 @@
           </div>
         </div>
         <div class="button-bar flex flex-row justify-content-end" id="editor-button-bar">
-          <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
-          <Button icon="pi pi-check" label="Save" class="save-button" @click="submit" />
+          <Button icon="pi pi-times" label="Cancel" class="p-button-warning" @click="$router.go(-1)" />
+          <Button
+            icon="pi pi-arrows-h"
+            label="Map"
+            class="p-button-secondary"
+            :disabled="!isObjectHasKeys(selected) || !isArrayHasLength(selectedSuggestions)"
+            @click="map"
+          />
+          <Button icon="pi pi-prime" label="Auto-Map" class="p-button-help" @click="autoMap" />
+          <Button icon="pi pi-check" label="Next" class="p-button-primary" @click="visibleFull = true" />
         </div>
       </div>
+      <Sidebar v-model:visible="visibleFull" :baseZIndex="1000" position="full">
+        <h3>Maps</h3>
+
+        <DataTable :value="mappedlist" dataKey="@id" responsiveLayout="scroll">
+          <Column field="unassigned" header="Unassigned">
+            <template #body="{data}"> {{ data.name }} | {{ data.iri }} </template>
+          </Column>
+          <Column field="matchedTo" header="Mapped to">
+            <template #body="{data}">
+              {{ data["http://endhealth.info/im#matchedTo"] }}
+            </template>
+          </Column>
+        </DataTable>
+        <div class="button-bar flex flex-row justify-content-end" id="map-button-bar">
+          <Button icon="pi pi-check" label="Submit" class="p-button-primary" @click="submit" />
+        </div>
+      </Sidebar>
     </div>
   </div>
 </template>
@@ -104,6 +118,15 @@ export default defineComponent({
       }
     });
   },
+  watch: {
+    async selected() {
+      if (this.selected) {
+        this.selectedView = await EntityService.getPartialEntity(this.selected.iri, []);
+        this.selected.suggestions = await EntityService.getMappingSuggestions(this.selected.iri, this.selected.name);
+        this.selectedSuggestions = [];
+      }
+    }
+  },
   computed: {
     ...mapState(["editorIri", "editorSavedEntity", "currentUser", "isLoggedIn"])
   },
@@ -115,24 +138,63 @@ export default defineComponent({
       unassigned: [] as any[],
       contentHeight: "",
       selectedView: {},
-      suggestions: [] as any[],
+      mappedlist: [] as any[],
+      visibleFull: false,
       loading: true
     };
   },
   async mounted() {
     this.loading = true;
-    await this.getUnassigned();
+    await this.init();
     window.addEventListener("resize", this.onResize);
-    this.loading = false;
     this.onResize();
+    this.loading = false;
   },
   beforeUnmount() {
     window.removeEventListener("resize", this.onResize);
   },
   methods: {
-    async onChange(event: any) {
-      this.selectedView = await EntityService.getPartialEntity(event.value["@id"] as string, []);
-      this.suggestions = await EntityService.getMappingSuggestions(event.value["@id"], event.value.name);
+    async init() {
+      await this.getUnassigned();
+      this.selected = this.unassigned[0];
+    },
+
+    async onRowExpand(event: any) {
+      event.data.expandView = await EntityService.getPartialEntity(event.data["@id"], []);
+    },
+
+    autoMap() {
+      this.loading = true;
+      for (const unassigned of this.unassigned) {
+        this.selected = unassigned;
+        if (isArrayHasLength(unassigned.suggestions)) {
+          this.selectedSuggestions = unassigned.suggestions;
+          this.map();
+        }
+      }
+      this.$toast.add({
+        severity: "success",
+        summary: "Auto map complete",
+        detail: this.mappedlist.length + " unassigned entities have been mapped"
+      });
+      this.loading = false;
+    },
+    map() {
+      const mappedUnassigned = this.selected;
+      const i = this.unassigned.findIndex(unassigned => this.selected.iri === unassigned.iri);
+      this.unassigned.splice(i, 1);
+      for (const suggestion of this.selectedSuggestions) {
+        mappedUnassigned[IM.MATCHED_TO] = this.selected.iri;
+      }
+      this.mappedlist.push(mappedUnassigned);
+      this.selected = this.unassigned[i];
+    },
+    isObjectHasKeys(object: any) {
+      return isObjectHasKeys(object);
+    },
+
+    isArrayHasLength(object: any) {
+      return isArrayHasLength(object);
     },
 
     async getUnassigned() {
@@ -143,8 +205,14 @@ export default defineComponent({
       this.setContentHeight();
     },
 
+    closeMaps() {
+      this.visibleFull = false;
+    },
+
     submit(): void {
-      console.log("submit");
+      this.closeMaps();
+      this.mappedlist = [];
+      this.init();
     },
 
     isObjectHasKeysWrapper(object: any): boolean {
@@ -221,14 +289,11 @@ export default defineComponent({
   font-size: 2rem;
 }
 
-#editor-button-bar {
+#editor-button-bar,
+#map-button-bar {
   padding: 1rem 1rem 1rem 0;
   gap: 0.5rem;
   width: 100%;
-  border-bottom: 1px solid #dee2e6;
-  border-left: 1px solid #dee2e6;
-  border-right: 1px solid #dee2e6;
-  border-radius: 3px;
   background-color: #ffffff;
 }
 
@@ -257,8 +322,4 @@ export default defineComponent({
 .json {
   height: calc(100vh - 18.5rem);
 }
-
-/* .suggestion-json {
-  height: calc(100vh - 18.5rem);
-} */
 </style>

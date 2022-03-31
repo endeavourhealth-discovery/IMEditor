@@ -75,6 +75,7 @@ import InputSwitch from "primevue/inputswitch";
 import StyleClass from "primevue/styleclass";
 import Tag from "primevue/tag";
 import AutoComplete from "primevue/autocomplete";
+import Sidebar from "primevue/sidebar";
 
 import { Amplify, Auth } from "aws-amplify";
 import awsconfig from "./aws-exports";
@@ -149,6 +150,7 @@ const app = createApp(App)
   .component("InputSwitch", InputSwitch)
   .component("Tag", Tag)
   .component("AutoComplete", AutoComplete)
+  .component("Sidebar", Sidebar)
   .component("TopBar", TopBar);
 
 const vm = app.mount("#app");
