@@ -46,7 +46,7 @@ describe("ConfigService.ts ___ axios success", () => {
 });
 
 describe("ConfigService.ts ___ axios fail", () => {
-  const api = import.meta.env.VITE_API;
+  const api = Env.api;
 
   beforeEach(() => {
     axios.get = vi.fn().mockRejectedValue(false);
