@@ -17,4 +17,3 @@ pluginManagement {
 
 rootProject.name = 'IMEditor'
 
-include 'im-editor'
