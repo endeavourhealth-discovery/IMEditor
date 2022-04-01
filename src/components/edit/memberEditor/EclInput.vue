@@ -18,10 +18,11 @@ import SetService from "@/services/SetService";
 import { defineComponent } from "@vue/runtime-core";
 import axios from "axios";
 import EclResults from "@/components/edit/memberEditor/EclResults.vue";
-import { Helpers } from "im-library";
+import {Helpers, Vocabulary} from 'im-library';
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
 } = Helpers;
+const { IM, SHACL, RDF } = Vocabulary;
 
 export default defineComponent({
   name: "EclInput",
@@ -62,7 +63,9 @@ export default defineComponent({
     },
 
     onSubmit() {
-      this.$emit("concept-updated", { "http://endhealth.info/im#definition": this.eclAsIriRefs });
+      const def: any = {};
+      def[IM.DEFINITION] = this.eclAsIriRefs;
+      this.$emit("concept-updated", def);
     }
   }
 });
