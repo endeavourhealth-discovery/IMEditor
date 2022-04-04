@@ -50,8 +50,7 @@ const router = createRouter({
   routes
 });
 
-router.beforeEach(async (to, from, next) => {
-  let hasCalledNext = false;
+router.beforeEach(async (to, from) => {
   const currentUrl = Env.editorUrl + "#" + to.path;
   if (to.path !== "/snomedLicense") {
     store.commit("updateSnomedReturnUrl", currentUrl);
@@ -59,14 +58,32 @@ router.beforeEach(async (to, from, next) => {
   }
   const iri = to.params.selectedIri as string;
   if (iri && store.state.blockedIris.includes(iri)) {
-    return;
+    return false;
   }
   if (to.name?.toString() == "Editor") {
     store.commit("updateEditorIri", iri);
   }
-  hasCalledNext = await checkAuth(to, next, store, hasCalledNext, currentUrl);
-  hasCalledNext = checkLicense(to, next, store, hasCalledNext);
-  if (!hasCalledNext) next();
+  if (to.matched.some((record: any) => record.meta.requiresAuth)) {
+    await store.dispatch("authenticateCurrentUser").then((res: any) => {
+      console.log("auth guard user authenticated:" + res.authenticated);
+      if (!res.authenticated) {
+        console.log("redirecting to login");
+        if (currentUrl === "Auth") {
+          return { path: "/login" };
+        } else {
+          window.location.href = Env.authUrl + "login?returnUrl=" + currentUrl;
+        }
+      }
+    });
+  }
+  if (to.matched.some((record: any) => record.meta.requiresLicense)) {
+    console.log("snomed license accepted:" + store.state.snomedLicenseAccepted);
+    if (store.state.snomedLicenseAccepted !== "true") {
+      return {
+        path: "/snomedLicense"
+      };
+    }
+  }
 });
 
 router.afterEach(to => {
