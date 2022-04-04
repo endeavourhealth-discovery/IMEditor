@@ -120,7 +120,9 @@ export default defineComponent({
     },
 
     onConfirm() {
-      this.$emit("concept-updated", { "http://endhealth.info/im#definition": this.generateMembersAsNode() });
+      const def: any = {};
+      def[IM.DEFINITION] = this.generateMembersAsNode();
+      this.$emit("concept-updated", def);
     },
 
     async processAny(item: any, position: number): Promise<any> {
