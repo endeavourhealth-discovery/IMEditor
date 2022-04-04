@@ -1,11 +1,8 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import Editor from "../views/Editor.vue";
-import { SnomedLicense, Env, Helpers } from "im-library";
+import { SnomedLicense, Env } from "im-library";
 import store from "@/store/index";
 import { nextTick } from "vue";
-const {
-  RouterGuards: { checkAuth, checkLicense }
-} = Helpers;
 
 const APP_TITLE = "IM Editor";
 
