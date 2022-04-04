@@ -64,17 +64,12 @@ router.beforeEach(async (to, from) => {
     store.commit("updateEditorIri", iri);
   }
   if (to.matched.some((record: any) => record.meta.requiresAuth)) {
-    await store.dispatch("authenticateCurrentUser").then((res: any) => {
-      console.log("auth guard user authenticated:" + res.authenticated);
-      if (!res.authenticated) {
-        console.log("redirecting to login");
-        if (currentUrl === "Auth") {
-          return { path: "/login" };
-        } else {
-          window.location.href = Env.authUrl + "login?returnUrl=" + currentUrl;
-        }
-      }
-    });
+    const res = await store.dispatch("authenticateCurrentUser");
+    console.log("auth guard user authenticated: " + res.authenticated);
+    if (!res.authenticated) {
+      console.log("redirecting to login");
+      window.location.href = Env.authUrl + "login?returnUrl=" + currentUrl;
+    }
   }
   if (to.matched.some((record: any) => record.meta.requiresLicense)) {
     console.log("snomed license accepted:" + store.state.snomedLicenseAccepted);
