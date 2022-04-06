@@ -48,7 +48,43 @@
                 </DataTable>
               </TabPanel>
               <TabPanel header="Search">
-                {{ selectedView }}
+                <DataTable
+                  :paginator="true"
+                  :rows="10"
+                  paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+                  currentPageReportTemplate="Showing {first} to {last} of {totalRecords}"
+                  :value="searchResults"
+                  v-model:expandedRows="expandedRows"
+                  v-model:selection="selectedSuggestions"
+                  dataKey="name"
+                  responsiveLayout="scroll"
+                  @rowExpand="onRowExpand"
+                >
+                  <template #header>
+                    <div class="flex justify-content-end">
+                      <span class="p-input-icon-left ">
+                        <i class="pi pi-search" />
+                        <InputText v-model="searchTerm" type="text" placeholder="Search" @input="search" />
+                      </span>
+                    </div>
+                  </template>
+                  <Column selectionMode="multiple" headerStyle="width: 3em"></Column>
+                  <Column :expander="true" headerStyle="width: 3rem" />
+                  <Column field="name" header="Name">
+                    <template #body="{data}">
+                      {{ data.name }}
+                    </template>
+                  </Column>
+                  <Column field="iri" header="Iri">
+                    <template #body="{data}">
+                      {{ data.iri }}
+                    </template>
+                  </Column>
+
+                  <template #expansion="{data}">
+                    <VueJsonPretty v-if="data.expandView" class="suggestion-json" :data="data.expandView" />
+                  </template>
+                </DataTable>
               </TabPanel>
             </TabView>
           </div>
@@ -92,15 +128,22 @@ import { defineComponent } from "vue";
 import EntityService from "@/services/EntityService";
 import ConfirmDialog from "primevue/confirmdialog";
 import { mapState } from "vuex";
-import { Vocabulary, Helpers } from "im-library";
+import { Vocabulary, Helpers, Models, Enums } from "im-library";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
+import axios from "axios";
+import { Namespace, TTIriRef, EntityReferenceNode, ComponentDetails, NextComponentSummary } from "im-library/dist/types/interfaces/Interfaces";
+
 const { IM, RDF } = Vocabulary;
 const {
   ConceptTypeMethods: { isValueSet },
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   ContainerDimensionGetters: { getContainerElementOptimalHeight }
 } = Helpers;
+const {
+  Search: { ConceptSummary, SearchRequest }
+} = Models;
+const { ComponentType, BuilderType, SortBy } = Enums;
 
 export default defineComponent({
   name: "Editor",
@@ -128,7 +171,7 @@ export default defineComponent({
     }
   },
   computed: {
-    ...mapState(["editorIri", "editorSavedEntity", "currentUser", "isLoggedIn"])
+    ...mapState(["editorIri", "editorSavedEntity", "currentUser", "isLoggedIn", "filterOptions", "selectedFilters"])
   },
   data() {
     return {
@@ -140,7 +183,10 @@ export default defineComponent({
       selectedView: {},
       mappedlist: [] as any[],
       visibleFull: false,
-      loading: true
+      searchTerm: "",
+      loading: true,
+      searchResults: [] as Models.Search.ConceptSummary[],
+      request: {} as { cancel: any; msg: string }
     };
   },
   async mounted() {
@@ -160,7 +206,7 @@ export default defineComponent({
     },
 
     async onRowExpand(event: any) {
-      event.data.expandView = await EntityService.getPartialEntity(event.data["@id"], []);
+      event.data.expandView = await EntityService.getPartialEntity(event.data["@id"] || event.data.iri, []);
     },
 
     autoMap() {
@@ -184,7 +230,8 @@ export default defineComponent({
       const i = this.unassigned.findIndex(unassigned => this.selected.iri === unassigned.iri);
       this.unassigned.splice(i, 1);
       for (const suggestion of this.selectedSuggestions) {
-        mappedUnassigned[IM.MATCHED_TO] = this.selected.iri;
+        console.log(suggestion);
+        mappedUnassigned[IM.MATCHED_TO] = suggestion["@id"] || suggestion.iri;
       }
       this.mappedlist.push(mappedUnassigned);
       this.selected = this.unassigned[i];
@@ -222,6 +269,47 @@ export default defineComponent({
     setContentHeight(): void {
       this.contentHeight =
         "height: " + getContainerElementOptimalHeight("mapper-main-container", ["p-panel-header", "p-tabview-nav", "button-bar"], true, 4, 4) + ";";
+    },
+
+    async search(): Promise<void> {
+      if (this.searchTerm.length > 0) {
+        this.searchResults = [];
+        const searchRequest = new SearchRequest();
+        searchRequest.termFilter = this.searchTerm;
+        searchRequest.sortBy = SortBy.Usage;
+        searchRequest.page = 1;
+        searchRequest.size = 100;
+        this.setFilters(searchRequest);
+        if (isObjectHasKeys(this.request, ["cancel", "msg"])) {
+          await this.request.cancel({ status: 499, message: "Search cancelled by user" });
+        }
+        const axiosSource = axios.CancelToken.source();
+        this.request = { cancel: axiosSource.cancel, msg: "Loading..." };
+        await this.fetchSearchResults(searchRequest, axiosSource.token);
+      }
+    },
+
+    setFilters(searchRequest: Models.Search.SearchRequest) {
+      let options = {} as { status: EntityReferenceNode[]; schemes: Namespace[]; types: EntityReferenceNode[] };
+      options = this.filterOptions;
+      searchRequest.schemeFilter = options.schemes.map((scheme: Namespace) => scheme.iri);
+      searchRequest.statusFilter = [];
+      for (const status of options.status) {
+        searchRequest.statusFilter.push(status["@id"]);
+      }
+      searchRequest.typeFilter = [];
+      for (const type of options.types) {
+        searchRequest.typeFilter.push(type["@id"]);
+      }
+    },
+
+    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, cancelToken: any) {
+      const result = await EntityService.advancedSearch(searchRequest, cancelToken);
+      if (result && isArrayHasLength(result)) {
+        this.searchResults = result;
+      } else {
+        this.searchResults = [];
+      }
     }
   }
 });
