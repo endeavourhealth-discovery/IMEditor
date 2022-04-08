@@ -19,11 +19,11 @@ const {
 export default class EntityService {
   static api = Env.api;
 
-  public static async getUnassigned() {
+  public static async getUnassigned(): Promise<any[]> {
     try {
       return await axios.get(this.api + "api/entity/public/unassigned");
     } catch (error) {
-      return {} as any;
+      return [] as any[];
     }
   }
 

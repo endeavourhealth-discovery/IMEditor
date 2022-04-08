@@ -7,46 +7,118 @@
     </TopBar>
     <ConfirmDialog></ConfirmDialog>
     <div id="mapper-main-container">
-      <div class="grid grid-nogutter">
-        <div class="col-3">
-          <Tree :value="root">
-            <template #default="slotProps">
-              <div @drop="onDrop(slotProps.node)" @dragover.prevent @dragenter.prevent>
-                <span :style="'color: #4063b0; opacity: 0.5;'" class="p-mx-1 type-icon">
-                  <font-awesome-icon :icon="['fas', 'folder']" />
-                </span>
-                <span>{{ slotProps.node.label }}</span>
-              </div>
-            </template>
-            <template #newFolder="slotProps">
-              <InputText
-                type="text"
-                aria-describedby="foldername-help"
-                v-model="slotProps.node.label"
-                v-on:keyup.enter="saveNewFolder(slotProps.node)"
-                :class="slotProps.node.class"
-              />
+      <div class="loading-container flex flex-row justify-content-center align-items-center" v-if="loading">
+        <ProgressSpinner />
+      </div>
+      <div v-else class="mapper-panel-buttons-container">
+        <div class="grid grid-nogutter">
+          <div class="col-2">
+            <Listbox v-model="selected" :options="unassigned" optionLabel="name" listStyle="height:95%;" :filter="true" filterPlaceholder="Search" />
+          </div>
+          <div class="col">
+            <TabView :lazy="true" class="tabView">
+              <TabPanel header="JSON">
+                <VueJsonPretty class="json" :data="selectedView" />
+              </TabPanel>
+              <TabPanel header="Suggestions">
+                <DataTable
+                  :value="selected.suggestions"
+                  v-model:expandedRows="expandedRows"
+                  v-model:selection="selectedSuggestions"
+                  dataKey="name"
+                  responsiveLayout="scroll"
+                  @rowExpand="onRowExpand"
+                >
+                  <Column selectionMode="multiple" headerStyle="width: 3em"></Column>
+                  <Column :expander="true" headerStyle="width: 3rem" />
+                  <Column field="name" header="Name">
+                    <template #body="{data}">
+                      {{ data.name }}
+                    </template>
+                  </Column>
+                  <Column field="iri" header="Iri">
+                    <template #body="{data}">
+                      {{ data["@id"] }}
+                    </template>
+                  </Column>
 
-              <Button icon="pi pi-check" class="p-button-rounded p-button-text" @click="saveNewFolder(slotProps.node)" />
-              <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text" @click="deleteNewFolder(slotProps.node)" />
-              <div>
-                <small v-if="slotProps.node.class === 'p-invalid'" id="foldername-help" class="p-error">{{ slotProps.node.message }}</small>
-              </div>
-            </template>
-          </Tree>
-          <Button label="Add folder" @click="addNewFolder" />
+                  <template #expansion="{data}">
+                    <VueJsonPretty v-if="data.expandView" class="suggestion-json" :data="data.expandView" />
+                  </template>
+                </DataTable>
+              </TabPanel>
+              <TabPanel header="Search">
+                <DataTable
+                  :paginator="true"
+                  :rows="10"
+                  paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+                  currentPageReportTemplate="Showing {first} to {last} of {totalRecords}"
+                  :value="searchResults"
+                  v-model:expandedRows="expandedRows"
+                  v-model:selection="selectedSuggestions"
+                  dataKey="name"
+                  responsiveLayout="scroll"
+                  @rowExpand="onRowExpand"
+                >
+                  <template #header>
+                    <div class="flex justify-content-end">
+                      <span class="p-input-icon-left ">
+                        <i class="pi pi-search" />
+                        <InputText v-model="searchTerm" type="text" placeholder="Search" @input="search" />
+                      </span>
+                    </div>
+                  </template>
+                  <Column selectionMode="multiple" headerStyle="width: 3em"></Column>
+                  <Column :expander="true" headerStyle="width: 3rem" />
+                  <Column field="name" header="Name">
+                    <template #body="{data}">
+                      {{ data.name }}
+                    </template>
+                  </Column>
+                  <Column field="iri" header="Iri">
+                    <template #body="{data}">
+                      {{ data.iri }}
+                    </template>
+                  </Column>
+
+                  <template #expansion="{data}">
+                    <VueJsonPretty v-if="data.expandView" class="suggestion-json" :data="data.expandView" />
+                  </template>
+                </DataTable>
+              </TabPanel>
+            </TabView>
+          </div>
         </div>
-        <div class="col">
-          <TabView :lazy="true" class="tabView">
-            <TabPanel header="Contents"> </TabPanel>
-            <TabPanel header="List">
-              <div v-for="item in unassigned" :key="item.iri" class="drag-el" draggable="true" @dragstart="startDrag(item)">
-                {{ item.name }}
-              </div>
-            </TabPanel>
-          </TabView>
+        <div class="button-bar flex flex-row justify-content-end" id="editor-button-bar">
+          <Button icon="pi pi-times" label="Cancel" class="p-button-warning" @click="$router.go(-1)" />
+          <Button
+            icon="pi pi-arrows-h"
+            label="Map"
+            class="p-button-secondary"
+            :disabled="!isObjectHasKeys(selected) || !isArrayHasLength(selectedSuggestions)"
+            @click="map"
+          />
+          <Button icon="pi pi-prime" label="Auto-Map" class="p-button-help" @click="autoMap" />
+          <Button icon="pi pi-check" label="Next" class="p-button-primary" @click="visibleFull = true" />
         </div>
       </div>
+      <Sidebar v-model:visible="visibleFull" :baseZIndex="1000" position="full">
+        <h3>Maps</h3>
+
+        <DataTable :value="mappedlist" dataKey="@id" responsiveLayout="scroll">
+          <Column field="unassigned" header="Unassigned">
+            <template #body="{data}"> {{ data.name }} | {{ data.iri }} </template>
+          </Column>
+          <Column field="matchedTo" header="Mapped to">
+            <template #body="{data}">
+              {{ data["http://endhealth.info/im#matchedTo"] }}
+            </template>
+          </Column>
+        </DataTable>
+        <div class="button-bar flex flex-row justify-content-end" id="map-button-bar">
+          <Button icon="pi pi-check" label="Submit" class="p-button-primary" @click="submit" />
+        </div>
+      </Sidebar>
     </div>
   </div>
 </template>
@@ -60,7 +132,7 @@ import { Vocabulary, Helpers, Models, Enums } from "im-library";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import axios from "axios";
-import { Namespace, TTIriRef, EntityReferenceNode, ComponentDetails, NextComponentSummary, TreeNode } from "im-library/dist/types/interfaces/Interfaces";
+import { Namespace, TTIriRef, EntityReferenceNode, ComponentDetails, NextComponentSummary } from "im-library/dist/types/interfaces/Interfaces";
 
 const { IM, RDF } = Vocabulary;
 const {
@@ -74,7 +146,7 @@ const {
 const { ComponentType, BuilderType, SortBy } = Enums;
 
 export default defineComponent({
-  name: "Mapper",
+  name: "Editor",
   components: {
     ConfirmDialog,
     VueJsonPretty
@@ -103,7 +175,6 @@ export default defineComponent({
   },
   data() {
     return {
-      root: [] as any[],
       expandedRows: [],
       selected: {} as any,
       selectedSuggestions: [] as any[],
@@ -115,8 +186,7 @@ export default defineComponent({
       searchTerm: "",
       loading: true,
       searchResults: [] as Models.Search.ConceptSummary[],
-      request: {} as { cancel: any; msg: string },
-      draggedItem: {} as any
+      request: {} as { cancel: any; msg: string }
     };
   },
   async mounted() {
@@ -133,40 +203,6 @@ export default defineComponent({
     async init() {
       await this.getUnassigned();
       this.selected = this.unassigned[0];
-    },
-
-    startDrag(item: any) {
-      this.draggedItem = item;
-    },
-
-    onDrop(node: any) {
-      node.children.push({ key: node.children.length + 10, label: this.draggedItem.name, data: this.draggedItem.iri, children: [] });
-    },
-
-    addNewFolder() {
-      this.root.push({ key: this.root.length, label: "", data: "", type: "newFolder", children: [] });
-    },
-
-    saveNewFolder(node: any) {
-      if (!node.label) {
-        node.class = "p-invalid";
-        node.message = "Name undefined";
-        return;
-      }
-      const nameExists = this.root.findIndex(rootNode => rootNode.label === node.label && rootNode.type !== "newFolder");
-      if (nameExists !== -1) {
-        node.class = "p-invalid";
-        node.message = "Name already exists";
-        return;
-      }
-
-      delete node.class;
-      delete node.type;
-    },
-
-    deleteNewFolder(node: any) {
-      const i = this.root.findIndex(rootNode => rootNode.key === node.key);
-      this.root.splice(i, 1);
     },
 
     async onRowExpand(event: any) {
@@ -209,8 +245,7 @@ export default defineComponent({
     },
 
     async getUnassigned() {
-      const unassigned = await EntityService.getUnassigned();
-      this.unassigned = unassigned.slice(1, 10);
+      this.unassigned = await EntityService.getUnassigned();
     },
 
     onResize(): void {
@@ -374,26 +409,5 @@ export default defineComponent({
 
 .json {
   height: calc(100vh - 18.5rem);
-}
-
-.type-icon {
-  padding-right: 0.5rem;
-}
-
-.drop-zone {
-  background-color: #eee;
-  margin-bottom: 10px;
-  padding: 10px;
-}
-
-.drag-el {
-  background-color: #fff;
-  margin-bottom: 10px;
-  padding: 5px;
-  cursor: pointer;
-}
-.drag-el:hover {
-  background-color: #6c757d;
-  color: #ffffff;
 }
 </style>
