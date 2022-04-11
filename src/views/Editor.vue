@@ -2,7 +2,10 @@
   <div id="topbar-editor-container">
     <TopBar>
       <template #content>
-        <span class="title"><strong>IM Editor:</strong></span>
+        <div class="topbar-content">
+          <span class="title"><strong>IM Editor:</strong></span>
+          <span class="entity-name" v-tooltip="{ value: entityName, class: 'name-tooltip' }">{{ entityName }}</span>
+        </div>
       </template>
     </TopBar>
     <ConfirmDialog></ConfirmDialog>
@@ -10,46 +13,44 @@
       <div class="loading-container flex flex-row justify-content-center align-items-center" v-if="loading">
         <ProgressSpinner />
       </div>
-      <div v-else class="panel-buttons-container">
-        <Panel :header="'Editor: ' + editorIri">
-          <div class="content-json-container">
-            <div class="content">
-              <TabView v-model:activeIndex="active">
-                <TabPanel header="Summary">
-                  <div class="panel-content" id="summary-editor-container" :style="contentHeight">
-                    <SummaryEditor
-                      v-if="active === 0 && isObjectHasKeysWrapper(conceptUpdated)"
-                      :updatedConcept="conceptUpdated"
-                      @concept-updated="updateConcept"
-                    />
-                  </div>
-                </TabPanel>
-                <TabPanel header="Parents">
-                  <div class="panel-content" id="parents-editor-container" :style="contentHeight">
-                    <ParentsEditor
-                      v-if="active === 1 && isObjectHasKeysWrapper(conceptUpdated)"
-                      :updatedConcept="conceptUpdated"
-                      @concept-updated="updateConcept"
-                    />
-                  </div>
-                </TabPanel>
-                <TabPanel v-if="isValueSet" header="Members">
-                  <div class="panel-content" id="member-editor-container" :style="contentHeight">
-                    <MemberEditor
-                      v-if="active === 2"
-                      :updatedMembers="conceptUpdated['http://endhealth.info/im#definition'] ? conceptUpdated['http://endhealth.info/im#definition'] : {}"
-                      @concept-updated="updateConcept"
-                    />
-                  </div>
-                </TabPanel>
-              </TabView>
-            </div>
-            <div v-if="contentHeight" class="json-container" :style="contentHeight">
-              <span>JSON viewer</span>
-              <VueJsonPretty v-if="isObjectHasKeysWrapper(conceptUpdated)" class="json" :path="'res'" :data="conceptUpdated" @click="handleClick" />
-            </div>
+      <div v-else class="content-buttons-container">
+        <div class="content-json-container">
+          <div class="content">
+            <TabView v-model:activeIndex="active" class="tabview">
+              <TabPanel header="Summary">
+                <div class="panel-content" id="summary-editor-container">
+                  <SummaryEditor
+                    v-if="active === 0 && isObjectHasKeysWrapper(conceptUpdated)"
+                    :updatedConcept="conceptUpdated"
+                    @concept-updated="updateConcept"
+                  />
+                </div>
+              </TabPanel>
+              <TabPanel header="Parents">
+                <div class="panel-content" id="parents-editor-container">
+                  <ParentsEditor
+                    v-if="active === 1 && isObjectHasKeysWrapper(conceptUpdated)"
+                    :updatedConcept="conceptUpdated"
+                    @concept-updated="updateConcept"
+                  />
+                </div>
+              </TabPanel>
+              <TabPanel v-if="isValueSet" header="Members">
+                <div class="panel-content" id="member-editor-container">
+                  <MemberEditor
+                    v-if="active === 2"
+                    :updatedMembers="conceptUpdated['http://endhealth.info/im#definition'] ? conceptUpdated['http://endhealth.info/im#definition'] : {}"
+                    @concept-updated="updateConcept"
+                  />
+                </div>
+              </TabPanel>
+            </TabView>
           </div>
-        </Panel>
+          <div class="json-container">
+            <span>JSON viewer</span>
+            <VueJsonPretty v-if="isObjectHasKeysWrapper(conceptUpdated)" class="json" :path="'res'" :data="conceptUpdated" @click="handleClick" />
+          </div>
+        </div>
         <div class="button-bar flex flex-row justify-content-end" id="editor-button-bar">
           <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
           <Button icon="pi pi-refresh" label="Reset" class="p-button-warning" @click="refreshEditor" />
@@ -71,7 +72,7 @@ import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers } from "im-library";
-const { IM, RDF } = Vocabulary;
+const { IM, RDF, RDFS } = Vocabulary;
 const {
   ConceptTypeMethods: { isValueSet },
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
@@ -113,30 +114,23 @@ export default defineComponent({
       conceptUpdated: {} as any,
       active: 0,
       contentHeight: "",
-      loading: true
+      loading: true,
+      entityName: ""
     };
   },
   async mounted() {
     this.loading = true;
-    window.addEventListener("resize", this.onResize);
     await this.fetchConceptData();
     this.loading = false;
     await this.$nextTick();
-    this.onResize();
-  },
-  beforeUnmount() {
-    window.removeEventListener("resize", this.onResize);
   },
   methods: {
-    onResize(): void {
-      this.setContentHeight();
-    },
-
     async fetchConceptData(): Promise<void> {
       if (this.editorIri) {
         const fullEntity = await EntityService.getFullEntity(this.editorIri);
         if (fullEntity) {
           this.conceptOriginal = fullEntity;
+          this.entityName = this.conceptOriginal[RDFS.LABEL];
           if (isObjectHasKeys(this.editorSavedEntity, ["@id"]) && this.editorSavedEntity["@id"] === this.editorIri) {
             this.conceptUpdated = this.editorSavedEntity;
           } else {
@@ -172,11 +166,6 @@ export default defineComponent({
       return isObjectHasKeys(object);
     },
 
-    setContentHeight(): void {
-      this.contentHeight =
-        "height: " + getContainerElementOptimalHeight("editor-main-container", ["p-panel-header", "p-tabview-nav-container", "button-bar"], true, 4, 1) + ";";
-    },
-
     handleClick(data: any) {
       console.log("click");
       console.log(data);
@@ -195,15 +184,16 @@ export default defineComponent({
 #editor-main-container {
   width: 100%;
   height: calc(100% - 3.5rem);
-  overflow-y: auto;
+  overflow: auto;
+  background-color: #ffffff;
 }
 
-.panel-buttons-container {
+.content-buttons-container {
   height: 100%;
   width: 100%;
   display: flex;
   flex-flow: column nowrap;
-  justify-content: space-between;
+  overflow: auto;
 }
 
 .loading-container {
@@ -212,17 +202,19 @@ export default defineComponent({
 }
 
 .content-json-container {
-  height: 100%;
+  flex: 1 1 auto;
   width: 100%;
   display: flex;
   flex-flow: row nowrap;
   justify-content: flex-start;
   gap: 1rem;
+  overflow: auto;
 }
 
 .json-container {
   width: 50%;
-  /* height: 100%; */
+  height: 100%;
+  overflow: auto;
 }
 
 .content {
@@ -242,7 +234,28 @@ export default defineComponent({
   height: 100%;
 }
 
-.p-panel {
+.tabview {
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+}
+
+.tabview:deep(.p-tabview-panels) {
+  flex: 1 1 auto;
+}
+
+.tabview:deep(.p-tabview-panel) {
+  height: 100%;
+  width: 100%;
+}
+
+.panel-content {
+  height: 100%;
+  width: 100;
+  overflow: auto;
+}
+
+/* .p-panel {
   display: flex;
   flex-flow: column nowrap;
   flex-grow: 100;
@@ -254,13 +267,17 @@ export default defineComponent({
 
 .panel-content {
   overflow-y: auto;
-}
+} */
 
 .title {
   font-size: 2rem;
+  display: flex;
+  flex-flow: row;
+  align-items: center;
 }
 
 #editor-button-bar {
+  flex: 0 1 auto;
   padding: 1rem 1rem 1rem 0;
   gap: 0.5rem;
   width: 100%;
@@ -269,5 +286,24 @@ export default defineComponent({
   border-right: 1px solid #dee2e6;
   border-radius: 3px;
   background-color: #ffffff;
+}
+
+.topbar-content {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.entity-name {
+  margin-left: 0.5rem;
+  font-size: 1.5rem;
+  overflow: hidden;
+  height: 1.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 0 1 auto;
 }
 </style>

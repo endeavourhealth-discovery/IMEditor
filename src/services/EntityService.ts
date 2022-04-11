@@ -127,7 +127,7 @@ export default class EntityService {
         cancelToken: cancelToken
       });
     } catch (error) {
-      return [] as typeof ConceptSummary[];
+      return [] as Models.Search.ConceptSummary[];
     }
   }
 
