@@ -87,6 +87,7 @@ export default defineComponent({
   flex-flow: row wrap;
   justify-content: center;
   align-items: center;
+  padding-top: 1rem;
 }
 
 .add-next-button {
