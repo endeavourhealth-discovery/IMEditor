@@ -9,11 +9,11 @@
     <div id="mapper-main-container">
       <div class="grid grid-nogutter">
         <div class="col-3">
-          <Tree :value="root">
+          <Tree :value="root" selectionMode="single" v-model:selectionKeys="selectedNode" @node-select="onNodeSelect">
             <template #default="slotProps">
               <div @drop="onDrop(slotProps.node)" @dragover.prevent @dragenter.prevent>
-                <span :style="'color: #4063b0; opacity: 0.5;'" class="p-mx-1 type-icon">
-                  <font-awesome-icon :icon="['fas', 'folder']" />
+                <span :style="'color: ' + slotProps.node.colour" class="p-mx-1 type-icon">
+                  <font-awesome-icon :icon="slotProps.node.icon" />
                 </span>
                 <span>{{ slotProps.node.label }}</span>
               </div>
@@ -25,6 +25,7 @@
                 v-model="slotProps.node.label"
                 v-on:keyup.enter="saveNewFolder(slotProps.node)"
                 :class="slotProps.node.class"
+                @dblclick="slotProps.node.type = 'newFolder'"
               />
 
               <Button icon="pi pi-check" class="p-button-rounded p-button-text" @click="saveNewFolder(slotProps.node)" />
@@ -38,11 +39,98 @@
         </div>
         <div class="col">
           <TabView :lazy="true" class="tabView">
-            <TabPanel header="Contents"> </TabPanel>
             <TabPanel header="List">
               <div v-for="item in unassigned" :key="item.iri" class="drag-el" draggable="true" @dragstart="startDrag(item)">
                 {{ item.name }}
               </div>
+            </TabPanel>
+            <TabPanel header="Contents">
+              <DataTable :value="selected.children" v-model:expandedRows="expandedRows" dataKey="data" responsiveLayout="scroll" @rowExpand="onRowExpand">
+                <Column :expander="true" headerStyle="width: 3rem" />
+                <Column field="name" header="Name">
+                  <template #body="{data}">
+                    {{ data.label }}
+                  </template>
+                </Column>
+                <Column field="iri" header="Iri">
+                  <template #body="{data}">
+                    {{ data.data }}
+                  </template>
+                </Column>
+
+                <template #expansion="{data}">
+                  <VueJsonPretty v-if="data.expandView" class="suggestion-json" :data="data.expandView" />
+                </template>
+              </DataTable>
+            </TabPanel>
+            <TabPanel header="JSON">
+              <VueJsonPretty class="json" :data="selectedView" />
+            </TabPanel>
+            <TabPanel header="Suggestions">
+              <DataTable
+                :value="selected.suggestions"
+                v-model:expandedRows="expandedRows"
+                v-model:selection="selectedSuggestions"
+                dataKey="name"
+                responsiveLayout="scroll"
+                @rowExpand="onRowExpand"
+              >
+                <Column selectionMode="multiple" headerStyle="width: 3em"></Column>
+                <Column :expander="true" headerStyle="width: 3rem" />
+                <Column field="name" header="Name">
+                  <template #body="{data}">
+                    {{ data.name }}
+                  </template>
+                </Column>
+                <Column field="iri" header="Iri">
+                  <template #body="{data}">
+                    {{ data["@id"] }}
+                  </template>
+                </Column>
+
+                <template #expansion="{data}">
+                  <VueJsonPretty v-if="data.expandView" class="suggestion-json" :data="data.expandView" />
+                </template>
+              </DataTable>
+            </TabPanel>
+            <TabPanel header="Search">
+              <DataTable
+                :paginator="true"
+                :rows="10"
+                paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords}"
+                :value="searchResults"
+                v-model:expandedRows="expandedRows"
+                v-model:selection="selectedSuggestions"
+                dataKey="name"
+                responsiveLayout="scroll"
+                @rowExpand="onRowExpand"
+              >
+                <template #header>
+                  <div class="flex justify-content-end">
+                    <span class="p-input-icon-left ">
+                      <i class="pi pi-search" />
+                      <InputText v-model="searchTerm" type="text" placeholder="Search" @input="search" />
+                    </span>
+                  </div>
+                </template>
+                <Column selectionMode="multiple" headerStyle="width: 3em"></Column>
+                <Column :expander="true" headerStyle="width: 3rem" />
+                <Column field="name" header="Name">
+                  <template #body="{data}">
+                    {{ data.name }}
+                  </template>
+                </Column>
+                <Column field="iri" header="Iri">
+                  <template #body="{data}">
+                    {{ data.iri }}
+                  </template>
+                </Column>
+
+                <template #expansion="{data}">
+                  <VueJsonPretty v-if="data.expandView" class="suggestion-json" :data="data.expandView" />
+                </template>
+              </DataTable>
             </TabPanel>
           </TabView>
         </div>
@@ -64,7 +152,7 @@ import { Namespace, TTIriRef, EntityReferenceNode, ComponentDetails, NextCompone
 
 const { IM, RDF } = Vocabulary;
 const {
-  ConceptTypeMethods: { isValueSet },
+  ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType },
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   ContainerDimensionGetters: { getContainerElementOptimalHeight }
 } = Helpers;
@@ -91,9 +179,10 @@ export default defineComponent({
   },
   watch: {
     async selected() {
-      if (this.selected) {
-        this.selectedView = await EntityService.getPartialEntity(this.selected.iri, []);
-        this.selected.suggestions = await EntityService.getMappingSuggestions(this.selected.iri, this.selected.name);
+      if (this.selected.data) {
+        this.selectedView = await EntityService.getPartialEntity(this.selected.data, []);
+        this.selected.suggestions = await EntityService.getMappingSuggestions(this.selected.data, this.selected.label);
+        this.selected.children = await EntityService.getEntityChildren(this.selected.data);
         this.selectedSuggestions = [];
       }
     }
@@ -104,6 +193,7 @@ export default defineComponent({
   data() {
     return {
       root: [] as any[],
+      selectedNode: {} as any,
       expandedRows: [],
       selected: {} as any,
       selectedSuggestions: [] as any[],
@@ -132,19 +222,35 @@ export default defineComponent({
   methods: {
     async init() {
       await this.getUnassigned();
-      this.selected = this.unassigned[0];
+      // this.selected = this.unassigned[0];
     },
 
     startDrag(item: any) {
       this.draggedItem = item;
     },
 
-    onDrop(node: any) {
-      node.children.push({ key: node.children.length + 10, label: this.draggedItem.name, data: this.draggedItem.iri, children: [] });
+    async onDrop(node: any) {
+      const entityType = await EntityService.getPartialEntity(this.draggedItem.iri, [RDF.TYPE]);
+      node.children.push({
+        key: node.key + node.children.length.toString(),
+        label: this.draggedItem.name,
+        data: this.draggedItem.iri,
+        children: [],
+        icon: getFAIconFromType(entityType[RDF.TYPE]),
+        colour: getColourFromType(entityType[RDF.TYPE])
+      });
     },
 
     addNewFolder() {
-      this.root.push({ key: this.root.length, label: "", data: "", type: "newFolder", children: [] });
+      this.root.push({
+        key: this.root.length.toString(),
+        label: "",
+        data: "",
+        type: "newFolder",
+        children: [],
+        icon: ["fas", "clipboard-check"],
+        colour: "#4063b0; opacity: 0.5;"
+      });
     },
 
     saveNewFolder(node: any) {
@@ -169,8 +275,12 @@ export default defineComponent({
       this.root.splice(i, 1);
     },
 
+    onNodeSelect(node: any) {
+      this.selected = node;
+    },
+
     async onRowExpand(event: any) {
-      event.data.expandView = await EntityService.getPartialEntity(event.data["@id"] || event.data.iri, []);
+      event.data.expandView = await EntityService.getPartialEntity(event.data["@id"] || event.data.iri || event.data.data, []);
     },
 
     autoMap() {
