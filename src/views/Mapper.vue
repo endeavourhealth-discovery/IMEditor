@@ -45,92 +45,16 @@
               </div>
             </TabPanel>
             <TabPanel header="Contents">
-              <DataTable :value="selected.children" v-model:expandedRows="expandedRows" dataKey="data" responsiveLayout="scroll" @rowExpand="onRowExpand">
-                <Column :expander="true" headerStyle="width: 3rem" />
-                <Column field="name" header="Name">
-                  <template #body="{data}">
-                    {{ data.label }}
-                  </template>
-                </Column>
-                <Column field="iri" header="Iri">
-                  <template #body="{data}">
-                    {{ data.data }}
-                  </template>
-                </Column>
-
-                <template #expansion="{data}">
-                  <VueJsonPretty v-if="data.expandView" class="suggestion-json" :data="data.expandView" />
-                </template>
-              </DataTable>
+              <ExpansionTable :contents="getTableDataFromNodes(selected.children)" :selectable="false" :inputSearch="false" :paginable="false" />
             </TabPanel>
-            <TabPanel header="JSON">
+            <TabPanel header="Details">
               <VueJsonPretty class="json" :data="selectedView" />
             </TabPanel>
             <TabPanel header="Suggestions">
-              <DataTable
-                :value="selected.suggestions"
-                v-model:expandedRows="expandedRows"
-                v-model:selection="selectedSuggestions"
-                dataKey="name"
-                responsiveLayout="scroll"
-                @rowExpand="onRowExpand"
-              >
-                <Column selectionMode="multiple" headerStyle="width: 3em"></Column>
-                <Column :expander="true" headerStyle="width: 3rem" />
-                <Column field="name" header="Name">
-                  <template #body="{data}">
-                    {{ data.name }}
-                  </template>
-                </Column>
-                <Column field="iri" header="Iri">
-                  <template #body="{data}">
-                    {{ data["@id"] }}
-                  </template>
-                </Column>
-
-                <template #expansion="{data}">
-                  <VueJsonPretty v-if="data.expandView" class="suggestion-json" :data="data.expandView" />
-                </template>
-              </DataTable>
+              <ExpansionTable :contents="selected.suggestions" :selectable="true" :inputSearch="false" :paginable="true" />
             </TabPanel>
             <TabPanel header="Search">
-              <DataTable
-                :paginator="true"
-                :rows="10"
-                paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-                currentPageReportTemplate="Showing {first} to {last} of {totalRecords}"
-                :value="searchResults"
-                v-model:expandedRows="expandedRows"
-                v-model:selection="selectedSuggestions"
-                dataKey="name"
-                responsiveLayout="scroll"
-                @rowExpand="onRowExpand"
-              >
-                <template #header>
-                  <div class="flex justify-content-end">
-                    <span class="p-input-icon-left ">
-                      <i class="pi pi-search" />
-                      <InputText v-model="searchTerm" type="text" placeholder="Search" @input="search" />
-                    </span>
-                  </div>
-                </template>
-                <Column selectionMode="multiple" headerStyle="width: 3em"></Column>
-                <Column :expander="true" headerStyle="width: 3rem" />
-                <Column field="name" header="Name">
-                  <template #body="{data}">
-                    {{ data.name }}
-                  </template>
-                </Column>
-                <Column field="iri" header="Iri">
-                  <template #body="{data}">
-                    {{ data.iri }}
-                  </template>
-                </Column>
-
-                <template #expansion="{data}">
-                  <VueJsonPretty v-if="data.expandView" class="suggestion-json" :data="data.expandView" />
-                </template>
-              </DataTable>
+              <ExpansionTable :contents="searchResults" :selectable="true" :inputSearch="true" @search="search" :paginable="true" />
             </TabPanel>
           </TabView>
         </div>
@@ -143,6 +67,7 @@
 import { defineComponent } from "vue";
 import EntityService from "@/services/EntityService";
 import ConfirmDialog from "primevue/confirmdialog";
+import ExpansionTable from "@/components/mapper/ExpansionTable.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Models, Enums } from "im-library";
 import VueJsonPretty from "vue-json-pretty";
@@ -165,7 +90,8 @@ export default defineComponent({
   name: "Mapper",
   components: {
     ConfirmDialog,
-    VueJsonPretty
+    VueJsonPretty,
+    ExpansionTable
   },
   beforeRouteLeave(to, from, next) {
     this.$confirm.require({
@@ -181,9 +107,10 @@ export default defineComponent({
     async selected() {
       if (this.selected.data) {
         this.selectedView = await EntityService.getPartialEntity(this.selected.data, []);
-        this.selected.suggestions = await EntityService.getMappingSuggestions(this.selected.data, this.selected.label);
+        this.selected.suggestions = (await EntityService.getMappingSuggestions(this.selected.data, this.selected.label)).map((suggestion: any) => {
+          return { iri: suggestion["@id"], name: suggestion.name, type: suggestion.type };
+        });
         this.selected.children = await EntityService.getEntityChildren(this.selected.data);
-        this.selectedSuggestions = [];
       }
     }
   },
@@ -194,17 +121,12 @@ export default defineComponent({
     return {
       root: [] as any[],
       selectedNode: {} as any,
-      expandedRows: [],
       selected: {} as any,
-      selectedSuggestions: [] as any[],
       unassigned: [] as any[],
       contentHeight: "",
       selectedView: {},
-      mappedlist: [] as any[],
-      visibleFull: false,
-      searchTerm: "",
       loading: true,
-      searchResults: [] as Models.Search.ConceptSummary[],
+      searchResults: [] as any[],
       request: {} as { cancel: any; msg: string },
       draggedItem: {} as any
     };
@@ -222,7 +144,13 @@ export default defineComponent({
   methods: {
     async init() {
       await this.getUnassigned();
-      // this.selected = this.unassigned[0];
+    },
+
+    getTableDataFromNodes(nodes: any) {
+      if (!isArrayHasLength(nodes)) return [];
+      return nodes.map((node: any) => {
+        return { iri: node.data, name: node.label, type: node.type };
+      });
     },
 
     startDrag(item: any) {
@@ -232,10 +160,11 @@ export default defineComponent({
     async onDrop(node: any) {
       const entityType = await EntityService.getPartialEntity(this.draggedItem.iri, [RDF.TYPE]);
       node.children.push({
-        key: node.key + node.children.length.toString(),
+        key: node.key + "" + node.children.length,
         label: this.draggedItem.name,
         data: this.draggedItem.iri,
         children: [],
+        type: entityType,
         icon: getFAIconFromType(entityType[RDF.TYPE]),
         colour: getColourFromType(entityType[RDF.TYPE])
       });
@@ -279,45 +208,6 @@ export default defineComponent({
       this.selected = node;
     },
 
-    async onRowExpand(event: any) {
-      event.data.expandView = await EntityService.getPartialEntity(event.data["@id"] || event.data.iri || event.data.data, []);
-    },
-
-    autoMap() {
-      this.loading = true;
-      for (const unassigned of this.unassigned) {
-        this.selected = unassigned;
-        if (isArrayHasLength(unassigned.suggestions)) {
-          this.selectedSuggestions = unassigned.suggestions;
-          this.map();
-        }
-      }
-      this.$toast.add({
-        severity: "success",
-        summary: "Auto map complete",
-        detail: this.mappedlist.length + " unassigned entities have been mapped"
-      });
-      this.loading = false;
-    },
-    map() {
-      const mappedUnassigned = this.selected;
-      const i = this.unassigned.findIndex(unassigned => this.selected.iri === unassigned.iri);
-      this.unassigned.splice(i, 1);
-      for (const suggestion of this.selectedSuggestions) {
-        console.log(suggestion);
-        mappedUnassigned[IM.MATCHED_TO] = suggestion["@id"] || suggestion.iri;
-      }
-      this.mappedlist.push(mappedUnassigned);
-      this.selected = this.unassigned[i];
-    },
-    isObjectHasKeys(object: any) {
-      return isObjectHasKeys(object);
-    },
-
-    isArrayHasLength(object: any) {
-      return isArrayHasLength(object);
-    },
-
     async getUnassigned() {
       const unassigned = await EntityService.getUnassigned();
       this.unassigned = unassigned.slice(1, 10);
@@ -327,30 +217,16 @@ export default defineComponent({
       this.setContentHeight();
     },
 
-    closeMaps() {
-      this.visibleFull = false;
-    },
-
-    submit(): void {
-      this.closeMaps();
-      this.mappedlist = [];
-      this.init();
-    },
-
-    isObjectHasKeysWrapper(object: any): boolean {
-      return isObjectHasKeys(object);
-    },
-
     setContentHeight(): void {
       this.contentHeight =
         "height: " + getContainerElementOptimalHeight("mapper-main-container", ["p-panel-header", "p-tabview-nav", "button-bar"], true, 4, 4) + ";";
     },
 
-    async search(): Promise<void> {
-      if (this.searchTerm.length > 0) {
+    async search(searchTerm: string): Promise<void> {
+      if (searchTerm.length > 0) {
         this.searchResults = [];
         const searchRequest = new SearchRequest();
-        searchRequest.termFilter = this.searchTerm;
+        searchRequest.termFilter = searchTerm;
         searchRequest.sortBy = SortBy.Usage;
         searchRequest.page = 1;
         searchRequest.size = 100;
@@ -381,7 +257,9 @@ export default defineComponent({
     async fetchSearchResults(searchRequest: Models.Search.SearchRequest, cancelToken: any) {
       const result = await EntityService.advancedSearch(searchRequest, cancelToken);
       if (result && isArrayHasLength(result)) {
-        this.searchResults = result;
+        this.searchResults = result.map(item => {
+          return { iri: item.iri, name: item.name, type: item.entityType };
+        });
       } else {
         this.searchResults = [];
       }
@@ -403,28 +281,9 @@ export default defineComponent({
   overflow-y: auto;
 }
 
-.mapper-panel-buttons-container {
-  height: 100%;
-  width: 100%;
-}
-
 .loading-container {
   width: 100%;
   height: 100%;
-}
-
-.content-json-container {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: flex-start;
-  gap: 1rem;
-}
-
-.json-container {
-  width: 50%;
-  /* height: 100%; */
 }
 
 .content {
@@ -432,58 +291,14 @@ export default defineComponent({
   height: 100%;
 }
 
-.json {
-  height: 100%;
-  width: 100%;
-  overflow: auto;
-  /* border: 1px #dee2e6 solid; */
-  border-radius: 3px;
-}
-
-.placeholder {
-  height: 100%;
-}
-
-.panel-content {
-  overflow-y: auto;
-}
-
 .title {
   font-size: 2rem;
-}
-
-#editor-button-bar,
-#map-button-bar {
-  padding: 1rem 1rem 1rem 0;
-  gap: 0.5rem;
-  width: 100%;
-  background-color: #ffffff;
-}
-
-.p-listbox {
-  height: calc(100vh - 13.5rem);
-  word-wrap: break-word;
-}
-
-.p-listbox-list {
-  height: calc(100vh - 4rem);
 }
 
 .tabView {
   display: flex;
   flex-direction: column;
   height: 100%;
-}
-
-.p-datatable-wrapper,
-.p-datatable,
-.p-datatable-tbody,
-.p-datatable-table {
-  height: calc(100vh - 18.5rem);
-}
-
-.json {
-  height: calc(100vh - 18.5rem);
 }
 
 .type-icon {
