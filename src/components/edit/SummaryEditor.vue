@@ -2,29 +2,34 @@
   <div class="loading-container flex flex-row justify-content-center align-items-center" v-if="loading">
     <ProgressSpinner />
   </div>
-  <div v-else class="p-fluid editor-grid">
-    <div class="field float-label-container iri">
+  <div v-else class="summary-container">
+    <div class="float-label-container iri">
       <span class="p-float-label">
-        <InputText class="p-inputtext-lg" v-model="updateIri" type="text" @input="updateEntity({ '@id': iri })" disabled />
+        <InputText class="p-inputtext-lg input-text" v-model="updateIri" type="text" @input="updateEntity({ '@id': iri })" disabled />
         <label for="Iri">Iri</label>
       </span>
     </div>
-    <div class="field float-label-container name">
+    <div class="float-label-container name">
       <span class="p-float-label">
-        <InputText class="p-inputtext-lg" v-model="name" type="text" @input="updateEntity({ 'http://www.w3.org/2000/01/rdf-schema#label': name })" />
+        <InputText class="p-inputtext-lg input-text" v-model="name" type="text" @input="updateEntity({ 'http://www.w3.org/2000/01/rdf-schema#label': name })" />
         <label for="Name">Name</label>
       </span>
     </div>
-    <div class="field float-label-container code">
+    <div class="float-label-container code">
       <span class="p-float-label">
-        <InputText class="p-inputtext-lg" v-model="code" type="text" @input="updateEntity({ '@id': updateIri, 'http://endhealth.info/im#code': code })" />
+        <InputText
+          class="p-inputtext-lg input-text"
+          v-model="code"
+          type="text"
+          @input="updateEntity({ '@id': updateIri, 'http://endhealth.info/im#code': code })"
+        />
         <label for="Code">Code</label>
       </span>
     </div>
-    <div class="field float-label-container description">
+    <div class="float-label-container description">
       <span class="p-float-label">
         <Textarea
-          class="p-inputtext-lg"
+          class="p-inputtext-lg input-text description"
           v-model="description"
           rows="4"
           @input="updateEntity({ 'http://www.w3.org/2000/01/rdf-schema#comment': description })"
@@ -32,16 +37,16 @@
         <label for="address">Description</label>
       </span>
     </div>
-    <div class="field float-label-container version">
+    <div class="float-label-container version">
       <span class="p-float-label">
-        <InputText class="p-inputtext-lg" v-model="version" type="text" @input="updateEntity" disabled />
+        <InputText class="p-inputtext-lg input-text" v-model="version" type="text" @input="updateEntity" disabled />
         <label for="Version">Version</label>
       </span>
     </div>
-    <div class="field float-label-container status">
+    <div class="float-label-container status">
       <span class="p-float-label">
         <Dropdown
-          class="p-inputtext-lg"
+          class="p-inputtext-lg input-text"
           v-model="status"
           :options="filterOptions.status"
           optionLabel="name"
@@ -50,16 +55,22 @@
         <label>Status</label>
       </span>
     </div>
-    <div class="field float-label-container scheme">
+    <div class="float-label-container scheme">
       <span class="p-float-label">
-        <Dropdown class="p-inputtext-lg" v-model="scheme" :options="filterOptions.schemes" optionLabel="name" @change="updateEntity({ '@id': updateIri })" />
+        <Dropdown
+          class="p-inputtext-lg input-text scheme"
+          v-model="scheme"
+          :options="filterOptions.schemes"
+          optionLabel="name"
+          @change="updateEntity({ '@id': updateIri })"
+        />
         <label>Scheme</label>
       </span>
     </div>
-    <div class="field float-label-container type">
+    <div class="float-label-container type">
       <span class="p-float-label">
         <MultiSelect
-          class="p-inputtext-lg"
+          class="p-inputtext-lg input-text"
           v-model="types"
           :options="filterOptions.types"
           optionLabel="name"
@@ -179,58 +190,29 @@ export default defineComponent({
   width: 100%;
 }
 
-.editor-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-auto-rows: auto;
-  grid-template-areas:
-    "iri name code"
-    "description description description"
-    "version status scheme"
-    "imlang imlang imlang";
-  column-gap: 7px;
-  height: 100%;
+.summary-container {
+  max-height: calc(100% - 1.5rem);
   width: 100%;
-  align-content: start;
-}
-
-.iri {
-  grid-area: iri;
-}
-
-.name {
-  grid-area: name;
-}
-
-.code {
-  grid-area: code;
-}
-
-.description {
-  grid-area: description;
-}
-
-.version {
-  grid-area: version;
-}
-
-.status {
-  grid-area: status;
-}
-
-.scheme {
-  grid-area: scheme;
-}
-
-.imlang-container {
-  grid-area: imlang;
-}
-
-.field {
-  height: fit-content;
+  padding-top: 1.5rem;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+  align-items: flex-start;
+  column-gap: 0.5rem;
+  row-gap: 1.5rem;
 }
 
 .float-label-container {
-  margin-top: 1.5rem;
+  /* margin-top: 1.5rem; */
+  height: fit-content;
+  max-width: 100%;
+}
+
+.description {
+  width: 100%;
+}
+
+.input-text {
+  max-width: 100%;
 }
 </style>

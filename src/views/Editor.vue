@@ -47,7 +47,7 @@
             </TabView>
           </div>
           <div class="json-container">
-            <span>JSON viewer</span>
+            <span class="json-header">JSON viewer</span>
             <VueJsonPretty v-if="isObjectHasKeysWrapper(conceptUpdated)" class="json" :path="'res'" :data="conceptUpdated" @click="handleClick" />
           </div>
         </div>
@@ -75,8 +75,7 @@ import { Vocabulary, Helpers } from "im-library";
 const { IM, RDF, RDFS } = Vocabulary;
 const {
   ConceptTypeMethods: { isValueSet },
-  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  ContainerDimensionGetters: { getContainerElementOptimalHeight }
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
 } = Helpers;
 
 export default defineComponent({
@@ -88,18 +87,21 @@ export default defineComponent({
     VueJsonPretty,
     ParentsEditor
   },
-  beforeRouteLeave(to, from, next) {
+  beforeRouteLeave(to, from) {
     if (this.checkForChanges()) {
       this.$confirm.require({
         message: "All unsaved changes will be lost. Are you sure you want to proceed?",
         header: "Confirmation",
         icon: "pi pi-exclamation-triangle",
         accept: () => {
-          next();
+          return true;
+        },
+        reject: () => {
+          return false;
         }
       });
     } else {
-      next();
+      return true;
     }
   },
   computed: {
@@ -215,6 +217,9 @@ export default defineComponent({
   width: 50%;
   height: 100%;
   overflow: auto;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-start;
 }
 
 .content {
@@ -223,11 +228,20 @@ export default defineComponent({
 }
 
 .json {
-  height: calc(100% - 1rem);
+  flex: 0 1 auto;
   width: 100%;
   overflow: auto;
   border: 1px #dee2e6 solid;
   border-radius: 3px;
+}
+
+.json-header {
+  font-size: 1rem;
+  padding: 0.5rem;
+}
+
+.json:deep(.vjs-value__string) {
+  word-break: break-all;
 }
 
 .placeholder {
@@ -251,23 +265,9 @@ export default defineComponent({
 
 .panel-content {
   height: 100%;
-  width: 100;
+  width: 100%;
   overflow: auto;
 }
-
-/* .p-panel {
-  display: flex;
-  flex-flow: column nowrap;
-  flex-grow: 100;
-}
-
-.p-panel .p-toggleable-content {
-  flex-grow: 100;
-}
-
-.panel-content {
-  overflow-y: auto;
-} */
 
 .title {
   font-size: 2rem;
