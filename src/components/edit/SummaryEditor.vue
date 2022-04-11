@@ -5,7 +5,7 @@
   <div v-else class="summary-container">
     <div class="float-label-container iri">
       <span class="p-float-label">
-        <InputText class="p-inputtext-lg input-text" v-model="updateIri" type="text" @input="updateEntity({ '@id': iri })" disabled />
+        <InputText class="p-inputtext-lg input-text" v-model="updateIri" type="text" @input="updateEntity({ '@id': iri })" />
         <label for="Iri">Iri</label>
       </span>
     </div>

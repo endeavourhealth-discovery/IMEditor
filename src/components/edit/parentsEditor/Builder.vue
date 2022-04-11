@@ -168,7 +168,7 @@ export default defineComponent({
 }
 
 #parents-build {
-  flex-grow: 100;
+  flex: 1 1 auto;
   width: 100%;
   overflow: auto;
   border: 1px solid black;

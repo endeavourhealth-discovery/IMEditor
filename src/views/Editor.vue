@@ -87,22 +87,14 @@ export default defineComponent({
     VueJsonPretty,
     ParentsEditor
   },
-  beforeRouteLeave(to, from) {
-    if (this.checkForChanges()) {
-      this.$confirm.require({
-        message: "All unsaved changes will be lost. Are you sure you want to proceed?",
-        header: "Confirmation",
-        icon: "pi pi-exclamation-triangle",
-        accept: () => {
-          return true;
-        },
-        reject: () => {
-          return false;
-        }
-      });
-    } else {
-      return true;
-    }
+  beforeRouteLeave() {
+    this.confirmLeaveEditor();
+  },
+  created() {
+    window.addEventListener("beforeunload", this.beforeWindowUnload);
+  },
+  beforeUnmount() {
+    window.removeEventListener("beforeunload", this.beforeWindowUnload);
   },
   computed: {
     isValueSet(): any {
@@ -139,6 +131,31 @@ export default defineComponent({
             this.conceptUpdated = JSON.parse(JSON.stringify(fullEntity));
           }
         }
+      }
+    },
+
+    confirmLeaveEditor() {
+      if (this.checkForChanges()) {
+        this.$confirm.require({
+          message: "All unsaved changes will be lost. Are you sure you want to proceed?",
+          header: "Confirmation",
+          icon: "pi pi-exclamation-triangle",
+          accept: () => {
+            return true;
+          },
+          reject: () => {
+            return false;
+          }
+        });
+      } else {
+        return true;
+      }
+    },
+
+    beforeWindowUnload(e: any) {
+      if (this.checkForChanges()) {
+        e.preventDefault();
+        e.returnValue = "";
       }
     },
 
@@ -256,6 +273,7 @@ export default defineComponent({
 
 .tabview:deep(.p-tabview-panels) {
   flex: 1 1 auto;
+  padding: 1rem 0 0 1rem;
 }
 
 .tabview:deep(.p-tabview-panel) {
