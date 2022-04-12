@@ -76,6 +76,7 @@ import StyleClass from "primevue/styleclass";
 import Tag from "primevue/tag";
 import AutoComplete from "primevue/autocomplete";
 import Sidebar from "primevue/sidebar";
+import Steps from "primevue/steps";
 
 import { Amplify, Auth } from "aws-amplify";
 import awsconfig from "./aws-exports";
@@ -151,6 +152,7 @@ const app = createApp(App)
   .component("Tag", Tag)
   .component("AutoComplete", AutoComplete)
   .component("Sidebar", Sidebar)
+  .component("Steps", Steps)
   .component("TopBar", TopBar);
 
 const vm = app.mount("#app");

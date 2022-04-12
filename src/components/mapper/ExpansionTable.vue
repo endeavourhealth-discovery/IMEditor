@@ -3,9 +3,13 @@
     :value="contents"
     v-model:selection="selected"
     v-model:expandedRows="expandedRows"
-    dataKey="data"
+    dataKey="iri"
     responsiveLayout="scroll"
     @rowExpand="onRowExpand"
+    @dragstart="startDrag"
+    @row-select="onRowSelect"
+    @row-unselect="onRowUnselect"
+    :reorderableColumns="false"
     :paginator="paginable"
     :rows="20"
   >
@@ -17,8 +21,9 @@
         </span>
       </div>
     </template>
-    <Column v-if="selectable" selectionMode="multiple" headerStyle="width: 3em"></Column>
-    <Column :expander="true" headerStyle="width: 3rem" />
+    <Column v-if="drag" :rowReorder="true" headerStyle="width: 3rem" />
+    <Column v-if="selectable" selectionMode="multiple" headerStyle="width: 3em" />
+    <Column v-if="expandable" :expander="true" headerStyle="width: 3rem" />
     <Column field="name" header="Name">
       <template #body="{data}">
         <span :style="'color: ' + getColourFromType(data.type)" class="p-mx-1 type-icon">
@@ -34,7 +39,7 @@
     </Column>
 
     <template #expansion="{data}">
-      <VueJsonPretty v-if="data.expandView" class="suggestion-json" :data="data.expandView" />
+      <VueJsonPretty class="suggestion-json" :data="data.expandView" />
     </template>
   </DataTable>
 </template>
@@ -53,7 +58,8 @@ const {
 
 export default defineComponent({
   name: "ExpansionTable",
-  props: ["contents", "selectable", "inputSearch", "paginable"],
+  props: ["contents", "selectable", "inputSearch", "paginable", "drag", "expandable"],
+  emits: ["search", "startDrag", "select", "unselect"],
   components: {
     VueJsonPretty
   },
@@ -76,6 +82,21 @@ export default defineComponent({
     },
     search() {
       this.$emit("search", this.searchTerm);
+    },
+
+    startDrag(event: any) {
+      const rowString = event.srcElement.innerText as string;
+      const data = rowString.split("\t");
+      const found = this.contents.find((content: any) => content.iri === data[3]);
+      this.$emit("startDrag", found);
+    },
+
+    onRowSelect(event: any) {
+      this.$emit("select", event.data);
+    },
+
+    onRowUnselect(event: any) {
+      this.$emit("unselect", event.data);
     }
   }
 });
@@ -84,5 +105,16 @@ export default defineComponent({
 <style scoped>
 .type-icon {
   padding-right: 0.5rem;
+}
+
+.drag-el {
+  background-color: #fff;
+  /* margin-bottom: 10px; */
+  /* padding: 5px; */
+  cursor: pointer;
+}
+.drag-el:hover {
+  background-color: #6c757d;
+  color: #ffffff;
 }
 </style>

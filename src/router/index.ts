@@ -1,7 +1,12 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import Editor from "../views/Editor.vue";
 import { SnomedLicense, Env } from "im-library";
-import Mapper from "../views/Mapper.vue";
+import MapperWizard from "../views/MapperWizard.vue";
+import TaskDefinition from "../components/mapper/TaskDefinition.vue";
+import TaskSelection from "../components/mapper/TaskSelection.vue";
+import EntityMatcher from "../components/mapper/EntityMatcher.vue";
+import MappingConfirmation from "../components/mapper/MappingConfirmation.vue";
+
 import store from "@/store/index";
 import { nextTick } from "vue";
 
@@ -38,12 +43,34 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: "/mapper",
-    name: "Mapper",
-    component: Mapper,
+    name: "MapperWizard",
+    component: MapperWizard,
     meta: {
       requiresAuth: true,
       requiresLicense: true
-    }
+    },
+    children: [
+      {
+        path: "definition",
+        name: "TaskDefinition",
+        component: TaskDefinition
+      },
+      {
+        path: "selection",
+        name: "TaskSelection",
+        component: TaskSelection
+      },
+      {
+        path: "match",
+        name: "EntityMatcher",
+        component: EntityMatcher
+      },
+      {
+        path: "confirmation",
+        name: "MappingConfirmation",
+        component: MappingConfirmation
+      }
+    ]
   },
   {
     path: "/snomedLicense",

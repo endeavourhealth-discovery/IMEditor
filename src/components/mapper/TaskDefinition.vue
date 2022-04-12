@@ -1,14 +1,9 @@
 <template>
   <div id="topbar-mapper-container">
-    <TopBar>
-      <template #content>
-        <span class="title"><strong>IM Mapper</strong></span>
-      </template>
-    </TopBar>
     <ConfirmDialog></ConfirmDialog>
     <div id="mapper-main-container">
       <div class="grid grid-nogutter">
-        <div class="col-3">
+        <div class="col-3 tree-bar-container">
           <Tree :value="root" selectionMode="single" v-model:selectionKeys="selectedNode" @node-select="onNodeSelect">
             <template #default="slotProps">
               <div @drop="onDrop(slotProps.node)" @dragover.prevent @dragenter.prevent>
@@ -40,9 +35,7 @@
         <div class="col">
           <TabView :lazy="true" class="tabView">
             <TabPanel header="List">
-              <div v-for="item in unassigned" :key="item.iri" class="drag-el" draggable="true" @dragstart="startDrag(item)">
-                {{ item.name }}
-              </div>
+              <ExpansionTable :contents="unassigned" :selectable="false" :inputSearch="false" :paginable="false" :drag="true" @startDrag="startDrag" />
             </TabPanel>
             <TabPanel header="Contents">
               <ExpansionTable :contents="getTableDataFromNodes(selected.children)" :selectable="false" :inputSearch="false" :paginable="false" />
@@ -54,10 +47,22 @@
               <ExpansionTable :contents="selected.suggestions" :selectable="true" :inputSearch="false" :paginable="true" />
             </TabPanel>
             <TabPanel header="Search">
-              <ExpansionTable :contents="searchResults" :selectable="true" :inputSearch="true" @search="search" :paginable="true" />
+              <ExpansionTable
+                :contents="searchResults"
+                :selectable="false"
+                :inputSearch="true"
+                @search="search"
+                :paginable="true"
+                :drag="true"
+                @startDrag="startDrag"
+              />
             </TabPanel>
           </TabView>
         </div>
+      </div>
+      <div class="button-bar flex flex-row justify-content-end" id="task-definition-button-bar">
+        <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
+        <Button icon="pi pi-check" label="Next" class="save-button" @click="next" />
       </div>
     </div>
   </div>
@@ -73,7 +78,7 @@ import { Vocabulary, Helpers, Models, Enums } from "im-library";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import axios from "axios";
-import { Namespace, TTIriRef, EntityReferenceNode, ComponentDetails, NextComponentSummary, TreeNode } from "im-library/dist/types/interfaces/Interfaces";
+import { Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
 
 const { IM, RDF } = Vocabulary;
 const {
@@ -82,9 +87,9 @@ const {
   ContainerDimensionGetters: { getContainerElementOptimalHeight }
 } = Helpers;
 const {
-  Search: { ConceptSummary, SearchRequest }
+  Search: { SearchRequest }
 } = Models;
-const { ComponentType, BuilderType, SortBy } = Enums;
+const { SortBy } = Enums;
 
 export default defineComponent({
   name: "Mapper",
@@ -94,15 +99,20 @@ export default defineComponent({
     ExpansionTable
   },
   beforeRouteLeave(to, from, next) {
-    this.$confirm.require({
-      message: "All unsaved changes will be lost. Are you sure you want to proceed?",
-      header: "Confirmation",
-      icon: "pi pi-exclamation-triangle",
-      accept: () => {
-        next();
-      }
-    });
+    if (to.matched[0].path === "/mapper") {
+      next();
+    } else {
+      this.$confirm.require({
+        message: "All unsaved changes will be lost. Are you sure you want to proceed?",
+        header: "Confirmation",
+        icon: "pi pi-exclamation-triangle",
+        accept: () => {
+          next();
+        }
+      });
+    }
   },
+  emits: ["nextPage"],
   watch: {
     async selected() {
       if (this.selected.data) {
@@ -119,6 +129,7 @@ export default defineComponent({
   },
   data() {
     return {
+      pageIndex: 0,
       root: [] as any[],
       selectedNode: {} as any,
       selected: {} as any,
@@ -263,16 +274,19 @@ export default defineComponent({
       } else {
         this.searchResults = [];
       }
+    },
+    next() {
+      this.$emit("nextPage", { pageIndex: this.pageIndex, data: this.getTableDataFromNodes(this.root) });
     }
   }
 });
 </script>
 
 <style scoped>
-#topbar-mapper-container {
-  height: 100vh;
-  width: 100vw;
-  overflow: auto;
+.tree-bar-container {
+  height: 100%;
+  display: flex;
+  flex-flow: column nowrap;
 }
 
 #mapper-main-container {
@@ -293,6 +307,17 @@ export default defineComponent({
 
 .title {
   font-size: 2rem;
+}
+
+#task-definition-button-bar {
+  padding: 1rem 1rem 1rem 0;
+  gap: 0.5rem;
+  width: 100%;
+  border-bottom: 1px solid #dee2e6;
+  border-left: 1px solid #dee2e6;
+  border-right: 1px solid #dee2e6;
+  border-radius: 3px;
+  background-color: #ffffff;
 }
 
 .tabView {
@@ -317,6 +342,7 @@ export default defineComponent({
   padding: 5px;
   cursor: pointer;
 }
+
 .drag-el:hover {
   background-color: #6c757d;
   color: #ffffff;
