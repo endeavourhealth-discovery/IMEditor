@@ -46,6 +46,7 @@
               </TabPanel>
             </TabView>
           </div>
+          <Divider layout="vertical" />
           <div class="json-container">
             <span class="json-header">JSON viewer</span>
             <VueJsonPretty v-if="isObjectHasKeysWrapper(conceptUpdated)" class="json" :path="'res'" :data="conceptUpdated" @click="handleClick" />
@@ -90,15 +91,19 @@ export default defineComponent({
   beforeRouteLeave() {
     this.confirmLeaveEditor();
   },
-  created() {
-    window.addEventListener("beforeunload", this.beforeWindowUnload);
-  },
   beforeUnmount() {
     window.removeEventListener("beforeunload", this.beforeWindowUnload);
   },
   computed: {
     isValueSet(): any {
       return isValueSet(this.conceptUpdated[RDF.TYPE]);
+    },
+    toggleConfirmLeaveDialog() {
+      if (JSON.stringify(this.conceptUpdated) === JSON.stringify(this.conceptOriginal)) {
+        window.removeEventListener("beforeunload", this.beforeWindowUnload);
+      } else {
+        window.addEventListener("beforeunload", this.beforeWindowUnload);
+      }
     },
     ...mapState(["editorIri", "editorSavedEntity", "currentUser", "isLoggedIn"])
   },
@@ -226,7 +231,6 @@ export default defineComponent({
   display: flex;
   flex-flow: row nowrap;
   justify-content: flex-start;
-  gap: 1rem;
   overflow: auto;
 }
 
@@ -323,5 +327,11 @@ export default defineComponent({
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 0 1 auto;
+}
+
+.p-divider {
+  height: calc(100% - 2rem) !important;
+  min-height: unset !important;
+  align-self: center;
 }
 </style>

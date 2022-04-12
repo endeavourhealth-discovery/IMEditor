@@ -5,77 +5,49 @@
   <div v-else class="summary-container">
     <div class="float-label-container iri">
       <span class="p-float-label">
-        <InputText class="p-inputtext-lg input-text" v-model="updateIri" type="text" @input="updateEntity({ '@id': iri })" />
+        <InputText class="p-inputtext-lg input-text" v-model="iri" type="text" disabled />
         <label for="Iri">Iri</label>
       </span>
     </div>
     <div class="float-label-container name">
       <span class="p-float-label">
-        <InputText class="p-inputtext-lg input-text" v-model="name" type="text" @input="updateEntity({ 'http://www.w3.org/2000/01/rdf-schema#label': name })" />
+        <InputText class="p-inputtext-lg input-text" v-model="name" type="text" />
         <label for="Name">Name</label>
       </span>
     </div>
     <div class="float-label-container code">
       <span class="p-float-label">
-        <InputText
-          class="p-inputtext-lg input-text"
-          v-model="code"
-          type="text"
-          @input="updateEntity({ '@id': updateIri, 'http://endhealth.info/im#code': code })"
-        />
+        <InputText class="p-inputtext-lg input-text" v-model="code" type="text" />
         <label for="Code">Code</label>
       </span>
     </div>
     <div class="float-label-container description">
       <span class="p-float-label">
-        <Textarea
-          class="p-inputtext-lg input-text description"
-          v-model="description"
-          rows="4"
-          @input="updateEntity({ 'http://www.w3.org/2000/01/rdf-schema#comment': description })"
-        />
+        <Textarea class="p-inputtext-lg input-text description" v-model="description" rows="4" />
         <label for="address">Description</label>
       </span>
     </div>
     <div class="float-label-container version">
       <span class="p-float-label">
-        <InputText class="p-inputtext-lg input-text" v-model="version" type="text" @input="updateEntity" disabled />
+        <InputText class="p-inputtext-lg input-text" v-model="version" type="text" disabled />
         <label for="Version">Version</label>
       </span>
     </div>
     <div class="float-label-container status">
       <span class="p-float-label">
-        <Dropdown
-          class="p-inputtext-lg input-text"
-          v-model="status"
-          :options="filterOptions.status"
-          optionLabel="name"
-          @change="updateEntity({ 'http://endhealth.info/im#status': [status] })"
-        />
+        <Dropdown class="p-inputtext-lg input-text" v-model="status" :options="filterOptions.status" optionLabel="name" />
         <label>Status</label>
       </span>
     </div>
     <div class="float-label-container scheme">
       <span class="p-float-label">
-        <Dropdown
-          class="p-inputtext-lg input-text scheme"
-          v-model="scheme"
-          :options="filterOptions.schemes"
-          optionLabel="name"
-          @change="updateEntity({ '@id': updateIri })"
-        />
+        <Dropdown class="p-inputtext-lg input-text scheme" v-model="scheme" :options="filterOptions.schemes" optionLabel="name" />
         <label>Scheme</label>
       </span>
     </div>
     <div class="float-label-container type">
       <span class="p-float-label">
-        <MultiSelect
-          class="p-inputtext-lg input-text"
-          v-model="types"
-          :options="filterOptions.types"
-          optionLabel="name"
-          @change="updateEntity({ 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': types })"
-        />
+        <MultiSelect class="p-inputtext-lg input-text" v-model="types" :options="filterOptions.types" optionLabel="name" />
         <label>Types</label>
       </span>
     </div>
@@ -102,6 +74,24 @@ export default defineComponent({
         this.processEntity();
       },
       deep: true
+    },
+    name(newValue) {
+      this.updateEntity({ "http://www.w3.org/2000/01/rdf-schema#label": newValue });
+    },
+    code(newValue) {
+      this.updateEntity({ "@id": this.updateIri, "http://endhealth.info/im#code": newValue });
+    },
+    description(newValue) {
+      this.updateEntity({ "http://www.w3.org/2000/01/rdf-schema#comment": newValue });
+    },
+    status(newValue) {
+      this.updateEntity({ "http://endhealth.info/im#status": [newValue] });
+    },
+    scheme() {
+      this.updateEntity({ "@id": this.updateIri });
+    },
+    types(newValue) {
+      this.updateEntity({ "http://www.w3.org/1999/02/22-rdf-syntax-ns#type": newValue });
     }
   },
   computed: {

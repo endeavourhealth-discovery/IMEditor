@@ -171,7 +171,7 @@ export default defineComponent({
   flex: 1 1 auto;
   width: 100%;
   overflow: auto;
-  border: 1px solid black;
+  border: 1px solid #dee2e6;
   border-radius: 3px;
   padding: 1rem;
   display: flex;

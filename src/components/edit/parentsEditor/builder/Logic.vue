@@ -243,9 +243,9 @@ export default defineComponent({
 }
 
 .children-container {
-  padding-left: 1rem;
-  /* border: 1px solid #34314c;
-  border-radius: 3px; */
+  padding: 1rem;
+  border: 1px solid #34314c;
+  border-radius: 3px;
 }
 
 .p-dropdown {
