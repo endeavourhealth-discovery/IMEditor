@@ -68,6 +68,6 @@ export default defineComponent({
 }
 
 .editor-container {
-  flex-grow: 100;
+  flex: 1 1 auto;
 }
 </style>

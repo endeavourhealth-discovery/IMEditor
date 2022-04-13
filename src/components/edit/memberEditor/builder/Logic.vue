@@ -4,27 +4,29 @@
       <ProgressSpinner />
     </div>
   </div>
-  <div v-else class="logic-container" :id="id">
-    <div class="label-container">
-      <span class="float-text">Logic</span>
-      <Dropdown v-model="selected" :options="value.options" optionLabel="name" placeholder="Select logic" />
-    </div>
-    <div class="children-container">
-      <template v-for="item of logicBuild" :key="item.id">
-        <component
-          :is="item.type"
-          :value="item.value"
-          :id="item.id"
-          :position="item.position"
-          :last="logicBuild.length - 2 <= item.position ? true : false"
-          :builderType="item.builderType"
-          @deleteClicked="deleteItemWrapper"
-          @addClicked="addItemWrapper"
-          @updateClicked="updateItemWrapper"
-          @addNextOptionsClicked="addNextOptionsWrapper"
-        >
-        </component>
-      </template>
+  <div v-else class="logic-buttons-container" :id="id">
+    <div class="logic-container">
+      <div class="label-container">
+        <span class="float-text">Logic</span>
+        <Dropdown v-model="selected" :options="value.options" optionLabel="name" placeholder="Select logic" />
+      </div>
+      <div class="children-container">
+        <template v-for="item of logicBuild" :key="item.id">
+          <component
+            :is="item.type"
+            :value="item.value"
+            :id="item.id"
+            :position="item.position"
+            :last="logicBuild.length - 2 <= item.position ? true : false"
+            :builderType="item.builderType"
+            @deleteClicked="deleteItemWrapper"
+            @addClicked="addItemWrapper"
+            @updateClicked="updateItemWrapper"
+            @addNextOptionsClicked="addNextOptionsWrapper"
+          >
+          </component>
+        </template>
+      </div>
     </div>
     <AddDeleteButtons :last="last" :position="position" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
   </div>
@@ -228,17 +230,26 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.logic-container {
+.logic-buttons-container {
+  width: 100%;
+  flex: 1 1 auto;
   display: flex;
-  flex-flow: row;
-  justify-content: center;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.logic-container {
+  flex: 1 1 auto;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
   align-items: flex-start;
-  margin: 0 1rem 0 0;
   padding: 1rem;
-  border: 1px solid #34314c;
+  border: 1px solid #dee2e6;
   border-radius: 3px;
   position: relative;
-  width: fit-content;
+  row-gap: 1rem;
 }
 
 .p-button-label {
@@ -253,16 +264,19 @@ export default defineComponent({
 }
 
 .label-container {
-  margin: 0 1rem 0 0;
   padding: 1rem;
   position: relative;
 }
 
 .children-container {
-  margin: 0 1rem 0 0;
   padding: 1rem;
-  /* border: 1px solid #34314c;
-  border-radius: 3px; */
+  border: 1px solid #dee2e6;
+  border-radius: 3px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-start;
+  gap: 1rem;
 }
 
 .p-dropdown {

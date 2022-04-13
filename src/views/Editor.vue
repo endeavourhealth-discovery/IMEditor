@@ -246,6 +246,7 @@ export default defineComponent({
 .content {
   width: 50%;
   height: 100%;
+  overflow: auto;
 }
 
 .json {
@@ -278,6 +279,7 @@ export default defineComponent({
 .tabview:deep(.p-tabview-panels) {
   flex: 1 1 auto;
   padding: 1rem 0 0 1rem;
+  overflow: auto;
 }
 
 .tabview:deep(.p-tabview-panel) {

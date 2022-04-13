@@ -251,14 +251,16 @@ export default defineComponent({
 
 <style scoped>
 .entity-search-item-container {
+  flex: 1 1 auto;
   display: flex;
   flex-flow: row nowrap;
   justify-content: flex-start;
   align-items: center;
+  gap: 1rem;
 }
 
 .label-container {
-  margin: 0 1rem 0 0;
+  flex: 1 1 auto;
   padding: 1rem;
   border: 1px solid #ffc952;
   border-radius: 3px;
@@ -283,6 +285,6 @@ export default defineComponent({
 }
 
 .search-input {
-  width: 15rem;
+  width: 100%;
 }
 </style>

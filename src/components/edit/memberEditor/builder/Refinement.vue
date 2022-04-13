@@ -221,6 +221,7 @@ export default defineComponent({
 
 <style scoped>
 .refinement-button-container {
+  flex: 1 1 auto;
   display: flex;
   flex-flow: row nowrap;
   justify-content: flex-start;
@@ -229,7 +230,7 @@ export default defineComponent({
   padding: 1rem;
   border: 1px solid #47b8e0;
   border-radius: 3px;
-  margin: 0 1rem 0 0;
+  gap: 1rem;
 }
 
 .refinement-item-container {
@@ -237,6 +238,13 @@ export default defineComponent({
   flex-flow: row nowrap;
   justify-content: flex-start;
   align-items: center;
+}
+
+.refinement-children-container {
+  flex: 1 1 auto;
+  display: flex;
+  flex-flow: column wrap;
+  gap: 1rem;
 }
 
 .label-container {
@@ -262,9 +270,5 @@ export default defineComponent({
   top: 0;
   font-size: 0.75rem;
   color: #6c757d;
-}
-
-.search-input {
-  width: 15rem;
 }
 </style>

@@ -214,15 +214,15 @@ export default defineComponent({
 }
 
 .logic-container {
+  flex: 1 1 auto;
   display: flex;
   flex-flow: row wrap;
   justify-content: flex-start;
   align-items: flex-start;
   padding: 1rem;
-  border: 1px solid #34314c;
+  border: 1px solid #dee2e6;
   border-radius: 3px;
   position: relative;
-  width: 100%;
   gap: 1rem;
 }
 
@@ -244,8 +244,12 @@ export default defineComponent({
 
 .children-container {
   padding: 1rem;
-  border: 1px solid #34314c;
+  border: 1px solid #dee2e6;
   border-radius: 3px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-start;
 }
 
 .p-dropdown {
