@@ -2,7 +2,7 @@
   <div class="switch-button-container">
     <div class="buttons-container">
       <Button icon="fas fa-minus" class="p-button-rounded p-button-outlined p-button-danger" @click="deleteClicked" />
-      <Button v-if="!last" icon="fas fa-plus" class="p-button-rounded p-button-outlined p-button-success" @click="addNextClicked" />
+      <Button icon="fas fa-plus" class="p-button-rounded p-button-outlined p-button-success" @click="addNextClicked" />
     </div>
   </div>
 </template>

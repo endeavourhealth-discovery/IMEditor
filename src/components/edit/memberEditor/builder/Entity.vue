@@ -65,15 +65,15 @@ export default defineComponent({
   },
   components: { SearchMiniOverlay, AddDeleteButtons },
   computed: mapState(["filterOptions", "selectedFilters"]),
-  async mounted() {
-    if (this.value && this.value.entity && isObjectHasKeys(this.value.entity, ["name", "@id"])) {
-      this.updateSelectedResult(this.value.entity);
-      await this.search();
-    } else {
-      this.selectedResult = {} as TTIriRef;
-      this.searchTerm = "";
+  watch: {
+    value: {
+      async handler() {
+        if (!this.value.entity) await this.init();
+      }
     }
-    this.value?.label ? (this.label = this.value.label) : (this.label = "Entity");
+  },
+  async mounted() {
+    await this.init();
   },
   data() {
     return {
@@ -87,6 +87,16 @@ export default defineComponent({
     };
   },
   methods: {
+    async init() {
+      if (this.value && this.value.entity && isObjectHasKeys(this.value.entity, ["name", "@id"])) {
+        this.updateSelectedResult(this.value.entity);
+        await this.search();
+      } else {
+        this.selectedResult = {} as TTIriRef;
+        this.searchTerm = "";
+      }
+      this.value?.label ? (this.label = this.value.label) : (this.label = "Entity");
+    },
     // debounceForSearch(): void {
     //   clearTimeout(this.debounce);
     //   this.debounce = window.setTimeout(() => {

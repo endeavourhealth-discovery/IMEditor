@@ -169,8 +169,18 @@ export default defineComponent({
     },
 
     updateConcept(data: any) {
-      for (const [key, value] of Object.entries(data)) {
-        this.conceptUpdated[key] = value;
+      if (isArrayHasLength(data)) {
+        data.forEach((item: any) => {
+          if (isObjectHasKeys(item)) {
+            for (const [key, value] of Object.entries(item)) {
+              this.conceptUpdated[key] = value;
+            }
+          }
+        });
+      } else if (isObjectHasKeys(data)) {
+        for (const [key, value] of Object.entries(data)) {
+          this.conceptUpdated[key] = value;
+        }
       }
     },
 
