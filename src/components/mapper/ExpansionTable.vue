@@ -87,7 +87,7 @@ export default defineComponent({
     startDrag(event: any) {
       const rowString = event.srcElement.innerText as string;
       const data = rowString.split("\t");
-      const found = this.contents.find((content: any) => content.iri === data[3]);
+      const found = this.contents.find((content: any) => content.iri === data[2]);
       this.$emit("startDrag", found);
     },
 

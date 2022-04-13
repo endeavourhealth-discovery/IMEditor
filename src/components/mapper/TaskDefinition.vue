@@ -160,7 +160,7 @@ export default defineComponent({
     getTableDataFromNodes(nodes: any) {
       if (!isArrayHasLength(nodes)) return [];
       return nodes.map((node: any) => {
-        return { iri: node.data, name: node.label, type: node.type };
+        return { iri: node.data, name: node.label, type: node.type, children: this.getTableDataFromNodes(node.children) };
       });
     },
 
@@ -175,7 +175,7 @@ export default defineComponent({
         label: this.draggedItem.name,
         data: this.draggedItem.iri,
         children: [],
-        type: entityType,
+        type: entityType[RDF.TYPE],
         icon: getFAIconFromType(entityType[RDF.TYPE]),
         colour: getColourFromType(entityType[RDF.TYPE])
       });
@@ -205,9 +205,14 @@ export default defineComponent({
         node.message = "Name already exists";
         return;
       }
-
+      node.data = IM.NAMESPACE + (node.label as string).replaceAll(" ", "");
+      node.type = [
+        {
+          "@id": "http://endhealth.info/im#Task",
+          name: "Task"
+        }
+      ];
       delete node.class;
-      delete node.type;
     },
 
     deleteNewFolder(node: any) {
