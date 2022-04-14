@@ -15,10 +15,9 @@
           :position="child.position"
           :last="refinementBuild.length - 2 <= child.position ? true : false"
           :builderType="child.builderType"
-          @deleteClicked="deleteItemWrapper"
+          @deleteClicked="deleteItem"
           @addClicked="addItemWrapper"
           @updateClicked="updateItemWrapper"
-          @addNextOptionsClicked="addNextOptionsWrapper"
         >
         </component>
       </template>
@@ -64,7 +63,7 @@ export default defineComponent({
   watch: {
     refinementBuild: {
       handler() {
-        if (this.refinementBuild.length > 1) this.onConfirm();
+        if (!this.loading) this.onConfirm();
       },
       deep: true
     }
@@ -76,13 +75,16 @@ export default defineComponent({
   data() {
     return {
       refinementBuild: [] as ComponentDetails[],
-      loading: true
+      loading: true,
+      propertyOptions: {} as any
     };
   },
   methods: {
     async createBuild() {
       this.loading = true;
       this.refinementBuild = [];
+      const propertyTypeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === RDF.PROPERTY);
+      this.propertyOptions = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: propertyTypeOptions };
       if (!this.hasData(this.value)) this.createDefaultBuild();
       else {
         let position = 0;
@@ -123,12 +125,10 @@ export default defineComponent({
 
     createDefaultBuild() {
       this.refinementBuild = [];
-      const propertyTypeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === RDF.PROPERTY);
-      const propertyOptions = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: propertyTypeOptions };
       const property = generateNewComponent(
         ComponentType.ENTITY,
         0,
-        { filterOptions: propertyOptions, entity: undefined, type: ComponentType.ENTITY },
+        { filterOptions: this.propertyOptions, entity: undefined, type: ComponentType.ENTITY },
         this.builderType
       );
       if (property) this.refinementBuild.push(property);
@@ -141,7 +141,23 @@ export default defineComponent({
       return false;
     },
 
-    deleteItemWrapper(data: ComponentDetails): void {
+    deleteItem(data: ComponentDetails): void {
+      const index = this.refinementBuild.findIndex(item => item.position === data.position);
+      this.refinementBuild.splice(index, 1);
+      const length = this.refinementBuild.length;
+      if (length === 0) {
+        this.createDefaultBuild();
+        return;
+      }
+      if (this.refinementBuild[0].type !== ComponentType.ENTITY) {
+        const property = generateNewComponent(
+          ComponentType.ENTITY,
+          0,
+          { filterOptions: this.propertyOptions, entity: undefined, type: ComponentType.ENTITY },
+          this.builderType
+        );
+        if (property) this.refinementBuild.unshift();
+      }
       deleteItem(data, this.refinementBuild, ComponentType.REFINEMENT, this.builderType);
     },
 
@@ -192,7 +208,7 @@ export default defineComponent({
       let children = [] as any[];
       for (const [index, item] of this.refinementBuild.entries()) {
         if (index === 0) propertyIri = item.value.entity ? item.value.entity["@id"] : "";
-        else children.push(item.json);
+        else if (item.type !== ComponentType.ADD_NEXT) children.push(item.json);
       }
       json[propertyIri] = children;
       return json;

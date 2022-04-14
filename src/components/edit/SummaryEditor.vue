@@ -84,14 +84,26 @@ export default defineComponent({
     description(newValue) {
       this.updateEntity({ "http://www.w3.org/2000/01/rdf-schema#comment": newValue });
     },
-    status(newValue) {
-      this.updateEntity({ "http://endhealth.info/im#status": [newValue] });
+    status: {
+      handler(newValue) {
+        this.updateEntity({ "http://endhealth.info/im#status": [{ "@id": newValue["@id"], name: newValue.name }] });
+      },
+      deep: true
     },
-    scheme() {
-      this.updateEntity({ "@id": this.updateIri });
+    scheme: {
+      handler() {
+        this.updateEntity({ "@id": this.updateIri });
+      },
+      deep: true
     },
-    types(newValue) {
-      this.updateEntity({ "http://www.w3.org/1999/02/22-rdf-syntax-ns#type": newValue });
+    types: {
+      handler(newValue) {
+        const filtered = newValue.map((type: any) => {
+          return { "@id": type["@id"], name: type.name };
+        });
+        this.updateEntity({ "http://www.w3.org/1999/02/22-rdf-syntax-ns#type": filtered });
+      },
+      deep: true
     }
   },
   computed: {
