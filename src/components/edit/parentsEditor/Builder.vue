@@ -81,7 +81,7 @@ export default defineComponent({
     },
 
     createDefaultBuild() {
-      this.parentsBuild.push(generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.PARENT));
+      this.parentsBuild = [generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.PARENT)];
     },
 
     generateParentsAsNode() {

@@ -15,10 +15,9 @@
           :position="item.position"
           :last="membersBuild.length - 2 <= item.position ? true : false"
           :builderType="item.builderType"
-          @deleteClicked="deleteItemWrapper"
+          @deleteClicked="deleteItem"
           @addClicked="addItemWrapper"
           @updateClicked="updateItemWrapper"
-          @addNextOptionsClicked="addNextOptionsWrapper"
         >
         </component>
       </template>
@@ -39,7 +38,7 @@ import { Vocabulary, Helpers, Enums } from "im-library";
 import { NextComponentSummary, EntityReferenceNode, ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, deleteItem, updateItem, scrollIntoView, addItem, addNextOptions },
+  EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, deleteItem, updateItem, updatePositions, scrollIntoView, addItem, addNextOptions },
   ConceptTypeMethods: { isValueSet }
 } = Helpers;
 const { IM, SHACL, RDF } = Vocabulary;
@@ -88,32 +87,28 @@ export default defineComponent({
         this.membersBuild.push(await this.processAny(item, position));
         position++;
       }
-      if (isArrayHasLength(this.membersBuild)) {
-        const last = this.membersBuild.length - 1;
-        this.membersBuild.push(genNextOptions(last, this.membersBuild[last].type, BuilderType.MEMBER, ComponentType.BUILDER));
-      } else {
+      if (!isArrayHasLength(this.membersBuild)) {
         this.createDefaultBuild();
       }
       this.loading = false;
     },
 
     createDefaultBuild() {
-      this.membersBuild.push(
+      this.membersBuild = [
         generateNewComponent(
           ComponentType.LOGIC,
           0,
           { iri: "", children: undefined, builderType: BuilderType.MEMBER, options: this.logicOptions },
           BuilderType.MEMBER
         )
-      );
-      this.membersBuild.push(genNextOptions(1, ComponentType.LOGIC, BuilderType.MEMBER, ComponentType.BUILDER));
+      ];
     },
 
     generateMembersAsNode() {
       let json = [];
       if (this.membersBuild.length) {
         for (const item of this.membersBuild) {
-          if (item && item.type !== ComponentType.ADD_NEXT) json.push(item.json);
+          json.push(item.json);
         }
       }
       return json;
@@ -186,18 +181,24 @@ export default defineComponent({
       return result;
     },
 
-    deleteItemWrapper(data: ComponentDetails): void {
-      deleteItem(data, this.membersBuild, ComponentType.BUILDER, BuilderType.MEMBER);
+    deleteItem(data: ComponentDetails): void {
+      const index = this.membersBuild.findIndex(item => item.position === data.position);
+      this.membersBuild.splice(index, 1);
+      const length = this.membersBuild.length;
+      if (length === 0) {
+        this.createDefaultBuild();
+        return;
+      }
+      if (data.position === 0) {
+        if (this.membersBuild[0].type !== ComponentType.LOGIC) {
+          this.membersBuild.unshift(generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.MEMBER));
+        }
+      }
+      updatePositions(this.membersBuild);
     },
 
     updateItemWrapper(data: ComponentDetails) {
       updateItem(data, this.membersBuild);
-    },
-
-    async addNextOptionsWrapper(data: NextComponentSummary): Promise<void> {
-      const nextOptionsComponent = addNextOptions(data, this.membersBuild, BuilderType.MEMBER);
-      await this.$nextTick();
-      scrollIntoView(nextOptionsComponent);
     },
 
     addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
