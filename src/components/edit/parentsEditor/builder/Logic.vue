@@ -22,12 +22,13 @@
             @deleteClicked="deleteItem"
             @addClicked="addItemWrapper"
             @updateClicked="updateItemWrapper"
+            @addNextOptionsClicked="addItemWrapper"
           >
           </component>
         </template>
       </div>
     </div>
-    <AddDeleteButtons :show="showButtons" :position="position" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
+    <AddDeleteButtons :show="showButtons" :position="position" :options="buttonMenuOptions" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
   </div>
 </template>
 
@@ -58,7 +59,7 @@ export default defineComponent({
   components: { AddDeleteButtons, AddNext, Entity },
   computed: mapState(["filterOptions"]),
   emits: {
-    addNextOptionsClicked: (payload: NextComponentSummary) => true,
+    addNextOptionsClicked: (payload: any) => true,
     deleteClicked: (payload: ComponentDetails) => true,
     updateClicked: (payload: ComponentDetails) => true
   },
@@ -90,7 +91,8 @@ export default defineComponent({
       selected: {} as { iri: string; name: string },
       logicBuild: [] as any[],
       loading: true,
-      filteredFilterOptions: {} as any
+      filteredFilterOptions: {} as any,
+      buttonMenuOptions: [ComponentType.LOGIC]
     };
   },
   methods: {
@@ -190,7 +192,7 @@ export default defineComponent({
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Parent" };
       }
-      addItem(data, this.logicBuild, ComponentType.LOGIC, this.builderType, true);
+      addItem(data, this.logicBuild, this.builderType, true);
     },
 
     deleteItem(data: ComponentDetails): void {
@@ -229,11 +231,10 @@ export default defineComponent({
       });
     },
 
-    addNextClicked(): void {
+    addNextClicked(item: any): void {
       this.$emit("addNextOptionsClicked", {
-        previousComponentType: ComponentType.LOGIC,
-        previousPosition: this.position,
-        parentGroup: ComponentType.LOGIC
+        position: this.position + 1,
+        selectedType: item
       });
     }
   }

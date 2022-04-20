@@ -16,7 +16,7 @@
         autoWidth="true"
       />
     </div>
-    <AddDeleteButtons :show="showButtons" :position="position" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
+    <AddDeleteButtons :show="showButtons" :position="position" :options="[]" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
   </div>
   <OverlayPanel class="search-op" ref="miniSearchOP">
     <SearchMiniOverlay :searchTerm="searchTerm" :searchResults="searchResults" :loading="loading" @searchResultSelected="updateSelectedResult" />

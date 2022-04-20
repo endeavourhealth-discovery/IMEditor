@@ -18,6 +18,7 @@
           @deleteClicked="deleteItem"
           @addClicked="addItem"
           @updateClicked="updateItem"
+          @addNextOptionsClicked="addItem"
         >
         </component>
       </template>

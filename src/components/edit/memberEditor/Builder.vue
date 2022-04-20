@@ -18,6 +18,7 @@
           @deleteClicked="deleteItem"
           @addClicked="addItemWrapper"
           @updateClicked="updateItemWrapper"
+          @addNextOptionsClicked="addItemWrapper"
         >
         </component>
       </template>

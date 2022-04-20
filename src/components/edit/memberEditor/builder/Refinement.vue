@@ -18,12 +18,19 @@
           @deleteClicked="deleteItem"
           @addClicked="addItemWrapper"
           @updateClicked="updateItemWrapper"
+          @addNextOptionsClicked="addItemWrapper"
         >
         </component>
       </template>
     </div>
     <div class="refinement-item-container" :id="id">
-      <AddDeleteButtons :show="showButtons" :position="position" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
+      <AddDeleteButtons
+        :show="showButtons"
+        :position="position"
+        :options="getButtonOptions()"
+        @deleteClicked="deleteClicked"
+        @addNextClicked="addNextClicked"
+      />
     </div>
   </div>
 </template>
@@ -55,7 +62,7 @@ export default defineComponent({
   },
   emits: {
     updateClicked: (payload: ComponentDetails) => true,
-    addNextOptionsClicked: (payload: NextComponentSummary) => true,
+    addNextOptionsClicked: (payload: any) => true,
     deleteClicked: (payload: ComponentDetails) => true,
     addClicked: (payload: any) => true
   },
@@ -181,7 +188,7 @@ export default defineComponent({
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Property" };
       }
-      addItem(data, this.refinementBuild, ComponentType.REFINEMENT, this.builderType, false);
+      addItem(data, this.refinementBuild, this.builderType, false);
     },
 
     onConfirm() {
@@ -228,12 +235,15 @@ export default defineComponent({
       return { propertyIri: propertyIri, children: children };
     },
 
-    addNextClicked(): void {
+    addNextClicked(item: any): void {
       this.$emit("addNextOptionsClicked", {
-        previousComponentType: ComponentType.REFINEMENT,
-        previousPosition: this.position,
-        parentGroup: ComponentType.REFINEMENT
+        position: this.position + 1,
+        selectedType: item
       });
+    },
+
+    getButtonOptions() {
+      return [ComponentType.ENTITY, ComponentType.LOGIC, ComponentType.REFINEMENT];
     }
   }
 });

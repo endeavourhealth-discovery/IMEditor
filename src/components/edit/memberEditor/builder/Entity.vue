@@ -16,7 +16,7 @@
         autoWidth="true"
       />
     </div>
-    <AddDeleteButtons :show="showButtons" :position="position" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
+    <AddDeleteButtons :show="showButtons" :position="position" :options="getButtonOptions()" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
   </div>
   <OverlayPanel class="search-op" ref="miniSearchOP">
     <SearchMiniOverlay :searchTerm="searchTerm" :searchResults="searchResults" :loading="loading" @searchResultSelected="updateSelectedResult" />
@@ -59,7 +59,7 @@ export default defineComponent({
   },
   emits: {
     updateClicked: (payload: ComponentDetails) => true,
-    addNextOptionsClicked: (payload: NextComponentSummary) => true,
+    addNextOptionsClicked: (payload: any) => true,
     deleteClicked: (payload: ComponentDetails) => true,
     addClicked: (payload: any) => true
   },
@@ -223,41 +223,27 @@ export default defineComponent({
     },
 
     deleteClicked(): void {
-      if (this.value)
-        this.$emit("deleteClicked", {
-          id: this.id,
-          value: this.selectedResult,
-          position: this.position,
-          type: this.value.type,
-          builderType: this.builderType,
-          json: this.selectedResult,
-          showButtons: this.showButtons
-        });
-      else
-        this.$emit("deleteClicked", {
-          id: this.id,
-          value: this.selectedResult,
-          position: this.position,
-          type: ComponentType.ENTITY,
-          builderType: this.builderType,
-          json: this.selectedResult,
-          showButtons: this.showButtons
-        });
+      this.$emit("deleteClicked", {
+        id: this.id,
+        value: this.selectedResult,
+        position: this.position,
+        type: ComponentType.ENTITY,
+        builderType: this.builderType,
+        json: this.selectedResult,
+        showButtons: this.showButtons
+      });
     },
 
-    addNextClicked(): void {
-      if (this.value)
-        this.$emit("addNextOptionsClicked", {
-          previousComponentType: this.value.type,
-          previousPosition: this.position,
-          parentGroup: this.value.type
-        });
-      else
-        this.$emit("addNextOptionsClicked", {
-          previousComponentType: ComponentType.ENTITY,
-          previousPosition: this.position,
-          parentGroup: ComponentType.ENTITY
-        });
+    addNextClicked(item: any): void {
+      this.$emit("addNextOptionsClicked", {
+        position: this.position + 1,
+        selectedType: item
+      });
+    },
+
+    getButtonOptions() {
+      if (this.builderType === BuilderType.PARENT) return [ComponentType.ENTITY];
+      else return [ComponentType.ENTITY, ComponentType.LOGIC, ComponentType.REFINEMENT];
     }
   }
 });

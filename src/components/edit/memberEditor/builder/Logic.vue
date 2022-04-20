@@ -22,12 +22,13 @@
             @deleteClicked="deleteItem"
             @addClicked="addItemWrapper"
             @updateClicked="updateItemWrapper"
+            @addNextOptionsClicked="addItemWrapper"
           >
           </component>
         </template>
       </div>
     </div>
-    <AddDeleteButtons :show="showButtons" :position="position" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
+    <AddDeleteButtons :show="showButtons" :position="position" :options="getButtonOptions()" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
   </div>
 </template>
 
@@ -61,7 +62,7 @@ export default defineComponent({
   },
   components: { AddDeleteButtons, AddNext, Entity, Refinement },
   emits: {
-    addNextOptionsClicked: (payload: NextComponentSummary) => true,
+    addNextOptionsClicked: (payload: any) => true,
     deleteClicked: (payload: ComponentDetails) => true,
     updateClicked: (payload: ComponentDetails) => true
   },
@@ -207,7 +208,7 @@ export default defineComponent({
       if (data.selectedType === ComponentType.LOGIC) {
         data.value = { options: this.value.options, iri: "", children: undefined };
       }
-      addItem(data, this.logicBuild, ComponentType.LOGIC, this.builderType, true);
+      addItem(data, this.logicBuild, this.builderType, true);
     },
 
     deleteItem(data: ComponentDetails): void {
@@ -248,12 +249,15 @@ export default defineComponent({
       });
     },
 
-    addNextClicked(): void {
+    addNextClicked(item: any): void {
       this.$emit("addNextOptionsClicked", {
-        previousComponentType: ComponentType.LOGIC,
-        previousPosition: this.position,
-        parentGroup: ComponentType.LOGIC
+        position: this.position + 1,
+        selectedType: item
       });
+    },
+
+    getButtonOptions() {
+      return [ComponentType.ENTITY, ComponentType.LOGIC, ComponentType.REFINEMENT];
     }
   }
 });
