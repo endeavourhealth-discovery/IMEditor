@@ -12,7 +12,14 @@
     :reorderableColumns="false"
     :paginator="paginable"
     :rows="20"
+    :loading="loading"
   >
+    <template #empty>
+      No records found.
+    </template>
+    <template #loading>
+      Loading data. Please wait.
+    </template>
     <template v-if="inputSearch" #header>
       <div class="flex justify-content-end">
         <span class="p-input-icon-left ">
@@ -58,7 +65,7 @@ const {
 
 export default defineComponent({
   name: "ExpansionTable",
-  props: ["contents", "selectable", "inputSearch", "paginable", "drag", "expandable"],
+  props: ["contents", "selectable", "inputSearch", "paginable", "drag", "expandable", "loading"],
   emits: ["search", "startDrag", "select", "unselect"],
   components: {
     VueJsonPretty

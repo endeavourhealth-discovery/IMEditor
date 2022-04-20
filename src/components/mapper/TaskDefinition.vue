@@ -1,70 +1,82 @@
 <template>
-  <div id="topbar-mapper-container">
-    <ConfirmDialog></ConfirmDialog>
-    <div id="mapper-main-container">
-      <div class="grid grid-nogutter">
-        <div class="col-3 tree-bar-container">
-          <Tree :value="root" selectionMode="single" v-model:selectionKeys="selectedNode" @node-select="onNodeSelect">
-            <template #default="slotProps">
-              <div @drop="onDrop(slotProps.node)" @dragover.prevent @dragenter.prevent>
-                <span :style="'color: ' + slotProps.node.colour" class="p-mx-1 type-icon">
-                  <font-awesome-icon :icon="slotProps.node.icon" />
-                </span>
-                <span>{{ slotProps.node.label }}</span>
-              </div>
-            </template>
-            <template #newFolder="slotProps">
-              <InputText
-                type="text"
-                aria-describedby="foldername-help"
-                v-model="slotProps.node.label"
-                v-on:keyup.enter="saveNewFolder(slotProps.node)"
-                :class="slotProps.node.class"
-                @dblclick="slotProps.node.type = 'newFolder'"
-              />
-
-              <Button icon="pi pi-check" class="p-button-rounded p-button-text" @click="saveNewFolder(slotProps.node)" />
-              <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text" @click="deleteNewFolder(slotProps.node)" />
-              <div>
-                <small v-if="slotProps.node.class === 'p-invalid'" id="foldername-help" class="p-error">{{ slotProps.node.message }}</small>
-              </div>
-            </template>
-          </Tree>
-          <Button label="Add folder" @click="addNewFolder" />
-        </div>
-        <div class="col">
-          <TabView :lazy="true" class="tabView">
-            <TabPanel header="List">
-              <ExpansionTable :contents="unassigned" :selectable="false" :inputSearch="false" :paginable="false" :drag="true" @startDrag="startDrag" />
-            </TabPanel>
-            <TabPanel header="Contents">
-              <ExpansionTable :contents="getTableDataFromNodes(selected.children)" :selectable="false" :inputSearch="false" :paginable="false" />
-            </TabPanel>
-            <TabPanel header="Details">
-              <VueJsonPretty class="json" :data="selectedView" />
-            </TabPanel>
-            <TabPanel header="Suggestions">
-              <ExpansionTable :contents="selected.suggestions" :selectable="true" :inputSearch="false" :paginable="true" />
-            </TabPanel>
-            <TabPanel header="Search">
-              <ExpansionTable
-                :contents="searchResults"
-                :selectable="false"
-                :inputSearch="true"
-                @search="search"
-                :paginable="true"
-                :drag="true"
-                @startDrag="startDrag"
-              />
-            </TabPanel>
-          </TabView>
-        </div>
-      </div>
-      <div class="button-bar flex flex-row justify-content-end" id="task-definition-button-bar">
-        <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
-        <Button icon="pi pi-check" label="Next" class="save-button" @click="next" />
-      </div>
+  <ConfirmDialog></ConfirmDialog>
+  <div class="grid grid-nogutter">
+    <div class="col-3 tree-bar-container">
+      <Tree :value="root" selectionMode="single" v-model:selectionKeys="selectedNode" @node-select="onNodeSelect">
+        <template #default="slotProps">
+          <span :style="'color: ' + slotProps.node.colour" class="p-mx-1 type-icon">
+            <font-awesome-icon :icon="slotProps.node.icon" />
+          </span>
+          <span>{{ slotProps.node.label }}</span>
+          <span style="color: red" class="p-mx-1 delete-icon clickable">
+            <font-awesome-icon :icon="['fas', 'trash']" @click="deleteNewFolder(slotProps.node)" />
+          </span>
+        </template>
+        <template #task="slotProps">
+          <div @drop="onDrop(slotProps.node)" @dragover.prevent @dragenter.prevent @dblclick="editFolder(slotProps.node)">
+            <span :style="'color: ' + slotProps.node.colour" class="p-mx-1 type-icon">
+              <font-awesome-icon :icon="slotProps.node.icon" />
+            </span>
+            <span>{{ slotProps.node.label }}</span>
+          </div>
+        </template>
+        <template #newFolder="slotProps">
+          <InputText
+            type="text"
+            aria-describedby="foldername-help"
+            v-model="slotProps.node.label"
+            v-on:keyup.enter="saveNewFolder(slotProps.node)"
+            :class="slotProps.node.class"
+            @dblclick="slotProps.node.type = 'newFolder'"
+          />
+          <Button icon="pi pi-check" class="p-button-rounded p-button-text" @click="saveNewFolder(slotProps.node)" />
+          <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text" @click="deleteNewFolder(slotProps.node)" />
+          <div>
+            <small v-if="slotProps.node.class === 'p-invalid'" id="foldername-help" class="p-error">{{ slotProps.node.message }}</small>
+          </div>
+        </template>
+      </Tree>
+      <Button label="Add folder" @click="addNewFolder" />
     </div>
+    <div class="col">
+      <TabView :lazy="true" class="tabView">
+        <TabPanel header="List">
+          <ExpansionTable
+            :contents="unassigned"
+            :selectable="false"
+            :inputSearch="false"
+            :paginable="false"
+            :drag="true"
+            @startDrag="startDrag"
+            :loading="loading"
+          />
+        </TabPanel>
+        <TabPanel header="Contents">
+          <ExpansionTable :contents="getTableDataFromNodes(selected.children)" :selectable="false" :inputSearch="false" :paginable="false" />
+        </TabPanel>
+        <TabPanel header="Details">
+          <VueJsonPretty class="json" :data="selectedView" />
+        </TabPanel>
+        <TabPanel header="Suggestions">
+          <ExpansionTable :contents="selected.suggestions" :selectable="true" :inputSearch="false" :paginable="true" />
+        </TabPanel>
+        <TabPanel header="Search">
+          <ExpansionTable
+            :contents="searchResults"
+            :selectable="false"
+            :inputSearch="true"
+            @search="search"
+            :paginable="true"
+            :drag="true"
+            @startDrag="startDrag"
+          />
+        </TabPanel>
+      </TabView>
+    </div>
+  </div>
+  <div class="button-bar flex flex-row justify-content-end" id="mapping-button-bar">
+    <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
+    <Button icon="pi pi-check" label="Next" class="save-button" @click="next" />
   </div>
 </template>
 
@@ -120,7 +132,7 @@ export default defineComponent({
         this.selected.suggestions = (await EntityService.getMappingSuggestions(this.selected.data, this.selected.label)).map((suggestion: any) => {
           return { iri: suggestion["@id"], name: suggestion.name, type: suggestion.type };
         });
-        this.selected.children = await EntityService.getEntityChildren(this.selected.data);
+        // this.selected.children = await EntityService.getEntityChildren(this.selected.data);
       }
     }
   },
@@ -155,6 +167,10 @@ export default defineComponent({
   methods: {
     async init() {
       await this.getUnassigned();
+    },
+
+    editFolder(node: any) {
+      node.type = "newFolder";
     },
 
     getTableDataFromNodes(nodes: any) {
@@ -206,18 +222,13 @@ export default defineComponent({
         return;
       }
       node.data = IM.NAMESPACE + (node.label as string).replaceAll(" ", "");
-      node.type = [
-        {
-          "@id": "http://endhealth.info/im#Task",
-          name: "Task"
-        }
-      ];
+      node.type = "task";
       delete node.class;
     },
 
     deleteNewFolder(node: any) {
       const i = this.root.findIndex(rootNode => rootNode.key === node.key);
-      this.root.splice(i, 1);
+      if (i !== -1) this.root.splice(i, 1);
     },
 
     onNodeSelect(node: any) {
@@ -294,27 +305,11 @@ export default defineComponent({
   flex-flow: column nowrap;
 }
 
-#mapper-main-container {
-  width: 100%;
-  height: calc(100% - 93.81px);
-  overflow-y: auto;
-}
-
-.loading-container {
-  width: 100%;
-  height: 100%;
-}
-
-.content {
-  width: 50%;
-  height: 100%;
-}
-
 .title {
   font-size: 2rem;
 }
 
-#task-definition-button-bar {
+#mapping-button-bar {
   padding: 1rem 1rem 1rem 0;
   gap: 0.5rem;
   width: 100%;
@@ -329,6 +324,10 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   height: 100%;
+}
+
+.delete-icon {
+  padding-left: 0.5rem;
 }
 
 .type-icon {
