@@ -17,7 +17,7 @@
             :value="item.value"
             :id="item.id"
             :position="item.position"
-            :last="logicBuild.length - 2 <= item.position ? true : false"
+            :showButtons="item.showButtons"
             :builderType="item.builderType"
             @deleteClicked="deleteItem"
             @addClicked="addItemWrapper"
@@ -27,7 +27,7 @@
         </template>
       </div>
     </div>
-    <AddDeleteButtons :last="last" :position="position" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
+    <AddDeleteButtons :show="showButtons" :position="position" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
   </div>
 </template>
 
@@ -52,7 +52,7 @@ export default defineComponent({
     id: { type: String, required: true },
     position: { type: Number, required: true },
     value: { type: Object as PropType<{ iri: string; children: PropType<Array<any>> | undefined }>, required: false },
-    last: { type: Boolean, required: true },
+    showButtons: { type: Boolean, default: true },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   components: { AddDeleteButtons, AddNext, Entity },
@@ -81,8 +81,8 @@ export default defineComponent({
       deep: true
     }
   },
-  async mounted() {
-    await this.init();
+  mounted() {
+    this.init();
   },
   data() {
     return {
@@ -94,26 +94,27 @@ export default defineComponent({
     };
   },
   methods: {
-    async init() {
+    init() {
       this.loading = true;
+      const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === IM.CONCEPT || type["@id"] === IM.CONCEPT_SET);
+      this.filteredFilterOptions = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
       if (this.value && isObjectHasKeys(this.value, ["iri", "children"])) {
         const found = this.options.find(option => option.iri === this.value?.iri);
         this.selected = found ? found : this.options[0];
-        await this.createBuild();
+        this.createBuild();
       } else {
         this.selected = this.options[0];
         this.createDefaultBuild();
       }
-      const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === IM.CONCEPT || type["@id"] === IM.CONCEPT_SET);
-      this.filteredFilterOptions = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
       this.loading = false;
     },
-    async createBuild() {
+
+    createBuild() {
       this.logicBuild = [];
       if (!this.hasChildren(this.value)) return;
       let position = 0;
       for (const child of this.value.children) {
-        this.logicBuild.push(await this.processChild(child, position));
+        this.logicBuild.push(this.processChild(child, position));
         position++;
       }
       if (!isArrayHasLength(this.logicBuild)) {
@@ -127,12 +128,13 @@ export default defineComponent({
           ComponentType.ENTITY,
           0,
           { filterOptions: this.filteredFilterOptions, entity: undefined, type: ComponentType.ENTITY, label: "Parent" },
-          BuilderType.PARENT
+          BuilderType.PARENT,
+          true
         )
       ];
     },
 
-    async processChild(child: any, position: number) {
+    processChild(child: any, position: number) {
       if (isObjectHasKeys(child, ["@id"])) return this.processIri(child, position);
     },
 
@@ -143,7 +145,8 @@ export default defineComponent({
         ComponentType.ENTITY,
         position,
         { filterOptions: options, entity: iri, type: ComponentType.ENTITY, label: "Parent" },
-        this.builderType
+        this.builderType,
+        true
       );
     },
 
@@ -155,11 +158,12 @@ export default defineComponent({
     onConfirm(): void {
       this.$emit("updateClicked", {
         id: this.id,
-        value: { iri: this.selected.iri, children: this.value?.children },
+        value: { iri: this.selected.iri, children: this.logicBuild },
         position: this.position,
         type: ComponentType.LOGIC,
         builderType: this.builderType,
-        json: this.createLogicJson()
+        json: this.createLogicJson(),
+        showButtons: this.showButtons
       });
     },
 
@@ -168,7 +172,7 @@ export default defineComponent({
       if (this.selected.iri) json[this.selected.iri] = [];
       if (this.logicBuild.length) {
         for (const item of this.logicBuild) {
-          json[this.selected.iri].push(item.json);
+          if (isObjectHasKeys(item, ["json"])) json[this.selected.iri].push(item.json);
         }
       }
       return json;
@@ -186,7 +190,7 @@ export default defineComponent({
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Parent" };
       }
-      addItem(data, this.logicBuild, ComponentType.LOGIC, this.builderType);
+      addItem(data, this.logicBuild, ComponentType.LOGIC, this.builderType, true);
     },
 
     deleteItem(data: ComponentDetails): void {
@@ -204,7 +208,8 @@ export default defineComponent({
               ComponentType.ENTITY,
               0,
               { filterOptions: this.filteredFilterOptions, entity: undefined, type: ComponentType.ENTITY, label: "Parent" },
-              BuilderType.PARENT
+              BuilderType.PARENT,
+              true
             )
           );
         }
@@ -219,7 +224,8 @@ export default defineComponent({
         position: this.position,
         type: ComponentType.LOGIC,
         builderType: this.builderType,
-        json: this.createLogicJson()
+        json: this.createLogicJson(),
+        showButtons: this.showButtons
       });
     },
 

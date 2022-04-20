@@ -16,6 +16,7 @@
         autoWidth="true"
       />
     </div>
+    <AddDeleteButtons :show="showButtons" :position="position" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
   </div>
   <OverlayPanel class="search-op" ref="miniSearchOP">
     <SearchMiniOverlay :searchTerm="searchTerm" :searchResults="searchResults" :loading="loading" @searchResultSelected="updateSelectedResult" />
@@ -25,6 +26,7 @@
 <script lang="ts">
 import { defineComponent, PropType } from "@vue/runtime-core";
 import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/SearchMiniOverlay.vue";
+import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import { mapState } from "vuex";
 import axios from "axios";
 import EntityService from "@/services/EntityService";
@@ -45,7 +47,7 @@ export default defineComponent({
     id: { type: String, required: true },
     position: { type: Number, required: true },
     value: { type: Object as PropType<{ propertyIri: string; quantifier: TTIriRef }>, required: false },
-    last: { type: Boolean, required: true },
+    showButtons: { type: Boolean, default: true },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
@@ -54,7 +56,7 @@ export default defineComponent({
     deleteClicked: (payload: ComponentDetails) => true,
     addClicked: (payload: any) => true
   },
-  components: { SearchMiniOverlay },
+  components: { AddDeleteButtons, SearchMiniOverlay },
   computed: mapState(["filterOptions", "selectedFilters"]),
   async mounted() {
     if (this.value && this.hasData(this.value)) {
@@ -170,8 +172,29 @@ export default defineComponent({
         position: this.position,
         type: ComponentType.QUANTIFIER,
         json: this.selectedResult,
-        builderType: this.builderType
+        builderType: this.builderType,
+        showButtons: this.showButtons
       };
+    },
+
+    deleteClicked(): void {
+      this.$emit("deleteClicked", {
+        id: this.id,
+        value: this.selectedResult,
+        position: this.position,
+        type: ComponentType.QUANTIFIER,
+        builderType: this.builderType,
+        json: this.selectedResult,
+        showButtons: this.showButtons
+      });
+    },
+
+    addNextClicked(): void {
+      this.$emit("addNextOptionsClicked", {
+        previousComponentType: ComponentType.QUANTIFIER,
+        previousPosition: this.position,
+        parentGroup: this.builderType
+      });
     }
   }
 });
@@ -184,10 +207,11 @@ export default defineComponent({
   flex-flow: row nowrap;
   justify-content: flex-start;
   align-items: center;
+  gap: 1rem;
 }
 
 .label-container {
-  width: 100%;
+  flex: 1 1 auto;
   padding: 1rem;
   border: 1px solid #ffc952;
   border-radius: 3px;

@@ -1,5 +1,5 @@
 <template>
-  <div class="switch-button-container">
+  <div v-if="show" class="switch-button-container">
     <div class="buttons-container">
       <Button icon="fas fa-minus" class="p-button-rounded p-button-outlined p-button-danger" @click="deleteClicked" />
       <Button icon="fas fa-plus" class="p-button-rounded p-button-outlined p-button-success" @click="addNextClicked" />
@@ -14,7 +14,7 @@ export default defineComponent({
   name: "AddDeleteButtons",
   props: {
     position: Number,
-    last: Boolean
+    show: Boolean
   },
   emits: {
     addNextClicked: () => true,

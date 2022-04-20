@@ -13,8 +13,8 @@
           :value="child.value"
           :id="child.id"
           :position="child.position"
-          :last="refinementBuild.length - 2 <= child.position ? true : false"
           :builderType="child.builderType"
+          :showButtons="child.showButtons"
           @deleteClicked="deleteItem"
           @addClicked="addItemWrapper"
           @updateClicked="updateItemWrapper"
@@ -23,7 +23,7 @@
       </template>
     </div>
     <div class="refinement-item-container" :id="id">
-      <AddDeleteButtons :last="last" :position="position" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
+      <AddDeleteButtons :show="showButtons" :position="position" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
     </div>
   </div>
 </template>
@@ -50,7 +50,7 @@ export default defineComponent({
     id: { type: String, required: true },
     position: { type: Number, required: true },
     value: { type: Object as PropType<{ propertyIri: string; children: any[] }>, required: false },
-    last: { type: Boolean, required: true },
+    showButtons: { type: Boolean, default: true },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
@@ -100,7 +100,8 @@ export default defineComponent({
             type: ComponentType.ENTITY,
             label: "Property"
           },
-          this.builderType
+          this.builderType,
+          false
         );
         if (property) {
           this.refinementBuild.push(property);
@@ -112,7 +113,8 @@ export default defineComponent({
             ComponentType.QUANTIFIER,
             position,
             { propertyIri: this.value.propertyIri, quantifier: child },
-            this.builderType
+            this.builderType,
+            false
           );
           if (quantifier) {
             this.refinementBuild.push(quantifier);
@@ -128,11 +130,12 @@ export default defineComponent({
       const property = generateNewComponent(
         ComponentType.ENTITY,
         0,
-        { filterOptions: this.propertyOptions, entity: undefined, type: ComponentType.ENTITY },
-        this.builderType
+        { filterOptions: this.propertyOptions, entity: undefined, type: ComponentType.ENTITY, label: "Property" },
+        this.builderType,
+        false
       );
       if (property) this.refinementBuild.push(property);
-      const quantifier = generateNewComponent(ComponentType.QUANTIFIER, 1, undefined, this.builderType);
+      const quantifier = generateNewComponent(ComponentType.QUANTIFIER, 1, undefined, this.builderType, true);
       if (quantifier) this.refinementBuild.push(quantifier);
     },
 
@@ -153,8 +156,9 @@ export default defineComponent({
         const property = generateNewComponent(
           ComponentType.ENTITY,
           0,
-          { filterOptions: this.propertyOptions, entity: undefined, type: ComponentType.ENTITY },
-          this.builderType
+          { filterOptions: this.propertyOptions, entity: undefined, type: ComponentType.ENTITY, label: "Property" },
+          this.builderType,
+          false
         );
         if (property) this.refinementBuild.unshift();
       }
@@ -177,7 +181,7 @@ export default defineComponent({
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Property" };
       }
-      addItem(data, this.refinementBuild, ComponentType.REFINEMENT, this.builderType);
+      addItem(data, this.refinementBuild, ComponentType.REFINEMENT, this.builderType, false);
     },
 
     onConfirm() {

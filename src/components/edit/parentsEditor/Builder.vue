@@ -13,7 +13,7 @@
           :value="item.value"
           :id="item.id"
           :position="item.position"
-          :last="parentsBuild.length - 2 <= item.position ? true : false"
+          :showButtons="item.showButtons"
           :builderType="item.builderType"
           @deleteClicked="deleteItem"
           @addClicked="addItem"
@@ -81,7 +81,7 @@ export default defineComponent({
     },
 
     createDefaultBuild() {
-      this.parentsBuild = [generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.PARENT)];
+      this.parentsBuild = [generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.PARENT, true)];
     },
 
     generateParentsAsNode() {
@@ -99,7 +99,7 @@ export default defineComponent({
     },
 
     processObject(item: { key: string; value: TTIriRef[] }, position: number): any {
-      return generateNewComponent(ComponentType.LOGIC, position, { iri: item.key, children: item.value }, BuilderType.PARENT);
+      return generateNewComponent(ComponentType.LOGIC, position, { iri: item.key, children: item.value }, BuilderType.PARENT, true);
     },
 
     deleteItem(data: ComponentDetails): void {
@@ -112,7 +112,7 @@ export default defineComponent({
       }
       if (data.position === 0) {
         if (this.parentsBuild[0].type !== ComponentType.LOGIC) {
-          this.parentsBuild.unshift(generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.PARENT));
+          this.parentsBuild.unshift(generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.PARENT, true));
         }
       }
       updatePositions(this.parentsBuild);
@@ -124,7 +124,7 @@ export default defineComponent({
     },
 
     addItem(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
-      const newComponent = generateNewComponent(data.selectedType, data.position, data.value, BuilderType.PARENT);
+      const newComponent = generateNewComponent(data.selectedType, data.position, data.value, BuilderType.PARENT, true);
       if (!newComponent) return;
       this.parentsBuild[data.position] = newComponent;
       updatePositions(this.parentsBuild);

@@ -17,7 +17,7 @@
             :value="item.value"
             :id="item.id"
             :position="item.position"
-            :last="logicBuild.length - 2 <= item.position ? true : false"
+            :showButtons="item.showButtons"
             :builderType="item.builderType"
             @deleteClicked="deleteItem"
             @addClicked="addItemWrapper"
@@ -27,7 +27,7 @@
         </template>
       </div>
     </div>
-    <AddDeleteButtons :last="last" :position="position" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
+    <AddDeleteButtons :show="showButtons" :position="position" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
   </div>
 </template>
 
@@ -56,7 +56,7 @@ export default defineComponent({
       type: Object as PropType<{ iri: string; children: PropType<Array<any>> | undefined; options: { iri: string; name: string }[] }>,
       required: true
     },
-    last: { type: Boolean, required: true },
+    showButtons: { type: Boolean, default: true },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   components: { AddDeleteButtons, AddNext, Entity, Refinement },
@@ -80,7 +80,7 @@ export default defineComponent({
     },
     value: {
       async handler() {
-        if (!this.value) await this.init();
+        if (!this.value.children && this.logicBuild[0].type !== ComponentType.ADD_NEXT) await this.init();
       },
       deep: true
     }
@@ -99,7 +99,10 @@ export default defineComponent({
   methods: {
     async init() {
       this.loading = true;
-      const found = this.value.options.find(option => option.iri === this.value.iri);
+      let found;
+      if (isObjectHasKeys(this.value, ["options"])) {
+        found = this.value.options.find(option => option.iri === this.value.iri);
+      }
       this.selected = found ? found : this.value.options[0];
       await this.createBuild();
       this.loading = false;
@@ -135,7 +138,7 @@ export default defineComponent({
 
     processLogic(child: any, position: number) {
       for (const [key, value] of Object.entries(child)) {
-        return generateNewComponent(ComponentType.LOGIC, position, { iri: key, children: value }, this.builderType);
+        return generateNewComponent(ComponentType.LOGIC, position, { iri: key, children: value }, this.builderType, true);
       }
     },
 
@@ -149,13 +152,14 @@ export default defineComponent({
         ComponentType.ENTITY,
         position,
         { filterOptions: options, entity: iri, type: ComponentType.ENTITY, label: "Member" },
-        this.builderType
+        this.builderType,
+        true
       );
     },
 
     processRefinement(child: any, position: number) {
       for (const [key, value] of Object.entries(child)) {
-        return generateNewComponent(ComponentType.REFINEMENT, position, { propertyIri: key, children: value }, this.builderType);
+        return generateNewComponent(ComponentType.REFINEMENT, position, { propertyIri: key, children: value }, this.builderType, true);
       }
     },
 
@@ -167,11 +171,12 @@ export default defineComponent({
     onConfirm(): void {
       this.$emit("updateClicked", {
         id: this.id,
-        value: { iri: this.selected.iri, children: this.value.children, options: this.value.options },
+        value: { iri: this.selected.iri, children: this.logicBuild, options: this.value.options },
         position: this.position,
         type: ComponentType.LOGIC,
         json: this.createLogicJson(),
-        builderType: this.builderType
+        builderType: this.builderType,
+        showButtons: true
       });
     },
 
@@ -180,7 +185,7 @@ export default defineComponent({
       if (this.selected.iri) json[this.selected.iri] = [];
       if (this.logicBuild.length) {
         for (const item of this.logicBuild) {
-          if (this.addDefaultOptions.includes(item.type)) json[this.selected.iri].push(item.json);
+          if (item.type !== ComponentType.ADD_NEXT) json[this.selected.iri].push(item.json);
         }
       }
       return json;
@@ -202,7 +207,7 @@ export default defineComponent({
       if (data.selectedType === ComponentType.LOGIC) {
         data.value = { options: this.value.options, iri: "", children: undefined };
       }
-      addItem(data, this.logicBuild, ComponentType.LOGIC, this.builderType);
+      addItem(data, this.logicBuild, ComponentType.LOGIC, this.builderType, true);
     },
 
     deleteItem(data: ComponentDetails): void {
@@ -225,7 +230,8 @@ export default defineComponent({
             position: 0,
             type: ComponentType.ADD_NEXT,
             json: {},
-            builderType: data.builderType
+            builderType: data.builderType,
+            showButtons: true
           });
         }
       }

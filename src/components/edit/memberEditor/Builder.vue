@@ -13,7 +13,7 @@
           :value="item.value"
           :id="item.id"
           :position="item.position"
-          :last="membersBuild.length - 2 <= item.position ? true : false"
+          :showButtons="item.showButtons"
           :builderType="item.builderType"
           @deleteClicked="deleteItem"
           @addClicked="addItemWrapper"
@@ -36,6 +36,7 @@ import Refinement from "@/components/edit/memberEditor/builder/Refinement.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums } from "im-library";
 import { NextComponentSummary, EntityReferenceNode, ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { truncate } from "fs";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, deleteItem, updateItem, updatePositions, scrollIntoView, addItem, addNextOptions },
@@ -99,7 +100,8 @@ export default defineComponent({
           ComponentType.LOGIC,
           0,
           { iri: "", children: undefined, builderType: BuilderType.MEMBER, options: this.logicOptions },
-          BuilderType.MEMBER
+          BuilderType.MEMBER,
+          true
         )
       ];
     },
@@ -137,7 +139,8 @@ export default defineComponent({
           ComponentType.ENTITY,
           position,
           { filterOptions: options, entity: iri, type: ComponentType.ENTITY, label: "Set" },
-          BuilderType.MEMBER
+          BuilderType.MEMBER,
+          true
         );
       } else {
         const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === IM.CONCEPT);
@@ -146,7 +149,8 @@ export default defineComponent({
           ComponentType.ENTITY,
           position,
           { filterOptions: options, entity: iri, type: ComponentType.ENTITY, label: "Member" },
-          BuilderType.MEMBER
+          BuilderType.MEMBER,
+          true
         );
       }
     },
@@ -163,10 +167,11 @@ export default defineComponent({
               builderType: BuilderType.MEMBER,
               options: this.logicOptions
             },
-            BuilderType.MEMBER
+            BuilderType.MEMBER,
+            true
           );
         } else {
-          return generateNewComponent(ComponentType.REFINEMENT, position, { propertyIri: key, children: value }, BuilderType.MEMBER);
+          return generateNewComponent(ComponentType.REFINEMENT, position, { propertyIri: key, children: value }, BuilderType.MEMBER, true);
         }
       }
     },
@@ -191,7 +196,7 @@ export default defineComponent({
       }
       if (data.position === 0) {
         if (this.membersBuild[0].type !== ComponentType.LOGIC) {
-          this.membersBuild.unshift(generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.MEMBER));
+          this.membersBuild.unshift(generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.MEMBER, true));
         }
       }
       updatePositions(this.membersBuild);
@@ -213,7 +218,7 @@ export default defineComponent({
       if (data.selectedType === ComponentType.LOGIC) {
         data.value = { options: this.logicOptions, iri: "", children: undefined };
       }
-      addItem(data, this.membersBuild, ComponentType.BUILDER, BuilderType.MEMBER);
+      addItem(data, this.membersBuild, ComponentType.BUILDER, BuilderType.MEMBER, true);
     }
   }
 });

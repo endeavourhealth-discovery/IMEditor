@@ -16,7 +16,7 @@
         autoWidth="true"
       />
     </div>
-    <AddDeleteButtons v-if="label !== 'Property'" :last="last" :position="position" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
+    <AddDeleteButtons :show="showButtons" :position="position" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
   </div>
   <OverlayPanel class="search-op" ref="miniSearchOP">
     <SearchMiniOverlay :searchTerm="searchTerm" :searchResults="searchResults" :loading="loading" @searchResultSelected="updateSelectedResult" />
@@ -54,7 +54,7 @@ export default defineComponent({
       }>,
       required: true
     },
-    last: { type: Boolean, required: true },
+    showButtons: { type: Boolean, required: true },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
@@ -206,7 +206,8 @@ export default defineComponent({
           position: this.position,
           type: this.value.type,
           json: this.selectedResult,
-          builderType: this.builderType
+          builderType: this.builderType,
+          showButtons: this.showButtons
         };
       else {
         return {
@@ -215,7 +216,8 @@ export default defineComponent({
           position: this.position,
           type: ComponentType.ENTITY,
           json: {},
-          builderType: this.builderType
+          builderType: this.builderType,
+          showButtons: this.showButtons
         };
       }
     },
@@ -228,7 +230,8 @@ export default defineComponent({
           position: this.position,
           type: this.value.type,
           builderType: this.builderType,
-          json: this.selectedResult
+          json: this.selectedResult,
+          showButtons: this.showButtons
         });
       else
         this.$emit("deleteClicked", {
@@ -237,7 +240,8 @@ export default defineComponent({
           position: this.position,
           type: ComponentType.ENTITY,
           builderType: this.builderType,
-          json: this.selectedResult
+          json: this.selectedResult,
+          showButtons: this.showButtons
         });
     },
 
