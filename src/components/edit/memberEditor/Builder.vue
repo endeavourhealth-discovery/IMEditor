@@ -219,7 +219,7 @@ export default defineComponent({
       if (data.selectedType === ComponentType.LOGIC) {
         data.value = { options: this.logicOptions, iri: "", children: undefined };
       }
-      addItem(data, this.membersBuild, ComponentType.BUILDER, BuilderType.MEMBER, true);
+      addItem(data, this.membersBuild, BuilderType.MEMBER, true);
     }
   }
 });
