@@ -37,11 +37,7 @@
               </TabPanel>
               <TabPanel v-if="isValueSet" header="Members">
                 <div class="panel-content" id="member-editor-container">
-                  <MemberEditor
-                    v-if="active === 2"
-                    :updatedMembers="conceptUpdated['http://endhealth.info/im#definition'] ? conceptUpdated['http://endhealth.info/im#definition'] : {}"
-                    @concept-updated="updateConcept"
-                  />
+                  <MemberEditor v-if="active === 2" :updatedConcept="conceptUpdated" @concept-updated="updateConcept" />
                 </div>
               </TabPanel>
             </TabView>
