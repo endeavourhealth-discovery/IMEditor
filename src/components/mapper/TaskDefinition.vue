@@ -2,14 +2,14 @@
   <ConfirmDialog></ConfirmDialog>
   <div class="grid grid-nogutter">
     <div class="col-3 tree-bar-container">
-      <Tree :value="root" selectionMode="single" v-model:selectionKeys="selectedNode" @node-select="onNodeSelect">
+      <Tree :value="root" selectionMode="single" v-model:selectionKeys="selectedNode" @node-select="onNodeSelect" :loading="loading">
         <template #default="slotProps">
           <span :style="'color: ' + slotProps.node.colour" class="p-mx-1 type-icon">
             <font-awesome-icon :icon="slotProps.node.icon" />
           </span>
           <span>{{ slotProps.node.label }}</span>
           <span style="color: red" class="p-mx-1 delete-icon clickable">
-            <font-awesome-icon :icon="['fas', 'trash']" @click="deleteNewFolder(slotProps.node)" />
+            <font-awesome-icon :icon="['fas', 'trash']" @click="deleteTaskAction(slotProps.node)" />
           </span>
         </template>
         <template #task="slotProps">
@@ -52,13 +52,7 @@
           />
         </TabPanel>
         <TabPanel header="Contents">
-          <ExpansionTable :contents="getTableDataFromNodes(selected.children)" :selectable="false" :inputSearch="false" :paginable="false" />
-        </TabPanel>
-        <TabPanel header="Details">
-          <VueJsonPretty class="json" :data="selectedView" />
-        </TabPanel>
-        <TabPanel header="Suggestions">
-          <ExpansionTable :contents="selected.suggestions" :selectable="true" :inputSearch="false" :paginable="true" />
+          <ExpansionTable :contents="getTableDataFromNodes(selected.children)" :selectable="false" :inputSearch="false" :paginable="false" :expandable="true" />
         </TabPanel>
         <TabPanel header="Search">
           <ExpansionTable
@@ -92,7 +86,7 @@ import "vue-json-pretty/lib/styles.css";
 import axios from "axios";
 import { Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
 
-const { IM, RDF } = Vocabulary;
+const { IM, RDF, RDFS } = Vocabulary;
 const {
   ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType },
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
@@ -132,7 +126,6 @@ export default defineComponent({
         this.selected.suggestions = (await EntityService.getMappingSuggestions(this.selected.data, this.selected.label)).map((suggestion: any) => {
           return { iri: suggestion["@id"], name: suggestion.name, type: suggestion.type };
         });
-        // this.selected.children = await EntityService.getEntityChildren(this.selected.data);
       }
     }
   },
@@ -167,6 +160,34 @@ export default defineComponent({
   methods: {
     async init() {
       await this.getUnassigned();
+      await this.getTasks();
+    },
+
+    async getTasks() {
+      this.loading = true;
+      this.root = (await EntityService.getEntityChildren(IM.MODULE_TASKS)) as any[];
+      this.root.forEach(async node => {
+        node.children = [];
+        node.key = node["@id"];
+        node.icon = getFAIconFromType(node.type);
+        node.colour = getColourFromType(node.type);
+        node.type = "task";
+        node.label = node.name;
+        const children = (await EntityService.getEntityChildren(node["@id"])) as any[];
+        children.forEach(child => {
+          node.children.push({
+            key: child["@id"],
+            label: child.name,
+            data: child["@id"],
+            children: [],
+            type: child.type,
+            icon: getFAIconFromType(child.type),
+            colour: getColourFromType(child.type)
+          });
+        });
+      });
+
+      this.loading = true;
     },
 
     editFolder(node: any) {
@@ -176,7 +197,7 @@ export default defineComponent({
     getTableDataFromNodes(nodes: any) {
       if (!isArrayHasLength(nodes)) return [];
       return nodes.map((node: any) => {
-        return { iri: node.data, name: node.label, type: node.type, children: this.getTableDataFromNodes(node.children) };
+        return { iri: node.data, name: node.label, type: node.type || node[RDF.TYPE], children: this.getTableDataFromNodes(node.children) };
       });
     },
 
@@ -185,16 +206,20 @@ export default defineComponent({
     },
 
     async onDrop(node: any) {
-      const entityType = await EntityService.getPartialEntity(this.draggedItem.iri, [RDF.TYPE]);
-      node.children.push({
-        key: node.key + "" + node.children.length,
-        label: this.draggedItem.name,
-        data: this.draggedItem.iri,
-        children: [],
-        type: entityType[RDF.TYPE],
-        icon: getFAIconFromType(entityType[RDF.TYPE]),
-        colour: getColourFromType(entityType[RDF.TYPE])
-      });
+      this.loading = true;
+      const entity = { "@id": this.draggedItem.iri } as any;
+      entity[IM.IN_TASK] = node["@id"];
+      await EntityService.addTaskAction(entity);
+      await this.getTasks();
+      this.loading = false;
+    },
+
+    async deleteTaskAction(removedNode: any) {
+      this.loading = true;
+      const found = this.root.find(node => node.children.find((child: any) => child.key === removedNode.key));
+      await EntityService.removeTaskAction(found.key, removedNode.key);
+      await this.getTasks();
+      this.loading = false;
     },
 
     addNewFolder() {
@@ -209,21 +234,33 @@ export default defineComponent({
       });
     },
 
-    saveNewFolder(node: any) {
+    async saveNewFolder(node: any) {
       if (!node.label) {
         node.class = "p-invalid";
         node.message = "Name undefined";
         return;
       }
+
       const nameExists = this.root.findIndex(rootNode => rootNode.label === node.label && rootNode.type !== "newFolder");
-      if (nameExists !== -1) {
+      const iri = IM.NAMESPACE + (node.label as string).replaceAll(" ", "");
+      const iriEntity = await EntityService.getPartialEntity(iri, []);
+      if (nameExists !== -1 || isObjectHasKeys(iriEntity, [RDFS.LABEL])) {
         node.class = "p-invalid";
-        node.message = "Name already exists";
+        node.message = "Task already exists";
         return;
       }
-      node.data = IM.NAMESPACE + (node.label as string).replaceAll(" ", "");
+
+      node.data = iri;
       node.type = "task";
       delete node.class;
+      await EntityService.createTask(this.buildEntityFromNode(node));
+    },
+
+    buildEntityFromNode(node: any) {
+      const entity = {} as any;
+      entity[RDFS.LABEL] = node.label;
+      entity["@id"] = node.data;
+      return entity;
     },
 
     deleteNewFolder(node: any) {
@@ -292,7 +329,7 @@ export default defineComponent({
       }
     },
     next() {
-      this.$emit("nextPage", { pageIndex: this.pageIndex, data: this.getTableDataFromNodes(this.root) });
+      this.$emit("nextPage", { pageIndex: this.pageIndex });
     }
   }
 });

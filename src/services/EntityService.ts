@@ -19,6 +19,35 @@ const {
 export default class EntityService {
   static api = Env.api;
 
+  public static async removeTaskAction(taskIri: string, removedActionIri: string): Promise<any> {
+    try {
+      return await axios.delete(this.api + "api/entity/task/action", {
+        params: {
+          taskIri: taskIri,
+          removedActionIri: removedActionIri
+        }
+      });
+    } catch (error) {
+      return {} as any;
+    }
+  }
+
+  public static async addTaskAction(entity: any): Promise<any> {
+    try {
+      return await axios.post(this.api + "api/entity/task/action", entity);
+    } catch (error) {
+      return {} as any;
+    }
+  }
+
+  public static async createTask(entity: any): Promise<any> {
+    try {
+      return await axios.post(this.api + "api/entity/task", entity);
+    } catch (error) {
+      return {} as any;
+    }
+  }
+
   public static async getUnassigned(): Promise<any[]> {
     try {
       return await axios.get(this.api + "api/entity/public/unassigned");
