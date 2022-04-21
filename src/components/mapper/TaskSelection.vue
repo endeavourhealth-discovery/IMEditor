@@ -2,7 +2,7 @@
   <div>
     <ExpansionTable :contents="tasks" :selectable="true" @select="select" unselect="unselect" />
   </div>
-  <div class="button-bar flex flex-row justify-content-end" id="task-definition-button-bar">
+  <div class="button-bar flex flex-row justify-content-end" id="mapping-button-bar">
     <Button icon="pi pi-times" label="Back" class="p-button-secondary" @click="previous" />
     <Button icon="pi pi-check" label="Next" class="save-button" @click="next" />
   </div>
@@ -59,4 +59,15 @@ export default defineComponent({
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+#mapping-button-bar {
+  padding: 1rem 1rem 1rem 0;
+  gap: 0.5rem;
+  width: 100%;
+  border-bottom: 1px solid #dee2e6;
+  border-left: 1px solid #dee2e6;
+  border-right: 1px solid #dee2e6;
+  border-radius: 3px;
+  background-color: #ffffff;
+}
+</style>
