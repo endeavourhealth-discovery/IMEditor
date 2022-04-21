@@ -44,7 +44,7 @@ const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   EditorBuilderJsonMethods: { addItem, addNextOptions, generateNewComponent, genNextOptions, updateItem, updatePositions, deleteItem, scrollIntoView }
 } = Helpers;
-const { IM } = Vocabulary;
+const { IM, RDFS } = Vocabulary;
 const { BuilderType, ComponentType } = Enums;
 
 export default defineComponent({
@@ -87,7 +87,11 @@ export default defineComponent({
   },
   data() {
     return {
-      options: [{ iri: IM.IS_CONTAINED_IN, name: "Contained in" }] as { iri: string; name: string }[],
+      options: [
+        { iri: IM.IS_CONTAINED_IN, name: "Contained in" },
+        { iri: IM.IS_A, name: "Is a" },
+        { iri: RDFS.SUBCLASS_OF, name: "Subclass of" }
+      ] as { iri: string; name: string }[],
       selected: {} as { iri: string; name: string },
       logicBuild: [] as any[],
       loading: true,

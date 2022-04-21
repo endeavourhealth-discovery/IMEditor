@@ -16,7 +16,7 @@ import { Vocabulary, Helpers } from "im-library";
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
-const { IM } = Vocabulary;
+const { IM, RDFS } = Vocabulary;
 
 export default defineComponent({
   name: "ParentsEditor",
@@ -44,6 +44,8 @@ export default defineComponent({
     getParents() {
       this.loading = true;
       if (isObjectHasKeys(this.updatedConcept, [IM.IS_CONTAINED_IN])) this.parents[IM.IS_CONTAINED_IN] = this.updatedConcept[IM.IS_CONTAINED_IN];
+      if (isObjectHasKeys(this.updatedConcept, [RDFS.SUBCLASS_OF])) this.parents[RDFS.SUBCLASS_OF] = this.updatedConcept[RDFS.SUBCLASS_OF];
+      if (isObjectHasKeys(this.updatedConcept, [IM.IS_A])) this.parents[IM.IS_A] = this.updatedConcept[IM.IS_A];
       this.loading = false;
     },
 
