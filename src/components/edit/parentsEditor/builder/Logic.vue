@@ -76,8 +76,8 @@ export default defineComponent({
       deep: true
     },
     value: {
-      async handler() {
-        if (!this.value) await this.init();
+      handler() {
+        if (!this.value) this.init();
       },
       deep: true
     }
@@ -113,7 +113,10 @@ export default defineComponent({
 
     createBuild() {
       this.logicBuild = [];
-      if (!this.hasChildren(this.value)) return;
+      if (!this.hasChildren(this.value)) {
+        this.createDefaultBuild();
+        return;
+      }
       let position = 0;
       for (const child of this.value.children) {
         this.logicBuild.push(this.processChild(child, position));
@@ -187,7 +190,7 @@ export default defineComponent({
     addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
       if (data.selectedType === ComponentType.ENTITY) {
         const typeOptions = this.filterOptions.types.filter(
-          (type: EntityReferenceNode) => type["@id"] === Vocabulary.IM.CONCEPT || type["@id"] === IM.CONCEPT_SET
+          (type: EntityReferenceNode) => type["@id"] === Vocabulary.IM.CONCEPT || type["@id"] === IM.CONCEPT_SET || type["@id"] === IM.VALUE_SET
         );
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Parent" };

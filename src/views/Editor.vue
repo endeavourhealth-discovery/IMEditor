@@ -105,7 +105,7 @@ export default defineComponent({
         window.addEventListener("beforeunload", this.beforeWindowUnload);
       }
     },
-    ...mapState(["editorIri", "editorSavedEntity", "currentUser", "isLoggedIn"])
+    ...mapState(["editorIri", "editorSavedEntity", "currentUser", "isLoggedIn", "filterOptions"])
   },
   data() {
     return {
@@ -120,6 +120,7 @@ export default defineComponent({
   async mounted() {
     this.loading = true;
     await this.fetchConceptData();
+    await this.getFilterOptions();
     this.loading = false;
     await this.$nextTick();
   },
@@ -136,6 +137,20 @@ export default defineComponent({
             this.conceptUpdated = JSON.parse(JSON.stringify(fullEntity));
           }
         }
+      }
+    },
+
+    async getFilterOptions(): Promise<void> {
+      if (!(isObjectHasKeys(this.filterOptions) && isArrayHasLength(this.filterOptions.schemes))) {
+        const schemeOptions = await EntityService.getNamespaces();
+        const typeOptions = await EntityService.getEntityChildren(IM.MODELLING_ENTITY_TYPE);
+        const statusOptions = await EntityService.getEntityChildren(IM.STATUS);
+
+        this.$store.commit("updateFilterOptions", {
+          status: statusOptions,
+          schemes: schemeOptions,
+          types: typeOptions
+        });
       }
     },
 

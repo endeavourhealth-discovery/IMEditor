@@ -11,7 +11,7 @@ const routes: Array<RouteRecordRaw> = [
     path: "/",
     name: "Home",
     component: Editor,
-    // redirect: {name: "Creator"},
+    redirect: { name: "Editor" },
     children: [
       // {
       //   path: "/editor",
@@ -22,7 +22,7 @@ const routes: Array<RouteRecordRaw> = [
       // }
       // },
       {
-        path: "/editor/:selectedIri",
+        path: "/editor/:selectedIri?",
         name: "Editor",
         component: Editor,
         meta: {
@@ -58,7 +58,7 @@ router.beforeEach(async (to, from) => {
     return false;
   }
   if (to.name?.toString() == "Editor") {
-    store.commit("updateEditorIri", iri);
+    if (iri) store.commit("updateEditorIri", iri);
   }
   if (to.matched.some((record: any) => record.meta.requiresAuth)) {
     const res = await store.dispatch("authenticateCurrentUser");

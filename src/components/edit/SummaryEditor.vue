@@ -125,27 +125,12 @@ export default defineComponent({
       loading: false
     };
   },
-  async mounted() {
+  mounted() {
     this.loading = true;
-    await this.getFilterOptions();
     this.processEntity();
     this.loading = false;
   },
   methods: {
-    async getFilterOptions(): Promise<void> {
-      if (!(isObjectHasKeys(this.filterOptions) && isArrayHasLength(this.filterOptions.schemes))) {
-        const schemeOptions = await EntityService.getNamespaces();
-        const typeOptions = await EntityService.getEntityChildren(IM.MODELLING_ENTITY_TYPE);
-        const statusOptions = await EntityService.getEntityChildren(IM.STATUS);
-
-        this.$store.commit("updateFilterOptions", {
-          status: statusOptions,
-          schemes: schemeOptions,
-          types: typeOptions
-        });
-      }
-    },
-
     processEntity() {
       if (!this.updatedConcept) return;
       if (isObjectHasKeys(this.updatedConcept, ["@id"])) this.iri = this.updatedConcept["@id"];
