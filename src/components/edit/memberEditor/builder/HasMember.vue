@@ -71,7 +71,7 @@ export default defineComponent({
   watch: {
     hasMembersBuild: {
       handler() {
-        this.onConfirm();
+        if (!this.loading) this.onConfirm();
       },
       deep: true
     }
@@ -88,7 +88,7 @@ export default defineComponent({
         { iri: SHACL.OR, name: "OR" },
         { iri: SHACL.NOT, name: "NOT" }
       ] as { iri: string; name: string }[],
-      filterOptions: {} as any,
+      filteredFilterOptions: {} as any,
       filterConfig: [IM.CONCEPT, IM.CONCEPT_SET_GROUP, IM.CONCEPT_SET, IM.VALUE_SET]
     };
   },
@@ -97,7 +97,7 @@ export default defineComponent({
       this.loading = true;
       this.hasMembersBuild = [];
       const memberTypeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => this.filterConfig.some(config => config === type["@id"]));
-      this.filterOptions = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: memberTypeOptions };
+      this.filteredFilterOptions = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: memberTypeOptions };
       if (isArrayHasLength(this.value)) {
         let position = 0;
         for (const item of this.value) {
@@ -115,7 +115,7 @@ export default defineComponent({
         generateNewComponent(
           ComponentType.ENTITY,
           0,
-          { filterOptions: this.filterOptions, entity: undefined, type: ComponentType.ENTITY, label: "Member" },
+          { filterOptions: this.filteredFilterOptions, entity: undefined, type: ComponentType.ENTITY, label: "Member" },
           BuilderType.MEMBER,
           true
         )
@@ -137,7 +137,7 @@ export default defineComponent({
         id: this.id,
         value: this.hasMembersBuild,
         position: this.position,
-        type: ComponentType.DEFINITION,
+        type: ComponentType.HAS_MEMBER,
         json: this.generateMembersAsNode(),
         builderType: this.builderType,
         showButtons: true
@@ -154,7 +154,7 @@ export default defineComponent({
       return generateNewComponent(
         ComponentType.ENTITY,
         position,
-        { filterOptions: this.filterOptions, entity: iri, type: ComponentType.ENTITY, label: "Member" },
+        { filterOptions: this.filteredFilterOptions, entity: iri, type: ComponentType.ENTITY, label: "Member" },
         BuilderType.MEMBER,
         true
       );
@@ -192,12 +192,7 @@ export default defineComponent({
 
     addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
       if (data.selectedType === ComponentType.ENTITY) {
-        const typeOptions = this.filterOptions.types.filter(
-          (type: EntityReferenceNode) =>
-            type["@id"] === IM.VALUE_SET || type["@id"] === IM.CONCEPT_SET || type["@id"] === IM.CONCEPT_SET_GROUP || type["@id"] === IM.CONCEPT
-        );
-        const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
-        data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Member" };
+        data.value = { filterOptions: this.filteredFilterOptions, entity: undefined, type: ComponentType.ENTITY, label: "Member" };
       }
       if (data.selectedType === ComponentType.LOGIC) {
         data.value = { options: this.logicOptions, iri: "", children: undefined };
@@ -210,7 +205,7 @@ export default defineComponent({
         id: this.id,
         value: this.hasMembersBuild,
         position: this.position,
-        type: ComponentType.DEFINITION,
+        type: ComponentType.HAS_MEMBER,
         builderType: this.builderType,
         json: this.generateMembersAsNode()
       });
@@ -224,7 +219,7 @@ export default defineComponent({
     },
 
     getButtonOptions() {
-      return [ComponentType.HAS_MEMBERS];
+      return [ComponentType.DEFINITION];
     }
   }
 });

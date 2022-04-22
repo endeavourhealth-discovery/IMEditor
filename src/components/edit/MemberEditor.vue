@@ -54,8 +54,8 @@ export default defineComponent({
       if (isObjectHasKeys(this.updatedConcept, [IM.DEFINITION]) && isArrayHasLength(this.updatedConcept[IM.DEFINITION])) {
         this.members[IM.DEFINITION] = JSON.parse(JSON.stringify(this.updatedConcept[IM.DEFINITION]));
       }
-      if (isObjectHasKeys(this.updatedConcept, [IM.HAS_MEMBERS]) && isArrayHasLength(this.updatedConcept[IM.HAS_MEMBERS])) {
-        this.members[IM.HAS_MEMBERS] = JSON.parse(JSON.stringify(this.updatedConcept[IM.HAS_MEMBERS]));
+      if (isObjectHasKeys(this.updatedConcept, [IM.HAS_MEMBER]) && isArrayHasLength(this.updatedConcept[IM.HAS_MEMBER])) {
+        this.members[IM.HAS_MEMBER] = JSON.parse(JSON.stringify(this.updatedConcept[IM.HAS_MEMBER]));
       }
 
       this.loading = false;

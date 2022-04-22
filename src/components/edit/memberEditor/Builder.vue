@@ -34,7 +34,7 @@ import Logic from "@/components/edit/memberEditor/builder/Logic.vue";
 import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
 import Refinement from "@/components/edit/memberEditor/builder/Refinement.vue";
 import Definition from "@/components/edit/memberEditor/Definition.vue";
-import HasMembers from "@/components/edit/memberEditor/builder/HasMembers.vue";
+import HasMember from "@/components/edit/memberEditor/builder/HasMember.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums } from "im-library";
 import { ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
@@ -48,7 +48,7 @@ const { BuilderType, ComponentType } = Enums;
 export default defineComponent({
   name: "Builder",
   props: { members: { type: Object as any, required: true } },
-  components: { AddDeleteButtons, AddNext, Definition, HasMembers, Logic, Entity, Refinement },
+  components: { AddDeleteButtons, AddNext, Definition, HasMember, Logic, Entity, Refinement },
   emits: {
     "concept-updated": (payload: any) => true
   },
@@ -75,17 +75,16 @@ export default defineComponent({
     async createBuild() {
       this.loading = true;
       this.membersBuild = [];
-      if (!isObjectHasKeys(this.members, [IM.DEFINITION]) && !isObjectHasKeys(this.members, [IM.HAS_MEMBERS])) {
+      if (!isObjectHasKeys(this.members, [IM.DEFINITION]) && !isObjectHasKeys(this.members, [IM.HAS_MEMBER])) {
         this.loading = false;
         return;
       }
       if (isObjectHasKeys(this.members, [IM.DEFINITION])) {
         this.membersBuild.push(generateNewComponent(ComponentType.DEFINITION, 0, this.members[IM.DEFINITION], BuilderType.MEMBER, true));
       }
-      if (isObjectHasKeys(this.members, [IM.HAS_MEMBERS])) {
-        this.membersBuild.push(
-          generateNewComponent(ComponentType.HAS_MEMBERS, this.membersBuild.length, this.members[IM.HAS_MEMBERS], BuilderType.MEMBER, true)
-        );
+      if (isObjectHasKeys(this.members, [IM.HAS_MEMBER])) {
+        this.membersBuild.push(generateNewComponent(ComponentType.HAS_MEMBER, this.membersBuild.length, this.members[IM.HAS_MEMBER], BuilderType.MEMBER, true));
+        console.log(this.membersBuild);
       }
       if (!isArrayHasLength(this.membersBuild)) {
         this.createDefaultBuild();
@@ -113,8 +112,8 @@ export default defineComponent({
         if (item.type === ComponentType.DEFINITION) {
           members[IM.DEFINITION] = item.json;
         }
-        if (item.type === ComponentType.HAS_MEMBERS) {
-          members[IM.HAS_MEMBERS] = item.json;
+        if (item.type === ComponentType.HAS_MEMBER) {
+          members[IM.HAS_MEMBER] = item.json;
         }
       }
       this.$emit("concept-updated", members);
