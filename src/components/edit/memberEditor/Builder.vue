@@ -34,6 +34,7 @@ import Logic from "@/components/edit/memberEditor/builder/Logic.vue";
 import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
 import Refinement from "@/components/edit/memberEditor/builder/Refinement.vue";
 import Definition from "@/components/edit/memberEditor/Definition.vue";
+import HasMembers from "@/components/edit/memberEditor/builder/HasMembers.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums } from "im-library";
 import { ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
@@ -47,7 +48,7 @@ const { BuilderType, ComponentType } = Enums;
 export default defineComponent({
   name: "Builder",
   props: { members: { type: Object as any, required: true } },
-  components: { AddDeleteButtons, AddNext, Definition, Logic, Entity, Refinement },
+  components: { AddDeleteButtons, AddNext, Definition, HasMembers, Logic, Entity, Refinement },
   emits: {
     "concept-updated": (payload: any) => true
   },

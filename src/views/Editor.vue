@@ -316,9 +316,7 @@ export default defineComponent({
 
 .title {
   font-size: 2rem;
-  display: flex;
-  flex-flow: row;
-  align-items: center;
+  white-space: nowrap;
 }
 
 #editor-button-bar {
