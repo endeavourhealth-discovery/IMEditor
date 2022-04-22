@@ -115,6 +115,7 @@ export default defineComponent({
           suggestion.type = suggestion[RDF.TYPE];
         });
         this.selectedSuggestions = [];
+        this.selectedEntities = [];
       }
     }
   },
@@ -126,13 +127,15 @@ export default defineComponent({
       selected: {} as any,
       searchResults: [] as any[],
       request: {} as { cancel: any; msg: string },
-      selectedEntities: [] as any[]
+      selectedEntities: [] as any[],
+      mappingsMap: new Map<string, any>()
     };
   },
 
   methods: {
     removeMapping(data: any) {
       this.selected.mappings = this.selected.mappings.filter((mapping: any) => mapping.iri !== data.iri);
+      this.mappingsMap.set(this.selected.iri, this.selected.mappings);
     },
     select(data: any) {
       this.selectedEntities.push(data);
@@ -148,7 +151,10 @@ export default defineComponent({
       return getFAIconFromType(type);
     },
     next() {
-      this.$emit("nextPage", { pageIndex: this.pageIndex, root: {} });
+      this.data.forEach((element: any) => {
+        console.log(element);
+      });
+      this.$emit("nextPage", { pageIndex: this.pageIndex, data: this.mappingsMap });
     },
     previous() {
       this.$emit("prevPage", { pageIndex: this.pageIndex, root: {} });
@@ -173,6 +179,8 @@ export default defineComponent({
           this.selected.mappings.push(entity);
         }
       });
+
+      this.mappingsMap.set(this.selected.iri, this.selected.mappings);
     },
 
     async search(searchTerm: string): Promise<void> {
