@@ -5,11 +5,9 @@
     </div>
   </div>
   <div v-else class="logic-buttons-container" :id="id">
+    <span class="float-text">Logic</span>
     <div class="logic-container">
-      <div class="label-container">
-        <span class="float-text">Logic</span>
-        <Dropdown v-model="selected" :options="value.options" optionLabel="name" placeholder="Select logic" />
-      </div>
+      <Dropdown v-model="selected" :options="value.options" optionLabel="name" placeholder="Select logic" />
       <div class="children-container">
         <template v-for="item of logicBuild" :key="item.id">
           <component
@@ -271,6 +269,7 @@ export default defineComponent({
   flex-flow: row nowrap;
   justify-content: space-between;
   gap: 1rem;
+  position: relative;
 }
 
 .logic-container {
@@ -280,7 +279,7 @@ export default defineComponent({
   justify-content: flex-start;
   align-items: flex-start;
   padding: 1rem;
-  border: 1px solid #dee2e6;
+  border: 1px solid #0c1793;
   border-radius: 3px;
   position: relative;
   row-gap: 1rem;
@@ -295,11 +294,6 @@ export default defineComponent({
   flex-flow: row nowrap;
   justify-content: center;
   align-items: center;
-}
-
-.label-container {
-  padding: 1rem;
-  position: relative;
 }
 
 .children-container {

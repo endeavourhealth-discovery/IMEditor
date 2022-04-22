@@ -33,9 +33,10 @@ import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
 import Logic from "@/components/edit/memberEditor/builder/Logic.vue";
 import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
 import Refinement from "@/components/edit/memberEditor/builder/Refinement.vue";
-import DefinitionBuilder from "@/components/edit/memberEditor/DefinitionBuilder.vue";
+import Definition from "@/components/edit/memberEditor/Definition.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums } from "im-library";
+import { ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, deleteItem, updateItem, updatePositions, scrollIntoView, addItem, addNextOptions }
@@ -46,7 +47,7 @@ const { BuilderType, ComponentType } = Enums;
 export default defineComponent({
   name: "Builder",
   props: { members: { type: Object as any, required: true } },
-  components: { AddDeleteButtons, AddNext, DefinitionBuilder, Logic, Entity, Refinement },
+  components: { AddDeleteButtons, AddNext, Definition, Logic, Entity, Refinement },
   emits: {
     "concept-updated": (payload: any) => true
   },
@@ -78,11 +79,11 @@ export default defineComponent({
         return;
       }
       if (isObjectHasKeys(this.members, [IM.DEFINITION])) {
-        this.membersBuild.push(generateNewComponent(ComponentType.DEFINITION_BUILDER, 0, this.members[IM.DEFINITION], BuilderType.MEMBER, true));
+        this.membersBuild.push(generateNewComponent(ComponentType.DEFINITION, 0, this.members[IM.DEFINITION], BuilderType.MEMBER, true));
       }
       if (isObjectHasKeys(this.members, [IM.HAS_MEMBERS])) {
         this.membersBuild.push(
-          generateNewComponent(ComponentType.HAS_MEMBERS_BUILDER, this.membersBuild.length, this.members[IM.HAS_MEMBERS], BuilderType.MEMBER, true)
+          generateNewComponent(ComponentType.HAS_MEMBERS, this.membersBuild.length, this.members[IM.HAS_MEMBERS], BuilderType.MEMBER, true)
         );
       }
       if (!isArrayHasLength(this.membersBuild)) {
@@ -92,10 +93,10 @@ export default defineComponent({
     },
 
     createDefaultBuild() {
-      this.membersBuild = [generateNewComponent(ComponentType.DEFINITION_BUILDER, 0, [], BuilderType.MEMBER, true)];
+      this.membersBuild = [generateNewComponent(ComponentType.DEFINITION, 0, [], BuilderType.MEMBER, true)];
     },
 
-    generateMembersAsNode() {
+    generateMembersAsNode(item: ComponentDetails) {
       let json = [];
       if (this.membersBuild.length) {
         for (const item of this.membersBuild) {
@@ -106,9 +107,16 @@ export default defineComponent({
     },
 
     onConfirm() {
-      const def: any = {};
-      def[IM.DEFINITION] = this.generateMembersAsNode();
-      this.$emit("concept-updated", def);
+      let members = {} as any;
+      for (const item of this.membersBuild) {
+        if (item.type === ComponentType.DEFINITION) {
+          members[IM.DEFINITION] = item.json;
+        }
+        if (item.type === ComponentType.HAS_MEMBERS) {
+          members[IM.HAS_MEMBERS] = item.json;
+        }
+      }
+      this.$emit("concept-updated", members);
     },
 
     deleteItem(data: ComponentDetails): void {
@@ -151,12 +159,12 @@ export default defineComponent({
   flex: 1 1 auto;
   width: 100%;
   overflow: auto;
-  border: 1px solid #dee2e6;
-  border-radius: 3px;
-  padding: 1rem;
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-start;
   align-items: center;
+  border: 1px solid #dee2e6;
+  border-radius: 3px;
+  padding: 1rem;
 }
 </style>

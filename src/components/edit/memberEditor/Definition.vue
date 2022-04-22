@@ -6,11 +6,8 @@
       </div>
     </div>
     <div v-else class="definition-buttons-container">
+      <span class="float-text">Definition</span>
       <div id="definition-build">
-        <div class="label-container">
-          <span class="float-text">Definition</span>
-          <!-- <InputText v-model="predicate.label" disabled /> -->
-        </div>
         <template v-for="item of definitionBuild" :key="item.id">
           <component
             :is="item.type"
@@ -58,7 +55,7 @@ const { IM, SHACL, RDF } = Vocabulary;
 const { BuilderType, ComponentType } = Enums;
 
 export default defineComponent({
-  name: "DefinitionBuilder",
+  name: "Definition",
   props: {
     id: { type: String, required: true },
     position: { type: Number, required: true },
@@ -74,7 +71,7 @@ export default defineComponent({
   },
   computed: mapState(["filterOptions"]),
   watch: {
-    membersBuild: {
+    definitionBuild: {
       handler() {
         this.onConfirm();
       },
@@ -140,7 +137,7 @@ export default defineComponent({
         id: this.id,
         value: this.definitionBuild,
         position: this.position,
-        type: ComponentType.DEFINITION_BUILDER,
+        type: ComponentType.DEFINITION,
         json: this.generateMembersAsNode(),
         builderType: this.builderType,
         showButtons: true
@@ -251,7 +248,7 @@ export default defineComponent({
         id: this.id,
         value: this.definitionBuild,
         position: this.position,
-        type: ComponentType.DEFINITION_BUILDER,
+        type: ComponentType.DEFINITION,
         builderType: this.builderType,
         json: this.generateMembersAsNode()
       });
@@ -265,7 +262,7 @@ export default defineComponent({
     },
 
     getButtonOptions() {
-      return [ComponentType.HAS_MEMBERS_BUILDER];
+      return [ComponentType.HAS_MEMBERS];
     }
   }
 });
@@ -273,41 +270,44 @@ export default defineComponent({
 
 <style scoped>
 #definition-builder-container {
-  height: 100%;
   width: 100%;
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-start;
+  position: relative;
+}
+
+.definition-buttons-container {
+  flex: 1 1 auto;
+  width: 100%;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 #definition-build {
   flex: 1 1 auto;
-  width: 100%;
-  overflow: auto;
-  border: 1px solid #dee2e6;
+  border: 1px solid #b00149;
   border-radius: 3px;
   padding: 1rem;
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-start;
-  align-items: center;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.children-container {
+  flex: 1 1 auto;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-start;
+  gap: 1rem;
 }
 
 .label-container {
-  flex: 1 1 auto;
-  padding: 1rem;
-  border: 1px solid #ffc952;
-  border-radius: 3px;
-  position: relative;
-  min-width: 15rem;
-}
-
-.label {
-  cursor: pointer;
-  border: 1px solid #dee2e6;
-  border-radius: 3px;
-  background-color: #ffffff;
-  padding: 0.25rem;
+  width: fit-content;
 }
 
 .float-text {
