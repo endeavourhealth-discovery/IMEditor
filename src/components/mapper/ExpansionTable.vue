@@ -44,6 +44,11 @@
         {{ data.iri }}
       </template>
     </Column>
+    <Column v-if="removableRows" headerStyle="width: 3rem">
+      <template #body="{data}">
+        <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text" @click="remove(data)" />
+      </template>
+    </Column>
 
     <template #expansion="{data}">
       <VueJsonPretty class="suggestion-json" :data="data.expandView" />
@@ -65,8 +70,8 @@ const {
 
 export default defineComponent({
   name: "ExpansionTable",
-  props: ["contents", "selectable", "inputSearch", "paginable", "drag", "expandable", "loading"],
-  emits: ["search", "startDrag", "select", "unselect"],
+  props: ["contents", "selectable", "inputSearch", "paginable", "drag", "expandable", "loading", "removableRows"],
+  emits: ["search", "startDrag", "select", "unselect", "remove"],
   components: {
     VueJsonPretty
   },
@@ -78,6 +83,9 @@ export default defineComponent({
     };
   },
   methods: {
+    remove(data: any) {
+      this.$emit("remove", data);
+    },
     getColourFromType(type: any) {
       return getColourFromType(type);
     },

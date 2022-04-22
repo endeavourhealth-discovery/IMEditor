@@ -26,7 +26,15 @@
           <VueJsonPretty class="mapping-item-container" :data="selectedView" />
         </TabPanel>
         <TabPanel header="Suggestions">
-          <ExpansionTable class="mapping-item-container" :contents="selected.suggestions" :selectable="true" :inputSearch="false" :paginable="true" />
+          <ExpansionTable
+            class="mapping-item-container"
+            :contents="selected.suggestions"
+            :selectable="true"
+            :inputSearch="false"
+            :paginable="true"
+            @select="select"
+            @unselect="unselect"
+          />
         </TabPanel>
         <TabPanel header="Search">
           <ExpansionTable
@@ -37,7 +45,18 @@
             @search="search"
             :paginable="true"
             @select="select"
-            unselect="unselect"
+            @unselect="unselect"
+          />
+        </TabPanel>
+        <TabPanel header="Mapped to">
+          <ExpansionTable
+            class="mapping-item-container"
+            :contents="selected.mappings"
+            :selectable="false"
+            :inputSearch="false"
+            :paginable="true"
+            :removableRows="true"
+            @remove="removeMapping"
           />
         </TabPanel>
       </TabView>
@@ -45,7 +64,13 @@
   </div>
   <div class="button-bar flex flex-row justify-content-end" id="mapping-button-bar">
     <Button icon="pi pi-times" label="Back" class="p-button-secondary" @click="previous" />
-    <Button icon="pi pi-arrows-h" label="Map" class="p-button-help" @click="map" />
+    <Button
+      icon="pi pi-arrows-h"
+      label="Map"
+      class="p-button-help"
+      :disabled="!(this.selected && (this.selectedSuggestions.length || this.selectedEntities.length))"
+      @click="map"
+    />
     <Button icon="pi pi-check" label="Next" class="save-button" @click="next" />
   </div>
 </template>
@@ -54,12 +79,13 @@
 import { defineComponent } from "vue";
 import { mapState } from "vuex";
 import ExpansionTable from "./ExpansionTable.vue";
-import { Vocabulary, Helpers, Models, Enums } from "im-library";
+import { Vocabulary, Helpers, Models, Enums, LoggerService } from "im-library";
 import { Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
 import EntityService from "@/services/EntityService";
 import VueJsonPretty from "vue-json-pretty";
 import axios from "axios";
 
+const { IM, RDF, RDFS } = Vocabulary;
 const {
   ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType },
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
@@ -74,7 +100,7 @@ export default defineComponent({
   name: "EntityMatcher",
   components: { ExpansionTable, VueJsonPretty },
   computed: {
-    ...mapState(["editorIri", "editorSavedEntity", "currentUser", "isLoggedIn", "filterOptions", "selectedFilters"])
+    ...mapState(["currentUser", "isLoggedIn", "filterOptions", "selectedFilters"])
   },
   emits: ["nextPage", "prevPage"],
   props: ["data"],
@@ -83,6 +109,11 @@ export default defineComponent({
       if (this.selected) {
         this.selectedView = await EntityService.getPartialEntity(this.selected.iri, []);
         this.selected.suggestions = await EntityService.getMappingSuggestions(this.selected.iri, this.selected.name);
+        this.selected.suggestions.forEach((suggestion: { [x: string]: any; iri: any }) => {
+          suggestion.iri = suggestion["@id"];
+          suggestion.name = suggestion[RDFS.LABEL];
+          suggestion.type = suggestion[RDF.TYPE];
+        });
         this.selectedSuggestions = [];
       }
     }
@@ -100,6 +131,9 @@ export default defineComponent({
   },
 
   methods: {
+    removeMapping(data: any) {
+      this.selected.mappings = this.selected.mappings.filter((mapping: any) => mapping.iri !== data.iri);
+    },
     select(data: any) {
       this.selectedEntities.push(data);
     },
@@ -121,7 +155,24 @@ export default defineComponent({
     },
 
     map() {
-      console.log("map");
+      if (isArrayHasLength(this.selectedEntities)) {
+        this.addMapping(this.selectedEntities);
+      } else if (isArrayHasLength(this.selectedSuggestions)) {
+        this.addMapping(this.selectedSuggestions);
+      }
+      this.$toast.add(LoggerService.success("Mapping added to list"));
+    },
+
+    addMapping(entities: any[]) {
+      if (!isArrayHasLength(this.selected.mappings)) {
+        this.selected.mappings = [] as any[];
+      }
+      entities.forEach(entity => {
+        const i = this.selected.mappings.findIndex((mapping: any) => entity.iri === mapping.iri);
+        if (i === -1) {
+          this.selected.mappings.push(entity);
+        }
+      });
     },
 
     async search(searchTerm: string): Promise<void> {

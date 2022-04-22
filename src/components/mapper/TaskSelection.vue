@@ -1,6 +1,6 @@
 <template>
   <div>
-    <ExpansionTable :contents="tasks" :selectable="true" @select="select" unselect="unselect" />
+    <ExpansionTable :contents="tasks" :selectable="true" @select="select" @unselect="unselect" />
   </div>
   <div class="button-bar flex flex-row justify-content-end" id="mapping-button-bar">
     <Button icon="pi pi-times" label="Back" class="p-button-secondary" @click="previous" />
