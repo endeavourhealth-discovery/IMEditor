@@ -14,6 +14,7 @@
         placeholder="Search"
         class="p-inputtext search-input"
         autoWidth="true"
+        v-tooltip="{ value: selectedResult.name, class: 'quantifier-tooltip' }"
       />
     </div>
     <AddDeleteButtons :show="showButtons" :position="position" :options="[]" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
@@ -208,6 +209,7 @@ export default defineComponent({
   justify-content: flex-start;
   align-items: center;
   gap: 1rem;
+  width: 100%;
 }
 
 .label-container {
@@ -237,5 +239,8 @@ export default defineComponent({
 
 .search-input {
   width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

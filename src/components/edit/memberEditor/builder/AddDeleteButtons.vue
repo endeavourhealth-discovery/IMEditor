@@ -65,7 +65,7 @@ export default defineComponent({
   order: 2;
   display: flex;
   flex-flow: column nowrap;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
 }
 

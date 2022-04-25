@@ -142,7 +142,7 @@ export default defineComponent({
         false
       );
       if (property) this.refinementBuild.push(property);
-      const quantifier = generateNewComponent(ComponentType.QUANTIFIER, 1, undefined, this.builderType, true);
+      const quantifier = generateNewComponent(ComponentType.QUANTIFIER, 1, undefined, this.builderType, false);
       if (quantifier) this.refinementBuild.push(quantifier);
     },
 
