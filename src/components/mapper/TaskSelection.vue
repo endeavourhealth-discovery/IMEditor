@@ -1,7 +1,5 @@
 <template>
-  <div>
-    <ExpansionTable :contents="tasks" :selectable="true" @select="select" @unselect="unselect" />
-  </div>
+  <ExpansionTable :contents="tasks" :selectable="true" @select="select" @unselect="unselect" class="table-container" />
   <div class="button-bar flex flex-row justify-content-end" id="mapping-button-bar">
     <Button icon="pi pi-times" label="Back" class="p-button-secondary" @click="previous" />
     <Button icon="pi pi-check" label="Next" class="save-button" @click="next" />
@@ -69,5 +67,10 @@ export default defineComponent({
   border-right: 1px solid #dee2e6;
   border-radius: 3px;
   background-color: #ffffff;
+}
+
+.table-container {
+  height: calc(100vh - 16.3rem);
+  overflow: auto;
 }
 </style>

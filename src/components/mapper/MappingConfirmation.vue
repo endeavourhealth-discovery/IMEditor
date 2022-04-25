@@ -1,23 +1,19 @@
 <template>
-  <div class="table-container">
-    <DataTable :value="mappingsDisplay" responsiveLayout="scroll">
-      <Column field="mappedFrom"> </Column>
-      <Column><template #body> mapped to -> </template></Column>
-      <Column field="mappedTo">
-        <template #body="{data}">
-          <table>
-            <tr v-for="(mapping, key) in data.mappedTo" :key="key">
-              <td>{{ mapping.iri }}</td>
-              <td>{{ mapping.name }}</td>
-              <td><Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text" /></td>
-            </tr>
-          </table>
-
-          <!-- <ExpansionTable class="mapping-item-container" :contents="data.mappedTo" :removableRows="true" @remove="removeMapping" /> -->
-        </template>
-      </Column>
-    </DataTable>
-  </div>
+  <DataTable :value="mappingsDisplay" responsiveLayout="scroll" class="table-container">
+    <Column field="mappedFrom" header="From"><i class="pi pi-arrow-right"></i> </Column>
+    <Column><template #body> </template></Column>
+    <Column field="mappedTo" header="To">
+      <template #body="{data}">
+        <table>
+          <tr v-for="(mapping, key) in data.mappedTo" :key="key">
+            <td>{{ mapping.iri }}</td>
+            <td>{{ mapping.name }}</td>
+            <td><Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text" /></td>
+          </tr>
+        </table>
+      </template>
+    </Column>
+  </DataTable>
 
   <div class="button-bar flex flex-row justify-content-end" id="task-definition-button-bar">
     <Button icon="pi pi-times" label="Back" class="p-button-secondary" @click="previous" />

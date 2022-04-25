@@ -2,7 +2,14 @@
   <ConfirmDialog></ConfirmDialog>
   <div class="grid grid-nogutter">
     <div class="col-3 tree-bar-container">
-      <Tree :value="root" selectionMode="single" v-model:selectionKeys="selectedNode" @node-select="onNodeSelect" :loading="loading">
+      <Tree
+        :value="root"
+        selectionMode="single"
+        v-model:selectionKeys="selectedNode"
+        @node-select="onNodeSelect"
+        :loading="loading"
+        class="task-definition-container"
+      >
         <template #default="slotProps">
           <span :style="'color: ' + slotProps.node.colour" class="p-mx-1 type-icon">
             <font-awesome-icon :icon="slotProps.node.icon" />
@@ -49,10 +56,18 @@
             :drag="true"
             @startDrag="startDrag"
             :loading="loading"
+            class="tab-container"
           />
         </TabPanel>
         <TabPanel header="Contents">
-          <ExpansionTable :contents="getTableDataFromNodes(selected.children)" :selectable="false" :inputSearch="false" :paginable="false" :expandable="true" />
+          <ExpansionTable
+            :contents="getTableDataFromNodes(selected.children)"
+            :selectable="false"
+            :inputSearch="false"
+            :paginable="false"
+            :expandable="true"
+            class="tab-container"
+          />
         </TabPanel>
         <TabPanel header="Search">
           <ExpansionTable
@@ -63,6 +78,7 @@
             :paginable="true"
             :drag="true"
             @startDrag="startDrag"
+            class="tab-container"
           />
         </TabPanel>
       </TabView>
@@ -387,5 +403,14 @@ export default defineComponent({
 .drag-el:hover {
   background-color: #6c757d;
   color: #ffffff;
+}
+
+.task-definition-container {
+  height: calc(100vh - 18.6rem);
+}
+
+.tab-container {
+  height: calc(100vh - 21.5rem);
+  overflow: auto;
 }
 </style>
