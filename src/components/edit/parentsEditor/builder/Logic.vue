@@ -294,6 +294,7 @@ export default defineComponent({
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-start;
+  gap: 1rem;
 }
 
 .p-dropdown {

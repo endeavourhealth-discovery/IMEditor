@@ -154,5 +154,6 @@ export default defineComponent({
   flex-flow: column nowrap;
   justify-content: flex-start;
   align-items: center;
+  gap: 1rem;
 }
 </style>
