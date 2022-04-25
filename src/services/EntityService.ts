@@ -270,4 +270,16 @@ export default class EntityService {
       return "";
     }
   }
+
+  public static async getPartialEntities(typeIris: string[], predicates: string[]) {
+    const promises: Promise<any>[] = [];
+    typeIris.forEach(iri => {
+      promises.push(this.getPartialEntity(iri, predicates));
+    });
+    try {
+      return await Promise.all(promises);
+    } catch (error) {
+      return [];
+    }
+  }
 }

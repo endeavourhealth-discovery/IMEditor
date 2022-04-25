@@ -37,11 +37,7 @@
               </TabPanel>
               <TabPanel v-if="isValueSet" header="Members">
                 <div class="panel-content" id="member-editor-container">
-                  <MemberEditor
-                    v-if="active === 2"
-                    :updatedMembers="conceptUpdated['http://endhealth.info/im#definition'] ? conceptUpdated['http://endhealth.info/im#definition'] : {}"
-                    @concept-updated="updateConcept"
-                  />
+                  <MemberEditor v-if="active === 2" :updatedConcept="conceptUpdated" @concept-updated="updateConcept" />
                 </div>
               </TabPanel>
             </TabView>
@@ -105,7 +101,7 @@ export default defineComponent({
         window.addEventListener("beforeunload", this.beforeWindowUnload);
       }
     },
-    ...mapState(["editorIri", "editorSavedEntity", "currentUser", "isLoggedIn"])
+    ...mapState(["editorIri", "editorSavedEntity", "currentUser", "isLoggedIn", "filterOptions"])
   },
   data() {
     return {
@@ -120,6 +116,7 @@ export default defineComponent({
   async mounted() {
     this.loading = true;
     await this.fetchConceptData();
+    await this.getFilterOptions();
     this.loading = false;
     await this.$nextTick();
   },
@@ -136,6 +133,20 @@ export default defineComponent({
             this.conceptUpdated = JSON.parse(JSON.stringify(fullEntity));
           }
         }
+      }
+    },
+
+    async getFilterOptions(): Promise<void> {
+      if (!(isObjectHasKeys(this.filterOptions) && isArrayHasLength(this.filterOptions.schemes))) {
+        const schemeOptions = await EntityService.getNamespaces();
+        const typeOptions = await EntityService.getEntityChildren(IM.MODELLING_ENTITY_TYPE);
+        const statusOptions = await EntityService.getEntityChildren(IM.STATUS);
+
+        this.$store.commit("updateFilterOptions", {
+          status: statusOptions,
+          schemes: schemeOptions,
+          types: typeOptions
+        });
       }
     },
 
@@ -169,8 +180,18 @@ export default defineComponent({
     },
 
     updateConcept(data: any) {
-      for (const [key, value] of Object.entries(data)) {
-        this.conceptUpdated[key] = value;
+      if (isArrayHasLength(data)) {
+        data.forEach((item: any) => {
+          if (isObjectHasKeys(item)) {
+            for (const [key, value] of Object.entries(item)) {
+              this.conceptUpdated[key] = value;
+            }
+          }
+        });
+      } else if (isObjectHasKeys(data)) {
+        for (const [key, value] of Object.entries(data)) {
+          this.conceptUpdated[key] = value;
+        }
       }
     },
 
@@ -295,9 +316,7 @@ export default defineComponent({
 
 .title {
   font-size: 2rem;
-  display: flex;
-  flex-flow: row;
-  align-items: center;
+  white-space: nowrap;
 }
 
 #editor-button-bar {

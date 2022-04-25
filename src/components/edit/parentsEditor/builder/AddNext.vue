@@ -18,7 +18,7 @@ export default defineComponent({
   props: {
     id: { type: String, required: true },
     position: { type: Number, required: true },
-    last: Boolean,
+    showButtons: Boolean,
     value: {
       type: Object as PropType<NextComponentSummary>,
       required: true

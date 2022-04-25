@@ -7,7 +7,7 @@
       <SelectButton v-model="editorType" :options="editorOptions" />
     </div>
     <div class="editor-container">
-      <Builder v-if="editorType === 'Builder'" :included="included" @concept-updated="builderUpdated" />
+      <Builder v-if="editorType === 'Builder'" :members="members" @concept-updated="builderUpdated" />
       <EclInput v-if="editorType === 'Ecl'" @concept-updated="eclMembersUpdated" />
     </div>
   </div>
@@ -17,14 +17,15 @@
 import { defineComponent } from "vue";
 import Builder from "@/components/edit/memberEditor/Builder.vue";
 import EclInput from "@/components/edit/memberEditor/EclInput.vue";
-import { Helpers } from "im-library";
+import { Helpers, Vocabulary } from "im-library";
 const {
-  DataTypeCheckers: { isArrayHasLength }
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
 } = Helpers;
+const { IM } = Vocabulary;
 
 export default defineComponent({
   name: "MemberEditor",
-  props: { updatedMembers: { type: Object, required: true } },
+  props: { updatedConcept: { type: Object, required: true } },
   components: { Builder, EclInput },
   emits: { "concept-updated": (payload: any) => true },
   watch: {
@@ -40,7 +41,7 @@ export default defineComponent({
   },
   data() {
     return {
-      included: [] as any[],
+      members: {} as any,
       loading: true,
       ecl: {} as any,
       editorType: "Builder",
@@ -50,8 +51,11 @@ export default defineComponent({
   methods: {
     processMembers(): void {
       this.loading = true;
-      if (isArrayHasLength(this.updatedMembers)) {
-        this.included = JSON.parse(JSON.stringify(this.updatedMembers));
+      if (isObjectHasKeys(this.updatedConcept, [IM.DEFINITION]) && isArrayHasLength(this.updatedConcept[IM.DEFINITION])) {
+        this.members[IM.DEFINITION] = JSON.parse(JSON.stringify(this.updatedConcept[IM.DEFINITION]));
+      }
+      if (isObjectHasKeys(this.updatedConcept, [IM.HAS_MEMBER]) && isArrayHasLength(this.updatedConcept[IM.HAS_MEMBER])) {
+        this.members[IM.HAS_MEMBER] = JSON.parse(JSON.stringify(this.updatedConcept[IM.HAS_MEMBER]));
       }
 
       this.loading = false;

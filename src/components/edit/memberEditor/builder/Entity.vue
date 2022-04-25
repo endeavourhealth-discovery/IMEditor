@@ -14,9 +14,10 @@
         placeholder="Search"
         class="p-inputtext search-input"
         autoWidth="true"
+        v-tooltip="{ value: selectedResult.name, class: 'entity-tooltip' }"
       />
     </div>
-    <AddDeleteButtons :last="last" :position="position" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
+    <AddDeleteButtons :show="showButtons" :position="position" :options="getButtonOptions()" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
   </div>
   <OverlayPanel class="search-op" ref="miniSearchOP">
     <SearchMiniOverlay :searchTerm="searchTerm" :searchResults="searchResults" :loading="loading" @searchResultSelected="updateSelectedResult" />
@@ -54,26 +55,26 @@ export default defineComponent({
       }>,
       required: true
     },
-    last: { type: Boolean, required: true },
+    showButtons: { type: Boolean, required: true },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
     updateClicked: (payload: ComponentDetails) => true,
-    addNextOptionsClicked: (payload: NextComponentSummary) => true,
+    addNextOptionsClicked: (payload: any) => true,
     deleteClicked: (payload: ComponentDetails) => true,
     addClicked: (payload: any) => true
   },
   components: { SearchMiniOverlay, AddDeleteButtons },
   computed: mapState(["filterOptions", "selectedFilters"]),
-  async mounted() {
-    if (this.value && this.value.entity && isObjectHasKeys(this.value.entity, ["name", "@id"])) {
-      this.updateSelectedResult(this.value.entity);
-      await this.search();
-    } else {
-      this.selectedResult = {} as TTIriRef;
-      this.searchTerm = "";
+  watch: {
+    value: {
+      async handler() {
+        if (!this.value.entity) await this.init();
+      }
     }
-    this.value?.label ? (this.label = this.value.label) : (this.label = "Entity");
+  },
+  async mounted() {
+    await this.init();
   },
   data() {
     return {
@@ -87,6 +88,16 @@ export default defineComponent({
     };
   },
   methods: {
+    async init() {
+      if (this.value && this.value.entity && isObjectHasKeys(this.value.entity, ["name", "@id"])) {
+        this.updateSelectedResult(this.value.entity);
+        await this.search();
+      } else {
+        this.selectedResult = {} as TTIriRef;
+        this.searchTerm = "";
+      }
+      this.value?.label ? (this.label = this.value.label) : (this.label = "Entity");
+    },
     // debounceForSearch(): void {
     //   clearTimeout(this.debounce);
     //   this.debounce = window.setTimeout(() => {
@@ -196,7 +207,8 @@ export default defineComponent({
           position: this.position,
           type: this.value.type,
           json: this.selectedResult,
-          builderType: this.builderType
+          builderType: this.builderType,
+          showButtons: this.showButtons
         };
       else {
         return {
@@ -205,45 +217,34 @@ export default defineComponent({
           position: this.position,
           type: ComponentType.ENTITY,
           json: {},
-          builderType: this.builderType
+          builderType: this.builderType,
+          showButtons: this.showButtons
         };
       }
     },
 
     deleteClicked(): void {
-      if (this.value)
-        this.$emit("deleteClicked", {
-          id: this.id,
-          value: this.selectedResult,
-          position: this.position,
-          type: this.value.type,
-          builderType: this.builderType,
-          json: this.selectedResult
-        });
-      else
-        this.$emit("deleteClicked", {
-          id: this.id,
-          value: this.selectedResult,
-          position: this.position,
-          type: ComponentType.ENTITY,
-          builderType: this.builderType,
-          json: this.selectedResult
-        });
+      this.$emit("deleteClicked", {
+        id: this.id,
+        value: this.selectedResult,
+        position: this.position,
+        type: ComponentType.ENTITY,
+        builderType: this.builderType,
+        json: this.selectedResult,
+        showButtons: this.showButtons
+      });
     },
 
-    addNextClicked(): void {
-      if (this.value)
-        this.$emit("addNextOptionsClicked", {
-          previousComponentType: this.value.type,
-          previousPosition: this.position,
-          parentGroup: this.value.type
-        });
-      else
-        this.$emit("addNextOptionsClicked", {
-          previousComponentType: ComponentType.ENTITY,
-          previousPosition: this.position,
-          parentGroup: ComponentType.ENTITY
-        });
+    addNextClicked(item: any): void {
+      this.$emit("addNextOptionsClicked", {
+        position: this.position + 1,
+        selectedType: item
+      });
+    },
+
+    getButtonOptions() {
+      if (this.builderType === BuilderType.PARENT) return [ComponentType.ENTITY];
+      else return [ComponentType.ENTITY, ComponentType.LOGIC, ComponentType.REFINEMENT];
     }
   }
 });
@@ -257,6 +258,7 @@ export default defineComponent({
   justify-content: flex-start;
   align-items: center;
   gap: 1rem;
+  width: 100%;
 }
 
 .label-container {
@@ -286,5 +288,8 @@ export default defineComponent({
 
 .search-input {
   width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

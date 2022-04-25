@@ -5,11 +5,9 @@
     </div>
   </div>
   <div v-else class="logic-buttons-container" :id="id">
+    <span class="float-text">Logic</span>
     <div class="logic-container">
-      <div class="label-container">
-        <span class="float-text">Logic</span>
-        <Dropdown v-model="selected" :options="value.options" optionLabel="name" placeholder="Select logic" />
-      </div>
+      <Dropdown v-model="selected" :options="value.options" optionLabel="name" placeholder="Select logic" />
       <div class="children-container">
         <template v-for="item of logicBuild" :key="item.id">
           <component
@@ -17,18 +15,18 @@
             :value="item.value"
             :id="item.id"
             :position="item.position"
-            :last="logicBuild.length - 2 <= item.position ? true : false"
+            :showButtons="item.showButtons"
             :builderType="item.builderType"
-            @deleteClicked="deleteItemWrapper"
+            @deleteClicked="deleteItem"
             @addClicked="addItemWrapper"
             @updateClicked="updateItemWrapper"
-            @addNextOptionsClicked="addNextOptionsWrapper"
+            @addNextOptionsClicked="addItemWrapper"
           >
           </component>
         </template>
       </div>
     </div>
-    <AddDeleteButtons :last="last" :position="position" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
+    <AddDeleteButtons :show="showButtons" :position="position" :options="getButtonOptions()" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
   </div>
 </template>
 
@@ -57,43 +55,58 @@ export default defineComponent({
       type: Object as PropType<{ iri: string; children: PropType<Array<any>> | undefined; options: { iri: string; name: string }[] }>,
       required: true
     },
-    last: { type: Boolean, required: true },
+    showButtons: { type: Boolean, default: true },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   components: { AddDeleteButtons, AddNext, Entity, Refinement },
   emits: {
-    addNextOptionsClicked: (payload: NextComponentSummary) => true,
+    addNextOptionsClicked: (payload: any) => true,
     deleteClicked: (payload: ComponentDetails) => true,
     updateClicked: (payload: ComponentDetails) => true
   },
   computed: mapState(["filterOptions"]),
   watch: {
     selected(): void {
-      this.onConfirm();
+      if (!this.loading) {
+        this.onConfirm();
+      }
     },
     logicBuild: {
       handler() {
         this.onConfirm();
       },
       deep: true
+    },
+    value: {
+      async handler() {
+        if (!this.value.children && this.logicBuild[0].type !== ComponentType.ADD_NEXT) await this.init();
+      },
+      deep: true
     }
   },
   async mounted() {
-    this.loading = true;
-    const found = this.value.options.find(option => option.iri === this.value.iri);
-    this.selected = found ? found : this.value.options[0];
-    await this.createBuild();
-
-    this.loading = false;
+    await this.init();
   },
   data() {
     return {
       selected: {} as { iri: string; name: string },
       logicBuild: [] as any[],
-      loading: true
+      loading: true,
+      addDefaultOptions: [ComponentType.LOGIC, ComponentType.ENTITY, ComponentType.REFINEMENT]
     };
   },
   methods: {
+    async init() {
+      this.loading = true;
+      let found;
+      if (isObjectHasKeys(this.value, ["options"])) {
+        found = this.value.options.find(option => option.iri === this.value.iri);
+      }
+      this.selected = found ? found : this.value.options[0];
+      await this.createBuild();
+      this.loading = false;
+    },
+
     async createBuild() {
       this.logicBuild = [];
       if (!this.hasChildren(this.value)) {
@@ -105,17 +118,14 @@ export default defineComponent({
         this.logicBuild.push(await this.processChild(child, position));
         position++;
       }
-      if (isArrayHasLength(this.logicBuild)) {
-        const last = this.logicBuild.length - 1;
-        this.logicBuild.push(genNextOptions(last, this.logicBuild[last].type, this.builderType, ComponentType.LOGIC));
-      } else {
+      if (!isArrayHasLength(this.logicBuild)) {
         this.createDefaultBuild();
       }
     },
 
     createDefaultBuild() {
       this.selected = this.value.options[0];
-      this.logicBuild.push(genNextOptions(-1, ComponentType.LOGIC, this.builderType));
+      this.logicBuild = [genNextOptions(-1, ComponentType.LOGIC, this.builderType)];
     },
 
     async processChild(child: any, position: number) {
@@ -127,7 +137,7 @@ export default defineComponent({
 
     processLogic(child: any, position: number) {
       for (const [key, value] of Object.entries(child)) {
-        return generateNewComponent(ComponentType.LOGIC, position, { iri: key, children: value }, this.builderType);
+        return generateNewComponent(ComponentType.LOGIC, position, { iri: key, children: value }, this.builderType, true);
       }
     },
 
@@ -141,13 +151,14 @@ export default defineComponent({
         ComponentType.ENTITY,
         position,
         { filterOptions: options, entity: iri, type: ComponentType.ENTITY, label: "Member" },
-        this.builderType
+        this.builderType,
+        true
       );
     },
 
     processRefinement(child: any, position: number) {
       for (const [key, value] of Object.entries(child)) {
-        return generateNewComponent(ComponentType.REFINEMENT, position, { propertyIri: key, children: value }, this.builderType);
+        return generateNewComponent(ComponentType.REFINEMENT, position, { propertyIri: key, children: value }, this.builderType, true);
       }
     },
 
@@ -159,11 +170,12 @@ export default defineComponent({
     onConfirm(): void {
       this.$emit("updateClicked", {
         id: this.id,
-        value: { iri: this.selected.iri, children: this.value.children, options: this.value.options },
+        value: { iri: this.selected.iri, children: this.logicBuild, options: this.value.options },
         position: this.position,
         type: ComponentType.LOGIC,
         json: this.createLogicJson(),
-        builderType: this.builderType
+        builderType: this.builderType,
+        showButtons: true
       });
     },
 
@@ -172,7 +184,7 @@ export default defineComponent({
       if (this.selected.iri) json[this.selected.iri] = [];
       if (this.logicBuild.length) {
         for (const item of this.logicBuild) {
-          if (item && item.type !== ComponentType.ADD_NEXT) json[this.selected.iri].push(item.json);
+          if (item.type !== ComponentType.ADD_NEXT) json[this.selected.iri].push(item.json);
         }
       }
       return json;
@@ -194,17 +206,34 @@ export default defineComponent({
       if (data.selectedType === ComponentType.LOGIC) {
         data.value = { options: this.value.options, iri: "", children: undefined };
       }
-      addItem(data, this.logicBuild, ComponentType.LOGIC, this.builderType);
+      addItem(data, this.logicBuild, this.builderType, true);
     },
 
-    async addNextOptionsWrapper(data: NextComponentSummary): Promise<void> {
-      const nextOptionsComponent = addNextOptions(data, this.logicBuild, this.builderType);
-      await this.$nextTick();
-      scrollIntoView(nextOptionsComponent);
-    },
-
-    deleteItemWrapper(data: ComponentDetails): void {
-      deleteItem(data, this.logicBuild, ComponentType.LOGIC, this.builderType);
+    deleteItem(data: ComponentDetails): void {
+      const index = this.logicBuild.findIndex(item => item.position === data.position);
+      this.logicBuild.splice(index, 1);
+      const length = this.logicBuild.length;
+      if (length === 0) {
+        this.createDefaultBuild();
+        return;
+      }
+      if (data.position === 0) {
+        if (!this.addDefaultOptions.includes(this.logicBuild[0].type)) {
+          this.logicBuild.unshift({
+            id: "addNext_" + 0,
+            value: {
+              previousPosition: data.position,
+              previousComponentType: data.type,
+              parentGroup: data.builderType
+            },
+            position: 0,
+            type: ComponentType.ADD_NEXT,
+            json: {},
+            builderType: data.builderType,
+            showButtons: true
+          });
+        }
+      }
     },
 
     deleteClicked(): void {
@@ -218,12 +247,15 @@ export default defineComponent({
       });
     },
 
-    addNextClicked(): void {
+    addNextClicked(item: any): void {
       this.$emit("addNextOptionsClicked", {
-        previousComponentType: ComponentType.LOGIC,
-        previousPosition: this.position,
-        parentGroup: ComponentType.LOGIC
+        position: this.position + 1,
+        selectedType: item
       });
+    },
+
+    getButtonOptions() {
+      return [ComponentType.ENTITY, ComponentType.LOGIC, ComponentType.REFINEMENT];
     }
   }
 });
@@ -237,6 +269,7 @@ export default defineComponent({
   flex-flow: row nowrap;
   justify-content: space-between;
   gap: 1rem;
+  position: relative;
 }
 
 .logic-container {
@@ -246,7 +279,7 @@ export default defineComponent({
   justify-content: flex-start;
   align-items: flex-start;
   padding: 1rem;
-  border: 1px solid #dee2e6;
+  border: 1px solid #0c1793;
   border-radius: 3px;
   position: relative;
   row-gap: 1rem;
@@ -261,11 +294,6 @@ export default defineComponent({
   flex-flow: row nowrap;
   justify-content: center;
   align-items: center;
-}
-
-.label-container {
-  padding: 1rem;
-  position: relative;
 }
 
 .children-container {

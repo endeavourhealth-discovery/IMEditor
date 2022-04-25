@@ -13,12 +13,12 @@
           :value="item.value"
           :id="item.id"
           :position="item.position"
-          :last="parentsBuild.length - 2 <= item.position ? true : false"
+          :showButtons="item.showButtons"
           :builderType="item.builderType"
           @deleteClicked="deleteItem"
           @addClicked="addItem"
           @updateClicked="updateItem"
-          @addNextOptionsClicked="addNextOptions"
+          @addNextOptionsClicked="addItem"
         >
         </component>
       </template>
@@ -27,7 +27,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from "@vue/runtime-core";
+import { defineComponent } from "@vue/runtime-core";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import Logic from "@/components/edit/parentsEditor/builder/Logic.vue";
 import { Helpers, Enums } from "im-library";
@@ -75,25 +75,21 @@ export default defineComponent({
         this.parentsBuild.push(this.processObject({ key: key, value: value }, position));
         position++;
       }
-      if (isArrayHasLength(this.parentsBuild)) {
-        const last = this.parentsBuild.length - 1;
-        this.parentsBuild.push(genNextOptions(last, this.parentsBuild[last].type, BuilderType.PARENT, ComponentType.BUILDER));
-      } else {
+      if (!isArrayHasLength(this.parentsBuild)) {
         this.createDefaultBuild();
       }
       this.loading = false;
     },
 
     createDefaultBuild() {
-      this.parentsBuild.push(generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.PARENT));
-      this.parentsBuild.push(genNextOptions(1, ComponentType.LOGIC, BuilderType.PARENT, ComponentType.BUILDER));
+      this.parentsBuild = [generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.PARENT, true)];
     },
 
     generateParentsAsNode() {
       let json = [];
       if (this.parentsBuild.length) {
         for (const item of this.parentsBuild) {
-          if (item.type !== ComponentType.ADD_NEXT) json.push(item.json);
+          json.push(item.json);
         }
       }
       return json;
@@ -104,23 +100,21 @@ export default defineComponent({
     },
 
     processObject(item: { key: string; value: TTIriRef[] }, position: number): any {
-      return generateNewComponent(ComponentType.LOGIC, position, { iri: item.key, children: item.value }, BuilderType.PARENT);
+      return generateNewComponent(ComponentType.LOGIC, position, { iri: item.key, children: item.value }, BuilderType.PARENT, true);
     },
 
     deleteItem(data: ComponentDetails): void {
       const index = this.parentsBuild.findIndex(item => item.position === data.position);
       this.parentsBuild.splice(index, 1);
       const length = this.parentsBuild.length;
+      if (length === 0) {
+        this.createDefaultBuild();
+        return;
+      }
       if (data.position === 0) {
-        this.parentsBuild.unshift(genNextOptions(0, ComponentType.BUILDER, BuilderType.PARENT, ComponentType.BUILDER));
-      }
-      if (index < length - 1 && this.parentsBuild[index].type === ComponentType.ADD_NEXT) {
-        this.parentsBuild[index] = genNextOptions(index - 1, this.parentsBuild[index - 1].type, BuilderType.PARENT, ComponentType.BUILDER);
-      }
-      if (this.parentsBuild[length - 1].type !== ComponentType.ADD_NEXT) {
-        this.parentsBuild.push(genNextOptions(length - 1, this.parentsBuild[length - 1].type, BuilderType.PARENT, ComponentType.BUILDER));
-      } else {
-        this.parentsBuild[length - 1] = genNextOptions(length - 2, this.parentsBuild[length - 2].type, BuilderType.PARENT, ComponentType.BUILDER);
+        if (this.parentsBuild[0].type !== ComponentType.LOGIC) {
+          this.parentsBuild.unshift(generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.PARENT, true));
+        }
       }
       updatePositions(this.parentsBuild);
     },
@@ -130,28 +124,10 @@ export default defineComponent({
       this.parentsBuild[index] = data;
     },
 
-    async addNextOptions(data: NextComponentSummary): Promise<void> {
-      const nextOptionsComponent = genNextOptions(data.previousPosition, data.previousComponentType, BuilderType.PARENT, data.parentGroup);
-      if (data.previousPosition !== this.parentsBuild.length - 1 && this.parentsBuild[data.previousPosition + 1].type === ComponentType.ADD_NEXT) {
-        this.parentsBuild[data.previousPosition + 1] = nextOptionsComponent;
-      } else {
-        this.parentsBuild.splice(data.previousPosition + 1, 0, nextOptionsComponent);
-      }
-      updatePositions(this.parentsBuild);
-      await this.$nextTick();
-      const itemToScrollTo = document.getElementById(nextOptionsComponent.id);
-      itemToScrollTo?.scrollIntoView();
-    },
-
     addItem(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
-      const newComponent = generateNewComponent(data.selectedType, data.position, data.value, BuilderType.PARENT);
+      const newComponent = generateNewComponent(data.selectedType, data.position, data.value, BuilderType.PARENT, true);
       if (!newComponent) return;
       this.parentsBuild[data.position] = newComponent;
-      if (this.parentsBuild[this.parentsBuild.length - 1].type !== ComponentType.ADD_NEXT) {
-        this.parentsBuild.push(
-          genNextOptions(this.parentsBuild.length - 1, this.parentsBuild[this.parentsBuild.length - 1].type, BuilderType.PARENT, ComponentType.BUILDER)
-        );
-      }
       updatePositions(this.parentsBuild);
     }
   }
