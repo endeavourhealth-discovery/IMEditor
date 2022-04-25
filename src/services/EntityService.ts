@@ -19,6 +19,14 @@ const {
 export default class EntityService {
   static api = Env.api;
 
+  public static async saveMapping(mappings: Map<string, string[]>): Promise<any[]> {
+    try {
+      return await axios.post(this.api + "api/entity/mapping", mappings);
+    } catch (error) {
+      return [] as any[];
+    }
+  }
+
   public static async removeTaskAction(taskIri: string, removedActionIri: string): Promise<any> {
     try {
       return await axios.delete(this.api + "api/entity/task/action", {
