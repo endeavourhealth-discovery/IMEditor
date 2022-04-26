@@ -24,7 +24,7 @@
         <div class="button-bar" id="creator-button-bar">
           <Button icon="pi pi-angle-left" label="Back" @click="stepsBack" />
           <Button icon="pi pi-refresh" label="Reset" class="p-button-warning" @click="refreshCreator" />
-          <Button icon="pi pi-check" label="Save" class="p-button-success save-button" @click="submit" />
+          <Button icon="pi pi-check" label="Submit" class="p-button-success save-button" @click="submit" />
           <Button icon="pi pi-angle-right" label="Next" @click="stepsForward" />
         </div>
       </div>
@@ -80,6 +80,7 @@ export default defineComponent({
   async mounted() {
     this.loading = true;
     await this.getFilterOptions();
+    this.setStepsFromType(this.hasType ? this.conceptUpdated[RDF.TYPE] : []);
     this.loading = false;
   },
   data() {
@@ -88,16 +89,7 @@ export default defineComponent({
       conceptUpdated: {} as any,
       loading: true,
       formObject: {} as any,
-      stepsItems: [
-        {
-          label: "Type",
-          to: "/creator/type"
-        },
-        {
-          label: "Summary",
-          to: "/creator/summary"
-        }
-      ],
+      stepsItems: [] as { label: string; to: string }[],
       currentStep: 0
     };
   },
@@ -179,20 +171,12 @@ export default defineComponent({
 
     setStepsFromType(types: any[]) {
       if (isValueSet(types)) {
-        this.stepsItems = [
-          {
-            label: "Type",
-            to: "/creator/type"
-          },
-          {
-            label: "Summary",
-            to: "/creator/summary"
-          },
-          {
+        if (this.stepsItems.findIndex(item => item.label === "Members") === -1) {
+          this.stepsItems.push({
             label: "Members",
             to: "/creator/members"
-          }
-        ];
+          });
+        }
       } else {
         this.stepsItems = [
           {
@@ -202,7 +186,8 @@ export default defineComponent({
           {
             label: "Summary",
             to: "/creator/summary"
-          }
+          },
+          { label: "Parents", to: "/creator/parents" }
         ];
       }
       if (this.currentStep === 0) {

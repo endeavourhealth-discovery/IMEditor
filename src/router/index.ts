@@ -3,6 +3,7 @@ import Editor from "../views/Editor.vue";
 import Creator from "../views/Creator.vue";
 import TypeSelector from "@/components/creator/TypeSelector.vue";
 import SummaryEditor from "@/components/edit/SummaryEditor.vue";
+import ParentsEditor from "@/components/edit/ParentsEditor.vue";
 import { SnomedLicense, Env } from "im-library";
 import store from "@/store/index";
 import { nextTick } from "vue";
@@ -20,7 +21,8 @@ const routes: Array<RouteRecordRaw> = [
     redirect: { name: "TypeSelector" },
     children: [
       { path: "type", name: "TypeSelector", component: TypeSelector },
-      { path: "summary", name: "Summary", component: SummaryEditor }
+      { path: "summary", name: "Summary", component: SummaryEditor },
+      { path: "parents", name: "Parents", component: ParentsEditor }
     ]
   },
   {

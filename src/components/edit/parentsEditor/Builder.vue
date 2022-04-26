@@ -68,6 +68,8 @@ export default defineComponent({
       this.loading = true;
       this.parentsBuild = [];
       if (!isObjectHasKeys(this.parents)) {
+        this.createDefaultBuild();
+        this.loading = false;
         return;
       }
       let position = 0;
