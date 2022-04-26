@@ -59,6 +59,9 @@
             @remove="removeMapping"
           />
         </TabPanel>
+        <TabPanel header="Hierarchy position" class="tab-container">
+          <SecondaryTree :conceptIri="selected.iri" />
+        </TabPanel>
       </TabView>
     </div>
   </div>
@@ -68,7 +71,7 @@
       icon="pi pi-arrows-h"
       label="Map"
       class="p-button-help"
-      :disabled="!(this.selected && (this.selectedSuggestions.length || this.selectedEntities.length))"
+      :disabled="!(selected && (selectedSuggestions.length || selectedEntities.length))"
       @click="map"
     />
     <Button icon="pi pi-check" label="Next" class="save-button" @click="next" />

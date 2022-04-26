@@ -1,4 +1,4 @@
-import { createApp } from "vue";
+import { createApp, Plugin } from "vue";
 import App from "./App.vue";
 import router from "./router";
 import store from "./store";
@@ -83,8 +83,9 @@ import awsconfig from "./aws-exports";
 import axios from "axios";
 
 // IMLibrary imports
+import IMLibrary from "im-library";
 import "im-library/dist/style.css";
-import { TopBar, Helpers, Env } from "im-library";
+import { Helpers, Env } from "im-library";
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
@@ -96,6 +97,7 @@ const app = createApp(App)
   .use(store)
   .use(router)
   .use(PrimeVue, { ripple: true })
+  .use(IMLibrary.install as Plugin, { store })
   .use(ConfirmationService)
   .use(ToastService)
   .use(VueClipboard, {
@@ -152,8 +154,7 @@ const app = createApp(App)
   .component("Tag", Tag)
   .component("AutoComplete", AutoComplete)
   .component("Sidebar", Sidebar)
-  .component("Steps", Steps)
-  .component("TopBar", TopBar);
+  .component("Steps", Steps);
 
 const vm = app.mount("#app");
 

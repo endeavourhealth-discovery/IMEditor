@@ -81,6 +81,10 @@
             class="tab-container"
           />
         </TabPanel>
+
+        <TabPanel header="Hierarchy position" class="tab-container">
+          <SecondaryTree :conceptIri="selected.data" />
+        </TabPanel>
       </TabView>
     </div>
   </div>
@@ -135,18 +139,8 @@ export default defineComponent({
     }
   },
   emits: ["nextPage"],
-  watch: {
-    async selected() {
-      if (this.selected.data) {
-        this.selectedView = await EntityService.getPartialEntity(this.selected.data, []);
-        this.selected.suggestions = (await EntityService.getMappingSuggestions(this.selected.data, this.selected.label)).map((suggestion: any) => {
-          return { iri: suggestion["@id"], name: suggestion.name, type: suggestion.type };
-        });
-      }
-    }
-  },
   computed: {
-    ...mapState(["editorIri", "editorSavedEntity", "currentUser", "isLoggedIn", "filterOptions", "selectedFilters"])
+    ...mapState(["filterOptions"])
   },
   data() {
     return {
@@ -156,7 +150,6 @@ export default defineComponent({
       selected: {} as any,
       unassigned: [] as any[],
       contentHeight: "",
-      selectedView: {},
       loading: true,
       searchResults: [] as any[],
       request: {} as { cancel: any; msg: string },
