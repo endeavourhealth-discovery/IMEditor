@@ -1,4 +1,4 @@
-import { createApp } from "vue";
+import { createApp, Plugin } from "vue";
 import App from "./App.vue";
 import router from "./router";
 import store from "./store";
@@ -75,6 +75,7 @@ import InputSwitch from "primevue/inputswitch";
 import StyleClass from "primevue/styleclass";
 import Tag from "primevue/tag";
 import AutoComplete from "primevue/autocomplete";
+import Steps from "primevue/steps";
 
 import { Amplify, Auth } from "aws-amplify";
 import awsconfig from "./aws-exports";
@@ -82,7 +83,7 @@ import axios from "axios";
 
 // IMLibrary imports
 import "im-library/dist/style.css";
-import { TopBar, Helpers, Env } from "im-library";
+import IMLibrary, { Helpers, Env } from "im-library";
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
@@ -94,6 +95,7 @@ const app = createApp(App)
   .use(store)
   .use(router)
   .use(PrimeVue, { ripple: true })
+  .use(IMLibrary.install as Plugin, { store })
   .use(ConfirmationService)
   .use(ToastService)
   .use(VueClipboard, {
@@ -149,7 +151,7 @@ const app = createApp(App)
   .component("InputSwitch", InputSwitch)
   .component("Tag", Tag)
   .component("AutoComplete", AutoComplete)
-  .component("TopBar", TopBar);
+  .component("Steps", Steps);
 
 const vm = app.mount("#app");
 

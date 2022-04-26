@@ -10,7 +10,7 @@
     </TopBar>
     <ConfirmDialog></ConfirmDialog>
     <div id="editor-main-container">
-      <div class="loading-container flex flex-row justify-content-center align-items-center" v-if="loading">
+      <div class="loading-container" v-if="loading">
         <ProgressSpinner />
       </div>
       <div v-else class="content-buttons-container">
@@ -48,7 +48,7 @@
             <VueJsonPretty v-if="isObjectHasKeysWrapper(conceptUpdated)" class="json" :path="'res'" :data="conceptUpdated" @click="handleClick" />
           </div>
         </div>
-        <div class="button-bar flex flex-row justify-content-end" id="editor-button-bar">
+        <div class="button-bar" id="editor-button-bar">
           <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
           <Button icon="pi pi-refresh" label="Reset" class="p-button-warning" @click="refreshEditor" />
           <Button icon="pi pi-check" label="Save" class="save-button" @click="submit" />
@@ -85,7 +85,7 @@ export default defineComponent({
     ParentsEditor
   },
   beforeRouteLeave() {
-    this.confirmLeaveEditor();
+    this.confirmLeavePage();
   },
   beforeUnmount() {
     window.removeEventListener("beforeunload", this.beforeWindowUnload);
@@ -95,20 +95,19 @@ export default defineComponent({
       return isValueSet(this.conceptUpdated[RDF.TYPE]);
     },
     toggleConfirmLeaveDialog() {
-      if (JSON.stringify(this.conceptUpdated) === JSON.stringify(this.conceptOriginal)) {
-        window.removeEventListener("beforeunload", this.beforeWindowUnload);
-      } else {
+      if (this.checkForChanges()) {
         window.addEventListener("beforeunload", this.beforeWindowUnload);
+      } else {
+        window.removeEventListener("beforeunload", this.beforeWindowUnload);
       }
     },
-    ...mapState(["editorIri", "editorSavedEntity", "currentUser", "isLoggedIn", "filterOptions"])
+    ...mapState(["editorIri", "editorSavedEntity", "filterOptions"])
   },
   data() {
     return {
       conceptOriginal: {} as any,
       conceptUpdated: {} as any,
       active: 0,
-      contentHeight: "",
       loading: true,
       entityName: ""
     };
@@ -150,7 +149,7 @@ export default defineComponent({
       }
     },
 
-    confirmLeaveEditor() {
+    confirmLeavePage() {
       if (this.checkForChanges()) {
         this.$confirm.require({
           message: "All unsaved changes will be lost. Are you sure you want to proceed?",
@@ -244,6 +243,10 @@ export default defineComponent({
 .loading-container {
   width: 100%;
   height: 100%;
+  display: flex;
+  flex-flow: row;
+  justify-content: center;
+  align-items: center;
 }
 
 .content-json-container {
@@ -329,6 +332,9 @@ export default defineComponent({
   border-right: 1px solid #dee2e6;
   border-radius: 3px;
   background-color: #ffffff;
+  display: flex;
+  flex-flow: row;
+  justify-content: flex-end;
 }
 
 .topbar-content {
