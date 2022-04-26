@@ -75,11 +75,11 @@ export default defineComponent({
       },
       deep: true
     },
-    name(newValue) {
+    name(newValue, oldValue) {
       this.updateEntity({ "http://www.w3.org/2000/01/rdf-schema#label": newValue });
     },
-    code(newValue) {
-      this.updateEntity({ "@id": this.updateIri, "http://endhealth.info/im#code": newValue });
+    code(newValue, oldValue) {
+      if (newValue !== oldValue) this.updateEntity({ "@id": this.updateIri, "http://endhealth.info/im#code": newValue });
     },
     description(newValue) {
       this.updateEntity({ "http://www.w3.org/2000/01/rdf-schema#comment": newValue });
@@ -91,8 +91,8 @@ export default defineComponent({
       deep: true
     },
     scheme: {
-      handler() {
-        this.updateEntity({ "@id": this.updateIri });
+      handler(newValue, oldValue) {
+        if (newValue !== oldValue) this.updateEntity({ "@id": this.updateIri });
       },
       deep: true
     },
@@ -133,7 +133,10 @@ export default defineComponent({
   methods: {
     processEntity() {
       if (!this.updatedConcept) return;
-      if (isObjectHasKeys(this.updatedConcept, ["@id"])) this.iri = this.updatedConcept["@id"];
+      if (isObjectHasKeys(this.updatedConcept, ["@id"])) {
+        this.iri = this.updatedConcept["@id"];
+        this.code = this.iri.substring(this.iri.indexOf("#") + 1);
+      }
       if (isObjectHasKeys(this.updatedConcept, [RDFS.LABEL])) this.name = this.updatedConcept[RDFS.LABEL];
       if (isObjectHasKeys(this.updatedConcept, [IM.HAS_STATUS])) {
         const found = this.filterOptions.status.find((item: any) => item["@id"] === this.updatedConcept[IM.HAS_STATUS][0]["@id"]);
@@ -146,8 +149,7 @@ export default defineComponent({
         });
       }
       const found = this.filterOptions.schemes.find((scheme: any) => scheme.iri === this.iri.substring(0, this.iri.indexOf("#") + 1));
-      this.scheme = found ? found : "";
-      this.code = this.iri.substring(this.iri.indexOf("#") + 1);
+      if (found) this.scheme = found;
       if (isObjectHasKeys(this.updatedConcept, [RDFS.COMMENT])) this.description = this.updatedConcept[RDFS.COMMENT];
     },
 
@@ -178,9 +180,11 @@ export default defineComponent({
 }
 
 .summary-container {
-  max-height: calc(100% - 1.5rem);
+  /* max-height: calc(100% - 1.5rem); */
+  flex: 0 1 auto;
+  overflow: auto;
   width: 100%;
-  padding-top: 1.5rem;
+  padding: 2.5rem 1rem 1rem 1rem;
   display: flex;
   flex-flow: row wrap;
   justify-content: flex-start;

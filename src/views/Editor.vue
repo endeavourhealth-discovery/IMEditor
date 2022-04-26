@@ -302,7 +302,7 @@ export default defineComponent({
 
 .tabview:deep(.p-tabview-panels) {
   flex: 1 1 auto;
-  padding: 1rem 0 0 1rem;
+  padding: 0rem 0 0 0rem;
   overflow: auto;
 }
 

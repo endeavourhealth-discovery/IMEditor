@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import Editor from "../views/Editor.vue";
 import Creator from "../views/Creator.vue";
 import TypeSelector from "@/components/creator/TypeSelector.vue";
+import SummaryEditor from "@/components/edit/SummaryEditor.vue";
 import { SnomedLicense, Env } from "im-library";
 import store from "@/store/index";
 import { nextTick } from "vue";
@@ -16,7 +17,11 @@ const routes: Array<RouteRecordRaw> = [
     meta: {
       requiresAuth: true
     },
-    children: [{ path: "type", name: "TypeSelector", component: TypeSelector }]
+    redirect: { name: "TypeSelector" },
+    children: [
+      { path: "type", name: "TypeSelector", component: TypeSelector },
+      { path: "summary", name: "Summary", component: SummaryEditor }
+    ]
   },
   {
     path: "/editor/:selectedIri?",
