@@ -4,6 +4,7 @@ import Creator from "../views/Creator.vue";
 import TypeSelector from "@/components/creator/TypeSelector.vue";
 import SummaryEditor from "@/components/edit/SummaryEditor.vue";
 import ParentsEditor from "@/components/edit/ParentsEditor.vue";
+import MemberEditor from "@/components/edit/MemberEditor.vue";
 import { SnomedLicense, Env } from "im-library";
 import store from "@/store/index";
 import { nextTick } from "vue";
@@ -22,7 +23,8 @@ const routes: Array<RouteRecordRaw> = [
     children: [
       { path: "type", name: "TypeSelector", component: TypeSelector },
       { path: "summary", name: "Summary", component: SummaryEditor },
-      { path: "parents", name: "Parents", component: ParentsEditor }
+      { path: "parents", name: "Parents", component: ParentsEditor },
+      { path: "members", name: "Members", component: MemberEditor }
     ]
   },
   {

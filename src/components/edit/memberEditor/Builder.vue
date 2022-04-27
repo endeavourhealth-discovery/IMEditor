@@ -76,6 +76,7 @@ export default defineComponent({
       this.loading = true;
       this.membersBuild = [];
       if (!isObjectHasKeys(this.members, [IM.DEFINITION]) && !isObjectHasKeys(this.members, [IM.HAS_MEMBER])) {
+        this.createDefaultBuild();
         this.loading = false;
         return;
       }
