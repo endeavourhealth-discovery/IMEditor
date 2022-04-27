@@ -12,9 +12,6 @@ import {
   EntityReferenceNode
 } from "im-library/dist/types/interfaces/Interfaces";
 import { Models, Env } from "im-library";
-const {
-  Search: { ConceptSummary, SearchRequest }
-} = Models;
 
 export default class EntityService {
   static api = Env.api;
@@ -64,16 +61,13 @@ export default class EntityService {
     }
   }
 
-  public static async getMappingSuggestions(iri: string, name: string) {
+  public static async getMappingSuggestions(request: SearchRequest, cancelToken: CancelToken): Promise<ConceptSummary[]> {
     try {
-      return await axios.get(this.api + "api/entity/public/mappingSuggestions", {
-        params: {
-          iri: iri,
-          name: name
-        }
+      return await axios.post(this.api + "api/entity/public/search", request, {
+        cancelToken: cancelToken
       });
     } catch (error) {
-      return {} as any;
+      return [] as ConceptSummary[];
     }
   }
 

@@ -32,6 +32,7 @@
             :selectable="true"
             :inputSearch="false"
             :paginable="true"
+            :expandable="true"
             @select="select"
             @unselect="unselect"
           />
@@ -111,12 +112,7 @@ export default defineComponent({
     async selected() {
       if (this.selected) {
         this.selectedView = await EntityService.getPartialEntity(this.selected.iri, []);
-        this.selected.suggestions = await EntityService.getMappingSuggestions(this.selected.iri, this.selected.name);
-        this.selected.suggestions.forEach((suggestion: { [x: string]: any; iri: any }) => {
-          suggestion.iri = suggestion["@id"];
-          suggestion.name = suggestion[RDFS.LABEL];
-          suggestion.type = suggestion[RDF.TYPE];
-        });
+        this.selected.suggestions = await this.getMappingSuggestions(this.selected.name);
         this.selectedSuggestions = [];
         this.selectedEntities = [];
       }
@@ -136,6 +132,13 @@ export default defineComponent({
   },
 
   methods: {
+    async getMappingSuggestions(term: string) {
+      const { searchRequest, token } = await this.prepareSearchRequestWithToken(term);
+      const results = await EntityService.getMappingSuggestions(searchRequest, token);
+      return results.map(entity => {
+        return { iri: entity.name, name: entity.name, type: entity.entityType };
+      });
+    },
     removeMapping(data: any) {
       this.selected.mappings = this.selected.mappings.filter((mapping: any) => mapping.iri !== data.iri);
       this.mappingsMap.set(this.selected.iri, this.selected.mappings);
@@ -188,20 +191,25 @@ export default defineComponent({
 
     async search(searchTerm: string): Promise<void> {
       if (searchTerm.length > 0) {
-        this.searchResults = [];
-        const searchRequest = new SearchRequest();
-        searchRequest.termFilter = searchTerm;
-        searchRequest.sortBy = SortBy.Usage;
-        searchRequest.page = 1;
-        searchRequest.size = 100;
-        this.setFilters(searchRequest);
-        if (isObjectHasKeys(this.request, ["cancel", "msg"])) {
-          await this.request.cancel({ status: 499, message: "Search cancelled by user" });
-        }
-        const axiosSource = axios.CancelToken.source();
-        this.request = { cancel: axiosSource.cancel, msg: "Loading..." };
-        await this.fetchSearchResults(searchRequest, axiosSource.token);
+        const { searchRequest, token } = await this.prepareSearchRequestWithToken(searchTerm);
+        await this.fetchSearchResults(searchRequest, token);
       }
+    },
+
+    async prepareSearchRequestWithToken(term: string) {
+      this.searchResults = [];
+      const searchRequest = new SearchRequest();
+      searchRequest.termFilter = term;
+      searchRequest.sortBy = SortBy.Usage;
+      searchRequest.page = 1;
+      searchRequest.size = 100;
+      this.setFilters(searchRequest);
+      if (isObjectHasKeys(this.request, ["cancel", "msg"])) {
+        await this.request.cancel({ status: 499, message: "Search cancelled by user" });
+      }
+      const axiosSource = axios.CancelToken.source();
+      this.request = { cancel: axiosSource.cancel, msg: "Loading..." };
+      return { searchRequest: searchRequest, token: axiosSource.token };
     },
 
     setFilters(searchRequest: Models.Search.SearchRequest) {
