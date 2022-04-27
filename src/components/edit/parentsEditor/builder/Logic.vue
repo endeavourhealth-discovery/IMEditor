@@ -53,7 +53,7 @@ export default defineComponent({
     id: { type: String, required: true },
     position: { type: Number, required: true },
     value: { type: Object as PropType<{ iri: string; children: PropType<Array<any>> | undefined }>, required: false },
-    showButtons: { type: Boolean, default: true },
+    showButtons: { type: Object as PropType<{ minus: Boolean; plus: Boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   components: { AddDeleteButtons, AddNext, Entity },
@@ -138,7 +138,7 @@ export default defineComponent({
           0,
           { filterOptions: this.filteredFilterOptions, entity: undefined, type: ComponentType.ENTITY, label: "Parent" },
           BuilderType.PARENT,
-          true
+          { minus: true, plus: true }
         )
       ];
     },
@@ -155,7 +155,7 @@ export default defineComponent({
         position,
         { filterOptions: options, entity: iri, type: ComponentType.ENTITY, label: "Parent" },
         this.builderType,
-        true
+        { minus: true, plus: true }
       );
     },
 
@@ -199,7 +199,7 @@ export default defineComponent({
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Parent" };
       }
-      addItem(data, this.logicBuild, this.builderType, true);
+      addItem(data, this.logicBuild, this.builderType, { minus: true, plus: true });
     },
 
     deleteItem(data: ComponentDetails): void {
@@ -218,7 +218,7 @@ export default defineComponent({
               0,
               { filterOptions: this.filteredFilterOptions, entity: undefined, type: ComponentType.ENTITY, label: "Parent" },
               BuilderType.PARENT,
-              true
+              { minus: true, plus: true }
             )
           );
         }

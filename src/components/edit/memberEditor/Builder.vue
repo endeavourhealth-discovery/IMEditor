@@ -81,10 +81,12 @@ export default defineComponent({
         return;
       }
       if (isObjectHasKeys(this.members, [IM.DEFINITION])) {
-        this.membersBuild.push(generateNewComponent(ComponentType.DEFINITION, 0, this.members[IM.DEFINITION], BuilderType.MEMBER, true));
+        this.membersBuild.push(generateNewComponent(ComponentType.DEFINITION, 0, this.members[IM.DEFINITION], BuilderType.MEMBER, { minus: true, plus: true }));
       }
       if (isObjectHasKeys(this.members, [IM.HAS_MEMBER])) {
-        this.membersBuild.push(generateNewComponent(ComponentType.HAS_MEMBER, this.membersBuild.length, this.members[IM.HAS_MEMBER], BuilderType.MEMBER, true));
+        this.membersBuild.push(
+          generateNewComponent(ComponentType.HAS_MEMBER, this.membersBuild.length, this.members[IM.HAS_MEMBER], BuilderType.MEMBER, { minus: true, plus: true })
+        );
         console.log(this.membersBuild);
       }
       if (!isArrayHasLength(this.membersBuild)) {
@@ -94,7 +96,7 @@ export default defineComponent({
     },
 
     createDefaultBuild() {
-      this.membersBuild = [generateNewComponent(ComponentType.DEFINITION, 0, [], BuilderType.MEMBER, true)];
+      this.membersBuild = [generateNewComponent(ComponentType.DEFINITION, 0, [], BuilderType.MEMBER, { minus: true, plus: true })];
     },
 
     generateMembersAsNode(item: ComponentDetails) {
@@ -140,7 +142,7 @@ export default defineComponent({
       console.log("here");
       if (data.selectedType === ComponentType.HAS_MEMBER) data.value = [];
       if (data.selectedType === ComponentType.DEFINITION) data.value = [];
-      addItem(data, this.membersBuild, BuilderType.MEMBER, true);
+      addItem(data, this.membersBuild, BuilderType.MEMBER, { minus: true, plus: true });
       this.toggleButtons();
     },
 
@@ -149,9 +151,9 @@ export default defineComponent({
         this.membersBuild.findIndex(item => item.type === ComponentType.BUILDER) &&
         this.membersBuild.findIndex(item => item.type === ComponentType.HAS_MEMBER)
       ) {
-        this.membersBuild.forEach(item => (item.showButtons = false));
+        this.membersBuild.forEach(item => (item.showButtons = { minus: false, plus: false }));
       } else {
-        this.membersBuild.forEach(item => (item.showButtons = true));
+        this.membersBuild.forEach(item => (item.showButtons = { minus: true, plus: true }));
       }
     }
   }

@@ -58,7 +58,7 @@ export default defineComponent({
     id: { type: String, required: true },
     position: { type: Number, required: true },
     value: { type: Array as PropType<any[]>, required: true },
-    showButtons: { type: Boolean, default: true },
+    showButtons: { type: Object as PropType<{ minus: Boolean; plus: Boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   components: { AddDeleteButtons, AddNext, Entity },
@@ -117,7 +117,7 @@ export default defineComponent({
           0,
           { filterOptions: this.filteredFilterOptions, entity: undefined, type: ComponentType.ENTITY, label: "Member" },
           BuilderType.MEMBER,
-          true
+          { minus: true, plus: true }
         )
       ];
     },
@@ -156,7 +156,7 @@ export default defineComponent({
         position,
         { filterOptions: this.filteredFilterOptions, entity: iri, type: ComponentType.ENTITY, label: "Member" },
         BuilderType.MEMBER,
-        true
+        { minus: true, plus: true }
       );
     },
 
@@ -192,7 +192,7 @@ export default defineComponent({
       if (data.selectedType === ComponentType.LOGIC) {
         data.value = { options: this.logicOptions, iri: "", children: undefined };
       }
-      addItem(data, this.hasMembersBuild, BuilderType.MEMBER, true);
+      addItem(data, this.hasMembersBuild, BuilderType.MEMBER, { minus: true, plus: true });
     },
 
     deleteClicked(): void {
@@ -202,7 +202,8 @@ export default defineComponent({
         position: this.position,
         type: ComponentType.HAS_MEMBER,
         builderType: this.builderType,
-        json: this.generateMembersAsNode()
+        json: this.generateMembersAsNode(),
+        showButtons: this.showButtons
       });
     },
 

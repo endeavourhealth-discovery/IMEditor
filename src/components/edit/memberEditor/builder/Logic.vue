@@ -55,7 +55,7 @@ export default defineComponent({
       type: Object as PropType<{ iri: string; children: PropType<Array<any>> | undefined; options: { iri: string; name: string }[] }>,
       required: true
     },
-    showButtons: { type: Boolean, default: true },
+    showButtons: { type: Object as PropType<{ minus: Boolean; plus: Boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   components: { AddDeleteButtons, AddNext, Entity, Refinement },
@@ -137,7 +137,7 @@ export default defineComponent({
 
     processLogic(child: any, position: number) {
       for (const [key, value] of Object.entries(child)) {
-        return generateNewComponent(ComponentType.LOGIC, position, { iri: key, children: value }, this.builderType, true);
+        return generateNewComponent(ComponentType.LOGIC, position, { iri: key, children: value }, this.builderType, { minus: true, plus: true });
       }
     },
 
@@ -152,13 +152,13 @@ export default defineComponent({
         position,
         { filterOptions: options, entity: iri, type: ComponentType.ENTITY, label: "Member" },
         this.builderType,
-        true
+        { minus: true, plus: true }
       );
     },
 
     processRefinement(child: any, position: number) {
       for (const [key, value] of Object.entries(child)) {
-        return generateNewComponent(ComponentType.REFINEMENT, position, { propertyIri: key, children: value }, this.builderType, true);
+        return generateNewComponent(ComponentType.REFINEMENT, position, { propertyIri: key, children: value }, this.builderType, { minus: true, plus: true });
       }
     },
 
@@ -175,7 +175,7 @@ export default defineComponent({
         type: ComponentType.LOGIC,
         json: this.createLogicJson(),
         builderType: this.builderType,
-        showButtons: true
+        showButtons: this.showButtons
       });
     },
 
@@ -206,7 +206,7 @@ export default defineComponent({
       if (data.selectedType === ComponentType.LOGIC) {
         data.value = { options: this.value.options, iri: "", children: undefined };
       }
-      addItem(data, this.logicBuild, this.builderType, true);
+      addItem(data, this.logicBuild, this.builderType, { minus: true, plus: true });
       this.removeAddNexts();
     },
 
@@ -238,7 +238,7 @@ export default defineComponent({
             type: ComponentType.ADD_NEXT,
             json: {},
             builderType: data.builderType,
-            showButtons: true
+            showButtons: { minus: true, plus: true }
           });
         }
       }
@@ -251,7 +251,8 @@ export default defineComponent({
         position: this.position,
         type: ComponentType.LOGIC,
         builderType: this.builderType,
-        json: this.selected.iri
+        json: this.selected.iri,
+        showButtons: this.showButtons
       });
     },
 

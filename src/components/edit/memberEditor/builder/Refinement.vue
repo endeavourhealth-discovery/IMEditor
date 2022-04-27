@@ -57,7 +57,7 @@ export default defineComponent({
     id: { type: String, required: true },
     position: { type: Number, required: true },
     value: { type: Object as PropType<{ propertyIri: string; children: any[] }>, required: false },
-    showButtons: { type: Boolean, default: true },
+    showButtons: { type: Object as PropType<{ minus: Boolean; plus: Boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
@@ -97,7 +97,8 @@ export default defineComponent({
         let position = 0;
         const typeOptions = [{ "@id": RDF.PROPERTY }];
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
-        const propertyName = (await EntityService.getPartialEntity(this.value.propertyIri, [RDFS.LABEL]))[RDFS.LABEL];
+        const result = await EntityService.getPartialEntity(this.value.propertyIri, [RDFS.LABEL]);
+        const propertyName = result ? result[RDFS.LABEL] : "";
         const property = generateNewComponent(
           ComponentType.ENTITY,
           position,
@@ -108,7 +109,7 @@ export default defineComponent({
             label: "Property"
           },
           this.builderType,
-          false
+          { minus: false, plus: false }
         );
         if (property) {
           this.refinementBuild.push(property);
@@ -121,7 +122,7 @@ export default defineComponent({
             position,
             { propertyIri: this.value.propertyIri, quantifier: child },
             this.builderType,
-            false
+            { minus: false, plus: false }
           );
           if (quantifier) {
             this.refinementBuild.push(quantifier);
@@ -139,10 +140,10 @@ export default defineComponent({
         0,
         { filterOptions: this.propertyOptions, entity: undefined, type: ComponentType.ENTITY, label: "Property" },
         this.builderType,
-        false
+        { minus: false, plus: false }
       );
       if (property) this.refinementBuild.push(property);
-      const quantifier = generateNewComponent(ComponentType.QUANTIFIER, 1, undefined, this.builderType, false);
+      const quantifier = generateNewComponent(ComponentType.QUANTIFIER, 1, undefined, this.builderType, { minus: false, plus: false });
       if (quantifier) this.refinementBuild.push(quantifier);
     },
 
@@ -165,7 +166,7 @@ export default defineComponent({
           0,
           { filterOptions: this.propertyOptions, entity: undefined, type: ComponentType.ENTITY, label: "Property" },
           this.builderType,
-          false
+          { minus: false, plus: false }
         );
         if (property) this.refinementBuild.unshift();
       }
@@ -188,7 +189,7 @@ export default defineComponent({
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Property" };
       }
-      addItem(data, this.refinementBuild, this.builderType, false);
+      addItem(data, this.refinementBuild, this.builderType, { minus: false, plus: false });
     },
 
     onConfirm() {

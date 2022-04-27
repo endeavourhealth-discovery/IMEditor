@@ -55,7 +55,7 @@ export default defineComponent({
       }>,
       required: true
     },
-    showButtons: { type: Boolean, required: true },
+    showButtons: { type: Object as PropType<{ minus: Boolean; plus: Boolean }>, required: true },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
