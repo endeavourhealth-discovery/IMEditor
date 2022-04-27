@@ -136,7 +136,7 @@ export default defineComponent({
       const { searchRequest, token } = await this.prepareSearchRequestWithToken(term);
       const results = await EntityService.getMappingSuggestions(searchRequest, token);
       return results.map(entity => {
-        return { iri: entity.name, name: entity.name, type: entity.entityType };
+        return { iri: entity.iri, name: entity.name, type: entity.entityType };
       });
     },
     removeMapping(data: any) {

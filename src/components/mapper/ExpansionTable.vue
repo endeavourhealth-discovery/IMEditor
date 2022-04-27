@@ -51,7 +51,14 @@
     </Column>
 
     <template #expansion="{data}">
-      <VueJsonPretty class="suggestion-json" :data="data.expandView" />
+      <TabView :lazy="true" class="tabView">
+        <TabPanel header="JSON">
+          <VueJsonPretty class="suggestion-json" :data="data.expandView" />
+        </TabPanel>
+        <TabPanel header="Hierarchy position">
+          <SecondaryTree :conceptIri="data.iri" class="suggestion-json" />
+        </TabPanel>
+      </TabView>
     </template>
   </DataTable>
 </template>
