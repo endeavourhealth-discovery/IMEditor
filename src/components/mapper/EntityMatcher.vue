@@ -112,7 +112,7 @@ export default defineComponent({
     async selected() {
       if (this.selected) {
         this.selectedView = await EntityService.getPartialEntity(this.selected.iri, []);
-        this.selected.suggestions = await this.getMappingSuggestions(this.selected.name);
+        this.selected.suggestions = await this.getMappingSuggestions(this.selected.iri, this.selected.name);
         this.selectedSuggestions = [];
         this.selectedEntities = [];
       }
@@ -132,9 +132,13 @@ export default defineComponent({
   },
 
   methods: {
-    async getMappingSuggestions(term: string) {
+    async getMappingSuggestions(iri: string, term: string) {
       const { searchRequest, token } = await this.prepareSearchRequestWithToken(term);
-      const results = await EntityService.getMappingSuggestions(searchRequest, token);
+      let results = await EntityService.getMappingSuggestions(searchRequest, token);
+      const i = results.findIndex(entity => entity.iri === iri);
+      if (i !== -1) {
+        results.splice(i, 1);
+      }
       return results.map(entity => {
         return { iri: entity.iri, name: entity.name, type: entity.entityType };
       });
