@@ -87,7 +87,6 @@ export default defineComponent({
         this.membersBuild.push(
           generateNewComponent(ComponentType.HAS_MEMBER, this.membersBuild.length, this.members[IM.HAS_MEMBER], BuilderType.MEMBER, { minus: true, plus: true })
         );
-        console.log(this.membersBuild);
       }
       if (!isArrayHasLength(this.membersBuild)) {
         this.createDefaultBuild();
@@ -139,7 +138,6 @@ export default defineComponent({
     },
 
     addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
-      console.log("here");
       if (data.selectedType === ComponentType.HAS_MEMBER) data.value = [];
       if (data.selectedType === ComponentType.DEFINITION) data.value = [];
       addItem(data, this.membersBuild, BuilderType.MEMBER, { minus: true, plus: true });
@@ -148,10 +146,10 @@ export default defineComponent({
 
     toggleButtons() {
       if (
-        this.membersBuild.findIndex(item => item.type === ComponentType.BUILDER) &&
+        this.membersBuild.findIndex(item => item.type === ComponentType.DEFINITION) &&
         this.membersBuild.findIndex(item => item.type === ComponentType.HAS_MEMBER)
       ) {
-        this.membersBuild.forEach(item => (item.showButtons = { minus: false, plus: false }));
+        this.membersBuild.forEach(item => (item.showButtons = { minus: true, plus: false }));
       } else {
         this.membersBuild.forEach(item => (item.showButtons = { minus: true, plus: true }));
       }
