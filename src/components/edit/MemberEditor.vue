@@ -87,6 +87,7 @@ export default defineComponent({
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-start;
+  padding: 1rem 1rem 0 1rem;
 }
 
 .editor-container {

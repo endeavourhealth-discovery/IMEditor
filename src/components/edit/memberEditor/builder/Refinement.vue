@@ -198,7 +198,8 @@ export default defineComponent({
         position: this.position,
         type: ComponentType.REFINEMENT,
         builderType: this.builderType,
-        json: this.createAsJson()
+        json: this.createAsJson(),
+        showButtons: this.showButtons
       });
     },
 
@@ -209,7 +210,8 @@ export default defineComponent({
         position: this.position,
         type: ComponentType.REFINEMENT,
         builderType: this.builderType,
-        json: this.createAsJson()
+        json: this.createAsJson(),
+        showButtons: this.showButtons
       });
     },
 

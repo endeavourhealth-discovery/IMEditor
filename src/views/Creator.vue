@@ -22,10 +22,10 @@
           </router-view>
         </div>
         <div class="button-bar" id="creator-button-bar">
-          <Button icon="pi pi-angle-left" label="Back" @click="stepsBack" />
+          <Button v-if="currentStep > 0" icon="pi pi-angle-left" label="Back" @click="stepsBack" />
           <Button icon="pi pi-refresh" label="Reset" class="p-button-warning" @click="refreshCreator" />
           <Button icon="pi pi-check" label="Submit" class="p-button-success save-button" @click="submit" />
-          <Button icon="pi pi-angle-right" label="Next" @click="stepsForward" />
+          <Button v-if="currentStep < stepsItems.length - 1" icon="pi pi-angle-right" label="Next" @click="stepsForward" />
         </div>
       </div>
     </div>

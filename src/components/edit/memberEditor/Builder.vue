@@ -128,11 +128,7 @@ export default defineComponent({
         this.createDefaultBuild();
         return;
       }
-      if (data.position === 0) {
-        if (this.membersBuild[0].type !== ComponentType.LOGIC) {
-          this.membersBuild.unshift(generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.MEMBER, true));
-        }
-      }
+      this.toggleButtons();
       updatePositions(this.membersBuild);
     },
 
@@ -141,7 +137,22 @@ export default defineComponent({
     },
 
     addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
+      console.log("here");
+      if (data.selectedType === ComponentType.HAS_MEMBER) data.value = [];
+      if (data.selectedType === ComponentType.DEFINITION) data.value = [];
       addItem(data, this.membersBuild, BuilderType.MEMBER, true);
+      this.toggleButtons();
+    },
+
+    toggleButtons() {
+      if (
+        this.membersBuild.findIndex(item => item.type === ComponentType.BUILDER) &&
+        this.membersBuild.findIndex(item => item.type === ComponentType.HAS_MEMBER)
+      ) {
+        this.membersBuild.forEach(item => (item.showButtons = false));
+      } else {
+        this.membersBuild.forEach(item => (item.showButtons = true));
+      }
     }
   }
 });
@@ -167,5 +178,6 @@ export default defineComponent({
   border: 1px solid #dee2e6;
   border-radius: 3px;
   padding: 1rem;
+  gap: 1rem;
 }
 </style>

@@ -140,7 +140,7 @@ export default defineComponent({
         type: ComponentType.HAS_MEMBER,
         json: this.generateMembersAsNode(),
         builderType: this.builderType,
-        showButtons: true
+        showButtons: this.showButtons
       });
     },
 
@@ -177,11 +177,6 @@ export default defineComponent({
       if (length === 0) {
         this.createDefaultBuild();
         return;
-      }
-      if (data.position === 0) {
-        if (this.hasMembersBuild[0].type !== ComponentType.LOGIC) {
-          this.hasMembersBuild.unshift(generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.MEMBER, true));
-        }
       }
       updatePositions(this.hasMembersBuild);
     },

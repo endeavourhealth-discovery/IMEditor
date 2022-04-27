@@ -53,7 +53,7 @@ export default defineComponent({
   },
   emits: {
     updateClicked: (payload: ComponentDetails) => true,
-    addNextOptionsClicked: (payload: NextComponentSummary) => true,
+    addNextOptionsClicked: (payload: any) => true,
     deleteClicked: (payload: ComponentDetails) => true,
     addClicked: (payload: any) => true
   },
@@ -192,9 +192,8 @@ export default defineComponent({
 
     addNextClicked(): void {
       this.$emit("addNextOptionsClicked", {
-        previousComponentType: ComponentType.QUANTIFIER,
-        previousPosition: this.position,
-        parentGroup: this.builderType
+        selectedType: ComponentType.QUANTIFIER,
+        position: this.position + 1
       });
     }
   }

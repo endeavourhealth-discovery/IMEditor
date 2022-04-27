@@ -1,8 +1,8 @@
 <template>
-  <div v-if="show" class="switch-button-container">
+  <div class="switch-button-container">
     <div class="buttons-container">
       <Button icon="fas fa-minus" class="p-button-rounded p-button-outlined p-button-danger" @click="deleteClicked" />
-      <Button icon="fas fa-plus" class="p-button-rounded p-button-outlined p-button-success" @click="addNextClicked" />
+      <Button v-if="show" icon="fas fa-plus" class="p-button-rounded p-button-outlined p-button-success" @click="addNextClicked" />
     </div>
     <Menu ref="optionsMenu" :model="menuOptions" :popup="true" />
   </div>
@@ -65,7 +65,7 @@ export default defineComponent({
   order: 2;
   display: flex;
   flex-flow: column nowrap;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: center;
 }
 

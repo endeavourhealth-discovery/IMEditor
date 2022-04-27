@@ -41,7 +41,7 @@ import { Vocabulary, Helpers, Enums } from "im-library";
 import { EntityReferenceNode, TTIriRef, ComponentDetails, NextComponentSummary } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, deleteItem, updateItem, addItem, addNextOptions, scrollIntoView }
+  EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, deleteItem, updateItem, addItem, addNextOptions, scrollIntoView, updatePositions }
 } = Helpers;
 const { SHACL, IM } = Vocabulary;
 const { BuilderType, ComponentType } = Enums;
@@ -207,6 +207,14 @@ export default defineComponent({
         data.value = { options: this.value.options, iri: "", children: undefined };
       }
       addItem(data, this.logicBuild, this.builderType, true);
+      this.removeAddNexts();
+    },
+
+    removeAddNexts() {
+      if (this.logicBuild.some(child => child.type === ComponentType.ADD_NEXT) && this.logicBuild.length > 1) {
+        this.logicBuild = this.logicBuild.filter(child => child.type !== ComponentType.ADD_NEXT);
+        updatePositions(this.logicBuild);
+      }
     },
 
     deleteItem(data: ComponentDetails): void {
@@ -282,7 +290,7 @@ export default defineComponent({
   border: 1px solid #0c1793;
   border-radius: 3px;
   position: relative;
-  row-gap: 1rem;
+  gap: 1rem;
 }
 
 .p-button-label {
