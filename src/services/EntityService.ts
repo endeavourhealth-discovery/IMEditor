@@ -181,13 +181,13 @@ export default class EntityService {
     }
   }
 
-  public static async advancedSearch(request: Models.Search.SearchRequest, cancelToken: CancelToken): Promise<Models.Search.ConceptSummary[]> {
+  public static async advancedSearch(request: SearchRequest, cancelToken: CancelToken): Promise<ConceptSummary[]> {
     try {
       return await axios.post(this.api + "api/entity/public/search", request, {
         cancelToken: cancelToken
       });
     } catch (error) {
-      return [] as typeof ConceptSummary[];
+      return [] as ConceptSummary[];
     }
   }
 
