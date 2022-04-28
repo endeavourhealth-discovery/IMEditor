@@ -48,7 +48,17 @@
     <div class="col">
       <TabView :lazy="true" class="tabView">
         <TabPanel header="List">
-          <ExpansionTable :contents="unassigned" :drag="true" @startDrag="startDrag" :loading="loading" class="tab-container" />
+          <ExpansionTable
+            :contents="unassigned"
+            :drag="true"
+            @startDrag="startDrag"
+            :loading="loading"
+            :expandable="true"
+            :selectable="true"
+            @select="tableSelect"
+            @unselect="tableUnselect"
+            class="tab-container"
+          />
         </TabPanel>
         <TabPanel header="Contents">
           <ExpansionTable :contents="selected.contents" :expandable="true" class="tab-container" />
@@ -73,8 +83,15 @@
   </div>
   <div class="button-bar flex flex-row justify-content-end" id="mapping-button-bar">
     <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
+    <Button icon="pi pi-folder" label="Add to task" class="p-button-help" @click="addSelectedToFolder" />
     <Button icon="pi pi-check" label="Next" class="save-button" @click="next" />
   </div>
+
+  <Dialog header="Select task" v-model:visible="displayAddToTask">
+    <!-- <Listbox v-model="selectedCity" :options="cities" optionLabel="name" /> -->
+    <ExpansionTable :contents="this.root" />
+    <!-- {{ tableSelectedList }} -->
+  </Dialog>
 </template>
 
 <script lang="ts">
@@ -137,7 +154,9 @@ export default defineComponent({
       loading: true,
       searchResults: [] as any[],
       request: {} as { cancel: any; msg: string },
-      draggedItem: {} as any
+      draggedItem: {} as any,
+      tableSelectedList: [] as any[],
+      displayAddToTask: false
     };
   },
   async mounted() {
@@ -154,6 +173,19 @@ export default defineComponent({
     async init() {
       await this.getUnassigned();
       await this.getTasks();
+    },
+
+    addSelectedToFolder() {
+      this.displayAddToTask = true;
+      console.log(this.tableSelectedList);
+    },
+
+    tableSelect(tableSelected: any) {
+      this.tableSelectedList.push(tableSelected);
+    },
+
+    tableUnselect(tableUnselected: any) {
+      this.tableSelectedList = this.tableSelectedList.filter(selected => selected.iri !== tableUnselected.iri);
     },
 
     async getTasks() {
