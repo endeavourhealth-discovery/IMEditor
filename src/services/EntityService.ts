@@ -12,6 +12,7 @@ import {
   EntityReferenceNode
 } from "im-library/dist/types/interfaces/Interfaces";
 import { Models, Env } from "im-library";
+import { ConceptSummary, SearchRequest } from "im-library/dist/types/models/modules/Search";
 
 export default class EntityService {
   static api = Env.api;
@@ -37,9 +38,16 @@ export default class EntityService {
     }
   }
 
-  public static async addTaskAction(entity: any): Promise<any> {
+  public static async addTaskAction(entityIri: string, taskIri: string): Promise<any> {
+    console.log(taskIri);
+    console.log(entityIri);
     try {
-      return await axios.post(this.api + "api/entity/task/action", entity);
+      return await axios.get(this.api + "api/entity/task/action", {
+        params: {
+          entityIri: entityIri,
+          taskIri: taskIri
+        }
+      });
     } catch (error) {
       return {} as any;
     }

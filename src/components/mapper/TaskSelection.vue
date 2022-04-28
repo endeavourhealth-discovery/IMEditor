@@ -16,6 +16,7 @@ const { IM, RDF, RDFS } = Vocabulary;
 export default defineComponent({
   name: "TaskSelection",
   components: { ExpansionTable },
+  props: ["data"],
   emits: ["nextPage", "prevPage"],
   data() {
     return {

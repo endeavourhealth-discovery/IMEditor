@@ -48,31 +48,14 @@
     <div class="col">
       <TabView :lazy="true" class="tabView">
         <TabPanel header="List">
-          <ExpansionTable
-            :contents="unassigned"
-            :selectable="false"
-            :inputSearch="false"
-            :paginable="false"
-            :drag="true"
-            @startDrag="startDrag"
-            :loading="loading"
-            class="tab-container"
-          />
+          <ExpansionTable :contents="unassigned" :drag="true" @startDrag="startDrag" :loading="loading" class="tab-container" />
         </TabPanel>
         <TabPanel header="Contents">
-          <ExpansionTable
-            :contents="getTableDataFromNodes(selected.children)"
-            :selectable="false"
-            :inputSearch="false"
-            :paginable="false"
-            :expandable="true"
-            class="tab-container"
-          />
+          <ExpansionTable :contents="selected.contents" :expandable="true" class="tab-container" />
         </TabPanel>
         <TabPanel header="Search">
           <ExpansionTable
             :contents="searchResults"
-            :selectable="false"
             :inputSearch="true"
             @search="search"
             :paginable="true"
@@ -138,7 +121,8 @@ export default defineComponent({
       });
     }
   },
-  emits: ["nextPage"],
+  props: ["data"],
+  emits: ["nextPage", "prevPage"],
   computed: {
     ...mapState(["filterOptions"])
   },
@@ -174,8 +158,8 @@ export default defineComponent({
 
     async getTasks() {
       this.loading = true;
-      this.root = (await EntityService.getEntityChildren(IM.MODULE_TASKS)) as any[];
-      this.root.forEach(async node => {
+      const root = (await EntityService.getEntityChildren(IM.MODULE_TASKS)) as any[];
+      for (const node of root) {
         node.children = [];
         node.key = node["@id"];
         node.icon = getFAIconFromType(node.type);
@@ -183,8 +167,8 @@ export default defineComponent({
         node.type = "task";
         node.label = node.name;
         const children = (await EntityService.getEntityChildren(node["@id"])) as any[];
-        children.forEach(child => {
-          node.children.push({
+        node.children = children.map(child => {
+          return {
             key: child["@id"],
             label: child.name,
             data: child["@id"],
@@ -192,10 +176,11 @@ export default defineComponent({
             type: child.type,
             icon: getFAIconFromType(child.type),
             colour: getColourFromType(child.type)
-          });
+          };
         });
-      });
-
+        node.contents = this.getTableDataFromNodes(node.children);
+      }
+      this.root = root;
       this.loading = true;
     },
 
@@ -218,7 +203,7 @@ export default defineComponent({
       this.loading = true;
       const entity = { "@id": this.draggedItem.iri } as any;
       entity[IM.IN_TASK] = node["@id"];
-      await EntityService.addTaskAction(entity);
+      await EntityService.addTaskAction(this.draggedItem.iri, node["@id"]);
       await this.getTasks();
       this.loading = false;
     },
@@ -238,8 +223,8 @@ export default defineComponent({
         data: "",
         type: "newFolder",
         children: [],
-        icon: ["fas", "clipboard-check"],
-        colour: "#4063b0; opacity: 0.5;"
+        icon: getFAIconFromType([{ "@id": IM.TASK, name: "" }]),
+        colour: getColourFromType([{ "@id": IM.TASK, name: "" }])
       });
     },
 

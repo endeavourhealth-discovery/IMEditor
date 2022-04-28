@@ -77,7 +77,16 @@ const {
 
 export default defineComponent({
   name: "ExpansionTable",
-  props: ["contents", "selectable", "inputSearch", "paginable", "drag", "expandable", "loading", "removableRows"],
+  props: {
+    contents: { type: Array, required: true },
+    loading: { type: Boolean, required: false },
+    selectable: { type: Boolean, required: false },
+    inputSearch: { type: Boolean, required: false },
+    paginable: { type: Boolean, required: false },
+    drag: { type: Boolean, required: false },
+    expandable: { type: Boolean, required: false },
+    removableRows: { type: Boolean, required: false }
+  },
   emits: ["search", "startDrag", "select", "unselect", "remove"],
   components: {
     VueJsonPretty
