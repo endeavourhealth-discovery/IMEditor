@@ -25,7 +25,7 @@ const { IM } = Vocabulary;
 
 export default defineComponent({
   name: "MemberEditor",
-  props: { updatedConcept: { type: Object, required: true } },
+  props: { updatedConcept: { type: Object, required: true }, mode: { type: String, required: true } },
   components: { Builder, EclInput },
   emits: { "concept-updated": (payload: any) => true },
   watch: {

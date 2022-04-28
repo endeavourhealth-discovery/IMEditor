@@ -17,7 +17,7 @@
           <Steps :model="stepsItems" />
           <router-view v-slot="{ Component }">
             <keep-alive>
-              <component :is="Component" :updatedConcept="conceptUpdated" @concept-updated="updateConcept" />
+              <component :is="Component" :updatedConcept="conceptUpdated" @concept-updated="updateConcept" mode="create" />
             </keep-alive>
           </router-view>
         </div>
@@ -42,7 +42,7 @@ const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength },
   ConceptTypeMethods: { isValueSet }
 } = Helpers;
-const { IM, RDF } = Vocabulary;
+const { IM, RDF, RDFS } = Vocabulary;
 
 export default defineComponent({
   name: "Creator",
@@ -55,7 +55,7 @@ export default defineComponent({
   },
   watch: {
     conceptUpdated: {
-      handler(newValue) {
+      async handler(newValue) {
         if (this.hasType) {
           this.setStepsFromType(newValue[RDF.TYPE]);
         }
@@ -161,8 +161,46 @@ export default defineComponent({
       }
     },
 
-    submit(): void {
-      console.log("submit");
+    async submit(): Promise<void> {
+      if (await this.isValidEntity(this.conceptUpdated)) {
+        console.log("submit");
+      } else {
+        console.log("invalid entity");
+      }
+    },
+
+    async isValidEntity(entity: any): Promise<boolean> {
+      let valid = [] as boolean[];
+      valid.push(await this.hasValidIri(entity));
+      valid.push(this.hasValidName(entity));
+      valid.push(this.hasValidTypes(entity));
+      valid.push(this.hasValidParents(entity));
+      return valid.every(item => item === true);
+    },
+
+    async hasValidIri(entity: any): Promise<boolean> {
+      if (!isObjectHasKeys(entity, ["@id"])) return false;
+      if (await EntityService.iriExists(entity["@id"])) return false;
+      return true;
+    },
+
+    hasValidName(entity: any): boolean {
+      if (!isObjectHasKeys(entity, [RDFS.LABEL])) return false;
+      return true;
+    },
+
+    hasValidTypes(entity: any): boolean {
+      if (!isObjectHasKeys(entity, [RDF.TYPE])) return false;
+      if (!isArrayHasLength(entity[RDF.TYPE])) return false;
+      return true;
+    },
+
+    hasValidParents(entity: any): boolean {
+      if (!isObjectHasKeys(entity, [IM.IS_CONTAINED_IN]) && !isObjectHasKeys(entity, [IM.IS_A]) && !isObjectHasKeys(entity, [RDFS.SUBCLASS_OF])) return false;
+      if (isObjectHasKeys(entity, [IM.IS_CONTAINED_IN])) {
+        if (!isArrayHasLength(entity[IM.IS_CONTAINED_IN]) || !isObjectHasKeys(entity[IM.IS_CONTAINED_IN][0], ["@id", "name"])) return false;
+      }
+      return true;
     },
 
     refreshCreator() {

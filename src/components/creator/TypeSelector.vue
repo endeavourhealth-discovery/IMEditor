@@ -15,7 +15,7 @@ const { IM, RDF } = Vocabulary;
 
 export default defineComponent({
   name: "TypeSelector",
-  props: { updatedConcept: { type: Object as any, required: true } },
+  props: { updatedConcept: { type: Object as any, required: true }, mode: { type: String, required: true } },
   emits: { "concept-updated": (payload: any) => true },
   computed: { ...mapState(["filterOptions"]) },
   mounted() {

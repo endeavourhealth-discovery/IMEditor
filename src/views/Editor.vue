@@ -23,6 +23,7 @@
                     v-if="active === 0 && isObjectHasKeysWrapper(conceptUpdated)"
                     :updatedConcept="conceptUpdated"
                     @concept-updated="updateConcept"
+                    mode="edit"
                   />
                 </div>
               </TabPanel>
@@ -32,12 +33,13 @@
                     v-if="active === 1 && isObjectHasKeysWrapper(conceptUpdated)"
                     :updatedConcept="conceptUpdated"
                     @concept-updated="updateConcept"
+                    mode="edit"
                   />
                 </div>
               </TabPanel>
               <TabPanel v-if="isValueSet" header="Members">
                 <div class="panel-content" id="member-editor-container">
-                  <MemberEditor v-if="active === 2" :updatedConcept="conceptUpdated" @concept-updated="updateConcept" />
+                  <MemberEditor v-if="active === 2" :updatedConcept="conceptUpdated" @concept-updated="updateConcept" mode="edit" />
                 </div>
               </TabPanel>
             </TabView>

@@ -282,4 +282,12 @@ export default class EntityService {
       return [];
     }
   }
+
+  public static async iriExists(iri: String): Promise<boolean> {
+    try {
+      return await axios.get(this.api + "api/entity/public/iriExists", { params: { iri: iri } });
+    } catch (error) {
+      return false;
+    }
+  }
 }

@@ -4,9 +4,13 @@
   </div>
   <div v-else class="summary-container">
     <div class="float-label-container iri">
-      <span class="p-float-label">
-        <InputText class="p-inputtext-lg input-text" v-model="iri" type="text" disabled />
+      <span class="p-float-label iri-validate-container">
+        <InputText class="p-inputtext-lg input-text" :class="invalidIri && 'invalid'" v-model="iri" type="text" disabled />
         <label for="Iri">Iri</label>
+        <small v-if="invalidIri" class="validate-error">Iri already exists.</small>
+        <small v-if="!iri.length && !code.length && !scheme.iri" class="validate-error">Code and scheme required for iri.</small>
+        <small v-else-if="!iri.length && !code.length" class="validate-error">Code required for iri.</small>
+        <small v-else-if="!iri.length && !scheme.iri" class="validate-error">Scheme required for iri.</small>
       </span>
     </div>
     <div class="float-label-container name">
@@ -17,7 +21,7 @@
     </div>
     <div class="float-label-container code">
       <span class="p-float-label">
-        <InputText class="p-inputtext-lg input-text" v-model="code" type="text" />
+        <InputText class="p-inputtext-lg input-text" :class="invalidIri && 'invalid'" v-model="code" type="text" :disabled="mode !== 'create'" />
         <label for="Code">Code</label>
       </span>
     </div>
@@ -41,7 +45,14 @@
     </div>
     <div class="float-label-container scheme">
       <span class="p-float-label">
-        <Dropdown class="p-inputtext-lg input-text scheme" v-model="scheme" :options="filterOptions.schemes" optionLabel="name" />
+        <Dropdown
+          class="p-inputtext-lg input-text scheme"
+          :class="invalidIri && 'invalid'"
+          v-model="scheme"
+          :options="filterOptions.schemes"
+          optionLabel="name"
+          :disabled="mode !== 'create'"
+        />
         <label>Scheme</label>
       </span>
     </div>
@@ -66,7 +77,7 @@ const { IM, RDF, RDFS } = Vocabulary;
 
 export default defineComponent({
   name: "SummaryEditor",
-  props: { updatedConcept: { type: Object, required: true } },
+  props: { updatedConcept: { type: Object, required: true }, mode: { type: String, required: true } },
   emits: { "concept-updated": (payload: any) => isObjectHasKeys(payload) },
   watch: {
     updatedConcept: {
@@ -78,8 +89,10 @@ export default defineComponent({
     name(newValue, oldValue) {
       this.updateEntity({ "http://www.w3.org/2000/01/rdf-schema#label": newValue });
     },
-    code(newValue, oldValue) {
-      if (newValue !== oldValue) this.updateEntity({ "@id": this.updateIri, "http://endhealth.info/im#code": newValue });
+    async code(newValue, oldValue) {
+      const newIri = await this.updateIri();
+      if (newValue && newValue !== oldValue && newIri) this.updateEntity({ "@id": newIri, "http://endhealth.info/im#code": newValue });
+      else if (newValue !== oldValue) this.updateEntity({ "http://endhealth.info/im#code": newValue });
     },
     description(newValue) {
       this.updateEntity({ "http://www.w3.org/2000/01/rdf-schema#comment": newValue });
@@ -91,8 +104,8 @@ export default defineComponent({
       deep: true
     },
     scheme: {
-      handler(newValue, oldValue) {
-        if (newValue !== oldValue) this.updateEntity({ "@id": this.updateIri });
+      async handler(newValue, oldValue) {
+        if (newValue !== oldValue) this.updateEntity({ "@id": await this.updateIri() });
       },
       deep: true
     },
@@ -107,10 +120,7 @@ export default defineComponent({
     }
   },
   computed: {
-    ...mapState(["filterOptions"]),
-    updateIri() {
-      return this.scheme.iri + this.code;
-    }
+    ...mapState(["filterOptions"])
   },
   data() {
     return {
@@ -122,7 +132,8 @@ export default defineComponent({
       types: [] as any[],
       version: "",
       description: "",
-      loading: false
+      loading: false,
+      invalidIri: false
     };
   },
   mounted() {
@@ -135,7 +146,10 @@ export default defineComponent({
       if (!this.updatedConcept) return;
       if (isObjectHasKeys(this.updatedConcept, ["@id"])) {
         this.iri = this.updatedConcept["@id"];
-        this.code = this.iri.substring(this.iri.indexOf("#") + 1);
+        if (!isObjectHasKeys(this.updatedConcept, [IM.CODE])) this.code = this.iri.substring(this.iri.indexOf("#") + 1);
+      }
+      if (isObjectHasKeys(this.updatedConcept, [IM.CODE])) {
+        this.code = this.updatedConcept[IM.CODE];
       }
       if (isObjectHasKeys(this.updatedConcept, [RDFS.LABEL])) this.name = this.updatedConcept[RDFS.LABEL];
       if (isObjectHasKeys(this.updatedConcept, [IM.HAS_STATUS])) {
@@ -155,6 +169,25 @@ export default defineComponent({
 
     updateEntity(data: any) {
       this.$emit("concept-updated", data);
+    },
+
+    async updateIri(): Promise<string> {
+      await this.checkIriExists();
+      return this.generateIri();
+    },
+
+    generateIri() {
+      if (this.scheme && this.scheme.iri && this.code) {
+        this.iri = this.scheme.iri + this.code;
+        return this.scheme.iri + this.code;
+      }
+      this.iri = "";
+      return "";
+    },
+
+    async checkIriExists() {
+      if (this.scheme.iri && this.code && this.mode === "create") this.invalidIri = await EntityService.iriExists(this.scheme.iri + this.code);
+      else this.invalidIri = false;
     }
   }
 });
@@ -205,5 +238,19 @@ export default defineComponent({
 
 .input-text {
   max-width: 100%;
+}
+
+.invalid {
+  border-color: #e24c4c;
+}
+
+.validate-error {
+  color: #e24c4c;
+  font-size: 0.8rem;
+}
+
+.iri-validate-container {
+  display: flex;
+  flex-flow: column nowrap;
 }
 </style>

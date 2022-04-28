@@ -20,7 +20,7 @@ const { IM, RDFS } = Vocabulary;
 
 export default defineComponent({
   name: "ParentsEditor",
-  props: { updatedConcept: { type: Object, required: true } },
+  props: { updatedConcept: { type: Object, required: true }, mode: { type: String, required: true } },
   components: { Builder },
   emits: { "concept-updated": (payload: any) => true },
   watch: {
