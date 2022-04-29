@@ -290,4 +290,12 @@ export default class EntityService {
       return false;
     }
   }
+
+  public static async createEntity(entity: any): Promise<any> {
+    try {
+      return await axios.post(this.api + "api/entity/create", entity);
+    } catch (error) {
+      return {};
+    }
+  }
 }

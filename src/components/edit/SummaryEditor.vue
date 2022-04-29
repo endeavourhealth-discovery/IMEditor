@@ -3,15 +3,15 @@
     <ProgressSpinner />
   </div>
   <div v-else class="summary-container">
-    <div class="float-label-container iri">
-      <span class="p-float-label iri-validate-container">
+    <div class="float-label-container iri-validate-container">
+      <span class="p-float-label">
         <InputText class="p-inputtext-lg input-text" :class="invalidIri && 'invalid'" v-model="iri" type="text" disabled />
         <label for="Iri">Iri</label>
-        <small v-if="invalidIri" class="validate-error">Iri already exists.</small>
-        <small v-if="!iri.length && !code.length && !scheme.iri" class="validate-error">Code and scheme required for iri.</small>
-        <small v-else-if="!iri.length && !code.length" class="validate-error">Code required for iri.</small>
-        <small v-else-if="!iri.length && !scheme.iri" class="validate-error">Scheme required for iri.</small>
       </span>
+      <small v-if="invalidIri" class="validate-error">Iri already exists.</small>
+      <small v-if="!iri.length && !code.length && !scheme.iri" class="validate-error">Code and scheme required for iri.</small>
+      <small v-else-if="!iri.length && !code.length" class="validate-error">Code required for iri.</small>
+      <small v-else-if="!iri.length && !scheme.iri" class="validate-error">Scheme required for iri.</small>
     </div>
     <div class="float-label-container name">
       <span class="p-float-label">
@@ -238,6 +238,10 @@ export default defineComponent({
 
 .input-text {
   max-width: 100%;
+  min-width: 15rem;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .invalid {

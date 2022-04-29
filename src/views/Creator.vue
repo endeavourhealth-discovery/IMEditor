@@ -164,6 +164,8 @@ export default defineComponent({
     async submit(): Promise<void> {
       if (await this.isValidEntity(this.conceptUpdated)) {
         console.log("submit");
+        const result = await EntityService.createEntity(this.conceptUpdated);
+        console.log(result);
       } else {
         console.log("invalid entity");
       }
