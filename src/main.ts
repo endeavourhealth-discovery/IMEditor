@@ -81,6 +81,9 @@ import { Amplify, Auth } from "aws-amplify";
 import awsconfig from "./aws-exports";
 import axios from "axios";
 
+import VueSweetalert2 from "vue-sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
+
 // IMLibrary imports
 import "im-library/dist/style.css";
 import IMLibrary, { Helpers, Env } from "im-library";
@@ -98,6 +101,7 @@ const app = createApp(App)
   .use(IMLibrary.install as Plugin, { store })
   .use(ConfirmationService)
   .use(ToastService)
+  .use(VueSweetalert2)
   .use(VueClipboard, {
     autoSetContainer: true,
     appendToBody: true

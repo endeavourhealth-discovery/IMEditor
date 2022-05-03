@@ -71,7 +71,7 @@ import { defineComponent } from "@vue/runtime-core";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers } from "im-library";
 const {
-  DataTypeCheckers: { isObjectHasKeys, isArrayHasLength }
+  DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
 const { IM, RDF, RDFS } = Vocabulary;
 
@@ -117,10 +117,20 @@ export default defineComponent({
         this.updateEntity({ "http://www.w3.org/1999/02/22-rdf-syntax-ns#type": filtered });
       },
       deep: true
+    },
+    creatorInvalidEntity(newValue) {
+      if (newValue) {
+        this.setInvalidInputs(this.creatorValidity);
+      }
+    },
+    editorInvalidEntity(newValue) {
+      if (newValue) {
+        this.setInvalidInputs(this.editorValidity);
+      }
     }
   },
   computed: {
-    ...mapState(["filterOptions"])
+    ...mapState(["filterOptions", "creatorInvalidEntity", "creatorValidity", "editorInvalidEntity", "editorValidity"])
   },
   data() {
     return {
@@ -133,7 +143,10 @@ export default defineComponent({
       version: "",
       description: "",
       loading: false,
-      invalidIri: false
+      invalidIri: false,
+      invalidName: false,
+      invalidTypes: false,
+      invalidStatus: false
     };
   },
   mounted() {
@@ -188,6 +201,20 @@ export default defineComponent({
     async checkIriExists() {
       if (this.scheme.iri && this.code && this.mode === "create") this.invalidIri = await EntityService.iriExists(this.scheme.iri + this.code);
       else this.invalidIri = false;
+    },
+
+    setInvalidInputs(validities: { key: string; valid: boolean }[]) {
+      const iriFound = validities.find((item: { key: string; valid: boolean }) => item.key === "iri");
+      if (iriFound) this.invalidIri = !iriFound.valid;
+
+      const nameFound = validities.find((item: { key: string; valid: boolean }) => item.key === "name");
+      if (nameFound) this.invalidName = !nameFound.valid;
+
+      const typesFound = validities.find((item: { key: string; valid: boolean }) => item.key === "types");
+      if (typesFound) this.invalidTypes = !typesFound.valid;
+
+      const statusFound = validities.find((item: { key: string; valid: boolean }) => item.key === "status");
+      if (statusFound) this.invalidStatus = !statusFound.valid;
     }
   }
 });

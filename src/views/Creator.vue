@@ -24,7 +24,7 @@
         <div class="button-bar" id="creator-button-bar">
           <Button v-if="currentStep > 0" icon="pi pi-angle-left" label="Back" @click="stepsBack" />
           <Button icon="pi pi-refresh" label="Reset" class="p-button-warning" @click="refreshCreator" />
-          <Button icon="pi pi-check" label="Submit" class="p-button-success save-button" @click="submit" />
+          <Button icon="pi pi-check" label="Create" class="p-button-success save-button" @click="submit" />
           <Button v-if="currentStep < stepsItems.length - 1" icon="pi pi-angle-right" label="Next" @click="stepsForward" />
         </div>
       </div>
@@ -152,6 +152,10 @@ export default defineComponent({
           this.conceptUpdated[key] = value;
         }
       }
+
+      if (this.creatorInvalidEntity) {
+        this.isValidEntity(this.conceptUpdated);
+      }
     },
 
     checkForChanges() {
@@ -165,22 +169,41 @@ export default defineComponent({
     async submit(): Promise<void> {
       if (await this.isValidEntity(this.conceptUpdated)) {
         console.log("submit");
-        const result = await EntityService.createEntity(this.conceptUpdated);
-        console.log(result);
+        await this.$swal
+          .fire({
+            icon: "info",
+            title: "Confirm create",
+            text: "Are you sure you want to create this entity?",
+            showCancelButton: true,
+            confirmButtonText: "Create",
+            reverseButtons: true,
+            confirmButtonColor: "#689F38",
+            cancelButtonColor: "#607D8B"
+          })
+          .then(async (result: any) => {
+            if (result.isConfirmed) {
+              const result = await EntityService.createEntity(this.conceptUpdated);
+              console.log(result);
+            }
+          });
       } else {
         console.log("invalid entity");
       }
     },
 
     async isValidEntity(entity: any): Promise<boolean> {
-      let valid = [] as boolean[];
-      valid.push(hasValidIri(entity));
-      valid.push(!(await this.iriExists(entity)));
-      valid.push(hasValidName(entity));
-      valid.push(hasValidTypes(entity));
-      valid.push(hasValidStatus(entity));
-      valid.push(hasValidParents(entity));
-      return valid.every(item => item === true);
+      if (!isObjectHasKeys(entity)) return false;
+      const creatorValidity = [] as { key: string; valid: boolean }[];
+      creatorValidity.push({ key: "iri", valid: hasValidIri(entity) });
+      creatorValidity.push({ key: "iriExists", valid: !(await this.iriExists(entity["@id"])) });
+      creatorValidity.push({ key: "name", valid: hasValidName(entity) });
+      creatorValidity.push({ key: "types", valid: hasValidTypes(entity) });
+      creatorValidity.push({ key: "status", valid: hasValidStatus(entity) });
+      creatorValidity.push({ key: "parents", valid: hasValidParents(entity) });
+      this.$store.commit("updateCreatorValidity", creatorValidity);
+      const valid = creatorValidity.every(item => item.valid === true);
+      this.$store.commit("updateCreatorInvalidEntity", !valid);
+      return valid;
     },
 
     async iriExists(entity: any): Promise<boolean> {
@@ -188,7 +211,22 @@ export default defineComponent({
     },
 
     refreshCreator() {
-      this.conceptUpdated = { ...this.conceptOriginal };
+      this.$swal
+        .fire({
+          icon: "warning",
+          title: "Warning",
+          text: "This action will reset all progress. Are you sure you want to proceed?",
+          showCancelButton: true,
+          confirmButtonText: "Reset",
+          reverseButtons: true,
+          confirmButtonColor: "#FBC02D",
+          cancelButtonColor: "#607D8B"
+        })
+        .then((result: any) => {
+          if (result.isConfirmed) {
+            this.conceptUpdated = { ...this.conceptOriginal };
+          }
+        });
     },
 
     setStepsFromType(types: any[]) {

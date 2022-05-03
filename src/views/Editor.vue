@@ -74,7 +74,8 @@ import { Vocabulary, Helpers } from "im-library";
 const { IM, RDF, RDFS } = Vocabulary;
 const {
   ConceptTypeMethods: { isValueSet },
-  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
+  EntityValidator: { hasValidIri, hasValidName, hasValidParents, hasValidStatus, hasValidTypes }
 } = Helpers;
 
 export default defineComponent({
@@ -103,7 +104,7 @@ export default defineComponent({
         window.removeEventListener("beforeunload", this.beforeWindowUnload);
       }
     },
-    ...mapState(["editorIri", "editorSavedEntity", "filterOptions"])
+    ...mapState(["editorIri", "editorSavedEntity", "filterOptions", "editorInvalidEntity", "editorValidity"])
   },
   data() {
     return {
@@ -176,8 +177,43 @@ export default defineComponent({
       }
     },
 
-    submit(): void {
-      console.log("submit");
+    async submit(): Promise<void> {
+      if (await this.isValidEntity(this.conceptUpdated)) {
+        console.log("submit");
+        await this.$swal
+          .fire({
+            icon: "info",
+            title: "Confirm save",
+            text: "Are you sure you want to save your changes?",
+            showCancelButton: true,
+            confirmButtonText: "Save",
+            reverseButtons: true,
+            confirmButtonColor: "#2196F3",
+            cancelButtonColor: "#607D8B"
+          })
+          .then(async (result: any) => {
+            if (result.isConfirmed) {
+              const result = await EntityService.updateEntity(this.conceptUpdated);
+              console.log(result);
+            }
+          });
+      } else {
+        console.log("invalid entity");
+      }
+    },
+
+    async isValidEntity(entity: any): Promise<boolean> {
+      const editorValidity = [] as { key: string; valid: boolean }[];
+      editorValidity.push({ key: "iri", valid: hasValidIri(entity) });
+      editorValidity.push({ key: "iriExists", valid: await EntityService.iriExists(entity["@id"]) });
+      editorValidity.push({ key: "name", valid: hasValidName(entity) });
+      editorValidity.push({ key: "types", valid: hasValidTypes(entity) });
+      editorValidity.push({ key: "status", valid: hasValidStatus(entity) });
+      editorValidity.push({ key: "parents", valid: hasValidParents(entity) });
+      this.$store.commit("updateEditorValidity", editorValidity);
+      const valid = editorValidity.every(item => item.valid === true);
+      this.$store.commit("updateEditorInvalidEntity", !valid);
+      return valid;
     },
 
     updateConcept(data: any) {
@@ -194,6 +230,9 @@ export default defineComponent({
           this.conceptUpdated[key] = value;
         }
       }
+      if (this.editorInvalidEntity) {
+        this.isValidEntity(this.conceptUpdated);
+      }
     },
 
     checkForChanges() {
@@ -205,7 +244,22 @@ export default defineComponent({
     },
 
     refreshEditor(): void {
-      this.conceptUpdated = { ...this.conceptOriginal };
+      this.$swal
+        .fire({
+          icon: "warning",
+          title: "Warning",
+          text: "This action will reset all progress. Are you sure you want to proceed?",
+          showCancelButton: true,
+          confirmButtonText: "Reset",
+          reverseButtons: true,
+          confirmButtonColor: "#FBC02D",
+          cancelButtonColor: "#607D8B"
+        })
+        .then((result: any) => {
+          if (result.isConfirmed) {
+            this.conceptUpdated = { ...this.conceptOriginal };
+          }
+        });
     },
 
     isObjectHasKeysWrapper(object: any): boolean {

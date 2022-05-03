@@ -27,7 +27,11 @@ export default createStore({
       schemes: [] as Namespace[],
       types: [] as EntityReferenceNode[]
     },
-    quickFiltersStatus: new Map<string, boolean>()
+    quickFiltersStatus: new Map<string, boolean>(),
+    creatorInvalidEntity: false,
+    creatorValidity: [] as { key: string; valid: boolean }[],
+    editorInvalidEntity: false,
+    editorValidity: [] as { key: string; valid: boolean }[]
   },
   mutations: {
     updateBlockedIris(state, blockedIris) {
@@ -79,6 +83,18 @@ export default createStore({
     updateEditorSavedEntity(state, entity) {
       state.editorSavedEntity = entity;
       localStorage.setItem("editorSavedEntity", entity);
+    },
+    updateCreatorInvalidEntity(state, bool) {
+      state.creatorInvalidEntity = bool;
+    },
+    updateCreatorValidity(state, data) {
+      state.creatorValidity = data;
+    },
+    updateEditorInvalidEntity(state, bool) {
+      state.editorInvalidEntity = bool;
+    },
+    updateEditorValidity(state, data) {
+      state.editorValidity = data;
     }
   },
   actions: {

@@ -297,4 +297,12 @@ export default class EntityService {
       return {};
     }
   }
+
+  public static async updateEntity(entity: any): Promise<any> {
+    try {
+      return await axios.post(this.api + "api/entity/update", entity);
+    } catch (error) {
+      return {};
+    }
+  }
 }
