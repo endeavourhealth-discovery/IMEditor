@@ -9,6 +9,8 @@
     @dragstart="startDrag"
     @row-select="onRowSelect"
     @row-unselect="onRowUnselect"
+    @row-select-all="rowSelectAll"
+    @row-unselect-all="rowUnselectAll"
     :reorderableColumns="false"
     :paginator="paginable"
     :rows="20"
@@ -87,7 +89,7 @@ export default defineComponent({
     expandable: { type: Boolean, required: false },
     removableRows: { type: Boolean, required: false }
   },
-  emits: ["search", "startDrag", "select", "unselect", "remove"],
+  emits: ["search", "startDrag", "select", "unselect", "remove", "selectAll", "unselectAll"],
   components: {
     VueJsonPretty
   },
@@ -118,7 +120,7 @@ export default defineComponent({
     startDrag(event: any) {
       const rowString = event.srcElement.innerText as string;
       const data = rowString.split("\t");
-      const found = this.contents.find((content: any) => content.iri === data[2]);
+      const found = this.contents.find((content: any) => content.iri === data[data.length - 1]);
       this.$emit("startDrag", found);
     },
 
@@ -128,6 +130,14 @@ export default defineComponent({
 
     onRowUnselect(event: any) {
       this.$emit("unselect", event.data);
+    },
+
+    rowSelectAll(event: any) {
+      this.$emit("selectAll", event.data);
+    },
+
+    rowUnselectAll() {
+      this.$emit("unselectAll");
     }
   }
 });

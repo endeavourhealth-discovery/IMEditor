@@ -57,6 +57,8 @@
             :selectable="true"
             @select="tableSelect"
             @unselect="tableUnselect"
+            @selectAll="selectAll"
+            @unselectAll="unselectAll"
             class="tab-container"
           />
         </TabPanel>
@@ -71,6 +73,11 @@
             :paginable="true"
             :drag="true"
             @startDrag="startDrag"
+            :selectable="true"
+            @select="tableSelect"
+            @unselect="tableUnselect"
+            @selectAll="selectAll"
+            @unselectAll="unselectAll"
             class="tab-container"
           />
         </TabPanel>
@@ -87,10 +94,8 @@
     <Button icon="pi pi-check" label="Next" class="save-button" @click="next" />
   </div>
 
-  <Dialog header="Select task" v-model:visible="displayAddToTask">
-    <!-- <Listbox v-model="selectedCity" :options="cities" optionLabel="name" /> -->
-    <ExpansionTable :contents="this.root" />
-    <!-- {{ tableSelectedList }} -->
+  <Dialog header="Select task" v-if="isArrayHasLength(tasks)" v-model:visible="displayAddToTask">
+    <MultipleTaskSelection :tasks="tasks" @addToTasks="addActionsToTasks" @closeTaskDialog="displayAddToTask = false" />
   </Dialog>
 </template>
 
@@ -99,6 +104,7 @@ import { defineComponent } from "vue";
 import EntityService from "@/services/EntityService";
 import ConfirmDialog from "primevue/confirmdialog";
 import ExpansionTable from "@/components/mapper/ExpansionTable.vue";
+import MultipleTaskSelection from "@/components/mapper/MultipleTaskSelection.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Models, Enums } from "im-library";
 import VueJsonPretty from "vue-json-pretty";
@@ -122,7 +128,8 @@ export default defineComponent({
   components: {
     ConfirmDialog,
     VueJsonPretty,
-    ExpansionTable
+    ExpansionTable,
+    MultipleTaskSelection
   },
   beforeRouteLeave(to, from, next) {
     if (to.matched[0].path === "/mapper") {
@@ -156,7 +163,8 @@ export default defineComponent({
       request: {} as { cancel: any; msg: string },
       draggedItem: {} as any,
       tableSelectedList: [] as any[],
-      displayAddToTask: false
+      displayAddToTask: false,
+      tasks: [] as any[]
     };
   },
   async mounted() {
@@ -175,9 +183,16 @@ export default defineComponent({
       await this.getTasks();
     },
 
-    addSelectedToFolder() {
+    isArrayHasLength(array: any) {
+      return isArrayHasLength(array);
+    },
+
+    async addSelectedToFolder() {
       this.displayAddToTask = true;
-      console.log(this.tableSelectedList);
+      const tasks = (await EntityService.getEntityChildren(IM.MODULE_TASKS)) as any[];
+      this.tasks = tasks.map(task => {
+        return { iri: task["@id"], name: task.name, type: task.type };
+      });
     },
 
     tableSelect(tableSelected: any) {
@@ -235,9 +250,24 @@ export default defineComponent({
       this.loading = true;
       const entity = { "@id": this.draggedItem.iri } as any;
       entity[IM.IN_TASK] = node["@id"];
-      await EntityService.addTaskAction(this.draggedItem.iri, node["@id"]);
+      await this.addActionToTask(this.draggedItem.iri, node["@id"]);
       await this.getTasks();
       this.loading = false;
+    },
+
+    async addActionToTask(entityIri: string, taskIri: string) {
+      await EntityService.addTaskAction(entityIri, taskIri);
+    },
+
+    async addActionsToTasks(data: any[]) {
+      for (const action of this.tableSelectedList) {
+        for (const task of data) {
+          await this.addActionToTask(action.iri, task.iri);
+        }
+      }
+      await this.getTasks();
+      this.loading = false;
+      this.displayAddToTask = false;
     },
 
     async deleteTaskAction(removedNode: any) {
@@ -310,6 +340,14 @@ export default defineComponent({
     setContentHeight(): void {
       this.contentHeight =
         "height: " + getContainerElementOptimalHeight("mapper-main-container", ["p-panel-header", "p-tabview-nav", "button-bar"], true, 4, 4) + ";";
+    },
+
+    selectAll(selectedList: any[]) {
+      this.tableSelectedList = selectedList;
+    },
+
+    unselectAll() {
+      this.tableSelectedList = [];
     },
 
     async search(searchTerm: string): Promise<void> {
@@ -417,6 +455,7 @@ export default defineComponent({
 
 .task-definition-container {
   height: calc(100vh - 18.6rem);
+  overflow: auto;
 }
 
 .tab-container {
