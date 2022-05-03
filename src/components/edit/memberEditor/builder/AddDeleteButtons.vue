@@ -16,11 +16,11 @@ export default defineComponent({
   name: "AddDeleteButtons",
   props: {
     position: Number,
-    show: { type: Object as PropType<{ minus: Boolean; plus: Boolean }>, default: { minus: true, plus: true } },
+    show: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     options: { type: Array as PropType<Array<ComponentType>>, required: true }
   },
   emits: {
-    addNextClicked: (payload: ComponentType) => true,
+    addNextClicked: (_payload: ComponentType) => true,
     deleteClicked: () => true
   },
   watch: {

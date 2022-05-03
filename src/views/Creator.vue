@@ -40,7 +40,8 @@ import EntityService from "@/services/EntityService";
 import TypeSelector from "@/components/creator/TypeSelector.vue";
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength },
-  ConceptTypeMethods: { isValueSet }
+  ConceptTypeMethods: { isValueSet },
+  EntityValidator: { hasValidIri, hasValidName, hasValidParents, hasValidTypes, hasValidStatus }
 } = Helpers;
 const { IM, RDF, RDFS } = Vocabulary;
 
@@ -173,36 +174,17 @@ export default defineComponent({
 
     async isValidEntity(entity: any): Promise<boolean> {
       let valid = [] as boolean[];
-      valid.push(await this.hasValidIri(entity));
-      valid.push(this.hasValidName(entity));
-      valid.push(this.hasValidTypes(entity));
-      valid.push(this.hasValidParents(entity));
+      valid.push(hasValidIri(entity));
+      valid.push(!(await this.iriExists(entity)));
+      valid.push(hasValidName(entity));
+      valid.push(hasValidTypes(entity));
+      valid.push(hasValidStatus(entity));
+      valid.push(hasValidParents(entity));
       return valid.every(item => item === true);
     },
 
-    async hasValidIri(entity: any): Promise<boolean> {
-      if (!isObjectHasKeys(entity, ["@id"])) return false;
-      if (await EntityService.iriExists(entity["@id"])) return false;
-      return true;
-    },
-
-    hasValidName(entity: any): boolean {
-      if (!isObjectHasKeys(entity, [RDFS.LABEL])) return false;
-      return true;
-    },
-
-    hasValidTypes(entity: any): boolean {
-      if (!isObjectHasKeys(entity, [RDF.TYPE])) return false;
-      if (!isArrayHasLength(entity[RDF.TYPE])) return false;
-      return true;
-    },
-
-    hasValidParents(entity: any): boolean {
-      if (!isObjectHasKeys(entity, [IM.IS_CONTAINED_IN]) && !isObjectHasKeys(entity, [IM.IS_A]) && !isObjectHasKeys(entity, [RDFS.SUBCLASS_OF])) return false;
-      if (isObjectHasKeys(entity, [IM.IS_CONTAINED_IN])) {
-        if (!isArrayHasLength(entity[IM.IS_CONTAINED_IN]) || !isObjectHasKeys(entity[IM.IS_CONTAINED_IN][0], ["@id", "name"])) return false;
-      }
-      return true;
+    async iriExists(entity: any): Promise<boolean> {
+      return await EntityService.iriExists(entity["@id"]);
     },
 
     refreshCreator() {

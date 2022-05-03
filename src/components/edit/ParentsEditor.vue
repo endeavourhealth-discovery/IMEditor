@@ -22,7 +22,7 @@ export default defineComponent({
   name: "ParentsEditor",
   props: { updatedConcept: { type: Object, required: true }, mode: { type: String, required: true } },
   components: { Builder },
-  emits: { "concept-updated": (payload: any) => true },
+  emits: { "concept-updated": (_payload: any) => true },
   watch: {
     updatedConcept: {
       handler() {

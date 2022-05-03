@@ -40,9 +40,9 @@ import { Vocabulary, Helpers, Enums } from "im-library";
 import { ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, deleteItem, updateItem, updatePositions, scrollIntoView, addItem, addNextOptions }
+  EditorBuilderJsonMethods: { generateNewComponent, updateItem, updatePositions, addItem }
 } = Helpers;
-const { IM, SHACL, RDF } = Vocabulary;
+const { IM } = Vocabulary;
 const { BuilderType, ComponentType } = Enums;
 
 export default defineComponent({
@@ -50,7 +50,7 @@ export default defineComponent({
   props: { members: { type: Object as any, required: true } },
   components: { AddDeleteButtons, AddNext, Definition, HasMember, Logic, Entity, Refinement },
   emits: {
-    "concept-updated": (payload: any) => true
+    "concept-updated": (_payload: any) => true
   },
   computed: mapState(["filterOptions"]),
   watch: {

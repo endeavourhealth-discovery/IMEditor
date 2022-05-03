@@ -11,14 +11,14 @@
 import { defineComponent, PropType } from "@vue/runtime-core";
 import { Enums } from "im-library";
 import { ComponentDetails, NextComponentSummary } from "im-library/dist/types/interfaces/Interfaces";
-const { ComponentType, BuilderType } = Enums;
+const { ComponentType } = Enums;
 
 export default defineComponent({
   name: "AddNext",
   props: {
     id: { type: String, required: true },
     position: { type: Number, required: true },
-    showButtons: { type: Object as PropType<{ minus: Boolean; plus: Boolean }>, default: { minus: true, plus: true } },
+    showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     value: {
       type: Object as PropType<NextComponentSummary>,
       required: true
@@ -26,8 +26,8 @@ export default defineComponent({
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
-    addClicked: (payload: { selectedType: typeof ComponentType; position: number }) => true,
-    deleteClicked: (payload: ComponentDetails) => true
+    addClicked: (_payload: { selectedType: typeof ComponentType; position: number }) => true,
+    deleteClicked: (_payload: ComponentDetails) => true
   },
   watch: {
     options: {

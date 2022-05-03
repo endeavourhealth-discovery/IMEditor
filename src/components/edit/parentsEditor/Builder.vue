@@ -31,10 +31,10 @@ import { defineComponent } from "@vue/runtime-core";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import Logic from "@/components/edit/parentsEditor/builder/Logic.vue";
 import { Helpers, Enums } from "im-library";
-import { NextComponentSummary, ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  EditorBuilderJsonMethods: { generateNewComponent, genNextOptions, addItem, addNextOptions, scrollIntoView, deleteItem, updateItem, updatePositions }
+  EditorBuilderJsonMethods: { generateNewComponent, updatePositions }
 } = Helpers;
 const { ComponentType, BuilderType } = Enums;
 
@@ -43,7 +43,7 @@ export default defineComponent({
   props: { parents: { type: Object, required: true } },
   components: { AddDeleteButtons, Logic },
   emits: {
-    "concept-updated": (payload: any) => true
+    "concept-updated": (_payload: any) => true
   },
   watch: {
     parentsBuild: {

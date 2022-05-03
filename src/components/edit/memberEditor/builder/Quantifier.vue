@@ -32,14 +32,14 @@ import { mapState } from "vuex";
 import axios from "axios";
 import EntityService from "@/services/EntityService";
 import { Vocabulary, Helpers, Enums, Models } from "im-library";
-import { NextComponentSummary, EntityReferenceNode, Namespace, TTIriRef, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
+import { EntityReferenceNode, Namespace, TTIriRef, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
 } = Helpers;
 const { IM } = Vocabulary;
-const { BuilderType, ComponentType, SortBy } = Enums;
+const { ComponentType, SortBy } = Enums;
 const {
-  Search: { ConceptSummary, SearchRequest }
+  Search: { SearchRequest }
 } = Models;
 
 export default defineComponent({
@@ -48,14 +48,14 @@ export default defineComponent({
     id: { type: String, required: true },
     position: { type: Number, required: true },
     value: { type: Object as PropType<{ propertyIri: string; quantifier: TTIriRef }>, required: false },
-    showButtons: { type: Object as PropType<{ minus: Boolean; plus: Boolean }>, default: { minus: true, plus: true } },
+    showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
-    updateClicked: (payload: ComponentDetails) => true,
-    addNextOptionsClicked: (payload: any) => true,
-    deleteClicked: (payload: ComponentDetails) => true,
-    addClicked: (payload: any) => true
+    updateClicked: (_payload: ComponentDetails) => true,
+    addNextOptionsClicked: (_payload: any) => true,
+    deleteClicked: (_payload: ComponentDetails) => true,
+    addClicked: (_payload: any) => true
   },
   components: { AddDeleteButtons, SearchMiniOverlay },
   computed: mapState(["filterOptions", "selectedFilters"]),
@@ -141,11 +141,6 @@ export default defineComponent({
     showOverlay(event: any): void {
       const x = this.$refs.miniSearchOP as any;
       x.show(event, event.target);
-    },
-
-    isTTIriRef(data: any): data is TTIriRef {
-      if (data && (data as TTIriRef)["@id"]) return true;
-      return false;
     },
 
     isConceptSummary(data: any): data is Models.Search.ConceptSummary {

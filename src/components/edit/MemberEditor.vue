@@ -27,7 +27,7 @@ export default defineComponent({
   name: "MemberEditor",
   props: { updatedConcept: { type: Object, required: true }, mode: { type: String, required: true } },
   components: { Builder, EclInput },
-  emits: { "concept-updated": (payload: any) => true },
+  emits: { "concept-updated": (_payload: any) => true },
   watch: {
     updatedMembers: {
       handler() {

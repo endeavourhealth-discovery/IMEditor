@@ -31,14 +31,15 @@ import { mapState } from "vuex";
 import axios from "axios";
 import EntityService from "@/services/EntityService";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
-import { Namespace, TTIriRef, EntityReferenceNode, ComponentDetails, NextComponentSummary } from "im-library/dist/types/interfaces/Interfaces";
+import { Namespace, TTIriRef, EntityReferenceNode, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 import { Helpers, Models, Enums } from "im-library";
 const {
-  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
+  TypeGuards: { isTTIriRef }
 } = Helpers;
 const { ComponentType, BuilderType, SortBy } = Enums;
 const {
-  Search: { ConceptSummary, SearchRequest }
+  Search: { SearchRequest }
 } = Models;
 
 export default defineComponent({
@@ -55,14 +56,14 @@ export default defineComponent({
       }>,
       required: true
     },
-    showButtons: { type: Object as PropType<{ minus: Boolean; plus: Boolean }>, required: true },
+    showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, required: true },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
-    updateClicked: (payload: ComponentDetails) => true,
-    addNextOptionsClicked: (payload: any) => true,
-    deleteClicked: (payload: ComponentDetails) => true,
-    addClicked: (payload: any) => true
+    updateClicked: (_payload: ComponentDetails) => true,
+    addNextOptionsClicked: (_payload: any) => true,
+    deleteClicked: (_payload: ComponentDetails) => true,
+    addClicked: (_payload: any) => true
   },
   components: { SearchMiniOverlay, AddDeleteButtons },
   computed: mapState(["filterOptions", "selectedFilters"]),
@@ -178,14 +179,9 @@ export default defineComponent({
       x.show(event, event.target);
     },
 
-    isTTIriRef(data: any): data is TTIriRef {
-      if ((data as TTIriRef)["@id"]) return true;
-      return false;
-    },
-
     updateSelectedResult(data: Models.Search.ConceptSummary | TTIriRef) {
       if (!isObjectHasKeys(data)) return;
-      if (this.isTTIriRef(data)) {
+      if (isTTIriRef(data)) {
         this.selectedResult = data;
       } else {
         this.selectedResult = { "@id": data.iri, name: data.name };

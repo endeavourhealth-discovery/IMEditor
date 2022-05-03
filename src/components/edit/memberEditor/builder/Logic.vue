@@ -38,13 +38,13 @@ import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
 import Refinement from "@/components/edit/memberEditor/builder/Refinement.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums } from "im-library";
-import { EntityReferenceNode, TTIriRef, ComponentDetails, NextComponentSummary } from "im-library/dist/types/interfaces/Interfaces";
+import { EntityReferenceNode, TTIriRef, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, deleteItem, updateItem, addItem, addNextOptions, scrollIntoView, updatePositions }
+  EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, updateItem, addItem, updatePositions }
 } = Helpers;
 const { SHACL, IM } = Vocabulary;
-const { BuilderType, ComponentType } = Enums;
+const { ComponentType } = Enums;
 
 export default defineComponent({
   name: "Logic",
@@ -55,14 +55,14 @@ export default defineComponent({
       type: Object as PropType<{ iri: string; children: PropType<Array<any>> | undefined; options: { iri: string; name: string }[] }>,
       required: true
     },
-    showButtons: { type: Object as PropType<{ minus: Boolean; plus: Boolean }>, default: { minus: true, plus: true } },
+    showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   components: { AddDeleteButtons, AddNext, Entity, Refinement },
   emits: {
-    addNextOptionsClicked: (payload: any) => true,
-    deleteClicked: (payload: ComponentDetails) => true,
-    updateClicked: (payload: ComponentDetails) => true
+    addNextOptionsClicked: (_payload: any) => true,
+    deleteClicked: (_payload: ComponentDetails) => true,
+    updateClicked: (_payload: ComponentDetails) => true
   },
   computed: mapState(["filterOptions"]),
   watch: {

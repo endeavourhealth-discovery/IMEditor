@@ -46,10 +46,10 @@ import EntityService from "@/services/EntityService";
 import { Vocabulary, Helpers, Enums } from "im-library";
 import { EntityReferenceNode, NextComponentSummary, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 const {
-  EditorBuilderJsonMethods: { generateNewComponent, genNextOptions, updateItem, deleteItem, addItem, addNextOptions, scrollIntoView }
+  EditorBuilderJsonMethods: { generateNewComponent, updateItem, deleteItem, addItem, addNextOptions, scrollIntoView }
 } = Helpers;
 const { RDFS, RDF } = Vocabulary;
-const { ComponentType, BuilderType } = Enums;
+const { ComponentType } = Enums;
 
 export default defineComponent({
   name: "Refinement",
@@ -57,14 +57,14 @@ export default defineComponent({
     id: { type: String, required: true },
     position: { type: Number, required: true },
     value: { type: Object as PropType<{ propertyIri: string; children: any[] }>, required: false },
-    showButtons: { type: Object as PropType<{ minus: Boolean; plus: Boolean }>, default: { minus: true, plus: true } },
+    showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
-    updateClicked: (payload: ComponentDetails) => true,
-    addNextOptionsClicked: (payload: any) => true,
-    deleteClicked: (payload: ComponentDetails) => true,
-    addClicked: (payload: any) => true
+    updateClicked: (_payload: ComponentDetails) => true,
+    addNextOptionsClicked: (_payload: any) => true,
+    deleteClicked: (_payload: ComponentDetails) => true,
+    addClicked: (_payload: any) => true
   },
   components: { AddDeleteButtons, Entity, Quantifier, AddNext },
   watch: {

@@ -45,10 +45,10 @@ import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
 import Refinement from "@/components/edit/memberEditor/builder/Refinement.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums } from "im-library";
-import { NextComponentSummary, EntityReferenceNode, ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { EntityReferenceNode, ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, deleteItem, updateItem, updatePositions, scrollIntoView, addItem, addNextOptions },
+  EditorBuilderJsonMethods: { generateNewComponent, updateItem, updatePositions, addItem },
   ConceptTypeMethods: { isValueSet }
 } = Helpers;
 const { IM, SHACL, RDF } = Vocabulary;
@@ -60,14 +60,14 @@ export default defineComponent({
     id: { type: String, required: true },
     position: { type: Number, required: true },
     value: { type: Array as PropType<any[]>, required: true },
-    showButtons: { type: Object as PropType<{ minus: Boolean; plus: Boolean }>, default: { minus: true, plus: true } },
+    showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   components: { AddDeleteButtons, AddNext, Logic, Entity, Refinement },
   emits: {
-    addNextOptionsClicked: (payload: any) => true,
-    deleteClicked: (payload: ComponentDetails) => true,
-    updateClicked: (payload: ComponentDetails) => true
+    addNextOptionsClicked: (_payload: any) => true,
+    deleteClicked: (_payload: ComponentDetails) => true,
+    updateClicked: (_payload: ComponentDetails) => true
   },
   computed: mapState(["filterOptions"]),
   watch: {
