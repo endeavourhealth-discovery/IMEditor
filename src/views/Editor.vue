@@ -199,13 +199,25 @@ export default defineComponent({
           });
       } else {
         console.log("invalid entity");
+        this.$swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: "Invalid values found. Please review your entries.",
+          confirmButtonText: "Close",
+          confirmButtonColor: "#689F38"
+        });
       }
     },
 
     async isValidEntity(entity: any): Promise<boolean> {
+      if (!isObjectHasKeys(entity)) {
+        this.$store.commit("updateEditorValidity", []);
+        this.$store.commit("updateEditorInvalidEntity", true);
+        return false;
+      }
       const editorValidity = [] as { key: string; valid: boolean }[];
       editorValidity.push({ key: "iri", valid: hasValidIri(entity) });
-      editorValidity.push({ key: "iriExists", valid: await EntityService.iriExists(entity["@id"]) });
+      if (hasValidIri(entity)) editorValidity.push({ key: "iriExists", valid: await EntityService.iriExists(entity["@id"]) });
       editorValidity.push({ key: "name", valid: hasValidName(entity) });
       editorValidity.push({ key: "types", valid: hasValidTypes(entity) });
       editorValidity.push({ key: "status", valid: hasValidStatus(entity) });
