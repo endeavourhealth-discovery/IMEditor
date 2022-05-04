@@ -111,7 +111,8 @@ export default defineComponent({
   watch: {
     async selected() {
       if (this.selected) {
-        this.selectedView = await EntityService.getPartialEntity(this.selected.iri, []);
+        const fullEntity = await EntityService.getPartialEntity(this.selected.iri, []);
+        this.selectedView = Object.assign(fullEntity);
         this.selected.suggestions = await this.getMappingSuggestions(this.selected.iri, this.selected.name);
         this.selectedSuggestions = [];
         this.selectedEntities = [];
@@ -121,6 +122,7 @@ export default defineComponent({
   data() {
     return {
       pageIndex: 2,
+      tasks: [] as any,
       selectedView: {} as any,
       selectedSuggestions: [] as any[],
       selected: {} as any,
@@ -161,9 +163,6 @@ export default defineComponent({
       return getFAIconFromType(type);
     },
     next() {
-      this.data.forEach((element: any) => {
-        console.log(element);
-      });
       this.$emit("nextPage", { pageIndex: this.pageIndex, data: this.mappingsMap });
     },
     previous() {

@@ -131,6 +131,7 @@ export default defineComponent({
     ExpansionTable,
     MultipleTaskSelection
   },
+
   beforeRouteLeave(to, from, next) {
     if (to.matched[0].path === "/mapper") {
       next();
@@ -148,7 +149,12 @@ export default defineComponent({
   props: ["data"],
   emits: ["nextPage", "prevPage"],
   computed: {
-    ...mapState(["filterOptions"])
+    ...mapState(["filterOptions", "refreshTree"])
+  },
+  watch: {
+    refreshTree() {
+      this.init();
+    }
   },
   data() {
     return {
@@ -204,7 +210,7 @@ export default defineComponent({
     },
 
     async getTasks() {
-      this.loading = true;
+      this.root = [];
       const root = (await EntityService.getEntityChildren(IM.MODULE_TASKS)) as any[];
       for (const node of root) {
         node.children = [];
@@ -222,13 +228,13 @@ export default defineComponent({
             children: [],
             type: child.type,
             icon: getFAIconFromType(child.type),
-            colour: getColourFromType(child.type)
+            colour: getColourFromType(child.type),
+            parentKey: node.key
           };
         });
         node.contents = this.getTableDataFromNodes(node.children);
       }
       this.root = root;
-      this.loading = true;
     },
 
     editFolder(node: any) {
@@ -272,8 +278,7 @@ export default defineComponent({
 
     async deleteTaskAction(removedNode: any) {
       this.loading = true;
-      const found = this.root.find(node => node.children.find((child: any) => child.key === removedNode.key));
-      await EntityService.removeTaskAction(found.key, removedNode.key);
+      await EntityService.removeTaskAction(removedNode.parentKey, removedNode.key);
       await this.getTasks();
       this.loading = false;
     },

@@ -11,6 +11,9 @@ import { defineComponent } from "vue";
 import ExpansionTable from "@/components/mapper/ExpansionTable.vue";
 import EntityService from "@/services/EntityService";
 import { Vocabulary, Helpers, Models, Enums } from "im-library";
+const {
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
+} = Helpers;
 const { IM, RDF, RDFS } = Vocabulary;
 
 export default defineComponent({
@@ -41,8 +44,15 @@ export default defineComponent({
     },
     async getTaskActions(data: any) {
       data.children = await EntityService.getEntityChildren(data.iri);
-      data.children.forEach((child: { [x: string]: any; iri: any }) => {
+      data.children.forEach(async (child: { [x: string]: any; iri: any }) => {
         child.iri = child["@id"];
+        const entity = await EntityService.getPartialEntity(child.iri, [IM.MAPPED_TO]);
+        child.mappings = [];
+        if (isArrayHasLength(entity[IM.MAPPED_TO])) {
+          entity[IM.MAPPED_TO].forEach((mappedTo: any) => {
+            child.mappings.push({ iri: mappedTo["@id"], name: mappedTo.name });
+          });
+        }
       });
     },
     next() {

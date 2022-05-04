@@ -27,7 +27,8 @@ export default createStore({
       schemes: [] as Namespace[],
       types: [] as EntityReferenceNode[]
     },
-    quickFiltersStatus: new Map<string, boolean>()
+    quickFiltersStatus: new Map<string, boolean>(),
+    refreshTree: false as boolean
   },
   mutations: {
     updateBlockedIris(state, blockedIris) {
@@ -79,6 +80,9 @@ export default createStore({
     updateEditorSavedEntity(state, entity) {
       state.editorSavedEntity = entity;
       localStorage.setItem("editorSavedEntity", entity);
+    },
+    updateRefreshTree(state) {
+      state.refreshTree = !state.refreshTree;
     }
   },
   actions: {

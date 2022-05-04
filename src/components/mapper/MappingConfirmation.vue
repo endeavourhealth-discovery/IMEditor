@@ -69,6 +69,7 @@ export default defineComponent({
     },
     goToTaskDefinition() {
       this.$router.push({ name: "TaskDefinition" });
+      this.$store.commit("updateRefreshTree");
       this.displayUpdatedEntities = false;
     },
     goToTaskSelection() {
