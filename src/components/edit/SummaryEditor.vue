@@ -5,25 +5,26 @@
   <div v-else class="summary-container">
     <div class="float-label-container iri-validate-container">
       <span class="p-float-label">
-        <InputText class="p-inputtext-lg input-text" :class="invalidIri && 'invalid'" v-model="iri" type="text" disabled />
+        <InputText class="p-inputtext-lg input-text" :class="(invalidIri || iriExists) && 'invalid'" v-model="iri" type="text" disabled />
         <label for="Iri">Iri</label>
       </span>
-      <small v-if="invalidIri" class="validate-error">Iri already exists.</small>
+      <small v-if="iriExists" class="validate-error">Iri already exists.</small>
       <small v-if="!iri.length && !code.length && !scheme.iri" class="validate-error">Code and scheme required for iri.</small>
       <small v-else-if="!iri.length && !code.length" class="validate-error">Code required for iri.</small>
       <small v-else-if="!iri.length && !scheme.iri" class="validate-error">Scheme required for iri.</small>
     </div>
     <div class="float-label-container name">
       <span class="p-float-label">
-        <InputText class="p-inputtext-lg input-text" v-model="name" type="text" />
+        <InputText class="p-inputtext-lg input-text" :class="invalidName && 'invalid'" v-model="name" type="text" />
         <label for="Name">Name</label>
       </span>
     </div>
     <div class="float-label-container code">
       <span class="p-float-label">
-        <InputText class="p-inputtext-lg input-text" :class="invalidIri && 'invalid'" v-model="code" type="text" :disabled="mode !== 'create'" />
+        <InputText class="p-inputtext-lg input-text" :class="(invalidIri || iriExists) && 'invalid'" v-model="code" type="text" :disabled="mode !== 'create'" />
         <label for="Code">Code</label>
       </span>
+      <small v-if="iriExists" class="validate-error">Code already exists for this scheme.</small>
     </div>
     <div class="float-label-container description">
       <span class="p-float-label">
@@ -39,7 +40,7 @@
     </div>
     <div class="float-label-container status">
       <span class="p-float-label">
-        <Dropdown class="p-inputtext-lg input-text" v-model="status" :options="filterOptions.status" optionLabel="name" />
+        <Dropdown class="p-inputtext-lg input-text" :class="invalidStatus && 'invalid'" v-model="status" :options="filterOptions.status" optionLabel="name" />
         <label>Status</label>
       </span>
     </div>
@@ -47,7 +48,7 @@
       <span class="p-float-label">
         <Dropdown
           class="p-inputtext-lg input-text scheme"
-          :class="invalidIri && 'invalid'"
+          :class="(invalidIri || iriExists) && 'invalid'"
           v-model="scheme"
           :options="filterOptions.schemes"
           optionLabel="name"
@@ -58,7 +59,7 @@
     </div>
     <div class="float-label-container type">
       <span class="p-float-label">
-        <MultiSelect class="p-inputtext-lg input-text" v-model="types" :options="filterOptions.types" optionLabel="name" />
+        <MultiSelect class="p-inputtext-lg input-text" :class="invalidTypes && 'invalid'" v-model="types" :options="filterOptions.types" optionLabel="name" />
         <label>Types</label>
       </span>
     </div>
@@ -83,6 +84,12 @@ export default defineComponent({
     updatedConcept: {
       handler() {
         this.processEntity();
+        if (this.creatorInvalidEntity) {
+          this.setInvalidInputs(this.creatorValidity);
+        }
+        if (this.editorInvalidEntity) {
+          this.setInvalidInputs(this.editorValidity);
+        }
       },
       deep: true
     },
@@ -105,7 +112,8 @@ export default defineComponent({
     },
     scheme: {
       async handler(newValue, oldValue) {
-        if (newValue !== oldValue) this.updateEntity({ "@id": await this.updateIri() });
+        const newIri = await this.updateIri();
+        if (newValue !== oldValue && newIri) this.updateEntity({ "@id": newIri });
       },
       deep: true
     },
@@ -144,6 +152,7 @@ export default defineComponent({
       description: "",
       loading: false,
       invalidIri: false,
+      iriExists: false,
       invalidName: false,
       invalidTypes: false,
       invalidStatus: false
@@ -199,22 +208,32 @@ export default defineComponent({
     },
 
     async checkIriExists() {
-      if (this.scheme.iri && this.code && this.mode === "create") this.invalidIri = await EntityService.iriExists(this.scheme.iri + this.code);
-      else this.invalidIri = false;
+      if (this.scheme.iri && this.code && this.mode === "create") this.iriExists = await EntityService.iriExists(this.scheme.iri + this.code);
+      else this.iriExists = false;
     },
 
     setInvalidInputs(validities: { key: string; valid: boolean }[]) {
       const iriFound = validities.find((item: { key: string; valid: boolean }) => item.key === "iri");
       if (iriFound) this.invalidIri = !iriFound.valid;
+      else this.invalidIri = true;
+
+      const iriExistsFound = validities.find((item: { key: string; valid: boolean }) => item.key === "iriExists");
+      if (iriExistsFound) {
+        this.iriExists = !iriExistsFound.valid;
+        this.invalidIri = true;
+      } else this.iriExists = false;
 
       const nameFound = validities.find((item: { key: string; valid: boolean }) => item.key === "name");
       if (nameFound) this.invalidName = !nameFound.valid;
+      else this.invalidName = true;
 
       const typesFound = validities.find((item: { key: string; valid: boolean }) => item.key === "types");
       if (typesFound) this.invalidTypes = !typesFound.valid;
+      else this.invalidTypes = true;
 
       const statusFound = validities.find((item: { key: string; valid: boolean }) => item.key === "status");
       if (statusFound) this.invalidStatus = !statusFound.valid;
+      else this.invalidStatus = true;
     }
   }
 });

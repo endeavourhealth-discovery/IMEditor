@@ -76,7 +76,7 @@ export default defineComponent({
       if (isObjectHasKeys(this.conceptUpdated, [RDF.TYPE])) return true;
       else return false;
     },
-    ...mapState(["currentUser", "isLoggedIn", "filterOptions"])
+    ...mapState(["currentUser", "isLoggedIn", "filterOptions", "creatorInvalidEntity"])
   },
   async mounted() {
     this.loading = true;
@@ -188,14 +188,25 @@ export default defineComponent({
           });
       } else {
         console.log("invalid entity");
+        this.$swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: "Invalid values found. Please review your entries.",
+          confirmButtonText: "Close",
+          confirmButtonColor: "#689F38"
+        });
       }
     },
 
     async isValidEntity(entity: any): Promise<boolean> {
-      if (!isObjectHasKeys(entity)) return false;
+      if (!isObjectHasKeys(entity)) {
+        this.$store.commit("updateCreatorValidity", []);
+        this.$store.commit("updateCreatorInvalidEntity", true);
+        return false;
+      }
       const creatorValidity = [] as { key: string; valid: boolean }[];
       creatorValidity.push({ key: "iri", valid: hasValidIri(entity) });
-      creatorValidity.push({ key: "iriExists", valid: !(await this.iriExists(entity["@id"])) });
+      if (hasValidIri(entity)) creatorValidity.push({ key: "iriExists", valid: !(await EntityService.iriExists(entity["@id"])) });
       creatorValidity.push({ key: "name", valid: hasValidName(entity) });
       creatorValidity.push({ key: "types", valid: hasValidTypes(entity) });
       creatorValidity.push({ key: "status", valid: hasValidStatus(entity) });
@@ -204,10 +215,6 @@ export default defineComponent({
       const valid = creatorValidity.every(item => item.valid === true);
       this.$store.commit("updateCreatorInvalidEntity", !valid);
       return valid;
-    },
-
-    async iriExists(entity: any): Promise<boolean> {
-      return await EntityService.iriExists(entity["@id"]);
     },
 
     refreshCreator() {

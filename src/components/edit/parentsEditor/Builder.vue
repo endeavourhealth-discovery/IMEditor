@@ -6,7 +6,8 @@
         <ProgressSpinner />
       </div>
     </div>
-    <div v-else id="parents-build">
+    <div v-else id="parents-build" :class="invalidParents && 'invalid'">
+      <small v-if="invalidParents" class="validate-error">Entity must have at least 1 parent.</small>
       <template v-for="item of parentsBuild" :key="item.id">
         <component
           :is="item.type"
@@ -28,6 +29,7 @@
 
 <script lang="ts">
 import { defineComponent } from "@vue/runtime-core";
+import { mapState } from "vuex";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import Logic from "@/components/edit/parentsEditor/builder/Logic.vue";
 import { Helpers, Enums } from "im-library";
@@ -49,10 +51,27 @@ export default defineComponent({
     parentsBuild: {
       handler() {
         this.onConfirm();
+        if (this.creatorInvalidEntity) {
+          this.setInvalidInputs(this.creatorValidity);
+        }
+        if (this.editorInvalidEntity) {
+          this.setInvalidInputs(this.editorValidity);
+        }
       },
       deep: true
+    },
+    creatorInvalidEntity(newValue) {
+      if (newValue) {
+        this.setInvalidInputs(this.creatorValidity);
+      }
+    },
+    editorInvalidEntity(newValue) {
+      if (newValue) {
+        this.setInvalidInputs(this.editorValidity);
+      }
     }
   },
+  computed: { ...mapState(["creatorInvalidEntity", "creatorValidity", "editorInvalidEntity", "editorValidity"]) },
   mounted() {
     this.createBuild();
   },
@@ -60,7 +79,8 @@ export default defineComponent({
     return {
       parentsBuild: [] as any[],
       parentsAsNode: {} as any,
-      loading: true
+      loading: true,
+      invalidParents: false
     };
   },
   methods: {
@@ -131,6 +151,12 @@ export default defineComponent({
       if (!newComponent) return;
       this.parentsBuild[data.position] = newComponent;
       updatePositions(this.parentsBuild);
+    },
+
+    setInvalidInputs(validities: { key: string; valid: boolean }[]) {
+      const parentsFound = validities.find((item: { key: string; valid: boolean }) => item.key === "parents");
+      if (parentsFound) this.invalidParents = !parentsFound.valid;
+      else this.invalidParents = true;
     }
   }
 });
@@ -157,5 +183,14 @@ export default defineComponent({
   justify-content: flex-start;
   align-items: center;
   gap: 1rem;
+}
+
+.invalid {
+  border-color: #e24c4c !important;
+}
+
+.validate-error {
+  color: #e24c4c;
+  font-size: 0.8rem;
 }
 </style>
