@@ -253,7 +253,8 @@ export default defineComponent({
           confirmButtonText: "Reset",
           reverseButtons: true,
           confirmButtonColor: "#FBC02D",
-          cancelButtonColor: "#607D8B"
+          cancelButtonColor: "#607D8B",
+          customClass: { confirmButton: "swal-reset-button" }
         })
         .then((result: any) => {
           if (result.isConfirmed) {
