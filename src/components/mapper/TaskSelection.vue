@@ -59,7 +59,7 @@ export default defineComponent({
       this.selectedTasks.forEach(async selected => {
         await this.getTaskActions(selected);
       });
-      this.$emit("nextPage", { pageIndex: this.pageIndex, data: this.selectedTasks });
+      this.$emit("nextPage", { pageIndex: this.pageIndex, data: { selectedTasks: this.selectedTasks } });
     },
     previous() {
       this.$emit("prevPage", { pageIndex: this.pageIndex, data: this.selectedTasks });

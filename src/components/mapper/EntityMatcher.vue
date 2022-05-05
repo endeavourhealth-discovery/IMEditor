@@ -4,7 +4,7 @@
       <Listbox
         class="task-action-container"
         v-model="selected"
-        :options="data"
+        :options="data.selectedTasks"
         optionGroupLabel="name"
         optionGroupChildren="children"
         optionLabel="name"
@@ -25,7 +25,7 @@
         <TabPanel header="Details">
           <VueJsonPretty class="mapping-item-container" :data="selectedView" />
         </TabPanel>
-        <TabPanel header="Suggestions">
+        <TabPanel header="Suggestions" v-if="isObjectHasKeys(selected)">
           <ExpansionTable
             class="mapping-item-container"
             :contents="selected.suggestions"
@@ -49,7 +49,7 @@
             @unselect="unselect"
           />
         </TabPanel>
-        <TabPanel header="Mapped to">
+        <TabPanel header="Mapped to" v-if="isObjectHasKeys(selected)">
           <ExpansionTable
             class="mapping-item-container"
             :contents="selected.mappings"
@@ -60,7 +60,7 @@
             @remove="removeMapping"
           />
         </TabPanel>
-        <TabPanel header="Hierarchy position" class="tab-container">
+        <TabPanel header="Hierarchy position" class="tab-container" v-if="isObjectHasKeys(selected)">
           <SecondaryTree :conceptIri="selected.iri" />
         </TabPanel>
       </TabView>
@@ -119,6 +119,9 @@ export default defineComponent({
       }
     }
   },
+  mounted() {
+    console.log(this.data);
+  },
   data() {
     return {
       pageIndex: 2,
@@ -134,6 +137,9 @@ export default defineComponent({
   },
 
   methods: {
+    isObjectHasKeys(object: any) {
+      return isObjectHasKeys(object);
+    },
     async getMappingSuggestions(iri: string, term: string) {
       const { searchRequest, token } = await this.prepareSearchRequestWithToken(term);
       let results = await EntityService.getMappingSuggestions(searchRequest, token);
@@ -163,7 +169,9 @@ export default defineComponent({
       return getFAIconFromType(type);
     },
     next() {
-      this.$emit("nextPage", { pageIndex: this.pageIndex, data: this.mappingsMap });
+      const data = Object.assign(this.data);
+      data.mappingsMap = this.mappingsMap;
+      this.$emit("nextPage", { pageIndex: this.pageIndex, data });
     },
     previous() {
       this.$emit("prevPage", { pageIndex: this.pageIndex, root: {} });

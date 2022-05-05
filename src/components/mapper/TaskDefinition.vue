@@ -82,7 +82,7 @@
           />
         </TabPanel>
 
-        <TabPanel header="Hierarchy position" class="tab-container">
+        <TabPanel header="Hierarchy position" class="tab-container" v-if="isObjectHasKeys(selected) && selected.type !== 'task'">
           <SecondaryTree :conceptIri="selected.data" />
         </TabPanel>
       </TabView>
@@ -114,7 +114,7 @@ import { Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces
 
 const { IM, RDF, RDFS } = Vocabulary;
 const {
-  ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType },
+  ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType, isOfTypes },
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   ContainerDimensionGetters: { getContainerElementOptimalHeight }
 } = Helpers;
@@ -187,6 +187,10 @@ export default defineComponent({
     async init() {
       await this.getUnassigned();
       await this.getTasks();
+    },
+
+    isObjectHasKeys(object: any, keys?: string[]) {
+      return isObjectHasKeys(object, keys);
     },
 
     isArrayHasLength(array: any) {

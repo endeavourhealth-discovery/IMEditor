@@ -46,7 +46,9 @@ export default defineComponent({
   },
   methods: {
     nextPage(event: any) {
-      this.data = event.data;
+      for (const property in event.data) {
+        this.data[property] = event.data[property];
+      }
       this.$router.push(this.items[event.pageIndex + 1].to);
     },
     prevPage(event: any) {

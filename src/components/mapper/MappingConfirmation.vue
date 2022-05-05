@@ -54,7 +54,8 @@ export default defineComponent({
     };
   },
   mounted() {
-    this.mappingsMap = Object.assign(this.data);
+    console.log(this.data);
+    this.mappingsMap = Object.assign(this.data.mappingsMap);
     this.mappingsMap.forEach((value, key) => {
       this.mappingsDisplay.push({
         mappedFrom: key,
