@@ -377,6 +377,14 @@ export default defineComponent({
   word-break: break-all;
 }
 
+.json:deep(.vjs-value) {
+  font-size: 1rem;
+}
+
+.json:deep(.vjs-key) {
+  font-size: 1rem;
+}
+
 .placeholder {
   height: 100%;
 }
