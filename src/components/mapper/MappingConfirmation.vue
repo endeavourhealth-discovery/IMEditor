@@ -12,11 +12,19 @@
     <Column><template #body> </template></Column>
     <Column field="mappedTo" header="To">
       <template #body="{data}">
-        <table>
+        <table v-if="isArrayHasLength(data.mappedTo)">
           <tr v-for="(mapping, key) in data.mappedTo" :key="key">
             <td>{{ mapping.iri }}</td>
             <td>{{ mapping.name }}</td>
-            <td><Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text" /></td>
+            <td><Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text" @click="removeMapping(data, mapping)" /></td>
+          </tr>
+        </table>
+
+        <table v-else>
+          <tr>
+            <td>No entity</td>
+            <td></td>
+            <td></td>
           </tr>
         </table>
       </template>
@@ -35,6 +43,11 @@ import { defineComponent } from "vue";
 import ExpansionTable from "./ExpansionTable.vue";
 import { Vocabulary, Helpers, Models, Enums, LoggerService } from "im-library";
 
+const {
+  ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType },
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
+  ContainerDimensionGetters: { getContainerElementOptimalHeight }
+} = Helpers;
 const { IM, RDF, RDFS } = Vocabulary;
 
 export default defineComponent({
@@ -44,26 +57,38 @@ export default defineComponent({
   components: {
     ExpansionTable
   },
+  computed: {
+    mappingsDisplay() {
+      const mappingsDisplay = [] as any[];
+      this.mappingsMap.forEach((value, key) => {
+        mappingsDisplay.push({
+          mappedFrom: key,
+          mappedTo: value
+        });
+      });
+      return mappingsDisplay;
+    }
+  },
   data() {
     return {
       pageIndex: 3,
       mappingsMap: new Map<string, any>(),
-      mappingsDisplay: [] as any[],
       displayUpdatedEntities: false,
       updatedEntities: [] as any[]
     };
   },
   mounted() {
-    console.log(this.data);
-    this.mappingsMap = Object.assign(this.data.mappingsMap);
-    this.mappingsMap.forEach((value, key) => {
-      this.mappingsDisplay.push({
-        mappedFrom: key,
-        mappedTo: value
-      });
-    });
+    this.mappingsMap = this.data.mappingsMap;
   },
   methods: {
+    isArrayHasLength(array: any) {
+      return isArrayHasLength(array);
+    },
+
+    removeMapping(data: any, mapping: any) {
+      data.mappedTo = (data.mappedTo as any[]).filter(mappedTo => mappedTo.iri !== mapping.iri);
+      this.mappingsMap.set(data.mappedFrom, data.mappedTo);
+    },
     goToEditor() {
       this.$router.push({ name: "Home" });
       this.displayUpdatedEntities = false;
@@ -90,7 +115,7 @@ export default defineComponent({
       this.displayUpdatedEntities = true;
     },
     previous() {
-      this.$emit("prevPage", { pageIndex: this.pageIndex, root: {} });
+      this.$emit("prevPage", { pageIndex: this.pageIndex });
     }
   }
 });

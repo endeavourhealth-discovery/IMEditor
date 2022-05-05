@@ -35,6 +35,8 @@
             :expandable="true"
             @select="select"
             @unselect="unselect"
+            @selectAll="selectAll"
+            @unselectAll="unselectAll"
           />
         </TabPanel>
         <TabPanel header="Search">
@@ -47,12 +49,14 @@
             :paginable="true"
             @select="select"
             @unselect="unselect"
+            @selectAll="selectAll"
+            @unselectAll="unselectAll"
           />
         </TabPanel>
         <TabPanel header="Mapped to" v-if="isObjectHasKeys(selected)">
           <ExpansionTable
             class="mapping-item-container"
-            :contents="selected.mappings"
+            :contents="mappingsMap.get(selected.iri)"
             :selectable="false"
             :inputSearch="false"
             :paginable="true"
@@ -75,7 +79,7 @@
       :disabled="!(selected && (selectedSuggestions.length || selectedEntities.length))"
       @click="map"
     />
-    <Button icon="pi pi-check" label="Next" class="save-button" @click="next" />
+    <Button icon="pi pi-check" label="Next" class="save-button" @click="next" :disabled="!this.mappingsMap.size" />
   </div>
 </template>
 
@@ -119,9 +123,7 @@ export default defineComponent({
       }
     }
   },
-  mounted() {
-    console.log(this.data);
-  },
+
   data() {
     return {
       pageIndex: 2,
@@ -152,8 +154,8 @@ export default defineComponent({
       });
     },
     removeMapping(data: any) {
-      this.selected.mappings = this.selected.mappings.filter((mapping: any) => mapping.iri !== data.iri);
-      this.mappingsMap.set(this.selected.iri, this.selected.mappings);
+      const mappings = this.mappingsMap.get(this.selected.iri).filter((mapping: any) => mapping.iri !== data.iri);
+      this.mappingsMap.set(this.selected.iri, mappings);
     },
     select(data: any) {
       this.selectedEntities.push(data);
@@ -162,6 +164,13 @@ export default defineComponent({
       const i = this.selectedEntities.indexOf((task: any) => task.iri === data.iri);
       this.selectedEntities.splice(i, 1);
     },
+    selectAll(selectedList: any[]) {
+      this.selectedEntities = selectedList;
+    },
+
+    unselectAll() {
+      this.selectedEntities = [];
+    },
     getColourFromType(type: any) {
       return getColourFromType(type);
     },
@@ -169,7 +178,7 @@ export default defineComponent({
       return getFAIconFromType(type);
     },
     next() {
-      const data = Object.assign(this.data);
+      const data = this.data;
       data.mappingsMap = this.mappingsMap;
       this.$emit("nextPage", { pageIndex: this.pageIndex, data });
     },
