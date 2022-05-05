@@ -13,13 +13,27 @@
         <ProgressSpinner />
       </div>
       <div v-else class="content-buttons-container">
-        <div class="steps-content">
-          <Steps :model="stepsItems" />
-          <router-view v-slot="{ Component }">
-            <keep-alive>
-              <component :is="Component" :updatedConcept="conceptUpdated" @concept-updated="updateConcept" mode="create" />
-            </keep-alive>
-          </router-view>
+        <div class="steps-json-container">
+          <div class="steps-content">
+            <Steps :model="stepsItems" />
+            <router-view v-slot="{ Component }">
+              <keep-alive>
+                <component :is="Component" :updatedConcept="conceptUpdated" @concept-updated="updateConcept" mode="create" />
+              </keep-alive>
+            </router-view>
+          </div>
+          <Divider v-if="showJson" layout="vertical" />
+          <div v-if="showJson" class="json-container">
+            <div class="json-header-container">
+              <span class="json-header">JSON viewer</span>
+            </div>
+            <VueJsonPretty class="json" :path="'res'" :data="conceptUpdated" @click="handleClick" />
+          </div>
+          <Button
+            class="p-button-rounded p-button-info p-button-outlined json-toggle"
+            :label="showJson ? 'hide JSON' : 'show JSON'"
+            @click="showJson = !showJson"
+          />
         </div>
         <div class="button-bar" id="creator-button-bar">
           <Button v-if="currentStep > 0" icon="pi pi-angle-left" label="Back" @click="stepsBack" />
@@ -38,6 +52,7 @@ import { mapState } from "vuex";
 import { Helpers, Vocabulary } from "im-library";
 import EntityService from "@/services/EntityService";
 import TypeSelector from "@/components/creator/TypeSelector.vue";
+import VueJsonPretty from "vue-json-pretty";
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength },
   ConceptTypeMethods: { isValueSet },
@@ -47,7 +62,7 @@ const { IM, RDF, RDFS } = Vocabulary;
 
 export default defineComponent({
   name: "Creator",
-  components: { TypeSelector },
+  components: { TypeSelector, VueJsonPretty },
   beforeRouteLeave() {
     this.confirmLeavePage();
   },
@@ -91,7 +106,8 @@ export default defineComponent({
       loading: true,
       formObject: {} as any,
       stepsItems: [] as { label: string; to: string }[],
-      currentStep: 0
+      currentStep: 0,
+      showJson: false
     };
   },
   methods: {
@@ -272,6 +288,11 @@ export default defineComponent({
     stepsForward() {
       this.currentStep++;
       if (this.currentStep < this.stepsItems.length) this.$router.push(this.stepsItems[this.currentStep].to);
+    },
+
+    handleClick(data: any) {
+      console.log("click");
+      console.log(data);
     }
   }
 });
@@ -299,6 +320,16 @@ export default defineComponent({
   overflow: auto;
 }
 
+.steps-json-container {
+  flex: 1 1 auto;
+  width: 100%;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  overflow: auto;
+  position: relative;
+}
+
 .steps-content {
   flex: 1 1 auto;
   width: 100%;
@@ -306,6 +337,55 @@ export default defineComponent({
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-start;
+}
+
+.json-container {
+  width: 50vw;
+  height: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-start;
+}
+
+.json {
+  flex: 0 1 auto;
+  width: 100%;
+  overflow: auto;
+  border: 1px #dee2e6 solid;
+  border-radius: 3px;
+}
+
+.json-header-container {
+  padding: 0.5rem;
+  height: 3rem;
+  flex: 0 0 auto;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.json-header {
+  font-size: 1.5rem;
+}
+
+.json:deep(.vjs-value__string) {
+  word-break: break-all;
+}
+
+.json:deep(.vjs-value) {
+  font-size: 1rem;
+}
+
+.json:deep(.vjs-key) {
+  font-size: 1rem;
+}
+
+.json-toggle {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: #ffffff !important;
 }
 
 .topbar-content {

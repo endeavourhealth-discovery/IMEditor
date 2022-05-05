@@ -44,11 +44,19 @@
               </TabPanel>
             </TabView>
           </div>
-          <Divider layout="vertical" />
-          <div class="json-container">
-            <span class="json-header">JSON viewer</span>
+          <Divider v-if="showJson" layout="vertical" />
+          <div v-if="showJson" class="json-container">
+            <div class="json-header-container">
+              <span class="json-header">JSON viewer</span>
+            </div>
+
             <VueJsonPretty v-if="isObjectHasKeysWrapper(conceptUpdated)" class="json" :path="'res'" :data="conceptUpdated" @click="handleClick" />
           </div>
+          <Button
+            class="p-button-rounded p-button-info p-button-outlined json-toggle"
+            :label="showJson ? 'hide JSON' : 'show JSON'"
+            @click="showJson = !showJson"
+          />
         </div>
         <div class="button-bar" id="editor-button-bar">
           <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
@@ -112,7 +120,8 @@ export default defineComponent({
       conceptUpdated: {} as any,
       active: 0,
       loading: true,
-      entityName: ""
+      entityName: "",
+      showJson: false
     };
   },
   async mounted() {
@@ -325,19 +334,19 @@ export default defineComponent({
   flex-flow: row nowrap;
   justify-content: flex-start;
   overflow: auto;
+  position: relative;
 }
 
 .json-container {
-  width: 50%;
+  width: 50vw;
   height: 100%;
-  overflow: auto;
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-start;
 }
 
 .content {
-  width: 50%;
+  flex: 1 1 auto;
   height: 100%;
   overflow: auto;
 }
@@ -350,13 +359,30 @@ export default defineComponent({
   border-radius: 3px;
 }
 
-.json-header {
-  font-size: 1rem;
+.json-header-container {
   padding: 0.5rem;
+  height: 3rem;
+  flex: 0 0 auto;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.json-header {
+  font-size: 1.5rem;
 }
 
 .json:deep(.vjs-value__string) {
   word-break: break-all;
+}
+
+.json:deep(.vjs-value) {
+  font-size: 1rem;
+}
+
+.json:deep(.vjs-key) {
+  font-size: 1rem;
 }
 
 .placeholder {
@@ -429,5 +455,11 @@ export default defineComponent({
   height: calc(100% - 2rem) !important;
   min-height: unset !important;
   align-self: center;
+}
+
+.json-toggle {
+  position: absolute;
+  top: 5px;
+  right: 5px;
 }
 </style>
