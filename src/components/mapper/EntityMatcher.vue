@@ -113,7 +113,10 @@ export default defineComponent({
   emits: ["nextPage", "prevPage"],
   props: ["data"],
   watch: {
-    async selected() {
+    async selected(newValue, oldValue) {
+      if (!newValue) {
+        this.selected = oldValue;
+      }
       if (this.selected) {
         const fullEntity = await EntityService.getPartialEntity(this.selected.iri, []);
         this.selectedView = Object.assign(fullEntity);
@@ -142,6 +145,7 @@ export default defineComponent({
     isObjectHasKeys(object: any) {
       return isObjectHasKeys(object);
     },
+
     async getMappingSuggestions(iri: string, term: string) {
       const { searchRequest, token } = await this.prepareSearchRequestWithToken(term);
       let results = await EntityService.getMappingSuggestions(searchRequest, token);
@@ -153,17 +157,21 @@ export default defineComponent({
         return { iri: entity.iri, name: entity.name, type: entity.entityType };
       });
     },
+
     removeMapping(data: any) {
       const mappings = this.mappingsMap.get(this.selected.iri).filter((mapping: any) => mapping.iri !== data.iri);
       this.mappingsMap.set(this.selected.iri, mappings);
     },
+
     select(data: any) {
       this.selectedEntities.push(data);
     },
+
     unselect(data: any) {
       const i = this.selectedEntities.indexOf((task: any) => task.iri === data.iri);
       this.selectedEntities.splice(i, 1);
     },
+
     selectAll(selectedList: any[]) {
       this.selectedEntities = selectedList;
     },
@@ -171,17 +179,21 @@ export default defineComponent({
     unselectAll() {
       this.selectedEntities = [];
     },
+
     getColourFromType(type: any) {
       return getColourFromType(type);
     },
+
     getFAIconFromType(type: any) {
       return getFAIconFromType(type);
     },
+
     next() {
       const data = this.data;
       data.mappingsMap = this.mappingsMap;
       this.$emit("nextPage", { pageIndex: this.pageIndex, data });
     },
+
     previous() {
       this.$emit("prevPage", { pageIndex: this.pageIndex, root: {} });
     },
