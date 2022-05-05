@@ -15,6 +15,11 @@
       </div>
       <div v-else class="content-buttons-container">
         <div class="content-json-container">
+          <Button
+            class="p-button-rounded p-button-info p-button-outlined json-toggle"
+            :label="showJson ? 'hide JSON' : 'show JSON'"
+            @click="showJson = !showJson"
+          />
           <div class="content">
             <TabView v-model:activeIndex="active" class="tabview">
               <TabPanel header="Summary">
@@ -44,9 +49,12 @@
               </TabPanel>
             </TabView>
           </div>
-          <Divider layout="vertical" />
-          <div class="json-container">
-            <span class="json-header">JSON viewer</span>
+          <Divider v-if="showJson" layout="vertical" />
+          <div v-if="showJson" class="json-container">
+            <div class="json-header-container">
+              <span class="json-header">JSON viewer</span>
+            </div>
+
             <VueJsonPretty v-if="isObjectHasKeysWrapper(conceptUpdated)" class="json" :path="'res'" :data="conceptUpdated" @click="handleClick" />
           </div>
         </div>
@@ -112,7 +120,8 @@ export default defineComponent({
       conceptUpdated: {} as any,
       active: 0,
       loading: true,
-      entityName: ""
+      entityName: "",
+      showJson: false
     };
   },
   async mounted() {
@@ -325,19 +334,19 @@ export default defineComponent({
   flex-flow: row nowrap;
   justify-content: flex-start;
   overflow: auto;
+  position: relative;
 }
 
 .json-container {
-  width: 50%;
+  width: 50vw;
   height: 100%;
-  overflow: auto;
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-start;
 }
 
 .content {
-  width: 50%;
+  flex: 1 1 auto;
   height: 100%;
   overflow: auto;
 }
@@ -350,9 +359,19 @@ export default defineComponent({
   border-radius: 3px;
 }
 
-.json-header {
-  font-size: 1rem;
+.json-header-container {
   padding: 0.5rem;
+  height: 3rem;
+  pointer-events: none;
+  flex: 0 0 auto;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.json-header {
+  font-size: 1.5rem;
 }
 
 .json:deep(.vjs-value__string) {
@@ -429,5 +448,19 @@ export default defineComponent({
   height: calc(100% - 2rem) !important;
   min-height: unset !important;
   align-self: center;
+}
+
+.json-toggle {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+
+.content:deep(.p-tabview-nav) {
+  background: none;
+}
+
+.content:deep(.p-tabview-nav-container, .p-tabview-nav-content) {
+  pointer-events: none;
 }
 </style>
