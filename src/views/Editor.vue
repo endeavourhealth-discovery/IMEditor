@@ -15,11 +15,6 @@
       </div>
       <div v-else class="content-buttons-container">
         <div class="content-json-container">
-          <Button
-            class="p-button-rounded p-button-info p-button-outlined json-toggle"
-            :label="showJson ? 'hide JSON' : 'show JSON'"
-            @click="showJson = !showJson"
-          />
           <div class="content">
             <TabView v-model:activeIndex="active" class="tabview">
               <TabPanel header="Summary">
@@ -57,6 +52,11 @@
 
             <VueJsonPretty v-if="isObjectHasKeysWrapper(conceptUpdated)" class="json" :path="'res'" :data="conceptUpdated" @click="handleClick" />
           </div>
+          <Button
+            class="p-button-rounded p-button-info p-button-outlined json-toggle"
+            :label="showJson ? 'hide JSON' : 'show JSON'"
+            @click="showJson = !showJson"
+          />
         </div>
         <div class="button-bar" id="editor-button-bar">
           <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
@@ -362,7 +362,6 @@ export default defineComponent({
 .json-header-container {
   padding: 0.5rem;
   height: 3rem;
-  pointer-events: none;
   flex: 0 0 auto;
   display: flex;
   flex-flow: row nowrap;
@@ -454,13 +453,5 @@ export default defineComponent({
   position: absolute;
   top: 5px;
   right: 5px;
-}
-
-.content:deep(.p-tabview-nav) {
-  background: none;
-}
-
-.content:deep(.p-tabview-nav-container, .p-tabview-nav-content) {
-  pointer-events: none;
 }
 </style>
