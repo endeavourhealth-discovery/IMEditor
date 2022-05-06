@@ -46,6 +46,7 @@
         <InputText class="p-inputtext-lg input-text" id="name-input" :class="invalidName && 'invalid'" v-model="name" type="text" />
         <label for="name-input">Name</label>
       </span>
+      <small v-if="invalidName" class="validate-error">Name required.</small>
     </div>
     <div class="float-label-container description">
       <span class="p-float-label">
@@ -65,6 +66,7 @@
         />
         <label for="status-dropdown">Status</label>
       </span>
+      <small v-if="invalidStatus" class="validate-error">Status required.</small>
     </div>
     <div class="float-label-container type">
       <span class="p-float-label">
@@ -78,6 +80,7 @@
         />
         <label for="type-multiselect">Types</label>
       </span>
+      <small v-if="invalidTypes" class="validate-error">Type required.</small>
     </div>
     <div class="float-label-container version">
       <span class="p-float-label">
@@ -242,7 +245,7 @@ export default defineComponent({
       const iriExistsFound = validities.find((item: { key: string; valid: boolean }) => item.key === "iriExists");
       if (iriExistsFound) {
         this.iriExists = !iriExistsFound.valid;
-        this.invalidIri = true;
+        if (this.mode === "create") this.invalidIri = true;
       } else this.iriExists = false;
 
       const nameFound = validities.find((item: { key: string; valid: boolean }) => item.key === "name");

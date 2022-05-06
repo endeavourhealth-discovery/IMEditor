@@ -6,7 +6,8 @@
         <ProgressSpinner />
       </div>
     </div>
-    <div v-else id="members-build">
+    <div v-else id="members-build" :class="invalidParents && 'invalid'">
+      <small v-if="invalidParents" class="validate-error">Entity must have at least 1 parent.</small>
       <template v-for="item of membersBuild" :key="item.id">
         <component
           :is="item.type"
@@ -52,13 +53,29 @@ export default defineComponent({
   emits: {
     "concept-updated": (_payload: any) => true
   },
-  computed: mapState(["filterOptions"]),
+  computed: mapState(["filterOptions", "creatorInvalidEntity", "creatorValidity", "editorInvalidEntity", "editorValidity"]),
   watch: {
     membersBuild: {
       handler() {
         this.onConfirm();
+        if (this.creatorInvalidEntity) {
+          this.setInvalidInputs(this.creatorValidity);
+        }
+        if (this.editorInvalidEntity) {
+          this.setInvalidInputs(this.editorValidity);
+        }
       },
       deep: true
+    },
+    creatorInvalidEntity(newValue) {
+      if (newValue) {
+        this.setInvalidInputs(this.creatorValidity);
+      }
+    },
+    editorInvalidEntity(newValue) {
+      if (newValue) {
+        this.setInvalidInputs(this.editorValidity);
+      }
     }
   },
   mounted() {
@@ -68,7 +85,8 @@ export default defineComponent({
     return {
       membersBuild: [] as any[],
       membersAsNode: {} as any,
-      loading: true
+      loading: true,
+      invalidParents: false
     };
   },
   methods: {
@@ -153,6 +171,12 @@ export default defineComponent({
       } else {
         this.membersBuild.forEach(item => (item.showButtons = { minus: true, plus: true }));
       }
+    },
+
+    setInvalidInputs(validities: { key: string; valid: boolean }[]) {
+      const parentsFound = validities.find((item: { key: string; valid: boolean }) => item.key === "parents");
+      if (parentsFound) this.invalidParents = !parentsFound.valid;
+      else this.invalidParents = true;
     }
   }
 });
@@ -179,5 +203,14 @@ export default defineComponent({
   border-radius: 3px;
   padding: 1rem;
   gap: 1rem;
+}
+
+.invalid {
+  border-color: #e24c4c !important;
+}
+
+.validate-error {
+  color: #e24c4c;
+  font-size: 0.8rem;
 }
 </style>
