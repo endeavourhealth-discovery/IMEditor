@@ -14,8 +14,10 @@
         placeholder="Search"
         class="p-inputtext search-input"
         autoWidth="true"
+        v-tooltip="{ value: selectedResult.name, class: 'quantifier-tooltip' }"
       />
     </div>
+    <AddDeleteButtons :show="showButtons" :position="position" :options="[]" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
   </div>
   <OverlayPanel class="search-op" ref="miniSearchOP">
     <SearchMiniOverlay :searchTerm="searchTerm" :searchResults="searchResults" :loading="loading" @searchResultSelected="updateSelectedResult" />
@@ -25,18 +27,19 @@
 <script lang="ts">
 import { defineComponent, PropType } from "@vue/runtime-core";
 import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/SearchMiniOverlay.vue";
+import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import { mapState } from "vuex";
 import axios from "axios";
 import EntityService from "@/services/EntityService";
 import { Vocabulary, Helpers, Enums, Models } from "im-library";
-import { NextComponentSummary, EntityReferenceNode, Namespace, TTIriRef, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
+import { EntityReferenceNode, Namespace, TTIriRef, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
 } = Helpers;
 const { IM } = Vocabulary;
-const { BuilderType, ComponentType, SortBy } = Enums;
+const { ComponentType, SortBy } = Enums;
 const {
-  Search: { ConceptSummary, SearchRequest }
+  Search: { SearchRequest }
 } = Models;
 
 export default defineComponent({
@@ -45,16 +48,16 @@ export default defineComponent({
     id: { type: String, required: true },
     position: { type: Number, required: true },
     value: { type: Object as PropType<{ propertyIri: string; quantifier: TTIriRef }>, required: false },
-    last: { type: Boolean, required: true },
+    showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
-    updateClicked: (payload: ComponentDetails) => true,
-    addNextOptionsClicked: (payload: NextComponentSummary) => true,
-    deleteClicked: (payload: ComponentDetails) => true,
-    addClicked: (payload: any) => true
+    updateClicked: (_payload: ComponentDetails) => true,
+    addNextOptionsClicked: (_payload: any) => true,
+    deleteClicked: (_payload: ComponentDetails) => true,
+    addClicked: (_payload: any) => true
   },
-  components: { SearchMiniOverlay },
+  components: { AddDeleteButtons, SearchMiniOverlay },
   computed: mapState(["filterOptions", "selectedFilters"]),
   async mounted() {
     if (this.value && this.hasData(this.value)) {
@@ -140,11 +143,6 @@ export default defineComponent({
       x.show(event, event.target);
     },
 
-    isTTIriRef(data: any): data is TTIriRef {
-      if (data && (data as TTIriRef)["@id"]) return true;
-      return false;
-    },
-
     isConceptSummary(data: any): data is Models.Search.ConceptSummary {
       if ((data as Models.Search.ConceptSummary).iri) return true;
       return false;
@@ -154,7 +152,7 @@ export default defineComponent({
       if (!quantifier) return;
       if (this.isConceptSummary(quantifier)) this.selectedResult = { "@id": quantifier.iri, name: quantifier.name };
       else this.selectedResult = quantifier;
-      this.searchTerm = quantifier.name;
+      this.searchTerm = quantifier.name ? quantifier.name : "";
       this.$emit("updateClicked", this.createQuantifier());
       this.hideOverlay();
     },
@@ -170,8 +168,28 @@ export default defineComponent({
         position: this.position,
         type: ComponentType.QUANTIFIER,
         json: this.selectedResult,
-        builderType: this.builderType
+        builderType: this.builderType,
+        showButtons: this.showButtons
       };
+    },
+
+    deleteClicked(): void {
+      this.$emit("deleteClicked", {
+        id: this.id,
+        value: this.selectedResult,
+        position: this.position,
+        type: ComponentType.QUANTIFIER,
+        builderType: this.builderType,
+        json: this.selectedResult,
+        showButtons: this.showButtons
+      });
+    },
+
+    addNextClicked(): void {
+      this.$emit("addNextOptionsClicked", {
+        selectedType: ComponentType.QUANTIFIER,
+        position: this.position + 1
+      });
     }
   }
 });
@@ -179,14 +197,17 @@ export default defineComponent({
 
 <style scoped>
 .quantifier-item-container {
+  flex: 1 1 auto;
   display: flex;
   flex-flow: row nowrap;
   justify-content: flex-start;
   align-items: center;
+  gap: 1rem;
+  width: 100%;
 }
 
 .label-container {
-  margin: 0 1rem 0 0;
+  flex: 1 1 auto;
   padding: 1rem;
   border: 1px solid #ffc952;
   border-radius: 3px;
@@ -211,6 +232,9 @@ export default defineComponent({
 }
 
 .search-input {
-  width: 15rem;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

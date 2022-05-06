@@ -3,7 +3,6 @@
     <template v-for="option of options" :key="option">
       <Button icon="fas fa-plus" :label="option" class="p-button-rounded p-button-outlined p-button-danger add-next-button" @click="addItem(option)"> </Button>
     </template>
-    <Button v-if="!last" icon="fas fa-minus" class="p-button-rounded p-button-outlined p-button-danger add-next-delete-button" @click="deleteClicked" />
   </div>
 </template>
 
@@ -26,8 +25,8 @@ export default defineComponent({
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
-    addClicked: (payload: { selectedType: Enums.ComponentType; position: number }) => true,
-    deleteClicked: (payload: ComponentDetails) => true
+    addClicked: (_payload: { selectedType: Enums.ComponentType; position: number }) => true,
+    deleteClicked: (_payload: ComponentDetails) => true
   },
   watch: {
     options: {
@@ -50,17 +49,6 @@ export default defineComponent({
       this.$emit("addClicked", {
         selectedType: selectedOption,
         position: this.value.previousPosition + 1
-      });
-    },
-
-    deleteClicked() {
-      this.$emit("deleteClicked", {
-        id: this.id,
-        position: this.position,
-        value: null,
-        type: ComponentType.ADD_NEXT,
-        builderType: this.builderType,
-        json: null
       });
     },
 

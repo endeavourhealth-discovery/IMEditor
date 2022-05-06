@@ -16,13 +16,13 @@ import { Vocabulary, Helpers } from "im-library";
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
-const { IM } = Vocabulary;
+const { IM, RDFS } = Vocabulary;
 
 export default defineComponent({
   name: "ParentsEditor",
-  props: { updatedConcept: { type: Object, required: true } },
+  props: { updatedConcept: { type: Object, required: true }, mode: { type: String, required: true } },
   components: { Builder },
-  emits: { "concept-updated": (payload: any) => true },
+  emits: { "concept-updated": (_payload: any) => true },
   watch: {
     updatedConcept: {
       handler() {
@@ -44,6 +44,8 @@ export default defineComponent({
     getParents() {
       this.loading = true;
       if (isObjectHasKeys(this.updatedConcept, [IM.IS_CONTAINED_IN])) this.parents[IM.IS_CONTAINED_IN] = this.updatedConcept[IM.IS_CONTAINED_IN];
+      if (isObjectHasKeys(this.updatedConcept, [RDFS.SUBCLASS_OF])) this.parents[RDFS.SUBCLASS_OF] = this.updatedConcept[RDFS.SUBCLASS_OF];
+      if (isObjectHasKeys(this.updatedConcept, [IM.IS_A])) this.parents[IM.IS_A] = this.updatedConcept[IM.IS_A];
       this.loading = false;
     },
 
@@ -65,9 +67,11 @@ export default defineComponent({
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-start;
+  padding: 1rem 1rem 0 1rem;
 }
 
 .editor-container {
-  flex-grow: 100;
+  flex: 1 1 auto;
+  overflow: auto;
 }
 </style>

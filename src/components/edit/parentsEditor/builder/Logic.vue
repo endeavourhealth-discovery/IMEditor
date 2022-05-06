@@ -4,29 +4,31 @@
       <ProgressSpinner />
     </div>
   </div>
-  <div v-else class="logic-container" :id="id">
-    <div class="label-container">
-      <span class="float-text">Logic</span>
-      <Dropdown v-model="selected" :options="options" optionLabel="name" placeholder="Select logic" />
+  <div v-else class="logic-buttons-container" :id="id">
+    <div class="logic-container">
+      <div class="label-container">
+        <span class="float-text">Logic</span>
+        <Dropdown v-model="selected" :options="options" optionLabel="name" placeholder="Select logic" />
+      </div>
+      <div class="children-container">
+        <template v-for="item of logicBuild" :key="item.id">
+          <component
+            :is="item.type"
+            :value="item.value"
+            :id="item.id"
+            :position="item.position"
+            :showButtons="item.showButtons"
+            :builderType="item.builderType"
+            @deleteClicked="deleteItem"
+            @addClicked="addItemWrapper"
+            @updateClicked="updateItemWrapper"
+            @addNextOptionsClicked="addItemWrapper"
+          >
+          </component>
+        </template>
+      </div>
     </div>
-    <div class="children-container">
-      <template v-for="item of logicBuild" :key="item.id">
-        <component
-          :is="item.type"
-          :value="item.value"
-          :id="item.id"
-          :position="item.position"
-          :last="logicBuild.length - 2 <= item.position ? true : false"
-          :builderType="item.builderType"
-          @deleteClicked="deleteItemWrapper"
-          @addClicked="addItemWrapper"
-          @updateClicked="updateItemWrapper"
-          @addNextOptionsClicked="addNextOptionsWrapper"
-        >
-        </component>
-      </template>
-    </div>
-    <AddDeleteButtons :last="last" :position="position" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
+    <AddDeleteButtons :show="showButtons" :position="position" :options="buttonMenuOptions" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
   </div>
 </template>
 
@@ -37,12 +39,12 @@ import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
 import AddNext from "@/components/edit/parentsEditor/builder/AddNext.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums } from "im-library";
-import { ComponentDetails, NextComponentSummary, TTIriRef, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
+import { ComponentDetails, TTIriRef, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  EditorBuilderJsonMethods: { addItem, addNextOptions, generateNewComponent, genNextOptions, updateItem, deleteItem, scrollIntoView }
+  EditorBuilderJsonMethods: { addItem, generateNewComponent, updateItem, updatePositions }
 } = Helpers;
-const { IM } = Vocabulary;
+const { IM, RDFS } = Vocabulary;
 const { BuilderType, ComponentType } = Enums;
 
 export default defineComponent({
@@ -51,69 +53,97 @@ export default defineComponent({
     id: { type: String, required: true },
     position: { type: Number, required: true },
     value: { type: Object as PropType<{ iri: string; children: PropType<Array<any>> | undefined }>, required: false },
-    last: { type: Boolean, required: true },
+    showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   components: { AddDeleteButtons, AddNext, Entity },
   computed: mapState(["filterOptions"]),
   emits: {
-    addNextOptionsClicked: (payload: NextComponentSummary) => true,
-    deleteClicked: (payload: ComponentDetails) => true,
-    updateClicked: (payload: ComponentDetails) => true
+    addNextOptionsClicked: (_payload: any) => true,
+    deleteClicked: (_payload: ComponentDetails) => true,
+    updateClicked: (_payload: ComponentDetails) => true
   },
   watch: {
     selected(): void {
-      this.onConfirm();
+      if (!this.loading) {
+        this.onConfirm();
+      }
     },
     logicBuild: {
       handler() {
         this.onConfirm();
       },
       deep: true
+    },
+    value: {
+      handler() {
+        if (!this.value) this.init();
+      },
+      deep: true
     }
   },
-  async mounted() {
-    this.loading = true;
-    if (this.value && isObjectHasKeys(this.value, ["iri", "children"])) {
-      const found = this.options.find(option => option.iri === this.value?.iri);
-      this.selected = found ? found : this.options[0];
-      await this.createBuild();
-    } else {
-      this.selected = this.options[0];
-      this.logicBuild.push(genNextOptions(-1, ComponentType.LOGIC, this.builderType, ComponentType.LOGIC));
-    }
-    this.loading = false;
+  mounted() {
+    this.init();
   },
   data() {
     return {
-      options: [{ iri: IM.IS_CONTAINED_IN, name: "Contained in" }] as { iri: string; name: string }[],
+      options: [
+        { iri: IM.IS_CONTAINED_IN, name: "Contained in" },
+        { iri: IM.IS_A, name: "Is a" },
+        { iri: RDFS.SUBCLASS_OF, name: "Subclass of" }
+      ] as { iri: string; name: string }[],
       selected: {} as { iri: string; name: string },
       logicBuild: [] as any[],
-      loading: true
+      loading: true,
+      filteredFilterOptions: {} as any,
+      buttonMenuOptions: [ComponentType.LOGIC]
     };
   },
   methods: {
-    async createBuild() {
+    init() {
+      this.loading = true;
+      const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === IM.CONCEPT || type["@id"] === IM.CONCEPT_SET);
+      this.filteredFilterOptions = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
+      if (this.value && isObjectHasKeys(this.value, ["iri", "children"])) {
+        const found = this.options.find(option => option.iri === this.value?.iri);
+        this.selected = found ? found : this.options[0];
+        this.createBuild();
+      } else {
+        this.selected = this.options[0];
+        this.createDefaultBuild();
+      }
+      this.loading = false;
+    },
+
+    createBuild() {
       this.logicBuild = [];
-      if (!this.hasChildren(this.value)) return;
+      if (!this.hasChildren(this.value)) {
+        this.createDefaultBuild();
+        return;
+      }
       let position = 0;
       for (const child of this.value.children) {
-        this.logicBuild.push(await this.processChild(child, position));
+        this.logicBuild.push(this.processChild(child, position));
         position++;
       }
-      if (isArrayHasLength(this.logicBuild)) {
-        const last = this.logicBuild.length - 1;
-        this.logicBuild.push(genNextOptions(last, this.logicBuild[last].type, this.builderType, ComponentType.LOGIC));
-      } else {
+      if (!isArrayHasLength(this.logicBuild)) {
         this.createDefaultBuild();
       }
     },
 
     createDefaultBuild() {
-      this.logicBuild.push(genNextOptions(0, ComponentType.LOGIC, this.builderType));
+      this.logicBuild = [
+        generateNewComponent(
+          ComponentType.ENTITY,
+          0,
+          { filterOptions: this.filteredFilterOptions, entity: undefined, type: ComponentType.ENTITY, label: "Parent" },
+          BuilderType.PARENT,
+          { minus: true, plus: true }
+        )
+      ];
     },
 
-    async processChild(child: any, position: number) {
+    processChild(child: any, position: number) {
       if (isObjectHasKeys(child, ["@id"])) return this.processIri(child, position);
     },
 
@@ -124,7 +154,8 @@ export default defineComponent({
         ComponentType.ENTITY,
         position,
         { filterOptions: options, entity: iri, type: ComponentType.ENTITY, label: "Parent" },
-        this.builderType
+        this.builderType,
+        { minus: true, plus: true }
       );
     },
 
@@ -136,11 +167,12 @@ export default defineComponent({
     onConfirm(): void {
       this.$emit("updateClicked", {
         id: this.id,
-        value: { iri: this.selected.iri, children: this.value?.children },
+        value: { iri: this.selected.iri, children: this.logicBuild },
         position: this.position,
         type: ComponentType.LOGIC,
         builderType: this.builderType,
-        json: this.createLogicJson()
+        json: this.createLogicJson(),
+        showButtons: this.showButtons
       });
     },
 
@@ -149,7 +181,7 @@ export default defineComponent({
       if (this.selected.iri) json[this.selected.iri] = [];
       if (this.logicBuild.length) {
         for (const item of this.logicBuild) {
-          if (item.type !== ComponentType.ADD_NEXT) json[this.selected.iri].push(item.json);
+          if (isObjectHasKeys(item, ["json"])) json[this.selected.iri].push(item.json);
         }
       }
       return json;
@@ -162,22 +194,36 @@ export default defineComponent({
     addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
       if (data.selectedType === ComponentType.ENTITY) {
         const typeOptions = this.filterOptions.types.filter(
-          (type: EntityReferenceNode) => type["@id"] === Vocabulary.IM.CONCEPT || type["@id"] === IM.CONCEPT_SET
+          (type: EntityReferenceNode) => type["@id"] === Vocabulary.IM.CONCEPT || type["@id"] === IM.CONCEPT_SET || type["@id"] === IM.VALUE_SET
         );
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Parent" };
       }
-      addItem(data, this.logicBuild, ComponentType.LOGIC, this.builderType);
+      addItem(data, this.logicBuild, this.builderType, { minus: true, plus: true });
     },
 
-    async addNextOptionsWrapper(data: NextComponentSummary): Promise<void> {
-      const nextOptionsComponent = addNextOptions(data, this.logicBuild, this.builderType);
-      await this.$nextTick();
-      scrollIntoView(nextOptionsComponent);
-    },
-
-    deleteItemWrapper(data: ComponentDetails): void {
-      deleteItem(data, this.logicBuild, ComponentType.LOGIC, this.builderType);
+    deleteItem(data: ComponentDetails): void {
+      const index = this.logicBuild.findIndex(item => item.position === data.position);
+      this.logicBuild.splice(index, 1);
+      const length = this.logicBuild.length;
+      if (length === 0) {
+        this.createDefaultBuild();
+        return;
+      }
+      if (data.position === 0) {
+        if (this.logicBuild[0].type !== ComponentType.ENTITY) {
+          this.logicBuild.unshift(
+            generateNewComponent(
+              ComponentType.ENTITY,
+              0,
+              { filterOptions: this.filteredFilterOptions, entity: undefined, type: ComponentType.ENTITY, label: "Parent" },
+              BuilderType.PARENT,
+              { minus: true, plus: true }
+            )
+          );
+        }
+      }
+      updatePositions(this.logicBuild);
     },
 
     deleteClicked(): void {
@@ -187,15 +233,15 @@ export default defineComponent({
         position: this.position,
         type: ComponentType.LOGIC,
         builderType: this.builderType,
-        json: this.createLogicJson()
+        json: this.createLogicJson(),
+        showButtons: this.showButtons
       });
     },
 
-    addNextClicked(): void {
+    addNextClicked(item: any): void {
       this.$emit("addNextOptionsClicked", {
-        previousComponentType: ComponentType.LOGIC,
-        previousPosition: this.position,
-        parentGroup: ComponentType.LOGIC
+        position: this.position + 1,
+        selectedType: item
       });
     }
   }
@@ -203,17 +249,25 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.logic-container {
+.logic-buttons-container {
+  width: 100%;
   display: flex;
-  flex-flow: row;
-  justify-content: center;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.logic-container {
+  flex: 1 1 auto;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
   align-items: flex-start;
-  margin: 0 1rem 0 0;
   padding: 1rem;
-  border: 1px solid #34314c;
+  border: 1px solid #dee2e6;
   border-radius: 3px;
   position: relative;
-  width: fit-content;
+  gap: 1rem;
 }
 
 .p-button-label {
@@ -228,16 +282,19 @@ export default defineComponent({
 }
 
 .label-container {
-  margin: 0 1rem 0 0;
-  padding: 1rem;
+  padding-top: 1rem;
   position: relative;
 }
 
 .children-container {
-  margin: 0 1rem 0 0;
   padding: 1rem;
-  /* border: 1px solid #34314c;
-  border-radius: 3px; */
+  border: 1px solid #dee2e6;
+  border-radius: 3px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-start;
+  gap: 1rem;
 }
 
 .p-dropdown {

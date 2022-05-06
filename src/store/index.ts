@@ -28,6 +28,10 @@ export default createStore({
       types: [] as EntityReferenceNode[]
     },
     quickFiltersStatus: new Map<string, boolean>(),
+    creatorInvalidEntity: false,
+    creatorValidity: [] as { key: string; valid: boolean }[],
+    editorInvalidEntity: false,
+    editorValidity: [] as { key: string; valid: boolean }[]
     refreshTree: false as boolean
   },
   mutations: {
@@ -83,6 +87,17 @@ export default createStore({
     },
     updateRefreshTree(state) {
       state.refreshTree = !state.refreshTree;
+    updateCreatorInvalidEntity(state, bool) {
+      state.creatorInvalidEntity = bool;
+    },
+    updateCreatorValidity(state, data) {
+      state.creatorValidity = data;
+    },
+    updateEditorInvalidEntity(state, bool) {
+      state.editorInvalidEntity = bool;
+    },
+    updateEditorValidity(state, data) {
+      state.editorValidity = data;
     }
   },
   actions: {

@@ -1,32 +1,60 @@
 <template>
   <div class="switch-button-container">
     <div class="buttons-container">
-      <Button icon="fas fa-minus" class="p-button-rounded p-button-outlined p-button-danger" @click="deleteClicked" />
-      <Button v-if="!last" icon="fas fa-plus" class="p-button-rounded p-button-outlined p-button-success" @click="addNextClicked" />
+      <Button v-if="show.minus" icon="fas fa-minus" class="p-button-rounded p-button-outlined p-button-danger" @click="deleteClicked" />
+      <Button v-if="show.plus" icon="fas fa-plus" class="p-button-rounded p-button-outlined p-button-success" @click="addNextClicked" />
     </div>
+    <Menu ref="optionsMenu" :model="menuOptions" :popup="true" />
   </div>
 </template>
 
-<script>
-import { defineComponent } from "@vue/runtime-core";
+<script lang="ts">
+import { defineComponent, PropType } from "@vue/runtime-core";
+import { ComponentType } from "im-library/dist/types/enums/Enums";
 
 export default defineComponent({
   name: "AddDeleteButtons",
   props: {
     position: Number,
-    last: Boolean
+    show: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
+    options: { type: Array as PropType<Array<ComponentType>>, required: true }
   },
   emits: {
-    addNextClicked: () => true,
+    addNextClicked: (_payload: ComponentType) => true,
     deleteClicked: () => true
   },
+  watch: {
+    selected(newValue) {
+      this.$emit("addNextClicked", newValue);
+    }
+  },
+  mounted() {
+    this.setMenuOptions();
+  },
+  data() {
+    return {
+      menuOptions: [] as any[],
+      selected: null as ComponentType | null
+    };
+  },
   methods: {
-    addNextClicked() {
-      this.$emit("addNextClicked");
+    addNextClicked(event: any) {
+      (this.$refs.optionsMenu as any).toggle(event);
     },
 
     deleteClicked() {
       this.$emit("deleteClicked");
+    },
+
+    setMenuOptions() {
+      for (const item of this.options) {
+        this.menuOptions.push({
+          label: item,
+          command: (option: any) => {
+            this.selected = option.item.label;
+          }
+        });
+      }
     }
   }
 });
