@@ -8,12 +8,11 @@ import {
   TTBundle,
   TTIriRef,
   EntityDefinitionDto,
-  PartialBundle,
   EntityReferenceNode
 } from "im-library/dist/types/interfaces/Interfaces";
 import { Models, Env } from "im-library";
 const {
-  Search: { ConceptSummary, SearchRequest }
+  Search: { ConceptSummary }
 } = Models;
 
 export default class EntityService {
@@ -84,7 +83,7 @@ export default class EntityService {
     }
   }
 
-  public static async getPartialEntityBundle(iri: string, predicates: string[]): Promise<PartialBundle> {
+  public static async getPartialEntityBundle(iri: string, predicates: string[]): Promise<TTBundle> {
     try {
       return await axios.get(this.api + "api/entity/public/partialBundle", {
         params: {
@@ -93,11 +92,11 @@ export default class EntityService {
         }
       });
     } catch (error) {
-      return {} as PartialBundle;
+      return {} as TTBundle;
     }
   }
 
-  public static async getDefinitionBundle(iri: string): Promise<PartialBundle> {
+  public static async getDefinitionBundle(iri: string): Promise<TTBundle> {
     try {
       return await axios.get(this.api + "api/entity/public/inferredBundle", {
         params: {
@@ -105,7 +104,7 @@ export default class EntityService {
         }
       });
     } catch (error) {
-      return {} as PartialBundle;
+      return {} as TTBundle;
     }
   }
 
@@ -280,6 +279,30 @@ export default class EntityService {
       return await Promise.all(promises);
     } catch (error) {
       return [];
+    }
+  }
+
+  public static async iriExists(iri: String): Promise<boolean> {
+    try {
+      return await axios.get(this.api + "api/entity/public/iriExists", { params: { iri: iri } });
+    } catch (error) {
+      return false;
+    }
+  }
+
+  public static async createEntity(entity: any): Promise<any> {
+    try {
+      return await axios.post(this.api + "api/entity/create", entity);
+    } catch (error) {
+      return {};
+    }
+  }
+
+  public static async updateEntity(entity: any): Promise<any> {
+    try {
+      return await axios.post(this.api + "api/entity/update", entity);
+    } catch (error) {
+      return {};
     }
   }
 }

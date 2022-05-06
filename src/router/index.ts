@@ -1,5 +1,10 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import Editor from "../views/Editor.vue";
+import Creator from "../views/Creator.vue";
+import TypeSelector from "@/components/creator/TypeSelector.vue";
+import SummaryEditor from "@/components/edit/SummaryEditor.vue";
+import ParentsEditor from "@/components/edit/ParentsEditor.vue";
+import MemberEditor from "@/components/edit/MemberEditor.vue";
 import { SnomedLicense, Env } from "im-library";
 import store from "@/store/index";
 import { nextTick } from "vue";
@@ -8,32 +13,28 @@ const APP_TITLE = "IM Editor";
 
 const routes: Array<RouteRecordRaw> = [
   {
-    path: "/",
-    name: "Home",
-    component: Editor,
-    redirect: { name: "Editor" },
+    path: "/creator",
+    name: "Creator",
+    component: Creator,
+    meta: {
+      requiresAuth: true
+    },
+    redirect: { name: "TypeSelector" },
     children: [
-      // {
-      //   path: "/editor",
-      //   name: "Creator",
-      //   component: Creator
-      // meta: {
-      //   requiresAuth: true
-      // }
-      // },
-      {
-        path: "/editor/:selectedIri?",
-        name: "Editor",
-        component: Editor,
-        meta: {
-          requiresAuth: true,
-          requiresLicense: true
-        }
-      }
+      { path: "type", name: "TypeSelector", component: TypeSelector },
+      { path: "summary", name: "Summary", component: SummaryEditor },
+      { path: "parents", name: "Parents", component: ParentsEditor },
+      { path: "members", name: "Members", component: MemberEditor }
     ]
-    // meta: {
-    //   requiresAuth: true
-    // }
+  },
+  {
+    path: "/editor/:selectedIri?",
+    name: "Editor",
+    component: Editor,
+    meta: {
+      requiresAuth: true,
+      requiresLicense: true
+    }
   },
   {
     path: "/snomedLicense",
@@ -76,6 +77,7 @@ router.beforeEach(async (to, from) => {
       };
     }
   }
+  return true;
 });
 
 router.afterEach(to => {

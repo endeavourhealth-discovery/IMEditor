@@ -38,13 +38,13 @@ import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
 import Refinement from "@/components/edit/memberEditor/builder/Refinement.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums } from "im-library";
-import { EntityReferenceNode, TTIriRef, ComponentDetails, NextComponentSummary } from "im-library/dist/types/interfaces/Interfaces";
+import { EntityReferenceNode, TTIriRef, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, deleteItem, updateItem, addItem, addNextOptions, scrollIntoView }
+  EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, updateItem, addItem, updatePositions }
 } = Helpers;
 const { SHACL, IM } = Vocabulary;
-const { BuilderType, ComponentType } = Enums;
+const { ComponentType } = Enums;
 
 export default defineComponent({
   name: "Logic",
@@ -55,14 +55,14 @@ export default defineComponent({
       type: Object as PropType<{ iri: string; children: PropType<Array<any>> | undefined; options: { iri: string; name: string }[] }>,
       required: true
     },
-    showButtons: { type: Boolean, default: true },
+    showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   components: { AddDeleteButtons, AddNext, Entity, Refinement },
   emits: {
-    addNextOptionsClicked: (payload: any) => true,
-    deleteClicked: (payload: ComponentDetails) => true,
-    updateClicked: (payload: ComponentDetails) => true
+    addNextOptionsClicked: (_payload: any) => true,
+    deleteClicked: (_payload: ComponentDetails) => true,
+    updateClicked: (_payload: ComponentDetails) => true
   },
   computed: mapState(["filterOptions"]),
   watch: {
@@ -137,7 +137,7 @@ export default defineComponent({
 
     processLogic(child: any, position: number) {
       for (const [key, value] of Object.entries(child)) {
-        return generateNewComponent(ComponentType.LOGIC, position, { iri: key, children: value }, this.builderType, true);
+        return generateNewComponent(ComponentType.LOGIC, position, { iri: key, children: value }, this.builderType, { minus: true, plus: true });
       }
     },
 
@@ -152,13 +152,13 @@ export default defineComponent({
         position,
         { filterOptions: options, entity: iri, type: ComponentType.ENTITY, label: "Member" },
         this.builderType,
-        true
+        { minus: true, plus: true }
       );
     },
 
     processRefinement(child: any, position: number) {
       for (const [key, value] of Object.entries(child)) {
-        return generateNewComponent(ComponentType.REFINEMENT, position, { propertyIri: key, children: value }, this.builderType, true);
+        return generateNewComponent(ComponentType.REFINEMENT, position, { propertyIri: key, children: value }, this.builderType, { minus: true, plus: true });
       }
     },
 
@@ -175,7 +175,7 @@ export default defineComponent({
         type: ComponentType.LOGIC,
         json: this.createLogicJson(),
         builderType: this.builderType,
-        showButtons: true
+        showButtons: this.showButtons
       });
     },
 
@@ -206,7 +206,15 @@ export default defineComponent({
       if (data.selectedType === ComponentType.LOGIC) {
         data.value = { options: this.value.options, iri: "", children: undefined };
       }
-      addItem(data, this.logicBuild, this.builderType, true);
+      addItem(data, this.logicBuild, this.builderType, { minus: true, plus: true });
+      this.removeAddNexts();
+    },
+
+    removeAddNexts() {
+      if (this.logicBuild.some(child => child.type === ComponentType.ADD_NEXT) && this.logicBuild.length > 1) {
+        this.logicBuild = this.logicBuild.filter(child => child.type !== ComponentType.ADD_NEXT);
+        updatePositions(this.logicBuild);
+      }
     },
 
     deleteItem(data: ComponentDetails): void {
@@ -230,7 +238,7 @@ export default defineComponent({
             type: ComponentType.ADD_NEXT,
             json: {},
             builderType: data.builderType,
-            showButtons: true
+            showButtons: { minus: true, plus: true }
           });
         }
       }
@@ -243,7 +251,8 @@ export default defineComponent({
         position: this.position,
         type: ComponentType.LOGIC,
         builderType: this.builderType,
-        json: this.selected.iri
+        json: this.selected.iri,
+        showButtons: this.showButtons
       });
     },
 
@@ -282,7 +291,7 @@ export default defineComponent({
   border: 1px solid #0c1793;
   border-radius: 3px;
   position: relative;
-  row-gap: 1rem;
+  gap: 1rem;
 }
 
 .p-button-label {

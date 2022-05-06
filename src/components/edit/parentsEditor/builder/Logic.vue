@@ -39,10 +39,10 @@ import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
 import AddNext from "@/components/edit/parentsEditor/builder/AddNext.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums } from "im-library";
-import { ComponentDetails, NextComponentSummary, TTIriRef, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
+import { ComponentDetails, TTIriRef, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  EditorBuilderJsonMethods: { addItem, addNextOptions, generateNewComponent, genNextOptions, updateItem, updatePositions, deleteItem, scrollIntoView }
+  EditorBuilderJsonMethods: { addItem, generateNewComponent, updateItem, updatePositions }
 } = Helpers;
 const { IM, RDFS } = Vocabulary;
 const { BuilderType, ComponentType } = Enums;
@@ -53,15 +53,15 @@ export default defineComponent({
     id: { type: String, required: true },
     position: { type: Number, required: true },
     value: { type: Object as PropType<{ iri: string; children: PropType<Array<any>> | undefined }>, required: false },
-    showButtons: { type: Boolean, default: true },
+    showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   components: { AddDeleteButtons, AddNext, Entity },
   computed: mapState(["filterOptions"]),
   emits: {
-    addNextOptionsClicked: (payload: any) => true,
-    deleteClicked: (payload: ComponentDetails) => true,
-    updateClicked: (payload: ComponentDetails) => true
+    addNextOptionsClicked: (_payload: any) => true,
+    deleteClicked: (_payload: ComponentDetails) => true,
+    updateClicked: (_payload: ComponentDetails) => true
   },
   watch: {
     selected(): void {
@@ -138,7 +138,7 @@ export default defineComponent({
           0,
           { filterOptions: this.filteredFilterOptions, entity: undefined, type: ComponentType.ENTITY, label: "Parent" },
           BuilderType.PARENT,
-          true
+          { minus: true, plus: true }
         )
       ];
     },
@@ -155,7 +155,7 @@ export default defineComponent({
         position,
         { filterOptions: options, entity: iri, type: ComponentType.ENTITY, label: "Parent" },
         this.builderType,
-        true
+        { minus: true, plus: true }
       );
     },
 
@@ -199,7 +199,7 @@ export default defineComponent({
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Parent" };
       }
-      addItem(data, this.logicBuild, this.builderType, true);
+      addItem(data, this.logicBuild, this.builderType, { minus: true, plus: true });
     },
 
     deleteItem(data: ComponentDetails): void {
@@ -218,7 +218,7 @@ export default defineComponent({
               0,
               { filterOptions: this.filteredFilterOptions, entity: undefined, type: ComponentType.ENTITY, label: "Parent" },
               BuilderType.PARENT,
-              true
+              { minus: true, plus: true }
             )
           );
         }

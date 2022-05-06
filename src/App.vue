@@ -52,4 +52,8 @@ body {
   width: 100%;
   word-wrap: break-word;
 }
+
+.swal-reset-button {
+  color: #212529 !important;
+}
 </style>

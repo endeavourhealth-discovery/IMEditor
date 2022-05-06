@@ -1,8 +1,8 @@
 <template>
-  <div v-if="show" class="switch-button-container">
+  <div class="switch-button-container">
     <div class="buttons-container">
-      <Button icon="fas fa-minus" class="p-button-rounded p-button-outlined p-button-danger" @click="deleteClicked" />
-      <Button icon="fas fa-plus" class="p-button-rounded p-button-outlined p-button-success" @click="addNextClicked" />
+      <Button v-if="show.minus" icon="fas fa-minus" class="p-button-rounded p-button-outlined p-button-danger" @click="deleteClicked" />
+      <Button v-if="show.plus" icon="fas fa-plus" class="p-button-rounded p-button-outlined p-button-success" @click="addNextClicked" />
     </div>
     <Menu ref="optionsMenu" :model="menuOptions" :popup="true" />
   </div>
@@ -16,11 +16,11 @@ export default defineComponent({
   name: "AddDeleteButtons",
   props: {
     position: Number,
-    show: Boolean,
+    show: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     options: { type: Array as PropType<Array<ComponentType>>, required: true }
   },
   emits: {
-    addNextClicked: (payload: ComponentType) => true,
+    addNextClicked: (_payload: ComponentType) => true,
     deleteClicked: () => true
   },
   watch: {
@@ -65,7 +65,7 @@ export default defineComponent({
   order: 2;
   display: flex;
   flex-flow: column nowrap;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: center;
 }
 

@@ -45,10 +45,10 @@ import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
 import Refinement from "@/components/edit/memberEditor/builder/Refinement.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums } from "im-library";
-import { NextComponentSummary, EntityReferenceNode, ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { EntityReferenceNode, ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, deleteItem, updateItem, updatePositions, scrollIntoView, addItem, addNextOptions },
+  EditorBuilderJsonMethods: { generateNewComponent, updateItem, updatePositions, addItem },
   ConceptTypeMethods: { isValueSet }
 } = Helpers;
 const { IM, SHACL, RDF } = Vocabulary;
@@ -60,14 +60,14 @@ export default defineComponent({
     id: { type: String, required: true },
     position: { type: Number, required: true },
     value: { type: Array as PropType<any[]>, required: true },
-    showButtons: { type: Boolean, default: true },
+    showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   components: { AddDeleteButtons, AddNext, Logic, Entity, Refinement },
   emits: {
-    addNextOptionsClicked: (payload: any) => true,
-    deleteClicked: (payload: ComponentDetails) => true,
-    updateClicked: (payload: ComponentDetails) => true
+    addNextOptionsClicked: (_payload: any) => true,
+    deleteClicked: (_payload: ComponentDetails) => true,
+    updateClicked: (_payload: ComponentDetails) => true
   },
   computed: mapState(["filterOptions"]),
   watch: {
@@ -117,7 +117,7 @@ export default defineComponent({
           0,
           { iri: "", children: undefined, builderType: BuilderType.MEMBER, options: this.logicOptions },
           BuilderType.MEMBER,
-          true
+          { minus: true, plus: true }
         )
       ];
     },
@@ -140,7 +140,7 @@ export default defineComponent({
         type: ComponentType.DEFINITION,
         json: this.generateMembersAsNode(),
         builderType: this.builderType,
-        showButtons: true
+        showButtons: this.showButtons
       });
     },
 
@@ -162,7 +162,7 @@ export default defineComponent({
           position,
           { filterOptions: options, entity: iri, type: ComponentType.ENTITY, label: "Set" },
           BuilderType.MEMBER,
-          true
+          { minus: true, plus: true }
         );
       } else {
         const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === IM.CONCEPT);
@@ -172,7 +172,7 @@ export default defineComponent({
           position,
           { filterOptions: options, entity: iri, type: ComponentType.ENTITY, label: "Member" },
           BuilderType.MEMBER,
-          true
+          { minus: true, plus: true }
         );
       }
     },
@@ -190,10 +190,13 @@ export default defineComponent({
               options: this.logicOptions
             },
             BuilderType.MEMBER,
-            true
+            { minus: true, plus: true }
           );
         } else {
-          return generateNewComponent(ComponentType.REFINEMENT, position, { propertyIri: key, children: value }, BuilderType.MEMBER, true);
+          return generateNewComponent(ComponentType.REFINEMENT, position, { propertyIri: key, children: value }, BuilderType.MEMBER, {
+            minus: true,
+            plus: true
+          });
         }
       }
     },
@@ -216,11 +219,6 @@ export default defineComponent({
         this.createDefaultBuild();
         return;
       }
-      if (data.position === 0) {
-        if (this.definitionBuild[0].type !== ComponentType.LOGIC) {
-          this.definitionBuild.unshift(generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.MEMBER, true));
-        }
-      }
       updatePositions(this.definitionBuild);
     },
 
@@ -240,7 +238,7 @@ export default defineComponent({
       if (data.selectedType === ComponentType.LOGIC) {
         data.value = { options: this.logicOptions, iri: "", children: undefined };
       }
-      addItem(data, this.definitionBuild, BuilderType.MEMBER, true);
+      addItem(data, this.definitionBuild, BuilderType.MEMBER, { minus: true, plus: true });
     },
 
     deleteClicked(): void {
@@ -250,7 +248,8 @@ export default defineComponent({
         position: this.position,
         type: ComponentType.DEFINITION,
         builderType: this.builderType,
-        json: this.generateMembersAsNode()
+        json: this.generateMembersAsNode(),
+        showButtons: this.showButtons
       });
     },
 
@@ -262,7 +261,7 @@ export default defineComponent({
     },
 
     getButtonOptions() {
-      return [ComponentType.HAS_MEMBERS];
+      return [ComponentType.HAS_MEMBER];
     }
   }
 });

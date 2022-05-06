@@ -10,7 +10,7 @@
     </TopBar>
     <ConfirmDialog></ConfirmDialog>
     <div id="editor-main-container">
-      <div class="loading-container flex flex-row justify-content-center align-items-center" v-if="loading">
+      <div class="loading-container" v-if="loading">
         <ProgressSpinner />
       </div>
       <div v-else class="content-buttons-container">
@@ -23,6 +23,7 @@
                     v-if="active === 0 && isObjectHasKeysWrapper(conceptUpdated)"
                     :updatedConcept="conceptUpdated"
                     @concept-updated="updateConcept"
+                    mode="edit"
                   />
                 </div>
               </TabPanel>
@@ -32,23 +33,32 @@
                     v-if="active === 1 && isObjectHasKeysWrapper(conceptUpdated)"
                     :updatedConcept="conceptUpdated"
                     @concept-updated="updateConcept"
+                    mode="edit"
                   />
                 </div>
               </TabPanel>
               <TabPanel v-if="isValueSet" header="Members">
                 <div class="panel-content" id="member-editor-container">
-                  <MemberEditor v-if="active === 2" :updatedConcept="conceptUpdated" @concept-updated="updateConcept" />
+                  <MemberEditor v-if="active === 2" :updatedConcept="conceptUpdated" @concept-updated="updateConcept" mode="edit" />
                 </div>
               </TabPanel>
             </TabView>
           </div>
-          <Divider layout="vertical" />
-          <div class="json-container">
-            <span class="json-header">JSON viewer</span>
+          <Divider v-if="showJson" layout="vertical" />
+          <div v-if="showJson" class="json-container">
+            <div class="json-header-container">
+              <span class="json-header">JSON viewer</span>
+            </div>
+
             <VueJsonPretty v-if="isObjectHasKeysWrapper(conceptUpdated)" class="json" :path="'res'" :data="conceptUpdated" @click="handleClick" />
           </div>
+          <Button
+            class="p-button-rounded p-button-info p-button-outlined json-toggle"
+            :label="showJson ? 'hide JSON' : 'show JSON'"
+            @click="showJson = !showJson"
+          />
         </div>
-        <div class="button-bar flex flex-row justify-content-end" id="editor-button-bar">
+        <div class="button-bar" id="editor-button-bar">
           <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
           <Button icon="pi pi-refresh" label="Reset" class="p-button-warning" @click="refreshEditor" />
           <Button icon="pi pi-check" label="Save" class="save-button" @click="submit" />
@@ -72,7 +82,8 @@ import { Vocabulary, Helpers } from "im-library";
 const { IM, RDF, RDFS } = Vocabulary;
 const {
   ConceptTypeMethods: { isValueSet },
-  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
+  EntityValidator: { hasValidIri, hasValidName, hasValidParents, hasValidStatus, hasValidTypes }
 } = Helpers;
 
 export default defineComponent({
@@ -85,7 +96,7 @@ export default defineComponent({
     ParentsEditor
   },
   beforeRouteLeave() {
-    this.confirmLeaveEditor();
+    this.confirmLeavePage();
   },
   beforeUnmount() {
     window.removeEventListener("beforeunload", this.beforeWindowUnload);
@@ -95,22 +106,22 @@ export default defineComponent({
       return isValueSet(this.conceptUpdated[RDF.TYPE]);
     },
     toggleConfirmLeaveDialog() {
-      if (JSON.stringify(this.conceptUpdated) === JSON.stringify(this.conceptOriginal)) {
-        window.removeEventListener("beforeunload", this.beforeWindowUnload);
-      } else {
+      if (this.checkForChanges()) {
         window.addEventListener("beforeunload", this.beforeWindowUnload);
+      } else {
+        window.removeEventListener("beforeunload", this.beforeWindowUnload);
       }
     },
-    ...mapState(["editorIri", "editorSavedEntity", "currentUser", "isLoggedIn", "filterOptions"])
+    ...mapState(["editorIri", "editorSavedEntity", "filterOptions", "editorInvalidEntity", "editorValidity"])
   },
   data() {
     return {
       conceptOriginal: {} as any,
       conceptUpdated: {} as any,
       active: 0,
-      contentHeight: "",
       loading: true,
-      entityName: ""
+      entityName: "",
+      showJson: false
     };
   },
   async mounted() {
@@ -150,7 +161,7 @@ export default defineComponent({
       }
     },
 
-    confirmLeaveEditor() {
+    confirmLeavePage() {
       if (this.checkForChanges()) {
         this.$confirm.require({
           message: "All unsaved changes will be lost. Are you sure you want to proceed?",
@@ -175,8 +186,55 @@ export default defineComponent({
       }
     },
 
-    submit(): void {
-      console.log("submit");
+    async submit(): Promise<void> {
+      if (await this.isValidEntity(this.conceptUpdated)) {
+        console.log("submit");
+        await this.$swal
+          .fire({
+            icon: "info",
+            title: "Confirm save",
+            text: "Are you sure you want to save your changes?",
+            showCancelButton: true,
+            confirmButtonText: "Save",
+            reverseButtons: true,
+            confirmButtonColor: "#2196F3",
+            cancelButtonColor: "#607D8B"
+          })
+          .then(async (result: any) => {
+            if (result.isConfirmed) {
+              const result = await EntityService.updateEntity(this.conceptUpdated);
+              console.log(result);
+            }
+          });
+      } else {
+        console.log("invalid entity");
+        this.$swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: "Invalid values found. Please review your entries.",
+          confirmButtonText: "Close",
+          confirmButtonColor: "#689F38"
+        });
+      }
+    },
+
+    async isValidEntity(entity: any): Promise<boolean> {
+      if (!isObjectHasKeys(entity)) {
+        this.$store.commit("updateEditorValidity", []);
+        this.$store.commit("updateEditorInvalidEntity", true);
+        return false;
+      }
+      const editorValidity = [] as { key: string; valid: boolean }[];
+      editorValidity.push({ key: "iri", valid: hasValidIri(entity) });
+      if (hasValidIri(entity)) editorValidity.push({ key: "iriExists", valid: await EntityService.iriExists(entity["@id"]) });
+      editorValidity.push({ key: "name", valid: hasValidName(entity) });
+      editorValidity.push({ key: "types", valid: hasValidTypes(entity) });
+      editorValidity.push({ key: "status", valid: hasValidStatus(entity) });
+      editorValidity.push({ key: "parents", valid: hasValidParents(entity) });
+      this.$store.commit("updateEditorValidity", editorValidity);
+      const valid = editorValidity.every(item => item.valid === true);
+      this.$store.commit("updateEditorInvalidEntity", !valid);
+      return valid;
     },
 
     updateConcept(data: any) {
@@ -193,6 +251,9 @@ export default defineComponent({
           this.conceptUpdated[key] = value;
         }
       }
+      if (this.editorInvalidEntity) {
+        this.isValidEntity(this.conceptUpdated);
+      }
     },
 
     checkForChanges() {
@@ -204,7 +265,23 @@ export default defineComponent({
     },
 
     refreshEditor(): void {
-      this.conceptUpdated = { ...this.conceptOriginal };
+      this.$swal
+        .fire({
+          icon: "warning",
+          title: "Warning",
+          text: "This action will reset all progress. Are you sure you want to proceed?",
+          showCancelButton: true,
+          confirmButtonText: "Reset",
+          reverseButtons: true,
+          confirmButtonColor: "#FBC02D",
+          cancelButtonColor: "#607D8B",
+          customClass: { confirmButton: "swal-reset-button" }
+        })
+        .then((result: any) => {
+          if (result.isConfirmed) {
+            this.conceptUpdated = { ...this.conceptOriginal };
+          }
+        });
     },
 
     isObjectHasKeysWrapper(object: any): boolean {
@@ -244,6 +321,10 @@ export default defineComponent({
 .loading-container {
   width: 100%;
   height: 100%;
+  display: flex;
+  flex-flow: row;
+  justify-content: center;
+  align-items: center;
 }
 
 .content-json-container {
@@ -253,19 +334,19 @@ export default defineComponent({
   flex-flow: row nowrap;
   justify-content: flex-start;
   overflow: auto;
+  position: relative;
 }
 
 .json-container {
-  width: 50%;
+  width: 50vw;
   height: 100%;
-  overflow: auto;
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-start;
 }
 
 .content {
-  width: 50%;
+  flex: 1 1 auto;
   height: 100%;
   overflow: auto;
 }
@@ -278,13 +359,30 @@ export default defineComponent({
   border-radius: 3px;
 }
 
-.json-header {
-  font-size: 1rem;
+.json-header-container {
   padding: 0.5rem;
+  height: 3rem;
+  flex: 0 0 auto;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.json-header {
+  font-size: 1.5rem;
 }
 
 .json:deep(.vjs-value__string) {
   word-break: break-all;
+}
+
+.json:deep(.vjs-value) {
+  font-size: 1rem;
+}
+
+.json:deep(.vjs-key) {
+  font-size: 1rem;
 }
 
 .placeholder {
@@ -299,7 +397,7 @@ export default defineComponent({
 
 .tabview:deep(.p-tabview-panels) {
   flex: 1 1 auto;
-  padding: 1rem 0 0 1rem;
+  padding: 0rem 0 0 0rem;
   overflow: auto;
 }
 
@@ -329,6 +427,9 @@ export default defineComponent({
   border-right: 1px solid #dee2e6;
   border-radius: 3px;
   background-color: #ffffff;
+  display: flex;
+  flex-flow: row;
+  justify-content: flex-end;
 }
 
 .topbar-content {
@@ -354,5 +455,18 @@ export default defineComponent({
   height: calc(100% - 2rem) !important;
   min-height: unset !important;
   align-self: center;
+}
+
+.json-toggle {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+
+#summary-editor-container {
+  display: flex;
+  flex-flow: column;
+  justify-content: flex-start;
+  align-items: center;
 }
 </style>

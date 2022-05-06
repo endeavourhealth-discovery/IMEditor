@@ -6,7 +6,8 @@
         <ProgressSpinner />
       </div>
     </div>
-    <div v-else id="members-build">
+    <div v-else id="members-build" :class="invalidParents && 'invalid'">
+      <small v-if="invalidParents" class="validate-error">Entity must have at least 1 parent.</small>
       <template v-for="item of membersBuild" :key="item.id">
         <component
           :is="item.type"
@@ -40,9 +41,9 @@ import { Vocabulary, Helpers, Enums } from "im-library";
 import { ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, deleteItem, updateItem, updatePositions, scrollIntoView, addItem, addNextOptions }
+  EditorBuilderJsonMethods: { generateNewComponent, updateItem, updatePositions, addItem }
 } = Helpers;
-const { IM, SHACL, RDF } = Vocabulary;
+const { IM } = Vocabulary;
 const { BuilderType, ComponentType } = Enums;
 
 export default defineComponent({
@@ -50,15 +51,31 @@ export default defineComponent({
   props: { members: { type: Object as any, required: true } },
   components: { AddDeleteButtons, AddNext, Definition, HasMember, Logic, Entity, Refinement },
   emits: {
-    "concept-updated": (payload: any) => true
+    "concept-updated": (_payload: any) => true
   },
-  computed: mapState(["filterOptions"]),
+  computed: mapState(["filterOptions", "creatorInvalidEntity", "creatorValidity", "editorInvalidEntity", "editorValidity"]),
   watch: {
     membersBuild: {
       handler() {
         this.onConfirm();
+        if (this.creatorInvalidEntity) {
+          this.setInvalidInputs(this.creatorValidity);
+        }
+        if (this.editorInvalidEntity) {
+          this.setInvalidInputs(this.editorValidity);
+        }
       },
       deep: true
+    },
+    creatorInvalidEntity(newValue) {
+      if (newValue) {
+        this.setInvalidInputs(this.creatorValidity);
+      }
+    },
+    editorInvalidEntity(newValue) {
+      if (newValue) {
+        this.setInvalidInputs(this.editorValidity);
+      }
     }
   },
   mounted() {
@@ -68,7 +85,8 @@ export default defineComponent({
     return {
       membersBuild: [] as any[],
       membersAsNode: {} as any,
-      loading: true
+      loading: true,
+      invalidParents: false
     };
   },
   methods: {
@@ -76,15 +94,17 @@ export default defineComponent({
       this.loading = true;
       this.membersBuild = [];
       if (!isObjectHasKeys(this.members, [IM.DEFINITION]) && !isObjectHasKeys(this.members, [IM.HAS_MEMBER])) {
+        this.createDefaultBuild();
         this.loading = false;
         return;
       }
       if (isObjectHasKeys(this.members, [IM.DEFINITION])) {
-        this.membersBuild.push(generateNewComponent(ComponentType.DEFINITION, 0, this.members[IM.DEFINITION], BuilderType.MEMBER, true));
+        this.membersBuild.push(generateNewComponent(ComponentType.DEFINITION, 0, this.members[IM.DEFINITION], BuilderType.MEMBER, { minus: true, plus: true }));
       }
       if (isObjectHasKeys(this.members, [IM.HAS_MEMBER])) {
-        this.membersBuild.push(generateNewComponent(ComponentType.HAS_MEMBER, this.membersBuild.length, this.members[IM.HAS_MEMBER], BuilderType.MEMBER, true));
-        console.log(this.membersBuild);
+        this.membersBuild.push(
+          generateNewComponent(ComponentType.HAS_MEMBER, this.membersBuild.length, this.members[IM.HAS_MEMBER], BuilderType.MEMBER, { minus: true, plus: true })
+        );
       }
       if (!isArrayHasLength(this.membersBuild)) {
         this.createDefaultBuild();
@@ -93,7 +113,7 @@ export default defineComponent({
     },
 
     createDefaultBuild() {
-      this.membersBuild = [generateNewComponent(ComponentType.DEFINITION, 0, [], BuilderType.MEMBER, true)];
+      this.membersBuild = [generateNewComponent(ComponentType.DEFINITION, 0, [], BuilderType.MEMBER, { minus: true, plus: true })];
     },
 
     generateMembersAsNode(item: ComponentDetails) {
@@ -127,11 +147,7 @@ export default defineComponent({
         this.createDefaultBuild();
         return;
       }
-      if (data.position === 0) {
-        if (this.membersBuild[0].type !== ComponentType.LOGIC) {
-          this.membersBuild.unshift(generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.MEMBER, true));
-        }
-      }
+      this.toggleButtons();
       updatePositions(this.membersBuild);
     },
 
@@ -140,7 +156,27 @@ export default defineComponent({
     },
 
     addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
-      addItem(data, this.membersBuild, BuilderType.MEMBER, true);
+      if (data.selectedType === ComponentType.HAS_MEMBER) data.value = [];
+      if (data.selectedType === ComponentType.DEFINITION) data.value = [];
+      addItem(data, this.membersBuild, BuilderType.MEMBER, { minus: true, plus: true });
+      this.toggleButtons();
+    },
+
+    toggleButtons() {
+      if (
+        this.membersBuild.findIndex(item => item.type === ComponentType.DEFINITION) &&
+        this.membersBuild.findIndex(item => item.type === ComponentType.HAS_MEMBER)
+      ) {
+        this.membersBuild.forEach(item => (item.showButtons = { minus: true, plus: false }));
+      } else {
+        this.membersBuild.forEach(item => (item.showButtons = { minus: true, plus: true }));
+      }
+    },
+
+    setInvalidInputs(validities: { key: string; valid: boolean }[]) {
+      const parentsFound = validities.find((item: { key: string; valid: boolean }) => item.key === "parents");
+      if (parentsFound) this.invalidParents = !parentsFound.valid;
+      else this.invalidParents = true;
     }
   }
 });
@@ -166,5 +202,15 @@ export default defineComponent({
   border: 1px solid #dee2e6;
   border-radius: 3px;
   padding: 1rem;
+  gap: 1rem;
+}
+
+.invalid {
+  border-color: #e24c4c !important;
+}
+
+.validate-error {
+  color: #e24c4c;
+  font-size: 0.8rem;
 }
 </style>

@@ -100,7 +100,7 @@ export default defineComponent({
     searchResults: { type: Array as PropType<Array<typeof ConceptSummary>>, required: false },
     loading: { type: Boolean, required: true }
   },
-  emits: { searchResultSelected: (payload: typeof ConceptSummary) => true },
+  emits: { searchResultSelected: (_payload: typeof ConceptSummary) => true },
   data() {
     return {
       selectedResult: {} as typeof ConceptSummary,

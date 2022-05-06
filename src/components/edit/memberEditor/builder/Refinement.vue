@@ -46,10 +46,10 @@ import EntityService from "@/services/EntityService";
 import { Vocabulary, Helpers, Enums } from "im-library";
 import { EntityReferenceNode, NextComponentSummary, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 const {
-  EditorBuilderJsonMethods: { generateNewComponent, genNextOptions, updateItem, deleteItem, addItem, addNextOptions, scrollIntoView }
+  EditorBuilderJsonMethods: { generateNewComponent, updateItem, deleteItem, addItem, addNextOptions, scrollIntoView }
 } = Helpers;
 const { RDFS, RDF } = Vocabulary;
-const { ComponentType, BuilderType } = Enums;
+const { ComponentType } = Enums;
 
 export default defineComponent({
   name: "Refinement",
@@ -57,14 +57,14 @@ export default defineComponent({
     id: { type: String, required: true },
     position: { type: Number, required: true },
     value: { type: Object as PropType<{ propertyIri: string; children: any[] }>, required: false },
-    showButtons: { type: Boolean, default: true },
+    showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
-    updateClicked: (payload: ComponentDetails) => true,
-    addNextOptionsClicked: (payload: any) => true,
-    deleteClicked: (payload: ComponentDetails) => true,
-    addClicked: (payload: any) => true
+    updateClicked: (_payload: ComponentDetails) => true,
+    addNextOptionsClicked: (_payload: any) => true,
+    deleteClicked: (_payload: ComponentDetails) => true,
+    addClicked: (_payload: any) => true
   },
   components: { AddDeleteButtons, Entity, Quantifier, AddNext },
   watch: {
@@ -97,7 +97,8 @@ export default defineComponent({
         let position = 0;
         const typeOptions = [{ "@id": RDF.PROPERTY }];
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
-        const propertyName = (await EntityService.getPartialEntity(this.value.propertyIri, [RDFS.LABEL]))[RDFS.LABEL];
+        const result = await EntityService.getPartialEntity(this.value.propertyIri, [RDFS.LABEL]);
+        const propertyName = result ? result[RDFS.LABEL] : "";
         const property = generateNewComponent(
           ComponentType.ENTITY,
           position,
@@ -108,7 +109,7 @@ export default defineComponent({
             label: "Property"
           },
           this.builderType,
-          false
+          { minus: false, plus: false }
         );
         if (property) {
           this.refinementBuild.push(property);
@@ -121,7 +122,7 @@ export default defineComponent({
             position,
             { propertyIri: this.value.propertyIri, quantifier: child },
             this.builderType,
-            false
+            { minus: false, plus: false }
           );
           if (quantifier) {
             this.refinementBuild.push(quantifier);
@@ -139,10 +140,10 @@ export default defineComponent({
         0,
         { filterOptions: this.propertyOptions, entity: undefined, type: ComponentType.ENTITY, label: "Property" },
         this.builderType,
-        false
+        { minus: false, plus: false }
       );
       if (property) this.refinementBuild.push(property);
-      const quantifier = generateNewComponent(ComponentType.QUANTIFIER, 1, undefined, this.builderType, false);
+      const quantifier = generateNewComponent(ComponentType.QUANTIFIER, 1, undefined, this.builderType, { minus: false, plus: false });
       if (quantifier) this.refinementBuild.push(quantifier);
     },
 
@@ -165,7 +166,7 @@ export default defineComponent({
           0,
           { filterOptions: this.propertyOptions, entity: undefined, type: ComponentType.ENTITY, label: "Property" },
           this.builderType,
-          false
+          { minus: false, plus: false }
         );
         if (property) this.refinementBuild.unshift();
       }
@@ -188,7 +189,7 @@ export default defineComponent({
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Property" };
       }
-      addItem(data, this.refinementBuild, this.builderType, false);
+      addItem(data, this.refinementBuild, this.builderType, { minus: false, plus: false });
     },
 
     onConfirm() {
@@ -198,7 +199,8 @@ export default defineComponent({
         position: this.position,
         type: ComponentType.REFINEMENT,
         builderType: this.builderType,
-        json: this.createAsJson()
+        json: this.createAsJson(),
+        showButtons: this.showButtons
       });
     },
 
@@ -209,7 +211,8 @@ export default defineComponent({
         position: this.position,
         type: ComponentType.REFINEMENT,
         builderType: this.builderType,
-        json: this.createAsJson()
+        json: this.createAsJson(),
+        showButtons: this.showButtons
       });
     },
 

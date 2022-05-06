@@ -25,9 +25,9 @@ const { IM } = Vocabulary;
 
 export default defineComponent({
   name: "MemberEditor",
-  props: { updatedConcept: { type: Object, required: true } },
+  props: { updatedConcept: { type: Object, required: true }, mode: { type: String, required: true } },
   components: { Builder, EclInput },
-  emits: { "concept-updated": (payload: any) => true },
+  emits: { "concept-updated": (_payload: any) => true },
   watch: {
     updatedMembers: {
       handler() {
@@ -87,6 +87,7 @@ export default defineComponent({
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-start;
+  padding: 1rem 1rem 0 1rem;
 }
 
 .editor-container {

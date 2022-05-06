@@ -6,7 +6,8 @@
         <ProgressSpinner />
       </div>
     </div>
-    <div v-else id="parents-build">
+    <div v-else id="parents-build" :class="invalidParents && 'invalid'">
+      <small v-if="invalidParents" class="validate-error">Entity must have at least 1 parent.</small>
       <template v-for="item of parentsBuild" :key="item.id">
         <component
           :is="item.type"
@@ -28,13 +29,14 @@
 
 <script lang="ts">
 import { defineComponent } from "@vue/runtime-core";
+import { mapState } from "vuex";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import Logic from "@/components/edit/parentsEditor/builder/Logic.vue";
 import { Helpers, Enums } from "im-library";
-import { NextComponentSummary, ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  EditorBuilderJsonMethods: { generateNewComponent, genNextOptions, addItem, addNextOptions, scrollIntoView, deleteItem, updateItem, updatePositions }
+  EditorBuilderJsonMethods: { generateNewComponent, updatePositions }
 } = Helpers;
 const { ComponentType, BuilderType } = Enums;
 
@@ -43,16 +45,33 @@ export default defineComponent({
   props: { parents: { type: Object, required: true } },
   components: { AddDeleteButtons, Logic },
   emits: {
-    "concept-updated": (payload: any) => true
+    "concept-updated": (_payload: any) => true
   },
   watch: {
     parentsBuild: {
       handler() {
         this.onConfirm();
+        if (this.creatorInvalidEntity) {
+          this.setInvalidInputs(this.creatorValidity);
+        }
+        if (this.editorInvalidEntity) {
+          this.setInvalidInputs(this.editorValidity);
+        }
       },
       deep: true
+    },
+    creatorInvalidEntity(newValue) {
+      if (newValue) {
+        this.setInvalidInputs(this.creatorValidity);
+      }
+    },
+    editorInvalidEntity(newValue) {
+      if (newValue) {
+        this.setInvalidInputs(this.editorValidity);
+      }
     }
   },
+  computed: { ...mapState(["creatorInvalidEntity", "creatorValidity", "editorInvalidEntity", "editorValidity"]) },
   mounted() {
     this.createBuild();
   },
@@ -60,7 +79,8 @@ export default defineComponent({
     return {
       parentsBuild: [] as any[],
       parentsAsNode: {} as any,
-      loading: true
+      loading: true,
+      invalidParents: false
     };
   },
   methods: {
@@ -68,6 +88,8 @@ export default defineComponent({
       this.loading = true;
       this.parentsBuild = [];
       if (!isObjectHasKeys(this.parents)) {
+        this.createDefaultBuild();
+        this.loading = false;
         return;
       }
       let position = 0;
@@ -82,7 +104,7 @@ export default defineComponent({
     },
 
     createDefaultBuild() {
-      this.parentsBuild = [generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.PARENT, true)];
+      this.parentsBuild = [generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.PARENT, { minus: true, plus: true })];
     },
 
     generateParentsAsNode() {
@@ -100,7 +122,7 @@ export default defineComponent({
     },
 
     processObject(item: { key: string; value: TTIriRef[] }, position: number): any {
-      return generateNewComponent(ComponentType.LOGIC, position, { iri: item.key, children: item.value }, BuilderType.PARENT, true);
+      return generateNewComponent(ComponentType.LOGIC, position, { iri: item.key, children: item.value }, BuilderType.PARENT, { minus: true, plus: true });
     },
 
     deleteItem(data: ComponentDetails): void {
@@ -113,7 +135,7 @@ export default defineComponent({
       }
       if (data.position === 0) {
         if (this.parentsBuild[0].type !== ComponentType.LOGIC) {
-          this.parentsBuild.unshift(generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.PARENT, true));
+          this.parentsBuild.unshift(generateNewComponent(ComponentType.LOGIC, 0, undefined, BuilderType.PARENT, { minus: true, plus: true }));
         }
       }
       updatePositions(this.parentsBuild);
@@ -125,10 +147,16 @@ export default defineComponent({
     },
 
     addItem(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
-      const newComponent = generateNewComponent(data.selectedType, data.position, data.value, BuilderType.PARENT, true);
+      const newComponent = generateNewComponent(data.selectedType, data.position, data.value, BuilderType.PARENT, { minus: true, plus: true });
       if (!newComponent) return;
       this.parentsBuild[data.position] = newComponent;
       updatePositions(this.parentsBuild);
+    },
+
+    setInvalidInputs(validities: { key: string; valid: boolean }[]) {
+      const parentsFound = validities.find((item: { key: string; valid: boolean }) => item.key === "parents");
+      if (parentsFound) this.invalidParents = !parentsFound.valid;
+      else this.invalidParents = true;
     }
   }
 });
@@ -155,5 +183,14 @@ export default defineComponent({
   justify-content: flex-start;
   align-items: center;
   gap: 1rem;
+}
+
+.invalid {
+  border-color: #e24c4c !important;
+}
+
+.validate-error {
+  color: #e24c4c;
+  font-size: 0.8rem;
 }
 </style>

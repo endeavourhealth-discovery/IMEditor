@@ -25,8 +25,8 @@ export default defineComponent({
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
-    addClicked: (payload: { selectedType: Enums.ComponentType; position: number }) => true,
-    deleteClicked: (payload: ComponentDetails) => true
+    addClicked: (_payload: { selectedType: Enums.ComponentType; position: number }) => true,
+    deleteClicked: (_payload: ComponentDetails) => true
   },
   watch: {
     options: {

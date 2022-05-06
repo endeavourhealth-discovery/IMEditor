@@ -20,9 +20,9 @@ const { IM, RDFS } = Vocabulary;
 
 export default defineComponent({
   name: "ParentsEditor",
-  props: { updatedConcept: { type: Object, required: true } },
+  props: { updatedConcept: { type: Object, required: true }, mode: { type: String, required: true } },
   components: { Builder },
-  emits: { "concept-updated": (payload: any) => true },
+  emits: { "concept-updated": (_payload: any) => true },
   watch: {
     updatedConcept: {
       handler() {
@@ -67,9 +67,11 @@ export default defineComponent({
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-start;
+  padding: 1rem 1rem 0 1rem;
 }
 
 .editor-container {
   flex: 1 1 auto;
+  overflow: auto;
 }
 </style>
