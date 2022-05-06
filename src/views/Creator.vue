@@ -337,6 +337,11 @@ export default defineComponent({
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-start;
+  align-items: center;
+}
+
+.p-steps {
+  width: 90%;
 }
 
 .json-container {

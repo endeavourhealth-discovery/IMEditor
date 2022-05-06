@@ -171,22 +171,25 @@ export default defineComponent({
 
     hideOverlay(): void {
       const x = this.$refs.miniSearchOP as any;
-      x.hide();
+      if (x) x.hide();
     },
 
     showOverlay(event: any): void {
       const x = this.$refs.miniSearchOP as any;
-      x.show(event, event.target);
+      if (x) x.show(event, event.target);
     },
 
     updateSelectedResult(data: Models.Search.ConceptSummary | TTIriRef) {
-      if (!isObjectHasKeys(data)) return;
-      if (isTTIriRef(data)) {
+      if (!isObjectHasKeys(data)) {
+        this.selectedResult = {} as TTIriRef;
+        this.searchTerm = "";
+      } else if (isTTIriRef(data)) {
         this.selectedResult = data;
+        this.searchTerm = data.name;
       } else {
         this.selectedResult = { "@id": data.iri, name: data.name };
+        this.searchTerm = data.name;
       }
-      this.searchTerm = data.name;
       this.$emit("updateClicked", this.createEntity());
       this.hideOverlay();
     },

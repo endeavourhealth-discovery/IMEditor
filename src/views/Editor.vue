@@ -462,4 +462,11 @@ export default defineComponent({
   top: 5px;
   right: 5px;
 }
+
+#summary-editor-container {
+  display: flex;
+  flex-flow: column;
+  justify-content: flex-start;
+  align-items: center;
+}
 </style>

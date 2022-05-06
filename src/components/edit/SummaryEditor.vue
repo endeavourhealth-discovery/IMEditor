@@ -5,62 +5,87 @@
   <div v-else class="summary-container">
     <div class="float-label-container iri-validate-container">
       <span class="p-float-label">
-        <InputText class="p-inputtext-lg input-text" :class="(invalidIri || iriExists) && 'invalid'" v-model="iri" type="text" disabled />
-        <label for="Iri">Iri</label>
+        <InputText class="p-inputtext-lg input-text" id="iri-input" :class="(invalidIri || iriExists) && 'invalid'" v-model="iri" type="text" disabled />
+        <label for="iri-input">Iri</label>
       </span>
       <small v-if="iriExists" class="validate-error">Iri already exists.</small>
-      <small v-if="!iri.length && !code.length && !scheme.iri" class="validate-error">Code and scheme required for iri.</small>
-      <small v-else-if="!iri.length && !code.length" class="validate-error">Code required for iri.</small>
-      <small v-else-if="!iri.length && !scheme.iri" class="validate-error">Scheme required for iri.</small>
-    </div>
-    <div class="float-label-container name">
-      <span class="p-float-label">
-        <InputText class="p-inputtext-lg input-text" :class="invalidName && 'invalid'" v-model="name" type="text" />
-        <label for="Name">Name</label>
-      </span>
+      <small v-if="!code.length && !scheme" class="validate-error">Code and scheme required for iri.</small>
+      <small v-else-if="!code.length" class="validate-error">Code required for iri.</small>
+      <small v-else-if="!scheme" class="validate-error">Scheme required for iri.</small>
     </div>
     <div class="float-label-container code">
       <span class="p-float-label">
-        <InputText class="p-inputtext-lg input-text" :class="(invalidIri || iriExists) && 'invalid'" v-model="code" type="text" :disabled="mode !== 'create'" />
-        <label for="Code">Code</label>
+        <InputText
+          class="p-inputtext-lg input-text"
+          id="code-input"
+          :class="(invalidIri || iriExists) && 'invalid'"
+          v-model="code"
+          type="text"
+          :disabled="mode !== 'create'"
+        />
+        <label for="code-input">Code</label>
       </span>
       <small v-if="iriExists" class="validate-error">Code already exists for this scheme.</small>
-    </div>
-    <div class="float-label-container description">
-      <span class="p-float-label">
-        <Textarea class="p-inputtext-lg input-text description" v-model="description" rows="4" />
-        <label for="address">Description</label>
-      </span>
-    </div>
-    <div class="float-label-container version">
-      <span class="p-float-label">
-        <InputText class="p-inputtext-lg input-text" v-model="version" type="text" disabled />
-        <label for="Version">Version</label>
-      </span>
-    </div>
-    <div class="float-label-container status">
-      <span class="p-float-label">
-        <Dropdown class="p-inputtext-lg input-text" :class="invalidStatus && 'invalid'" v-model="status" :options="filterOptions.status" optionLabel="name" />
-        <label>Status</label>
-      </span>
     </div>
     <div class="float-label-container scheme">
       <span class="p-float-label">
         <Dropdown
-          class="p-inputtext-lg input-text scheme"
+          class="p-inputtext-lg input-text"
+          id="scheme-dropdown"
           :class="(invalidIri || iriExists) && 'invalid'"
           v-model="scheme"
           :options="filterOptions.schemes"
           optionLabel="name"
           :disabled="mode !== 'create'"
         />
-        <label>Scheme</label>
+        <label for="scheme-dropdown">Scheme</label>
       </span>
+    </div>
+    <div class="float-label-container name">
+      <span class="p-float-label">
+        <InputText class="p-inputtext-lg input-text" id="name-input" :class="invalidName && 'invalid'" v-model="name" type="text" />
+        <label for="name-input">Name</label>
+      </span>
+      <small v-if="invalidName" class="validate-error">Name required.</small>
+    </div>
+    <div class="float-label-container description">
+      <span class="p-float-label">
+        <Textarea class="p-inputtext-lg input-text" id="description-textarea" v-model="description" rows="4" />
+        <label for="description-textarea">Description</label>
+      </span>
+    </div>
+    <div class="float-label-container status">
+      <span class="p-float-label">
+        <Dropdown
+          class="p-inputtext-lg input-text"
+          id="status-dropdown"
+          :class="invalidStatus && 'invalid'"
+          v-model="status"
+          :options="filterOptions.status"
+          optionLabel="name"
+        />
+        <label for="status-dropdown">Status</label>
+      </span>
+      <small v-if="invalidStatus" class="validate-error">Status required.</small>
     </div>
     <div class="float-label-container type">
       <span class="p-float-label">
-        <MultiSelect class="p-inputtext-lg input-text" :class="invalidTypes && 'invalid'" v-model="types" :options="filterOptions.types" optionLabel="name" />
-        <label>Types</label>
+        <MultiSelect
+          class="p-inputtext-lg input-text"
+          id="type-multiselect"
+          :class="invalidTypes && 'invalid'"
+          v-model="types"
+          :options="filterOptions.types"
+          optionLabel="name"
+        />
+        <label for="type-multiselect">Types</label>
+      </span>
+      <small v-if="invalidTypes" class="validate-error">Type required.</small>
+    </div>
+    <div class="float-label-container version">
+      <span class="p-float-label">
+        <InputText class="p-inputtext-lg input-text" id="version-input" v-model="version" type="text" disabled />
+        <label for="version-input">Version</label>
       </span>
     </div>
   </div>
@@ -145,8 +170,8 @@ export default defineComponent({
       iri: "",
       name: "",
       code: "",
-      scheme: {} as any,
-      status: {} as any,
+      scheme: null as any,
+      status: null as any,
       types: [] as any[],
       version: "",
       description: "",
@@ -208,7 +233,7 @@ export default defineComponent({
     },
 
     async checkIriExists() {
-      if (this.scheme.iri && this.code && this.mode === "create") this.iriExists = await EntityService.iriExists(this.scheme.iri + this.code);
+      if (this.scheme && this.scheme.iri && this.code && this.mode === "create") this.iriExists = await EntityService.iriExists(this.scheme.iri + this.code);
       else this.iriExists = false;
     },
 
@@ -220,7 +245,7 @@ export default defineComponent({
       const iriExistsFound = validities.find((item: { key: string; valid: boolean }) => item.key === "iriExists");
       if (iriExistsFound) {
         this.iriExists = !iriExistsFound.valid;
-        this.invalidIri = true;
+        if (this.mode === "create") this.invalidIri = true;
       } else this.iriExists = false;
 
       const nameFound = validities.find((item: { key: string; valid: boolean }) => item.key === "name");
@@ -259,23 +284,35 @@ export default defineComponent({
 }
 
 .summary-container {
-  /* max-height: calc(100% - 1.5rem); */
   flex: 0 1 auto;
   overflow: auto;
-  width: 100%;
+  width: 60%;
   padding: 2.5rem 1rem 1rem 1rem;
   display: flex;
-  flex-flow: row wrap;
+  flex-flow: column nowrap;
   justify-content: flex-start;
-  align-items: flex-start;
-  column-gap: 0.5rem;
-  row-gap: 1.5rem;
+  align-items: center;
+  row-gap: 1.75rem;
 }
 
 .float-label-container {
-  /* margin-top: 1.5rem; */
   height: fit-content;
   max-width: 100%;
+}
+
+.name,
+.code,
+.version,
+.status,
+.type {
+  width: 100%;
+}
+
+.iri-validate-container,
+.code,
+.scheme,
+.name {
+  width: 100%;
 }
 
 .description {
@@ -283,8 +320,7 @@ export default defineComponent({
 }
 
 .input-text {
-  max-width: 100%;
-  min-width: 15rem;
+  width: 100%;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
@@ -297,6 +333,7 @@ export default defineComponent({
 .validate-error {
   color: #e24c4c;
   font-size: 0.8rem;
+  padding: 0 0 0.25rem 0;
 }
 
 .iri-validate-container {
