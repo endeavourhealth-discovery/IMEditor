@@ -70,13 +70,13 @@ export default class EntityService {
     }
   }
 
-  public static async getMappingSuggestions(request: SearchRequest, cancelToken: CancelToken): Promise<ConceptSummary[]> {
+  public static async getMappingSuggestions(request: Models.Search.SearchRequest, cancelToken: CancelToken): Promise<Models.Search.ConceptSummary[]> {
     try {
       return await axios.post(this.api + "api/entity/public/search", request, {
         cancelToken: cancelToken
       });
     } catch (error) {
-      return [] as ConceptSummary[];
+      return [] as Models.Search.ConceptSummary[];
     }
   }
 
@@ -182,7 +182,7 @@ export default class EntityService {
     }
   }
 
-  public static async advancedSearch(request: SearchRequest, cancelToken: CancelToken): Promise<ConceptSummary[]> {
+  public static async advancedSearch(request: Models.Search.SearchRequest, cancelToken: CancelToken): Promise<Models.Search.ConceptSummary[]> {
     try {
       return await axios.post(this.api + "api/entity/public/search", request, {
         cancelToken: cancelToken

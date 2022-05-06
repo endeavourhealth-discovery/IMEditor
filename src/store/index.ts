@@ -31,7 +31,7 @@ export default createStore({
     creatorInvalidEntity: false,
     creatorValidity: [] as { key: string; valid: boolean }[],
     editorInvalidEntity: false,
-    editorValidity: [] as { key: string; valid: boolean }[]
+    editorValidity: [] as { key: string; valid: boolean }[],
     refreshTree: false as boolean
   },
   mutations: {
@@ -87,6 +87,7 @@ export default createStore({
     },
     updateRefreshTree(state) {
       state.refreshTree = !state.refreshTree;
+    },
     updateCreatorInvalidEntity(state, bool) {
       state.creatorInvalidEntity = bool;
     },

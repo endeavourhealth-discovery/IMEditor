@@ -86,7 +86,6 @@ import VueSweetalert2 from "vue-sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
 
 // IMLibrary imports
-import IMLibrary from "im-library";
 import "im-library/dist/style.css";
 import IMLibrary, { Helpers, Env } from "im-library";
 const {
