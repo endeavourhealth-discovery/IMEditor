@@ -49,14 +49,15 @@
 <script lang="ts">
 import { defineComponent } from "@vue/runtime-core";
 import { mapState } from "vuex";
-import { Helpers, Vocabulary } from "im-library";
+import { Helpers, Vocabulary, Env } from "im-library";
 import EntityService from "@/services/EntityService";
 import TypeSelector from "@/components/creator/TypeSelector.vue";
 import VueJsonPretty from "vue-json-pretty";
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength },
   ConceptTypeMethods: { isValueSet },
-  EntityValidator: { hasValidIri, hasValidName, hasValidParents, hasValidTypes, hasValidStatus }
+  EntityValidator: { hasValidIri, hasValidName, hasValidParents, hasValidTypes, hasValidStatus },
+  Converters: { iriToUrl }
 } = Helpers;
 const { IM, RDF, RDFS } = Vocabulary;
 
@@ -194,12 +195,33 @@ export default defineComponent({
             confirmButtonText: "Create",
             reverseButtons: true,
             confirmButtonColor: "#689F38",
-            cancelButtonColor: "#607D8B"
+            cancelButtonColor: "#607D8B",
+            showLoaderOnConfirm: true,
+            allowOutsideClick: () => !this.$swal.isLoading(),
+            preConfirm: async () => {
+              const res = await EntityService.createEntity(this.conceptUpdated);
+              if (res) return res;
+              else this.$swal.showValidationMessage("Error creating entity from server.");
+            }
           })
-          .then(async (result: any) => {
+          .then((result: any) => {
             if (result.isConfirmed) {
-              const result = await EntityService.createEntity(this.conceptUpdated);
-              console.log(result);
+              this.$swal
+                .fire({
+                  title: "Success",
+                  text: "Entity" + this.conceptUpdated["@id"] + " has been created.",
+                  icon: "success",
+                  showCancelButton: true,
+                  reverseButtons: true,
+                  confirmButtonText: "Open in Viewer",
+                  confirmButtonColor: "#2196F3",
+                  cancelButtonColor: "#607D8B"
+                })
+                .then((result: any) => {
+                  if (result.isConfirmed) {
+                    window.location.href = Env.viewerUrl + "concept?selectedIri=" + iriToUrl(this.conceptUpdated["@id"]);
+                  }
+                });
             }
           });
       } else {
