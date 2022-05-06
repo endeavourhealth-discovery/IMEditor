@@ -6,7 +6,7 @@
       </template>
     </TopBar>
     <div class="card">
-      <Steps :model="items" :readonly="true" />
+      <Steps :model="items" :readonly="false" />
     </div>
 
     <router-view v-slot="{ Component }" :data="data" @prevPage="prevPage($event)" @nextPage="nextPage($event)">
@@ -33,7 +33,7 @@ export default defineComponent({
           to: "/mapper/selection"
         },
         {
-          label: "Match to",
+          label: "Map to",
           to: "/mapper/match"
         },
         {

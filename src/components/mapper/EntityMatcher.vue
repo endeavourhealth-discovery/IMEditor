@@ -21,7 +21,7 @@
       </Listbox>
     </div>
     <div class="col">
-      <TabView :lazy="true" class="tabView">
+      <TabView :lazy="true" class="tabView" @tab-change="selectedEntities = []">
         <TabPanel header="Details">
           <VueJsonPretty class="mapping-item-container" :data="selectedView" />
         </TabPanel>
@@ -72,13 +72,7 @@
   </div>
   <div class="button-bar flex flex-row justify-content-end" id="mapping-button-bar">
     <Button icon="pi pi-times" label="Back" class="p-button-secondary" @click="previous" />
-    <Button
-      icon="pi pi-arrows-h"
-      label="Map"
-      class="p-button-help"
-      :disabled="!(selected && (selectedSuggestions.length || selectedEntities.length))"
-      @click="map"
-    />
+    <Button icon="pi pi-arrows-h" label="Map" class="p-button-help" :disabled="!(selected && selectedEntities.length)" @click="map" />
     <Button icon="pi pi-check" label="Next" class="save-button" @click="next" :disabled="!this.mappingsMap.size" />
   </div>
 </template>
@@ -121,7 +115,6 @@ export default defineComponent({
         const fullEntity = await EntityService.getPartialEntity(this.selected.iri, []);
         this.selectedView = Object.assign(fullEntity);
         this.selected.suggestions = await this.getMappingSuggestions(this.selected.iri, this.selected.name);
-        this.selectedSuggestions = [];
         this.selectedEntities = [];
       }
     }
@@ -132,7 +125,6 @@ export default defineComponent({
       pageIndex: 2,
       tasks: [] as any,
       selectedView: {} as any,
-      selectedSuggestions: [] as any[],
       selected: {} as any,
       searchResults: [] as any[],
       request: {} as { cancel: any; msg: string },
@@ -201,8 +193,6 @@ export default defineComponent({
     map() {
       if (isArrayHasLength(this.selectedEntities)) {
         this.addMapping(this.selectedEntities);
-      } else if (isArrayHasLength(this.selectedSuggestions)) {
-        this.addMapping(this.selectedSuggestions);
       }
       this.$toast.add(LoggerService.success("Mapping added to list"));
     },

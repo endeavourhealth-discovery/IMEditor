@@ -46,7 +46,7 @@
       <Button label="Add folder" @click="addNewFolder" />
     </div>
     <div class="col">
-      <TabView :lazy="true" class="tabView">
+      <TabView :lazy="true" class="tabView" @tab-change="tableSelectedList = []">
         <TabPanel header="List">
           <ExpansionTable
             :contents="unassigned"
@@ -319,6 +319,7 @@ export default defineComponent({
       node.type = "task";
       delete node.class;
       await EntityService.createTask(this.buildEntityFromNode(node));
+      this.getTasks();
     },
 
     buildEntityFromNode(node: any) {
