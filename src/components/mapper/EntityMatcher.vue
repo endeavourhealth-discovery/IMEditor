@@ -116,6 +116,9 @@ export default defineComponent({
         this.selectedView = Object.assign(fullEntity);
         this.selected.suggestions = await this.getMappingSuggestions(this.selected.iri, this.selected.name);
         this.selectedEntities = [];
+        if (isArrayHasLength(this.selected.mappings) && !this.mappingsMap.has(this.selected.iri)) {
+          this.mappingsMap.set(this.selected.iri, this.selected.mappings);
+        }
       }
     }
   },
