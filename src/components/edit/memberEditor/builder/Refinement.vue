@@ -43,6 +43,7 @@ import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
 import Quantifier from "@/components/edit/memberEditor/builder/Quantifier.vue";
 import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
 import EntityService from "@/services/EntityService";
+import QueryService from "@/services/QueryService";
 import { Vocabulary, Helpers, Enums } from "im-library";
 import { EntityReferenceNode, NextComponentSummary, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 const {
@@ -99,6 +100,49 @@ export default defineComponent({
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         const result = await EntityService.getPartialEntity(this.value.propertyIri, [RDFS.LABEL]);
         const propertyName = result ? result[RDFS.LABEL] : "";
+        const query = {
+          distinct: true,
+          activeOnly: true,
+          select: [
+            {
+              binding: "id"
+            },
+            {
+              binding: "code"
+            },
+            {
+              binding: "term"
+            }
+          ],
+          match: {
+            includeSubEntities: true,
+            property: {
+              "@id": "http://www.w3.org/2000/01/rdf-schema#domain"
+            },
+            valueConcept: [
+              {
+                includeSupertypes: true,
+                "@id": this.value.propertyIri
+              }
+            ],
+            optional: [
+              {
+                property: {
+                  "@id": "http://www.w3.org/2000/01/rdf-schema#label"
+                },
+                valueVar: "term"
+              },
+              {
+                property: {
+                  "@id": "http://endhealth.info/im#code"
+                },
+                valueVar: "code"
+              }
+            ]
+          }
+        };
+        const queryResult = await QueryService.queryIM(query);
+        console.log(queryResult);
         const property = generateNewComponent(
           ComponentType.ENTITY,
           position,
