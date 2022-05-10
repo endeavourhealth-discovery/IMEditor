@@ -46,10 +46,10 @@ export default defineComponent({
       data.children = await EntityService.getEntityChildren(data.iri);
       data.children.forEach(async (child: { [x: string]: any; iri: any }) => {
         child.iri = child["@id"];
-        const entity = await EntityService.getPartialEntity(child.iri, [IM.MAPPED_TO]);
+        const entity = await EntityService.getPartialEntity(child.iri, [IM.MATCHED_TO]);
         child.mappings = [];
-        if (isArrayHasLength(entity[IM.MAPPED_TO])) {
-          entity[IM.MAPPED_TO].forEach((mappedTo: any) => {
+        if (isArrayHasLength(entity[IM.MATCHED_TO])) {
+          entity[IM.MATCHED_TO].forEach((mappedTo: any) => {
             child.mappings.push({ iri: mappedTo["@id"], name: mappedTo.name });
           });
         }
