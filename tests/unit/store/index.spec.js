@@ -34,7 +34,12 @@ describe("state", () => {
       "blockedIris",
       "filterOptions",
       "selectedFilters",
-      "quickFiltersStatus"
+      "quickFiltersStatus",
+      "creatorInvalidEntity",
+      "creatorValidity",
+      "editorInvalidEntity",
+      "editorValidity",
+      "refreshTree"
     ]);
     expect(store.state.history).toEqual([]);
     expect(store.state.currentUser).toEqual({});
