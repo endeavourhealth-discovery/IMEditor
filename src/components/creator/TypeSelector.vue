@@ -1,8 +1,8 @@
 <template>
-  <div v-for="type of typeOptions" :key="type['@id']" class="type-buttons-container">
-    <button class="custom-button" @click="typeSelected(type)">
+  <div class="type-buttons-container">
+    <Button v-for="type of typeOptions" :key="type['@id']" class="custom-button" @click="typeSelected(type)">
       <span>{{ type.name }}</span>
-    </button>
+    </Button>
   </div>
 </template>
 
@@ -49,6 +49,7 @@ export default defineComponent({
   flex-flow: row wrap;
   justify-content: center;
   align-items: center;
+  gap: 1rem;
 }
 
 .custom-button {
