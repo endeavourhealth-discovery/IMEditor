@@ -220,6 +220,8 @@ export default defineComponent({
                 .then((result: any) => {
                   if (result.isConfirmed) {
                     window.location.href = Env.viewerUrl + "concept?selectedIri=" + iriToUrl(this.conceptUpdated["@id"]);
+                  } else {
+                    this.$router.push({ name: "Editor", params: { selectedIri: this.conceptUpdated["@id"] } });
                   }
                 });
             }
