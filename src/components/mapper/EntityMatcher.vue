@@ -163,8 +163,7 @@ export default defineComponent({
     },
 
     unselect(data: any) {
-      const i = this.selectedEntities.indexOf((task: any) => task.iri === data.iri);
-      this.selectedEntities.splice(i, 1);
+      this.selectedEntities = this.selectedEntities.filter((task: any) => task.iri !== data.iri);
     },
 
     selectAll(selectedList: any[]) {

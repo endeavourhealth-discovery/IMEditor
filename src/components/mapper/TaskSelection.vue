@@ -1,5 +1,13 @@
 <template>
-  <ExpansionTable :contents="tasks" :selectable="true" @select="select" @unselect="unselect" class="table-container" />
+  <ExpansionTable
+    :contents="tasks"
+    :selectable="true"
+    @select="select"
+    @unselect="unselect"
+    @selectAll="selectAll"
+    @unselectAll="unselectAll"
+    class="table-container"
+  />
   <div class="button-bar flex flex-row justify-content-end" id="mapping-button-bar">
     <Button icon="pi pi-times" label="Back" class="p-button-secondary" @click="previous" />
     <Button icon="pi pi-check" label="Next" class="save-button" @click="next" />
@@ -39,8 +47,13 @@ export default defineComponent({
       this.selectedTasks.push(data);
     },
     unselect(data: any) {
-      const i = this.selectedTasks.indexOf((task: any) => task.iri === data.iri);
-      this.selectedTasks.splice(i, 1);
+      this.selectedTasks = this.selectedTasks.filter((task: any) => task.iri !== data.iri);
+    },
+    selectAll(selectedList: any[]) {
+      this.selectedTasks = selectedList;
+    },
+    unselectAll() {
+      this.selectedTasks = [];
     },
     async getTaskActions(data: any) {
       data.children = await EntityService.getEntityChildren(data.iri);
