@@ -43,9 +43,8 @@ import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
 import Quantifier from "@/components/edit/memberEditor/builder/Quantifier.vue";
 import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
 import EntityService from "@/services/EntityService";
-import QueryService from "@/services/QueryService";
 import { Vocabulary, Helpers, Enums } from "im-library";
-import { EntityReferenceNode, NextComponentSummary, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
+import { EntityReferenceNode, NextComponentSummary, ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 const {
   EditorBuilderJsonMethods: { generateNewComponent, updateItem, deleteItem, addItem, addNextOptions, scrollIntoView }
 } = Helpers;
@@ -57,7 +56,7 @@ export default defineComponent({
   props: {
     id: { type: String, required: true },
     position: { type: Number, required: true },
-    value: { type: Object as PropType<{ propertyIri: string; children: any[] }>, required: false },
+    value: { type: Object as PropType<{ propertyIri: string; children: any[]; associatedMember: TTIriRef | undefined }>, required: false },
     showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
@@ -100,49 +99,6 @@ export default defineComponent({
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
         const result = await EntityService.getPartialEntity(this.value.propertyIri, [RDFS.LABEL]);
         const propertyName = result ? result[RDFS.LABEL] : "";
-        const query = {
-          distinct: true,
-          activeOnly: true,
-          select: [
-            {
-              binding: "id"
-            },
-            {
-              binding: "code"
-            },
-            {
-              binding: "term"
-            }
-          ],
-          match: {
-            includeSubEntities: true,
-            property: {
-              "@id": "http://www.w3.org/2000/01/rdf-schema#domain"
-            },
-            valueConcept: [
-              {
-                includeSupertypes: true,
-                "@id": this.value.propertyIri
-              }
-            ],
-            optional: [
-              {
-                property: {
-                  "@id": "http://www.w3.org/2000/01/rdf-schema#label"
-                },
-                valueVar: "term"
-              },
-              {
-                property: {
-                  "@id": "http://endhealth.info/im#code"
-                },
-                valueVar: "code"
-              }
-            ]
-          }
-        };
-        const queryResult = await QueryService.queryIM(query);
-        console.log(queryResult);
         const property = generateNewComponent(
           ComponentType.ENTITY,
           position,
@@ -279,7 +235,7 @@ export default defineComponent({
         if (index === 0) propertyIri = child.value.entity ? child.value.entity["@id"] : "";
         else children.push(child.value);
       }
-      return { propertyIri: propertyIri, children: children };
+      return { propertyIri: propertyIri, children: children, associatedMember: this.value?.associatedMember };
     },
 
     addNextClicked(item: any): void {
