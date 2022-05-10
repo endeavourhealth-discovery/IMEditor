@@ -1,4 +1,4 @@
-import { createApp } from "vue";
+import { createApp, Plugin } from "vue";
 import App from "./App.vue";
 import router from "./router";
 import store from "./store";
@@ -75,14 +75,19 @@ import InputSwitch from "primevue/inputswitch";
 import StyleClass from "primevue/styleclass";
 import Tag from "primevue/tag";
 import AutoComplete from "primevue/autocomplete";
+import Sidebar from "primevue/sidebar";
+import Steps from "primevue/steps";
 
 import { Amplify, Auth } from "aws-amplify";
 import awsconfig from "./aws-exports";
 import axios from "axios";
 
+import VueSweetalert2 from "vue-sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
+
 // IMLibrary imports
 import "im-library/dist/style.css";
-import { TopBar, Helpers, Env } from "im-library";
+import IMLibrary, { Helpers, Env } from "im-library";
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
@@ -94,8 +99,10 @@ const app = createApp(App)
   .use(store)
   .use(router)
   .use(PrimeVue, { ripple: true })
+  .use(IMLibrary.install as Plugin, { store })
   .use(ConfirmationService)
   .use(ToastService)
+  .use(VueSweetalert2)
   .use(VueClipboard, {
     autoSetContainer: true,
     appendToBody: true
@@ -149,7 +156,8 @@ const app = createApp(App)
   .component("InputSwitch", InputSwitch)
   .component("Tag", Tag)
   .component("AutoComplete", AutoComplete)
-  .component("TopBar", TopBar);
+  .component("Sidebar", Sidebar)
+  .component("Steps", Steps);
 
 const vm = app.mount("#app");
 
@@ -172,7 +180,7 @@ axios.interceptors.response.use(
           summary: "Access denied",
           detail: "Login required for " + error.config.url.substring(error.config.url.lastIndexOf("/") + 1) + "."
         });
-        vm.$router.push({ name: "Login" });
+        window.location.href = Env.authUrl + "login?returnUrl=" + vm.$route.fullPath;
       } else if (error.response.status === 401) {
         vm.$toast.add({
           severity: "error",
@@ -182,7 +190,7 @@ axios.interceptors.response.use(
             error.config.url.substring(error.config.url.lastIndexOf("/") + 1) +
             ". Please contact an admin to change your account security clearance if you require access to this resource."
         });
-        vm.$router.push({ name: "Login" });
+        vm.$router.push({ name: "AccessDenied" });
       } else {
         vm.$toast.add({
           severity: "warn",

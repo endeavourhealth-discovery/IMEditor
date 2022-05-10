@@ -2,70 +2,90 @@
   <div class="loading-container flex flex-row justify-content-center align-items-center" v-if="loading">
     <ProgressSpinner />
   </div>
-  <div v-else class="p-fluid editor-grid">
-    <div class="field float-label-container iri">
+  <div v-else class="summary-container">
+    <div class="float-label-container iri-validate-container">
       <span class="p-float-label">
-        <InputText class="p-inputtext-lg" v-model="updateIri" type="text" @input="updateEntity({ '@id': iri })" disabled />
-        <label for="Iri">Iri</label>
+        <InputText class="p-inputtext-lg input-text" id="iri-input" :class="(invalidIri || iriExists) && 'invalid'" v-model="iri" type="text" disabled />
+        <label for="iri-input">Iri</label>
       </span>
+      <small v-if="iriExists" class="validate-error">Iri already exists.</small>
+      <small v-if="!code.length && !scheme" class="validate-error">Code and scheme required for iri.</small>
+      <small v-else-if="!code.length" class="validate-error">Code required for iri.</small>
+      <small v-else-if="!scheme" class="validate-error">Scheme required for iri.</small>
     </div>
-    <div class="field float-label-container name">
+    <div class="float-label-container code">
       <span class="p-float-label">
-        <InputText class="p-inputtext-lg" v-model="name" type="text" @input="updateEntity({ 'http://www.w3.org/2000/01/rdf-schema#label': name })" />
-        <label for="Name">Name</label>
-      </span>
-    </div>
-    <div class="field float-label-container code">
-      <span class="p-float-label">
-        <InputText class="p-inputtext-lg" v-model="code" type="text" @input="updateEntity({ '@id': updateIri, 'http://endhealth.info/im#code': code })" />
-        <label for="Code">Code</label>
-      </span>
-    </div>
-    <div class="field float-label-container description">
-      <span class="p-float-label">
-        <Textarea
-          class="p-inputtext-lg"
-          v-model="description"
-          rows="4"
-          @input="updateEntity({ 'http://www.w3.org/2000/01/rdf-schema#comment': description })"
+        <InputText
+          class="p-inputtext-lg input-text"
+          id="code-input"
+          :class="(invalidIri || iriExists) && 'invalid'"
+          v-model="code"
+          type="text"
+          :disabled="mode !== 'create' && !checkAuthorization"
         />
-        <label for="address">Description</label>
+        <label for="code-input">Code</label>
       </span>
+      <small v-if="iriExists" class="validate-error">Code already exists for this scheme.</small>
     </div>
-    <div class="field float-label-container version">
-      <span class="p-float-label">
-        <InputText class="p-inputtext-lg" v-model="version" type="text" @input="updateEntity" disabled />
-        <label for="Version">Version</label>
-      </span>
-    </div>
-    <div class="field float-label-container status">
+    <div class="float-label-container scheme">
       <span class="p-float-label">
         <Dropdown
-          class="p-inputtext-lg"
+          class="p-inputtext-lg input-text"
+          id="scheme-dropdown"
+          :class="(invalidIri || iriExists) && 'invalid'"
+          v-model="scheme"
+          :options="filterOptions.schemes"
+          optionLabel="name"
+          :disabled="mode !== 'create' && !checkAuthorization"
+        />
+        <label for="scheme-dropdown">Scheme</label>
+      </span>
+    </div>
+    <div class="float-label-container name">
+      <span class="p-float-label">
+        <InputText class="p-inputtext-lg input-text" id="name-input" :class="invalidName && 'invalid'" v-model="name" type="text" />
+        <label for="name-input">Name</label>
+      </span>
+      <small v-if="invalidName" class="validate-error">Name required.</small>
+    </div>
+    <div class="float-label-container description">
+      <span class="p-float-label">
+        <Textarea class="p-inputtext-lg input-text" id="description-textarea" v-model="description" rows="4" />
+        <label for="description-textarea">Description</label>
+      </span>
+    </div>
+    <div class="float-label-container status">
+      <span class="p-float-label">
+        <Dropdown
+          class="p-inputtext-lg input-text"
+          id="status-dropdown"
+          :class="invalidStatus && 'invalid'"
           v-model="status"
           :options="filterOptions.status"
           optionLabel="name"
-          @change="updateEntity({ 'http://endhealth.info/im#status': [status] })"
         />
-        <label>Status</label>
+        <label for="status-dropdown">Status</label>
       </span>
+      <small v-if="invalidStatus" class="validate-error">Status required.</small>
     </div>
-    <div class="field float-label-container scheme">
-      <span class="p-float-label">
-        <Dropdown class="p-inputtext-lg" v-model="scheme" :options="filterOptions.schemes" optionLabel="name" @change="updateEntity({ '@id': updateIri })" />
-        <label>Scheme</label>
-      </span>
-    </div>
-    <div class="field float-label-container type">
+    <div class="float-label-container type">
       <span class="p-float-label">
         <MultiSelect
-          class="p-inputtext-lg"
+          class="p-inputtext-lg input-text"
+          id="type-multiselect"
+          :class="invalidTypes && 'invalid'"
           v-model="types"
           :options="filterOptions.types"
           optionLabel="name"
-          @change="updateEntity({ 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': types })"
         />
-        <label>Types</label>
+        <label for="type-multiselect">Types</label>
+      </span>
+      <small v-if="invalidTypes" class="validate-error">Type required.</small>
+    </div>
+    <div class="float-label-container version">
+      <span class="p-float-label">
+        <InputText class="p-inputtext-lg input-text" id="version-input" v-model="version" type="text" disabled />
+        <label for="version-input">Version</label>
       </span>
     </div>
   </div>
@@ -73,69 +93,115 @@
 
 <script lang="ts">
 import EntityService from "@/services/EntityService";
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent, PropType } from "@vue/runtime-core";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers } from "im-library";
 const {
-  DataTypeCheckers: { isObjectHasKeys, isArrayHasLength }
+  DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
 const { IM, RDF, RDFS } = Vocabulary;
 
 export default defineComponent({
   name: "SummaryEditor",
-  props: { updatedConcept: { type: Object, required: true } },
+  props: {
+    updatedConcept: { type: Object, required: true },
+    mode: { type: String, required: true },
+    userRoles: { type: Array as PropType<Array<string>>, default: [] }
+  },
   emits: { "concept-updated": (payload: any) => isObjectHasKeys(payload) },
   watch: {
     updatedConcept: {
       handler() {
         this.processEntity();
+        if (this.creatorInvalidEntity) {
+          this.setInvalidInputs(this.creatorValidity);
+        }
+        if (this.editorInvalidEntity) {
+          this.setInvalidInputs(this.editorValidity);
+        }
       },
       deep: true
+    },
+    name(newValue, oldValue) {
+      this.updateEntity({ "http://www.w3.org/2000/01/rdf-schema#label": newValue });
+    },
+    async code(newValue, oldValue) {
+      const newIri = await this.updateIri();
+      if (newValue && newValue !== oldValue && newIri) this.updateEntity({ "@id": newIri, "http://endhealth.info/im#code": newValue });
+      else if (newValue !== oldValue) this.updateEntity({ "http://endhealth.info/im#code": newValue });
+    },
+    description(newValue) {
+      this.updateEntity({ "http://www.w3.org/2000/01/rdf-schema#comment": newValue });
+    },
+    status: {
+      handler(newValue) {
+        this.updateEntity({ "http://endhealth.info/im#status": [{ "@id": newValue["@id"], name: newValue.name }] });
+      },
+      deep: true
+    },
+    scheme: {
+      async handler(newValue, oldValue) {
+        const newIri = await this.updateIri();
+        if (newValue !== oldValue && newIri) this.updateEntity({ "@id": newIri });
+      },
+      deep: true
+    },
+    types: {
+      handler(newValue) {
+        const filtered = newValue.map((type: any) => {
+          return { "@id": type["@id"], name: type.name };
+        });
+        this.updateEntity({ "http://www.w3.org/1999/02/22-rdf-syntax-ns#type": filtered });
+      },
+      deep: true
+    },
+    creatorInvalidEntity(newValue) {
+      if (newValue) {
+        this.setInvalidInputs(this.creatorValidity);
+      }
+    },
+    editorInvalidEntity(newValue) {
+      if (newValue) {
+        this.setInvalidInputs(this.editorValidity);
+      }
     }
   },
   computed: {
-    ...mapState(["filterOptions"]),
-    updateIri() {
-      return this.scheme.iri + this.code;
-    }
+    ...mapState(["filterOptions", "creatorInvalidEntity", "creatorValidity", "editorInvalidEntity", "editorValidity"])
   },
   data() {
     return {
       iri: "",
       name: "",
       code: "",
-      scheme: {} as any,
-      status: {} as any,
+      scheme: null as any,
+      status: null as any,
       types: [] as any[],
       version: "",
       description: "",
-      loading: false
+      loading: false,
+      invalidIri: false,
+      iriExists: false,
+      invalidName: false,
+      invalidTypes: false,
+      invalidStatus: false
     };
   },
-  async mounted() {
+  mounted() {
     this.loading = true;
-    await this.getFilterOptions();
     this.processEntity();
     this.loading = false;
   },
   methods: {
-    async getFilterOptions(): Promise<void> {
-      if (!(isObjectHasKeys(this.filterOptions) && isArrayHasLength(this.filterOptions.schemes))) {
-        const schemeOptions = await EntityService.getNamespaces();
-        const typeOptions = await EntityService.getEntityChildren(IM.MODELLING_ENTITY_TYPE);
-        const statusOptions = await EntityService.getEntityChildren(IM.STATUS);
-
-        this.$store.commit("updateFilterOptions", {
-          status: statusOptions,
-          schemes: schemeOptions,
-          types: typeOptions
-        });
-      }
-    },
-
     processEntity() {
       if (!this.updatedConcept) return;
-      if (isObjectHasKeys(this.updatedConcept, ["@id"])) this.iri = this.updatedConcept["@id"];
+      if (isObjectHasKeys(this.updatedConcept, ["@id"])) {
+        this.iri = this.updatedConcept["@id"];
+        if (!isObjectHasKeys(this.updatedConcept, [IM.CODE])) this.code = this.iri.substring(this.iri.indexOf("#") + 1);
+      }
+      if (isObjectHasKeys(this.updatedConcept, [IM.CODE])) {
+        this.code = this.updatedConcept[IM.CODE];
+      }
       if (isObjectHasKeys(this.updatedConcept, [RDFS.LABEL])) this.name = this.updatedConcept[RDFS.LABEL];
       if (isObjectHasKeys(this.updatedConcept, [IM.HAS_STATUS])) {
         const found = this.filterOptions.status.find((item: any) => item["@id"] === this.updatedConcept[IM.HAS_STATUS][0]["@id"]);
@@ -148,13 +214,60 @@ export default defineComponent({
         });
       }
       const found = this.filterOptions.schemes.find((scheme: any) => scheme.iri === this.iri.substring(0, this.iri.indexOf("#") + 1));
-      this.scheme = found ? found : "";
-      this.code = this.iri.substring(this.iri.indexOf("#") + 1);
+      if (found) this.scheme = found;
       if (isObjectHasKeys(this.updatedConcept, [RDFS.COMMENT])) this.description = this.updatedConcept[RDFS.COMMENT];
     },
 
     updateEntity(data: any) {
       this.$emit("concept-updated", data);
+    },
+
+    async updateIri(): Promise<string> {
+      await this.checkIriExists();
+      return this.generateIri();
+    },
+
+    generateIri() {
+      if (this.scheme && this.scheme.iri && this.code) {
+        this.iri = this.scheme.iri + this.code;
+        return this.scheme.iri + this.code;
+      }
+      this.iri = "";
+      return "";
+    },
+
+    async checkIriExists() {
+      if (this.scheme && this.scheme.iri && this.code && this.mode === "create") this.iriExists = await EntityService.iriExists(this.scheme.iri + this.code);
+      else this.iriExists = false;
+    },
+
+    setInvalidInputs(validities: { key: string; valid: boolean }[]) {
+      const iriFound = validities.find((item: { key: string; valid: boolean }) => item.key === "iri");
+      if (iriFound) this.invalidIri = !iriFound.valid;
+      else this.invalidIri = true;
+
+      const iriExistsFound = validities.find((item: { key: string; valid: boolean }) => item.key === "iriExists");
+      if (iriExistsFound) {
+        this.iriExists = !iriExistsFound.valid;
+        if (this.mode === "create") this.invalidIri = true;
+      } else this.iriExists = false;
+
+      const nameFound = validities.find((item: { key: string; valid: boolean }) => item.key === "name");
+      if (nameFound) this.invalidName = !nameFound.valid;
+      else this.invalidName = true;
+
+      const typesFound = validities.find((item: { key: string; valid: boolean }) => item.key === "types");
+      if (typesFound) this.invalidTypes = !typesFound.valid;
+      else this.invalidTypes = true;
+
+      const statusFound = validities.find((item: { key: string; valid: boolean }) => item.key === "status");
+      if (statusFound) this.invalidStatus = !statusFound.valid;
+      else this.invalidStatus = true;
+    },
+
+    checkAuthorization() {
+      if (this.userRoles) return this.userRoles.includes("IMAdmin");
+      else return false;
     }
   }
 });
@@ -179,58 +292,61 @@ export default defineComponent({
   width: 100%;
 }
 
-.editor-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-auto-rows: auto;
-  grid-template-areas:
-    "iri name code"
-    "description description description"
-    "version status scheme"
-    "imlang imlang imlang";
-  column-gap: 7px;
-  height: 100%;
-  width: 100%;
-  align-content: start;
-}
-
-.iri {
-  grid-area: iri;
-}
-
-.name {
-  grid-area: name;
-}
-
-.code {
-  grid-area: code;
-}
-
-.description {
-  grid-area: description;
-}
-
-.version {
-  grid-area: version;
-}
-
-.status {
-  grid-area: status;
-}
-
-.scheme {
-  grid-area: scheme;
-}
-
-.imlang-container {
-  grid-area: imlang;
-}
-
-.field {
-  height: fit-content;
+.summary-container {
+  flex: 0 1 auto;
+  overflow: auto;
+  width: 60%;
+  padding: 2.5rem 1rem 1rem 1rem;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-start;
+  align-items: center;
+  row-gap: 1.75rem;
 }
 
 .float-label-container {
-  margin-top: 1.5rem;
+  height: fit-content;
+  max-width: 100%;
+}
+
+.name,
+.code,
+.version,
+.status,
+.type {
+  width: 100%;
+}
+
+.iri-validate-container,
+.code,
+.scheme,
+.name {
+  width: 100%;
+}
+
+.description {
+  width: 100%;
+}
+
+.input-text {
+  width: 100%;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.invalid {
+  border-color: #e24c4c;
+}
+
+.validate-error {
+  color: #e24c4c;
+  font-size: 0.8rem;
+  padding: 0 0 0.25rem 0;
+}
+
+.iri-validate-container {
+  display: flex;
+  flex-flow: column nowrap;
 }
 </style>
