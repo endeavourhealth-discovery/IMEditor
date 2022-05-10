@@ -69,6 +69,7 @@
           <ExpansionTable
             :contents="searchResults"
             :inputSearch="true"
+            :expandable="true"
             @search="search"
             :paginable="true"
             :drag="true"

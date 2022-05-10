@@ -45,6 +45,7 @@
             :contents="searchResults"
             :selectable="true"
             :inputSearch="true"
+            :expandable="true"
             @search="search"
             :paginable="true"
             @select="select"
