@@ -27,8 +27,13 @@ const { IM, RDF, RDFS } = Vocabulary;
 export default defineComponent({
   name: "TaskSelection",
   components: { ExpansionTable },
-  props: ["data"],
-  emits: ["nextPage", "prevPage"],
+  props: {
+    data: { type: Object, required: true }
+  },
+  emits: {
+    nextPage: (_payload: { pageIndex: number; data: {} }) => true,
+    prevPage: (_payload: { pageIndex: number; data: {} }) => true
+  },
   data() {
     return {
       pageIndex: 1,
@@ -37,7 +42,7 @@ export default defineComponent({
     };
   },
   async mounted() {
-    this.tasks = (await EntityService.getEntityChildren(IM.MODULE_TASKS)) as any[];
+    this.tasks = await EntityService.getEntityChildren(IM.MODULE_TASKS);
     this.tasks.forEach(task => {
       task.iri = task["@id"];
     });
@@ -72,10 +77,12 @@ export default defineComponent({
       this.selectedTasks.forEach(async selected => {
         await this.getTaskActions(selected);
       });
-      this.$emit("nextPage", { pageIndex: this.pageIndex, data: { selectedTasks: this.selectedTasks } });
+      const data = { ...this.data };
+      data.selectedTasks = this.selectedTasks;
+      this.$emit("nextPage", { pageIndex: this.pageIndex, data: data });
     },
     previous() {
-      this.$emit("prevPage", { pageIndex: this.pageIndex, data: this.selectedTasks });
+      this.$emit("prevPage", { pageIndex: this.pageIndex, data: {} });
     }
   }
 });

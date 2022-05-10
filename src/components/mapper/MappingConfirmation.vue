@@ -52,8 +52,13 @@ const { IM, RDF, RDFS } = Vocabulary;
 
 export default defineComponent({
   name: "TaskSelection",
-  props: ["data"],
-  emits: ["nextPage", "prevPage"],
+  props: {
+    data: { type: Object, required: true }
+  },
+  emits: {
+    nextPage: (_payload: { pageIndex: number; data: {} }) => true,
+    prevPage: (_payload: { pageIndex: number; data: {} }) => true
+  },
   components: {
     ExpansionTable
   },
@@ -115,7 +120,7 @@ export default defineComponent({
       this.displayUpdatedEntities = true;
     },
     previous() {
-      this.$emit("prevPage", { pageIndex: this.pageIndex });
+      this.$emit("prevPage", { pageIndex: this.pageIndex, data: {} });
     }
   }
 });

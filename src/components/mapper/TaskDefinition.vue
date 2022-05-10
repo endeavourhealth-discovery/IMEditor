@@ -133,23 +133,13 @@ export default defineComponent({
     ExpansionTable,
     MultipleTaskSelection
   },
-
-  beforeRouteLeave(to, from, next) {
-    if (to.matched[0].path === "/mapper") {
-      next();
-    } else {
-      this.$confirm.require({
-        message: "All unsaved changes will be lost. Are you sure you want to proceed?",
-        header: "Confirmation",
-        icon: "pi pi-exclamation-triangle",
-        accept: () => {
-          next();
-        }
-      });
-    }
+  props: {
+    data: { type: Object, required: true }
   },
-  props: ["data"],
-  emits: ["nextPage", "prevPage"],
+  emits: {
+    nextPage: (_payload: { pageIndex: number; data: {} }) => true,
+    prevPage: (_payload: { pageIndex: number; data: {} }) => true
+  },
   computed: {
     ...mapState(["filterOptions", "refreshTree"])
   },
@@ -178,12 +168,7 @@ export default defineComponent({
   async mounted() {
     this.loading = true;
     await this.init();
-    window.addEventListener("resize", this.onResize);
-    this.onResize();
     this.loading = false;
-  },
-  beforeUnmount() {
-    window.removeEventListener("resize", this.onResize);
   },
   methods: {
     async init() {
@@ -346,15 +331,6 @@ export default defineComponent({
       });
     },
 
-    onResize(): void {
-      this.setContentHeight();
-    },
-
-    setContentHeight(): void {
-      this.contentHeight =
-        "height: " + getContainerElementOptimalHeight("mapper-main-container", ["p-panel-header", "p-tabview-nav", "button-bar"], true, 4, 4) + ";";
-    },
-
     selectAll(selectedList: any[]) {
       this.tableSelectedList = selectedList;
     },
@@ -406,7 +382,7 @@ export default defineComponent({
       }
     },
     next() {
-      this.$emit("nextPage", { pageIndex: this.pageIndex });
+      this.$emit("nextPage", { pageIndex: this.pageIndex, data: {} });
     }
   }
 });
@@ -417,10 +393,6 @@ export default defineComponent({
   height: 100%;
   display: flex;
   flex-flow: column nowrap;
-}
-
-.title {
-  font-size: 2rem;
 }
 
 #mapping-button-bar {
@@ -446,24 +418,6 @@ export default defineComponent({
 
 .type-icon {
   padding-right: 0.5rem;
-}
-
-.drop-zone {
-  background-color: #eee;
-  margin-bottom: 10px;
-  padding: 10px;
-}
-
-.drag-el {
-  background-color: #fff;
-  margin-bottom: 10px;
-  padding: 5px;
-  cursor: pointer;
-}
-
-.drag-el:hover {
-  background-color: #6c757d;
-  color: #ffffff;
 }
 
 .task-definition-container {

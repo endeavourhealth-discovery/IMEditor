@@ -40,8 +40,6 @@ export default class EntityService {
   }
 
   public static async addTaskAction(entityIri: string, taskIri: string): Promise<any> {
-    console.log(taskIri);
-    console.log(entityIri);
     try {
       return await axios.get(this.api + "api/entity/task/action", {
         params: {

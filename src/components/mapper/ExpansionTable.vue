@@ -91,7 +91,16 @@ export default defineComponent({
     expandable: { type: Boolean, required: false },
     removableRows: { type: Boolean, required: false }
   },
-  emits: ["search", "startDrag", "select", "unselect", "remove", "selectAll", "unselectAll"],
+  // emits: ["search", "startDrag", "select", "unselect", "remove", "selectAll", "unselectAll"],
+  emits: {
+    search: (_payload: string) => true,
+    startDrag: (_payload: any) => true,
+    select: (_payload: any) => true,
+    unselect: (_payload: any) => true,
+    remove: (_payload: any) => true,
+    selectAll: (_payload: any) => true,
+    unselectAll: () => true
+  },
   components: {
     VueJsonPretty
   },
@@ -148,16 +157,5 @@ export default defineComponent({
 <style scoped>
 .type-icon {
   padding-right: 0.5rem;
-}
-
-.drag-el {
-  background-color: #fff;
-  /* margin-bottom: 10px; */
-  /* padding: 5px; */
-  cursor: pointer;
-}
-.drag-el:hover {
-  background-color: #6c757d;
-  color: #ffffff;
 }
 </style>

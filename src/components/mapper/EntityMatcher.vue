@@ -74,7 +74,7 @@
   <div class="button-bar flex flex-row justify-content-end" id="mapping-button-bar">
     <Button icon="pi pi-times" label="Back" class="p-button-secondary" @click="previous" />
     <Button icon="pi pi-arrows-h" label="Map" class="p-button-help" :disabled="!(selected && selectedEntities.length)" @click="map" />
-    <Button icon="pi pi-check" label="Next" class="save-button" @click="next" :disabled="!this.mappingsMap.size" />
+    <Button icon="pi pi-check" label="Next" class="save-button" @click="next" :disabled="!mappingsMap.size" />
   </div>
 </template>
 
@@ -105,8 +105,13 @@ export default defineComponent({
   computed: {
     ...mapState(["currentUser", "isLoggedIn", "filterOptions", "selectedFilters"])
   },
-  emits: ["nextPage", "prevPage"],
-  props: ["data"],
+  emits: {
+    nextPage: (_payload: { pageIndex: number; data: {} }) => true,
+    prevPage: (_payload: { pageIndex: number; data: {} }) => true
+  },
+  props: {
+    data: { type: Object, required: true }
+  },
   watch: {
     async selected(newValue, oldValue) {
       if (!newValue) {
@@ -114,7 +119,7 @@ export default defineComponent({
       }
       if (this.selected) {
         const fullEntity = await EntityService.getPartialEntity(this.selected.iri, []);
-        this.selectedView = Object.assign(fullEntity);
+        this.selectedView = { ...fullEntity };
         this.selected.suggestions = await this.getMappingSuggestions(this.selected.iri, this.selected.name);
         this.selectedEntities = [];
         if (isArrayHasLength(this.selected.mappings) && !this.mappingsMap.has(this.selected.iri)) {
@@ -186,11 +191,11 @@ export default defineComponent({
     next() {
       const data = this.data;
       data.mappingsMap = this.mappingsMap;
-      this.$emit("nextPage", { pageIndex: this.pageIndex, data });
+      this.$emit("nextPage", { pageIndex: this.pageIndex, data: data });
     },
 
     previous() {
-      this.$emit("prevPage", { pageIndex: this.pageIndex, root: {} });
+      this.$emit("prevPage", { pageIndex: this.pageIndex, data: {} });
     },
 
     map() {
