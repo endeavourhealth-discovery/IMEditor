@@ -49,7 +49,7 @@
       <TabView :lazy="true" class="tabView" @tab-change="tableSelectedList = []">
         <TabPanel header="List">
           <ExpansionTable
-            :contents="unassigned"
+            :contents="unmapped"
             :drag="true"
             :paginable="true"
             @startDrag="startDrag"
@@ -164,7 +164,7 @@ export default defineComponent({
       root: [] as any[],
       selectedNode: {} as any,
       selected: {} as any,
-      unassigned: [] as any[],
+      unmapped: [] as any[],
       contentHeight: "",
       loading: true,
       searchResults: [] as any[],
@@ -187,7 +187,7 @@ export default defineComponent({
   },
   methods: {
     async init() {
-      await this.getUnassigned();
+      await this.getUnmapped();
       await this.getTasks();
     },
 
@@ -340,8 +340,10 @@ export default defineComponent({
       this.selected = node;
     },
 
-    async getUnassigned() {
-      this.unassigned = await EntityService.getUnassigned();
+    async getUnmapped() {
+      this.unmapped = (await EntityService.getUnmapped()).map(unmapped => {
+        return { iri: unmapped["@id"], name: unmapped.name };
+      });
     },
 
     onResize(): void {

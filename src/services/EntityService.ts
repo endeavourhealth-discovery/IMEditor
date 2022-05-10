@@ -62,9 +62,9 @@ export default class EntityService {
     }
   }
 
-  public static async getUnassigned(): Promise<any[]> {
+  public static async getUnmapped(): Promise<any[]> {
     try {
-      return await axios.get(this.api + "api/entity/public/unassigned");
+      return await axios.get(this.api + "api/entity/public/unmapped");
     } catch (error) {
       return [] as any[];
     }
