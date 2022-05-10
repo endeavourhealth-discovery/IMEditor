@@ -51,6 +51,7 @@
           <ExpansionTable
             :contents="unassigned"
             :drag="true"
+            :paginable="true"
             @startDrag="startDrag"
             :loading="loading"
             :expandable="true"
@@ -340,8 +341,7 @@ export default defineComponent({
     },
 
     async getUnassigned() {
-      const unassigned = await EntityService.getUnassigned();
-      this.unassigned = unassigned.slice(1, 10);
+      this.unassigned = await EntityService.getUnassigned();
     },
 
     onResize(): void {

@@ -13,8 +13,9 @@
     @row-unselect-all="rowUnselectAll"
     :reorderableColumns="false"
     :paginator="paginable"
-    :rows="20"
+    :rows="rows || 18"
     :loading="loading"
+    class="p-datatable-sm"
   >
     <template #empty>
       No records found.
@@ -85,6 +86,7 @@ export default defineComponent({
     selectable: { type: Boolean, required: false },
     inputSearch: { type: Boolean, required: false },
     paginable: { type: Boolean, required: false },
+    rows: { type: Number, required: false },
     drag: { type: Boolean, required: false },
     expandable: { type: Boolean, required: false },
     removableRows: { type: Boolean, required: false }
