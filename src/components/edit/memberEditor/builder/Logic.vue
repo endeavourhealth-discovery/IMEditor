@@ -185,7 +185,7 @@ export default defineComponent({
 
     updateRefinementsAssociatedMembers() {
       for (const item of this.logicBuild) {
-        if (item.type === ComponentType.REFINEMENT) {
+        if (item.type === ComponentType.REFINEMENT && item.value) {
           const associatedMember = this.getRefinementAssociatedmember(item.position);
           item.value.associatedMember = associatedMember;
         }

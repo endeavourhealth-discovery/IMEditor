@@ -6,7 +6,7 @@
         <ProgressSpinner style="width:1.5rem;height:1.5rem;" strokeWidth="6" />
       </div>
       <Dropdown v-else v-model="selected" :options="dropdownOptions" optionLabel="name" placeholder="select a property" :disabled="invalidAssociatedMember" />
-      <small v-if="invalidAssociatedMember">Missing member for refinement. Please select a member.</small>
+      <small v-if="invalidAssociatedMember" class="validate-error">Missing member for refinement. Please select a member first.</small>
     </div>
     <AddDeleteButtons :show="showButtons" :position="position" :options="[]" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
   </div>
@@ -182,5 +182,11 @@ export default defineComponent({
 
 .p-dropdown {
   width: 100%;
+}
+
+.validate-error {
+  color: #e24c4c;
+  font-size: 0.8rem;
+  padding: 0 0 0.25rem 0;
 }
 </style>
