@@ -84,8 +84,10 @@
           />
         </TabPanel>
 
-        <TabPanel header="Hierarchy position" class="tab-container" v-if="isObjectHasKeys(selected) && selected.type !== 'task'">
-          <SecondaryTree :conceptIri="selected.data" />
+        <TabPanel header="Hierarchy position" v-if="isObjectHasKeys(selected) && selected.type !== 'task'">
+          <div class="tab-container">
+            <SecondaryTree :conceptIri="selected.data" />
+          </div>
         </TabPanel>
       </TabView>
     </div>
