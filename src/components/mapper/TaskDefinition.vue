@@ -1,14 +1,14 @@
 <template>
   <ConfirmDialog></ConfirmDialog>
-  <div class="grid grid-nogutter">
-    <div class="col-3 tree-bar-container">
+  <div class="task-definition-container">
+    <div class="tree-bar-container col-3">
       <Tree
         :value="root"
         selectionMode="single"
         v-model:selectionKeys="selectedNode"
         @node-select="onNodeSelect"
         :loading="loading"
-        class="task-definition-container"
+        class="task-tree-container"
       >
         <template #default="slotProps">
           <span :style="'color: ' + slotProps.node.colour" class="p-mx-1 type-icon">
@@ -49,8 +49,9 @@
       <TabView :lazy="true" class="tabView" @tab-change="tableSelectedList = []">
         <TabPanel header="List">
           <ExpansionTable
-            :contents="unassigned"
+            :contents="unmapped"
             :drag="true"
+            :paginable="true"
             @startDrag="startDrag"
             :loading="loading"
             :expandable="true"
@@ -69,6 +70,7 @@
           <ExpansionTable
             :contents="searchResults"
             :inputSearch="true"
+            :expandable="true"
             @search="search"
             :paginable="true"
             :drag="true"
@@ -88,7 +90,7 @@
       </TabView>
     </div>
   </div>
-  <div class="button-bar flex flex-row justify-content-end" id="mapping-button-bar">
+  <div class="button-bar">
     <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
     <Button icon="pi pi-folder" label="Add to task" class="p-button-help" @click="addSelectedToFolder" />
     <Button icon="pi pi-check" label="Next" class="save-button" @click="next" />
@@ -131,23 +133,13 @@ export default defineComponent({
     ExpansionTable,
     MultipleTaskSelection
   },
-
-  beforeRouteLeave(to, from, next) {
-    if (to.matched[0].path === "/mapper") {
-      next();
-    } else {
-      this.$confirm.require({
-        message: "All unsaved changes will be lost. Are you sure you want to proceed?",
-        header: "Confirmation",
-        icon: "pi pi-exclamation-triangle",
-        accept: () => {
-          next();
-        }
-      });
-    }
+  props: {
+    data: { type: Object, required: true }
   },
-  props: ["data"],
-  emits: ["nextPage", "prevPage"],
+  emits: {
+    nextPage: (_payload: { pageIndex: number; data: {} }) => true,
+    prevPage: (_payload: { pageIndex: number; data: {} }) => true
+  },
   computed: {
     ...mapState(["filterOptions", "refreshTree"])
   },
@@ -162,7 +154,7 @@ export default defineComponent({
       root: [] as any[],
       selectedNode: {} as any,
       selected: {} as any,
-      unassigned: [] as any[],
+      unmapped: [] as any[],
       contentHeight: "",
       loading: true,
       searchResults: [] as any[],
@@ -176,16 +168,11 @@ export default defineComponent({
   async mounted() {
     this.loading = true;
     await this.init();
-    window.addEventListener("resize", this.onResize);
-    this.onResize();
     this.loading = false;
-  },
-  beforeUnmount() {
-    window.removeEventListener("resize", this.onResize);
   },
   methods: {
     async init() {
-      await this.getUnassigned();
+      await this.getUnmapped();
       await this.getTasks();
     },
 
@@ -338,18 +325,10 @@ export default defineComponent({
       this.selected = node;
     },
 
-    async getUnassigned() {
-      const unassigned = await EntityService.getUnassigned();
-      this.unassigned = unassigned.slice(1, 10);
-    },
-
-    onResize(): void {
-      this.setContentHeight();
-    },
-
-    setContentHeight(): void {
-      this.contentHeight =
-        "height: " + getContainerElementOptimalHeight("mapper-main-container", ["p-panel-header", "p-tabview-nav", "button-bar"], true, 4, 4) + ";";
+    async getUnmapped() {
+      this.unmapped = (await EntityService.getUnmapped()).map(unmapped => {
+        return { iri: unmapped["@id"], name: unmapped.name };
+      });
     },
 
     selectAll(selectedList: any[]) {
@@ -403,7 +382,7 @@ export default defineComponent({
       }
     },
     next() {
-      this.$emit("nextPage", { pageIndex: this.pageIndex });
+      this.$emit("nextPage", { pageIndex: this.pageIndex, data: {} });
     }
   }
 });
@@ -411,16 +390,27 @@ export default defineComponent({
 
 <style scoped>
 .tree-bar-container {
-  height: 100%;
   display: flex;
   flex-flow: column nowrap;
 }
 
-.title {
-  font-size: 2rem;
+.task-definition-container {
+  flex: 1 1 auto;
+  width: 100%;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  overflow: auto;
+  position: relative;
 }
 
-#mapping-button-bar {
+.tab-container {
+  height: calc(100vh - 17.7rem);
+  overflow: auto;
+}
+
+.button-bar {
+  flex: 0 1 auto;
   padding: 1rem 1rem 1rem 0;
   gap: 0.5rem;
   width: 100%;
@@ -429,6 +419,18 @@ export default defineComponent({
   border-right: 1px solid #dee2e6;
   border-radius: 3px;
   background-color: #ffffff;
+  display: flex;
+  flex-flow: row;
+  justify-content: flex-end;
+}
+
+.task-tree-container {
+  flex: 1 1 auto;
+  width: 100%;
+  overflow: auto;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-start;
 }
 
 .tabView {
@@ -443,33 +445,5 @@ export default defineComponent({
 
 .type-icon {
   padding-right: 0.5rem;
-}
-
-.drop-zone {
-  background-color: #eee;
-  margin-bottom: 10px;
-  padding: 10px;
-}
-
-.drag-el {
-  background-color: #fff;
-  margin-bottom: 10px;
-  padding: 5px;
-  cursor: pointer;
-}
-
-.drag-el:hover {
-  background-color: #6c757d;
-  color: #ffffff;
-}
-
-.task-definition-container {
-  height: calc(100vh - 18.6rem);
-  overflow: auto;
-}
-
-.tab-container {
-  height: calc(100vh - 21.5rem);
-  overflow: auto;
 }
 </style>

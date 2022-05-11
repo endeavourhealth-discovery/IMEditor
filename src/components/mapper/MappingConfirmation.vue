@@ -1,13 +1,13 @@
 <template>
   <Dialog header="Updated entities" v-model:visible="displayUpdatedEntities">
-    <ExpansionTable v-if="updatedEntities.length" class="mapping-item-container" :contents="updatedEntities" :paginable="true" :expandable="true" />
+    <ExpansionTable v-if="updatedEntities.length" :contents="updatedEntities" :paginable="true" :expandable="true" />
     <template #footer>
       <Button label="Go to editor" @click="goToEditor" />
       <Button label="Create new task" @click="goToTaskDefinition" />
       <Button label="Select task" @click="goToTaskSelection" />
     </template>
   </Dialog>
-  <DataTable :value="mappingsDisplay" responsiveLayout="scroll" class="table-container">
+  <DataTable :value="mappingsDisplay" responsiveLayout="scroll" class="mapping-table-container">
     <Column field="mappedFrom" header="From"><i class="pi pi-arrow-right"></i> </Column>
     <Column><template #body> </template></Column>
     <Column field="mappedTo" header="To">
@@ -31,7 +31,7 @@
     </Column>
   </DataTable>
 
-  <div class="button-bar flex flex-row justify-content-end" id="task-definition-button-bar">
+  <div class="button-bar">
     <Button icon="pi pi-times" label="Back" class="p-button-secondary" @click="previous" />
     <Button icon="pi pi-check" label="Submit" class="save-button" @click="submit" />
   </div>
@@ -52,8 +52,13 @@ const { IM, RDF, RDFS } = Vocabulary;
 
 export default defineComponent({
   name: "TaskSelection",
-  props: ["data"],
-  emits: ["nextPage", "prevPage"],
+  props: {
+    data: { type: Object, required: true }
+  },
+  emits: {
+    nextPage: (_payload: { pageIndex: number; data: {} }) => true,
+    prevPage: (_payload: { pageIndex: number; data: {} }) => true
+  },
   components: {
     ExpansionTable
   },
@@ -115,19 +120,22 @@ export default defineComponent({
       this.displayUpdatedEntities = true;
     },
     previous() {
-      this.$emit("prevPage", { pageIndex: this.pageIndex });
+      this.$emit("prevPage", { pageIndex: this.pageIndex, data: {} });
     }
   }
 });
 </script>
 
 <style scoped>
-.table-container {
-  height: calc(100vh - 16.3rem);
+.mapping-table-container {
+  height: calc(100% - 11.6rem);
+  width: 100%;
   overflow: auto;
+  background-color: #ffffff;
 }
 
 .button-bar {
+  flex: 0 1 auto;
   padding: 1rem 1rem 1rem 0;
   gap: 0.5rem;
   width: 100%;
@@ -136,5 +144,8 @@ export default defineComponent({
   border-right: 1px solid #dee2e6;
   border-radius: 3px;
   background-color: #ffffff;
+  display: flex;
+  flex-flow: row;
+  justify-content: flex-end;
 }
 </style>

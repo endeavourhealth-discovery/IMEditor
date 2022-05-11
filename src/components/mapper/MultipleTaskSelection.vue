@@ -21,8 +21,13 @@ export default defineComponent({
   components: {
     ExpansionTable
   },
-  props: ["tasks"],
-  emits: ["addToTasks", "closeTaskDialog"],
+  props: {
+    tasks: { type: Array, required: true }
+  },
+  emits: {
+    addToTasks: (_payload: any[]) => true,
+    closeTaskDialog: () => true
+  },
   data() {
     return {
       tableSelectedList: [] as any[]
@@ -63,9 +68,5 @@ export default defineComponent({
   width: 100%;
   border: none;
   background-color: #ffffff;
-}
-
-.p-card {
-  box-shadow: none;
 }
 </style>
