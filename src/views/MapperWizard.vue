@@ -9,9 +9,9 @@
       <Steps :model="items" :readonly="false" />
     </div>
 
-    <router-view v-slot="{ Component }" :data="stepsObject" @prevPage="prevPage($event)" @nextPage="nextPage($event)">
+    <router-view v-slot="{ Component }">
       <keep-alive>
-        <component :is="Component" />
+        <component :is="Component" :data="stepsObject" @prevPage="prevPage($event)" @nextPage="nextPage($event)" />
       </keep-alive>
     </router-view>
   </div>

@@ -103,7 +103,7 @@ export default defineComponent({
   name: "EntityMatcher",
   components: { ExpansionTable, VueJsonPretty },
   computed: {
-    ...mapState(["currentUser", "isLoggedIn", "filterOptions", "selectedFilters"])
+    ...mapState(["filterOptions", "selectedFilters"])
   },
   emits: {
     nextPage: (_payload: { pageIndex: number; data: {} }) => true,
