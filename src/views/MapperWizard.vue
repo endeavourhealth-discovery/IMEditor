@@ -5,8 +5,10 @@
         <span class="title"><strong>IM Mapper</strong></span>
       </template>
     </TopBar>
-    <div class="card">
-      <Steps :model="items" :readonly="false" />
+    <div class="steps-json-container">
+      <div class="steps-content">
+        <Steps :model="items" :readonly="false" />
+      </div>
     </div>
 
     <router-view v-slot="{ Component }">
@@ -68,5 +70,32 @@ export default defineComponent({
 .title {
   font-size: 2rem;
   white-space: nowrap;
+}
+
+.steps-json-container {
+  flex: 1 1 auto;
+  width: 100%;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  overflow: auto;
+  position: relative;
+  // background-color: #ffffff;
+}
+
+.steps-content {
+  flex: 1 1 auto;
+  width: 100%;
+  overflow: auto;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-start;
+  align-items: center;
+  background-color: #ffffff;
+}
+
+.p-steps {
+  width: 100%;
+  // top: 1rem;
 }
 </style>

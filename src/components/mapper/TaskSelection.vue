@@ -1,14 +1,9 @@
 <template>
-  <ExpansionTable
-    :contents="tasks"
-    :selectable="true"
-    @select="select"
-    @unselect="unselect"
-    @selectAll="selectAll"
-    @unselectAll="unselectAll"
-    class="table-container"
-  />
-  <div class="button-bar flex flex-row justify-content-end" id="mapping-button-bar">
+  <div class="task-selection-container">
+    <ExpansionTable :contents="tasks" :selectable="true" @select="select" @unselect="unselect" @selectAll="selectAll" @unselectAll="unselectAll" />
+  </div>
+
+  <div class="button-bar">
     <Button icon="pi pi-times" label="Back" class="p-button-secondary" @click="previous" />
     <Button icon="pi pi-check" label="Next" class="save-button" @click="next" />
   </div>
@@ -89,7 +84,15 @@ export default defineComponent({
 </script>
 
 <style scoped>
-#mapping-button-bar {
+.task-selection-container {
+  height: calc(100% - 11.6rem);
+  width: 100%;
+  overflow: auto;
+  background-color: #ffffff;
+}
+
+.button-bar {
+  flex: 0 1 auto;
   padding: 1rem 1rem 1rem 0;
   gap: 0.5rem;
   width: 100%;
@@ -98,10 +101,8 @@ export default defineComponent({
   border-right: 1px solid #dee2e6;
   border-radius: 3px;
   background-color: #ffffff;
-}
-
-.table-container {
-  height: calc(100vh - 16.3rem);
-  overflow: auto;
+  display: flex;
+  flex-flow: row;
+  justify-content: flex-end;
 }
 </style>

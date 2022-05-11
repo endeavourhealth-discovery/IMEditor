@@ -90,7 +90,7 @@
       </TabView>
     </div>
   </div>
-  <div id="mapping-button-bar">
+  <div class="button-bar">
     <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
     <Button icon="pi pi-folder" label="Add to task" class="p-button-help" @click="addSelectedToFolder" />
     <Button icon="pi pi-check" label="Next" class="save-button" @click="next" />
@@ -394,7 +394,22 @@ export default defineComponent({
   flex-flow: column nowrap;
 }
 
-#mapping-button-bar {
+.task-definition-container {
+  flex: 1 1 auto;
+  width: 100%;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  overflow: auto;
+  position: relative;
+}
+
+.tab-container {
+  height: calc(100vh - 17.7rem);
+  overflow: auto;
+}
+
+.button-bar {
   flex: 0 1 auto;
   padding: 1rem 1rem 1rem 0;
   gap: 0.5rem;
@@ -409,6 +424,15 @@ export default defineComponent({
   justify-content: flex-end;
 }
 
+.task-tree-container {
+  flex: 1 1 auto;
+  width: 100%;
+  overflow: auto;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-start;
+}
+
 .tabView {
   display: flex;
   flex-direction: column;
@@ -421,29 +445,5 @@ export default defineComponent({
 
 .type-icon {
   padding-right: 0.5rem;
-}
-
-.task-definition-container {
-  flex: 1 1 auto;
-  width: 100%;
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: flex-start;
-  overflow: auto;
-  position: relative;
-}
-
-.tab-container {
-  height: calc(100vh - 22.5rem);
-  overflow: auto;
-}
-
-.task-tree-container {
-  flex: 1 1 auto;
-  width: 100%;
-  overflow: auto;
-  display: flex;
-  flex-flow: column nowrap;
-  justify-content: flex-start;
 }
 </style>
