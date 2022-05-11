@@ -73,7 +73,7 @@ export default defineComponent({
     },
     logicBuild: {
       handler() {
-        // TODO refresh refinement associatedMembers
+        this.updateRefinementsAssociatedMembers();
         this.onConfirm();
       },
       deep: true
@@ -159,16 +159,7 @@ export default defineComponent({
 
     processRefinement(child: any, position: number) {
       for (const [key, value] of Object.entries(child)) {
-        let associatedMember = {} as TTIriRef;
-        let i = position - 1;
-        while (i >= 0) {
-          console.log(this.logicBuild[i]);
-          if (this.logicBuild[i] && this.logicBuild[i].type === ComponentType.ENTITY) {
-            associatedMember = this.logicBuild[i].value.entity;
-            i = -1;
-          }
-          i--;
-        }
+        const associatedMember = this.getRefinementAssociatedmember(position);
         return generateNewComponent(
           ComponentType.REFINEMENT,
           position,
@@ -176,6 +167,28 @@ export default defineComponent({
           this.builderType,
           { minus: true, plus: true }
         );
+      }
+    },
+
+    getRefinementAssociatedmember(position: number) {
+      let associatedMember = {} as TTIriRef;
+      let i = position - 1;
+      while (i >= 0) {
+        if (this.logicBuild[i] && this.logicBuild[i].type === ComponentType.ENTITY) {
+          associatedMember = this.logicBuild[i].value.entity;
+          i = -1;
+        }
+        i--;
+      }
+      return associatedMember;
+    },
+
+    updateRefinementsAssociatedMembers() {
+      for (const item of this.logicBuild) {
+        if (item.type === ComponentType.REFINEMENT) {
+          const associatedMember = this.getRefinementAssociatedmember(item.position);
+          item.value.associatedMember = associatedMember;
+        }
       }
     },
 
