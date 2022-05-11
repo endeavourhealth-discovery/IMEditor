@@ -130,7 +130,10 @@ export default defineComponent({
         plus: false
       });
       if (property) this.refinementBuild.push(property);
-      const quantifier = generateNewComponent(ComponentType.QUANTIFIER, 1, undefined, this.builderType, { minus: false, plus: false });
+      const quantifier = generateNewComponent(ComponentType.QUANTIFIER, 1, { propertyIri: "", quantifier: {} }, this.builderType, {
+        minus: false,
+        plus: false
+      });
       if (quantifier) this.refinementBuild.push(quantifier);
     },
 
