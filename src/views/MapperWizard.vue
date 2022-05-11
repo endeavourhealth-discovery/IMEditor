@@ -80,7 +80,6 @@ export default defineComponent({
   justify-content: flex-start;
   overflow: auto;
   position: relative;
-  // background-color: #ffffff;
 }
 
 .steps-content {
@@ -96,6 +95,5 @@ export default defineComponent({
 
 .p-steps {
   width: 100%;
-  // top: 1rem;
 }
 </style>

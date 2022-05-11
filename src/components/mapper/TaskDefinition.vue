@@ -392,6 +392,7 @@ export default defineComponent({
 .tree-bar-container {
   display: flex;
   flex-flow: column nowrap;
+  background-color: #ffffff;
 }
 
 .task-definition-container {
@@ -402,6 +403,7 @@ export default defineComponent({
   justify-content: flex-start;
   overflow: auto;
   position: relative;
+  background-color: #ffffff;
 }
 
 .tab-container {
