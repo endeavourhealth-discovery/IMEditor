@@ -65,13 +65,8 @@ export default defineComponent({
   overflow: auto;
 }
 
-#mapper-main-container {
-  width: 100%;
-  height: calc(100% - 93.81px);
-  overflow-y: auto;
-}
-
 .title {
   font-size: 2rem;
+  white-space: nowrap;
 }
 </style>

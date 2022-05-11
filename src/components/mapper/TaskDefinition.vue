@@ -1,14 +1,14 @@
 <template>
   <ConfirmDialog></ConfirmDialog>
-  <div class="grid grid-nogutter">
-    <div class="col-3 tree-bar-container">
+  <div class="task-definition-container">
+    <div class="tree-bar-container col-3">
       <Tree
         :value="root"
         selectionMode="single"
         v-model:selectionKeys="selectedNode"
         @node-select="onNodeSelect"
         :loading="loading"
-        class="task-definition-container"
+        class="task-tree-container"
       >
         <template #default="slotProps">
           <span :style="'color: ' + slotProps.node.colour" class="p-mx-1 type-icon">
@@ -90,7 +90,7 @@
       </TabView>
     </div>
   </div>
-  <div class="button-bar flex flex-row justify-content-end" id="mapping-button-bar">
+  <div id="mapping-button-bar">
     <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
     <Button icon="pi pi-folder" label="Add to task" class="p-button-help" @click="addSelectedToFolder" />
     <Button icon="pi pi-check" label="Next" class="save-button" @click="next" />
@@ -390,12 +390,12 @@ export default defineComponent({
 
 <style scoped>
 .tree-bar-container {
-  height: 100%;
   display: flex;
   flex-flow: column nowrap;
 }
 
 #mapping-button-bar {
+  flex: 0 1 auto;
   padding: 1rem 1rem 1rem 0;
   gap: 0.5rem;
   width: 100%;
@@ -404,6 +404,9 @@ export default defineComponent({
   border-right: 1px solid #dee2e6;
   border-radius: 3px;
   background-color: #ffffff;
+  display: flex;
+  flex-flow: row;
+  justify-content: flex-end;
 }
 
 .tabView {
@@ -421,12 +424,26 @@ export default defineComponent({
 }
 
 .task-definition-container {
-  height: calc(100vh - 18.6rem);
+  flex: 1 1 auto;
+  width: 100%;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
   overflow: auto;
+  position: relative;
 }
 
 .tab-container {
-  height: calc(100vh - 21.5rem);
+  height: calc(100vh - 22.5rem);
   overflow: auto;
+}
+
+.task-tree-container {
+  flex: 1 1 auto;
+  width: 100%;
+  overflow: auto;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-start;
 }
 </style>
