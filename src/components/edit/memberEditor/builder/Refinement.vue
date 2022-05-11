@@ -39,10 +39,9 @@
 import { defineComponent, PropType } from "@vue/runtime-core";
 import { mapState } from "vuex";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
-import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
+import Property from "@/components/edit/memberEditor/builder/Property.vue";
 import Quantifier from "@/components/edit/memberEditor/builder/Quantifier.vue";
 import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
-import EntityService from "@/services/EntityService";
 import { Vocabulary, Helpers, Enums } from "im-library";
 import { EntityReferenceNode, NextComponentSummary, ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 const {
@@ -66,7 +65,7 @@ export default defineComponent({
     deleteClicked: (_payload: ComponentDetails) => true,
     addClicked: (_payload: any) => true
   },
-  components: { AddDeleteButtons, Entity, Quantifier, AddNext },
+  components: { AddDeleteButtons, Property, Quantifier, AddNext },
   watch: {
     refinementBuild: {
       handler() {
@@ -82,31 +81,22 @@ export default defineComponent({
   data() {
     return {
       refinementBuild: [] as ComponentDetails[],
-      loading: true,
-      propertyOptions: {} as any
+      loading: true
     };
   },
   methods: {
     async createBuild() {
       this.loading = true;
       this.refinementBuild = [];
-      const propertyTypeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === RDF.PROPERTY);
-      this.propertyOptions = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: propertyTypeOptions };
       if (!this.hasData(this.value)) this.createDefaultBuild();
       else {
         let position = 0;
-        const typeOptions = [{ "@id": RDF.PROPERTY }];
-        const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
-        const result = await EntityService.getPartialEntity(this.value.propertyIri, [RDFS.LABEL]);
-        const propertyName = result ? result[RDFS.LABEL] : "";
         const property = generateNewComponent(
-          ComponentType.ENTITY,
+          ComponentType.PROPERTY,
           position,
           {
-            filterOptions: options,
-            entity: { "@id": this.value.propertyIri, name: propertyName },
-            type: ComponentType.ENTITY,
-            label: "Property"
+            propertyIri: this.value.propertyIri,
+            associatedMember: this.value.associatedMember
           },
           this.builderType,
           { minus: false, plus: false }
@@ -135,20 +125,17 @@ export default defineComponent({
 
     createDefaultBuild() {
       this.refinementBuild = [];
-      const property = generateNewComponent(
-        ComponentType.ENTITY,
-        0,
-        { filterOptions: this.propertyOptions, entity: undefined, type: ComponentType.ENTITY, label: "Property" },
-        this.builderType,
-        { minus: false, plus: false }
-      );
+      const property = generateNewComponent(ComponentType.PROPERTY, 0, { propertyIri: "", associatedMember: {} }, this.builderType, {
+        minus: false,
+        plus: false
+      });
       if (property) this.refinementBuild.push(property);
       const quantifier = generateNewComponent(ComponentType.QUANTIFIER, 1, undefined, this.builderType, { minus: false, plus: false });
       if (quantifier) this.refinementBuild.push(quantifier);
     },
 
-    hasData(data: any): data is { propertyIri: string; children: any[] } {
-      if (data && (data as { propertyIri: string; children: any[] }).propertyIri) return true;
+    hasData(data: any): data is { propertyIri: string; children: any[]; associatedMember: TTIriRef } {
+      if (data && (data as { propertyIri: string; children: any[]; associatedMember: TTIriRef }).propertyIri) return true;
       return false;
     },
 
@@ -160,11 +147,11 @@ export default defineComponent({
         this.createDefaultBuild();
         return;
       }
-      if (this.refinementBuild[0].type !== ComponentType.ENTITY) {
+      if (this.refinementBuild[0].type !== ComponentType.PROPERTY) {
         const property = generateNewComponent(
-          ComponentType.ENTITY,
+          ComponentType.PROPERTY,
           0,
-          { filterOptions: this.propertyOptions, entity: undefined, type: ComponentType.ENTITY, label: "Property" },
+          { propertyIri: this.value?.propertyIri || "", associatedMember: this.value?.associatedMember || {} },
           this.builderType,
           { minus: false, plus: false }
         );
