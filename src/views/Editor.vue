@@ -23,6 +23,7 @@
                     v-if="active === 0 && isObjectHasKeysWrapper(conceptUpdated)"
                     :updatedConcept="conceptUpdated"
                     @concept-updated="updateConcept"
+                    :userRoles="userRoles"
                     mode="edit"
                   />
                 </div>
@@ -70,6 +71,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { Auth } from "aws-amplify";
 import SummaryEditor from "@/components/edit/SummaryEditor.vue";
 import EntityService from "@/services/EntityService";
 import ConfirmDialog from "primevue/confirmdialog";
@@ -78,12 +80,13 @@ import ParentsEditor from "@/components/edit/ParentsEditor.vue";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import { mapState } from "vuex";
-import { Vocabulary, Helpers } from "im-library";
+import { Vocabulary, Helpers, Env } from "im-library";
 const { IM, RDF, RDFS } = Vocabulary;
 const {
   ConceptTypeMethods: { isValueSet },
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  EntityValidator: { hasValidIri, hasValidName, hasValidParents, hasValidStatus, hasValidTypes }
+  EntityValidator: { hasValidIri, hasValidName, hasValidParents, hasValidStatus, hasValidTypes },
+  Converters: { iriToUrl }
 } = Helpers;
 
 export default defineComponent({
@@ -121,11 +124,13 @@ export default defineComponent({
       active: 0,
       loading: true,
       entityName: "",
-      showJson: false
+      showJson: false,
+      userRoles: [] as string[]
     };
   },
   async mounted() {
     this.loading = true;
+    await this.getUserRoles();
     await this.fetchConceptData();
     await this.getFilterOptions();
     this.loading = false;
@@ -198,12 +203,35 @@ export default defineComponent({
             confirmButtonText: "Save",
             reverseButtons: true,
             confirmButtonColor: "#2196F3",
-            cancelButtonColor: "#607D8B"
+            cancelButtonColor: "#607D8B",
+            showLoaderOnConfirm: true,
+            allowOutsideClick: () => !this.$swal.isLoading(),
+            preConfirm: async () => {
+              const res = await EntityService.updateEntity(this.conceptUpdated);
+              if (res) return res;
+              else this.$swal.showValidationMessage("Error saving entity to server.");
+            }
           })
-          .then(async (result: any) => {
+          .then((result: any) => {
             if (result.isConfirmed) {
-              const result = await EntityService.updateEntity(this.conceptUpdated);
-              console.log(result);
+              this.$swal
+                .fire({
+                  title: "Success!",
+                  text: "Entity " + this.conceptUpdated["@id"] + " has been updated.",
+                  icon: "success",
+                  showCancelButton: true,
+                  reverseButtons: true,
+                  confirmButtonText: "Open in Viewer",
+                  confirmButtonColor: "#2196F3",
+                  cancelButtonColor: "#607D8B"
+                })
+                .then((result: any) => {
+                  if (result.isConfirmed) {
+                    window.location.href = Env.viewerUrl + "concept?selectedIri=" + iriToUrl(this.conceptUpdated["@id"]);
+                  } else {
+                    this.fetchConceptData();
+                  }
+                });
             }
           });
       } else {
@@ -291,6 +319,16 @@ export default defineComponent({
     handleClick(data: any) {
       console.log("click");
       console.log(data);
+    },
+
+    async getUserRoles() {
+      await Auth.currentSession()
+        .then(data => {
+          this.userRoles = data.getIdToken().payload["cognito:groups"];
+        })
+        .catch(() => {
+          this.userRoles = [];
+        });
     }
   }
 });

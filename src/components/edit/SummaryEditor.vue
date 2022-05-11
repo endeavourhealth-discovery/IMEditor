@@ -21,7 +21,7 @@
           :class="(invalidIri || iriExists) && 'invalid'"
           v-model="code"
           type="text"
-          :disabled="mode !== 'create'"
+          :disabled="mode !== 'create' && !checkAuthorization"
         />
         <label for="code-input">Code</label>
       </span>
@@ -36,7 +36,7 @@
           v-model="scheme"
           :options="filterOptions.schemes"
           optionLabel="name"
-          :disabled="mode !== 'create'"
+          :disabled="mode !== 'create' && !checkAuthorization"
         />
         <label for="scheme-dropdown">Scheme</label>
       </span>
@@ -93,7 +93,7 @@
 
 <script lang="ts">
 import EntityService from "@/services/EntityService";
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent, PropType } from "@vue/runtime-core";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers } from "im-library";
 const {
@@ -103,7 +103,11 @@ const { IM, RDF, RDFS } = Vocabulary;
 
 export default defineComponent({
   name: "SummaryEditor",
-  props: { updatedConcept: { type: Object, required: true }, mode: { type: String, required: true } },
+  props: {
+    updatedConcept: { type: Object, required: true },
+    mode: { type: String, required: true },
+    userRoles: { type: Array as PropType<Array<string>>, default: [] }
+  },
   emits: { "concept-updated": (payload: any) => isObjectHasKeys(payload) },
   watch: {
     updatedConcept: {
@@ -259,6 +263,11 @@ export default defineComponent({
       const statusFound = validities.find((item: { key: string; valid: boolean }) => item.key === "status");
       if (statusFound) this.invalidStatus = !statusFound.valid;
       else this.invalidStatus = true;
+    },
+
+    checkAuthorization() {
+      if (this.userRoles) return this.userRoles.includes("IMAdmin");
+      else return false;
     }
   }
 });
