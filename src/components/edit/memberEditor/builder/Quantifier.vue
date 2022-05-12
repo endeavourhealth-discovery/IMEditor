@@ -5,13 +5,26 @@
       <div v-if="loading" class="loading-container">
         <ProgressSpinner style="width:1.5rem;height:1.5rem;" strokeWidth="6" />
       </div>
-      <Dropdown
+      <AutoComplete
+        v-else-if="filteredOptions.length < 25"
+        v-model="selectedResult"
+        :suggestions="filteredOptions"
+        @complete="selectFromDropdown"
+        field="name"
+        :dropdown="true"
+        :disabled="invalidAssociatedProperty"
+        :forceSelection="true"
+      />
+      <AutoComplete
         v-else
         v-model="selectedResult"
-        :options="dropdownOptions"
-        optionLabel="name"
-        placeholder="select a quantifier"
+        :suggestions="filteredOptions"
+        @complete="selectFromDropdown"
+        :virtualScrollerOptions="{ itemSize: 25 }"
+        field="name"
+        :dropdown="true"
         :disabled="invalidAssociatedProperty"
+        :forceSelection="true"
       />
       <small v-if="invalidAssociatedProperty" class="validate-error">Missing property for refinement. Please select a property first.</small>
     </div>
@@ -21,19 +34,24 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "@vue/runtime-core";
+import axios from "axios";
 import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/SearchMiniOverlay.vue";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums, Models } from "im-library";
-import { TTIriRef, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
+import { TTIriRef, ComponentDetails, Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
 import QueryService from "@/services/QueryService";
+import EntityService from "@/services/EntityService";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   TypeGuards: { isTTIriRef },
   Sorters: { byName }
 } = Helpers;
 const { IM, RDFS } = Vocabulary;
-const { ComponentType } = Enums;
+const { ComponentType, SortBy } = Enums;
+const {
+  Search: { SearchRequest }
+} = Models;
 
 export default defineComponent({
   name: "Quantifier",
@@ -58,6 +76,12 @@ export default defineComponent({
         await this.init();
       },
       deep: true
+    },
+    selectedResult: {
+      handler(newValue, oldValue) {
+        if (newValue && JSON.stringify(newValue) !== JSON.stringify(oldValue) && newValue["@id"]) this.onConfirm();
+      },
+      deep: true
     }
   },
   async mounted() {
@@ -66,28 +90,32 @@ export default defineComponent({
   data() {
     return {
       loading: false,
-      selectedResult: {} as TTIriRef,
+      selectedResult: null as TTIriRef | null,
       dropdownOptions: [] as any[],
-      invalidAssociatedProperty: false
+      filteredOptions: [] as any[],
+      invalidAssociatedProperty: false,
+      request: {} as { cancel: any; msg: string },
+      propertyQuantiferKeys: [] as TTIriRef[]
     };
   },
   methods: {
     async init() {
       this.loading = true;
-      if (this.value && isTTIriRef(this.value.quantifier)) {
-        this.selectedResult = this.value.quantifier;
-      }
       if (this.value.propertyIri) {
         this.invalidAssociatedProperty = false;
         const query = this.createQuantifierOptionsQuery(this.value.propertyIri);
         const queryResult = await QueryService.queryIM(query);
-        console.log(queryResult);
         if (isObjectHasKeys(queryResult, ["entities", "@context"]) && isArrayHasLength(queryResult.entities)) {
-          this.dropdownOptions = queryResult.entities
+          this.propertyQuantiferKeys = queryResult.entities
             .map(result => {
               return { "@id": result["@id"][0], name: result[RDFS.LABEL][0] };
             })
             .sort(byName);
+        }
+        await this.search({ query: this.value.propertyIri });
+        if (this.value && isTTIriRef(this.value.quantifier)) {
+          const found = this.dropdownOptions?.find(item => item["@id"] === this.value.quantifier["@id"]);
+          if (found) this.selectedResult = found;
         }
       } else {
         this.invalidAssociatedProperty = true;
@@ -126,9 +154,66 @@ export default defineComponent({
       };
     },
 
+    async search(event: any) {
+      if (event.query.length > 0) {
+        this.loading = true;
+        this.dropdownOptions = [];
+        const searchRequest = new SearchRequest();
+        searchRequest.termFilter = event.query;
+        searchRequest.sortBy = SortBy.Usage;
+        searchRequest.page = 1;
+        searchRequest.size = 100;
+        this.setFilters(searchRequest);
+        if (isObjectHasKeys(this.request, ["cancel", "msg"])) {
+          await this.request.cancel({ status: 499, message: "Search cancelled by user" });
+        }
+        const axiosSource = axios.CancelToken.source();
+        this.request = { cancel: axiosSource.cancel, msg: "Loading..." };
+        const result = await EntityService.advancedSearch(searchRequest, axiosSource.token);
+        if (isArrayHasLength(result)) {
+          this.dropdownOptions = result.map(item => {
+            return { "@id": item.iri, name: item.name };
+          });
+        }
+        this.loading = false;
+      }
+    },
+
+    setFilters(searchRequest: Models.Search.SearchRequest) {
+      const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === IM.CONCEPT || type["@id"] === IM.CONCEPT_SET);
+      const filteredFilterOptions = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
+
+      searchRequest.schemeFilter = filteredFilterOptions.schemes.map((scheme: Namespace) => scheme.iri);
+
+      searchRequest.statusFilter = [];
+      for (const status of filteredFilterOptions.status) {
+        searchRequest.statusFilter.push(status["@id"]);
+      }
+
+      searchRequest.typeFilter = [];
+      for (const type of filteredFilterOptions.types) {
+        searchRequest.typeFilter.push(type["@id"]);
+      }
+    },
+
+    selectFromDropdown(event: any) {
+      const query = event.query;
+      let filteredItems = [];
+      if (this.dropdownOptions) {
+        for (let i = 0; i < this.dropdownOptions.length; i++) {
+          let item = this.dropdownOptions[i];
+          if (item.name.toLowerCase().indexOf(query.toLowerCase()) === 0) {
+            filteredItems.push(item);
+          }
+        }
+      }
+      if (filteredItems.length) this.filteredOptions = filteredItems;
+      else this.filteredOptions = this.dropdownOptions;
+    },
+
     createQuantifier(): ComponentDetails {
       return {
-        value: this.selectedResult,
+        value: this.createAsJson(),
         id: this.id,
         position: this.position,
         type: ComponentType.QUANTIFIER,
@@ -138,10 +223,26 @@ export default defineComponent({
       };
     },
 
+    onConfirm() {
+      this.$emit("updateClicked", {
+        id: this.id,
+        value: this.createAsJson(),
+        position: this.position,
+        type: ComponentType.QUANTIFIER,
+        builderType: this.builderType,
+        json: this.selectedResult,
+        showButtons: this.showButtons
+      });
+    },
+
+    createAsJson() {
+      return { quantifier: this.selectedResult, propertyIri: this.value.propertyIri };
+    },
+
     deleteClicked(): void {
       this.$emit("deleteClicked", {
         id: this.id,
-        value: this.selectedResult,
+        value: this.createAsJson(),
         position: this.position,
         type: ComponentType.QUANTIFIER,
         builderType: this.builderType,
@@ -205,8 +306,15 @@ export default defineComponent({
   color: #6c757d;
 }
 
-.p-dropdown {
+.p-autocomplete {
   width: 100%;
+}
+
+.p-autocomplete:deep(.p-autocomplete-input) {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .validate-error {

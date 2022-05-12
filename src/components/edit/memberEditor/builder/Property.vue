@@ -49,6 +49,12 @@ export default defineComponent({
         await this.init();
       },
       deep: true
+    },
+    selected: {
+      handler(newValue, oldValue) {
+        if (newValue && JSON.stringify(newValue) !== JSON.stringify(oldValue) && newValue["@id"]) this.onConfirm();
+      },
+      deep: true
     }
   },
   async mounted() {
@@ -121,10 +127,26 @@ export default defineComponent({
       };
     },
 
+    onConfirm() {
+      this.$emit("updateClicked", {
+        id: this.id,
+        value: this.createAsJson(),
+        position: this.position,
+        type: ComponentType.PROPERTY,
+        builderType: this.builderType,
+        json: this.selected,
+        showButtons: this.showButtons
+      });
+    },
+
+    createAsJson() {
+      return { propertyIri: this.selected["@id"], associatedMember: this.value.associatedMember };
+    },
+
     deleteClicked(): void {
       this.$emit("deleteClicked", {
         id: this.id,
-        value: this.selected,
+        value: this.createAsJson(),
         position: this.position,
         type: ComponentType.PROPERTY,
         builderType: this.builderType,

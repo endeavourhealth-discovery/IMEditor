@@ -174,10 +174,8 @@ export default defineComponent({
     },
 
     addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
-      if (data.selectedType === ComponentType.ENTITY) {
-        const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === RDF.PROPERTY);
-        const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
-        data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Property" };
+      if (data.selectedType === ComponentType.PROPERTY) {
+        data.value = { propertyIri: this.value?.propertyIri, associatedMember: this.value?.associatedMember };
       }
       addItem(data, this.refinementBuild, this.builderType, { minus: false, plus: false });
     },
@@ -211,7 +209,7 @@ export default defineComponent({
       let propertyIri = "";
       let children = [] as any[];
       for (const [index, item] of this.refinementBuild.entries()) {
-        if (index === 0) propertyIri = item.value.entity ? item.value.entity["@id"] : "";
+        if (index === 0) propertyIri = item.value.propertyIri ? item.value.propertyIri : "";
         else if (item.type !== ComponentType.ADD_NEXT) children.push(item.json);
       }
       json[propertyIri] = children;
@@ -222,7 +220,7 @@ export default defineComponent({
       const children = [];
       let propertyIri = "";
       for (const [index, child] of this.refinementBuild.entries()) {
-        if (index === 0) propertyIri = child.value.entity ? child.value.entity["@id"] : "";
+        if (index === 0) propertyIri = child.value.propertyIri ? child.value.propertyIri : "";
         else children.push(child.value);
       }
       return { propertyIri: propertyIri, children: children, associatedMember: this.value?.associatedMember };
