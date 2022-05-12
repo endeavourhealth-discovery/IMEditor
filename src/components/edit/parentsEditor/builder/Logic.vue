@@ -42,7 +42,8 @@ import { Vocabulary, Helpers, Enums } from "im-library";
 import { ComponentDetails, TTIriRef, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  EditorBuilderJsonMethods: { addItem, generateNewComponent, updateItem, updatePositions }
+  EditorBuilderJsonMethods: { addItem, generateNewComponent, updateItem, updatePositions },
+  ConceptTypeMethods: { isValueSet }
 } = Helpers;
 const { IM, RDFS } = Vocabulary;
 const { BuilderType, ComponentType } = Enums;
@@ -58,6 +59,7 @@ export default defineComponent({
   },
   components: { AddDeleteButtons, AddNext, Entity },
   computed: mapState(["filterOptions"]),
+  inject: ["entityType"],
   emits: {
     addNextOptionsClicked: (_payload: any) => true,
     deleteClicked: (_payload: ComponentDetails) => true,
@@ -87,11 +89,7 @@ export default defineComponent({
   },
   data() {
     return {
-      options: [
-        { iri: IM.IS_CONTAINED_IN, name: "Contained in" },
-        { iri: IM.IS_A, name: "Is a" },
-        { iri: RDFS.SUBCLASS_OF, name: "Subclass of" }
-      ] as { iri: string; name: string }[],
+      options: [] as { iri: string; name: string }[],
       selected: {} as { iri: string; name: string },
       logicBuild: [] as any[],
       loading: true,
@@ -102,6 +100,7 @@ export default defineComponent({
   methods: {
     init() {
       this.loading = true;
+      this.setOptions();
       const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === IM.CONCEPT || type["@id"] === IM.CONCEPT_SET);
       this.filteredFilterOptions = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
       if (this.value && isObjectHasKeys(this.value, ["iri", "children"])) {
@@ -141,6 +140,22 @@ export default defineComponent({
           { minus: true, plus: true }
         )
       ];
+    },
+
+    setOptions() {
+      if (isValueSet(this.entityType)) {
+        this.options = [
+          { iri: IM.IS_CONTAINED_IN, name: "Contained in" },
+          { iri: IM.IS_A, name: "Is a" },
+          { iri: RDFS.SUBCLASS_OF, name: "Subclass of" }
+        ];
+      } else {
+        this.options = [
+          { iri: IM.IS_CONTAINED_IN, name: "Contained in" },
+          { iri: IM.IS_A, name: "Is a" },
+          { iri: RDFS.SUBCLASS_OF, name: "Subclass of" }
+        ];
+      }
     },
 
     processChild(child: any, position: number) {

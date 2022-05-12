@@ -103,7 +103,7 @@ export default defineComponent({
       if (isObjectHasKeys(this.value, ["options"])) {
         found = this.value.options.find(option => option.iri === this.value.iri);
       }
-      this.selected = found ? found : this.value.options[0];
+      this.selected = found ? found : this.value.options[1];
       await this.createBuild();
       this.loading = false;
     },
