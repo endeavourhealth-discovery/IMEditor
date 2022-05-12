@@ -144,11 +144,7 @@ export default defineComponent({
 
     setOptions() {
       if (isValueSet(this.entityType)) {
-        this.options = [
-          { iri: IM.IS_CONTAINED_IN, name: "Contained in" },
-          { iri: IM.IS_A, name: "Is a" },
-          { iri: RDFS.SUBCLASS_OF, name: "Subclass of" }
-        ];
+        this.options = [{ iri: IM.IS_CONTAINED_IN, name: "Contained in" }];
       } else {
         this.options = [
           { iri: IM.IS_CONTAINED_IN, name: "Contained in" },

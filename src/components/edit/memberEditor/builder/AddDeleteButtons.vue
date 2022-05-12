@@ -24,8 +24,11 @@ export default defineComponent({
     deleteClicked: () => true
   },
   watch: {
-    selected(newValue) {
-      this.$emit("addNextClicked", newValue);
+    selected: {
+      handler(newValue) {
+        if (this.selected) this.$emit("addNextClicked", newValue);
+      },
+      deep: true
     }
   },
   mounted() {
@@ -51,6 +54,7 @@ export default defineComponent({
         this.menuOptions.push({
           label: item,
           command: (option: any) => {
+            this.selected = null;
             this.selected = option.item.label;
           }
         });
