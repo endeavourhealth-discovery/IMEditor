@@ -193,6 +193,7 @@ export default defineComponent({
   },
   methods: {
     async getPredefinedList(listName: string) {
+      this.loading = true;
       if (!this.predefinedListMap.has(listName)) {
         const list = (await EntityService.getPredefinedList(listName)).map(unmapped => {
           return { iri: unmapped["@id"], name: unmapped.name };
@@ -201,6 +202,7 @@ export default defineComponent({
       }
 
       this.selectedList = this.predefinedListMap.get(listName);
+      this.loading = false;
     },
 
     async init() {

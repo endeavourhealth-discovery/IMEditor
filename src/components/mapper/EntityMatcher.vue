@@ -71,6 +71,7 @@
 
   <div class="button-bar">
     <Button icon="pi pi-times" label="Back" class="p-button-secondary" @click="previous" />
+    <Button icon="pi pi-plus" label="Create new entity" class="p-button-warning" @click="directToCreator" />
     <Button icon="pi pi-arrows-h" label="Map" class="p-button-help" :disabled="!(selected && selectedEntities.length)" @click="map" />
     <Button icon="pi pi-check" label="Next" class="save-button" @click="next" :disabled="!mappingsMap.size" />
   </div>
@@ -141,6 +142,10 @@ export default defineComponent({
   },
 
   methods: {
+    directToCreator() {
+      this.$router.push({ name: "Creator" });
+    },
+
     isObjectHasKeys(object: any) {
       return isObjectHasKeys(object);
     },
