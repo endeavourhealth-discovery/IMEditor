@@ -48,8 +48,15 @@
     <div class="col">
       <TabView :lazy="true" class="tabView" @tab-change="tableSelectedList = []">
         <TabPanel header="List">
+          <Dropdown
+            v-model="selectedListOption"
+            :options="predefinedListOptions"
+            optionLabel="name"
+            placeholder="Select a predifined list"
+            class="predefined-list-dropdown"
+          />
           <ExpansionTable
-            :contents="unmapped"
+            :contents="selectedList"
             :drag="true"
             :paginable="true"
             @startDrag="startDrag"
@@ -114,7 +121,7 @@ import { Vocabulary, Helpers, Models, Enums } from "im-library";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import axios from "axios";
-import { Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
+import { Namespace, EntityReferenceNode, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 
 const { IM, RDF, RDFS } = Vocabulary;
 const {
@@ -146,8 +153,12 @@ export default defineComponent({
     ...mapState(["filterOptions", "refreshTree"])
   },
   watch: {
-    refreshTree() {
-      this.init();
+    async refreshTree() {
+      await this.init();
+    },
+
+    async selectedListOption() {
+      await this.getPredefinedList(this.selectedListOption.path);
     }
   },
   data() {
@@ -156,7 +167,6 @@ export default defineComponent({
       root: [] as any[],
       selectedNode: {} as any,
       selected: {} as any,
-      unmapped: [] as any[],
       contentHeight: "",
       loading: true,
       searchResults: [] as any[],
@@ -164,17 +174,37 @@ export default defineComponent({
       draggedItem: {} as any,
       tableSelectedList: [] as any[],
       displayAddToTask: false,
-      tasks: [] as any[]
+      tasks: [] as any[],
+      predefinedListOptions: [
+        { name: "Unmapped", path: "unmapped" },
+        { name: "Unassigned", path: "unassigned" },
+        { name: "Unclassified", path: "unclassified" }
+      ],
+      predefinedListMap: new Map(),
+      selectedListOption: {} as { name: string; path: string },
+      selectedList: [] as any[]
     };
   },
   async mounted() {
     this.loading = true;
+    this.predefinedListMap = new Map();
     await this.init();
     this.loading = false;
   },
   methods: {
+    async getPredefinedList(listName: string) {
+      if (!this.predefinedListMap.has(listName)) {
+        const list = (await EntityService.getPredefinedList(listName)).map(unmapped => {
+          return { iri: unmapped["@id"], name: unmapped.name };
+        });
+        this.predefinedListMap.set(listName, list);
+      }
+
+      this.selectedList = this.predefinedListMap.get(listName);
+    },
+
     async init() {
-      await this.getUnmapped();
+      this.selectedListOption = this.predefinedListOptions[0];
       await this.getTasks();
     },
 
@@ -251,6 +281,7 @@ export default defineComponent({
       entity[IM.IN_TASK] = node["@id"];
       await this.addActionToTask(this.draggedItem.iri, node["@id"]);
       await this.getTasks();
+      this.selectedNode = {};
       this.loading = false;
     },
 
@@ -327,12 +358,6 @@ export default defineComponent({
       this.selected = node;
     },
 
-    async getUnmapped() {
-      this.unmapped = (await EntityService.getUnmapped()).map(unmapped => {
-        return { iri: unmapped["@id"], name: unmapped.name };
-      });
-    },
-
     selectAll(selectedList: any[]) {
       this.tableSelectedList = selectedList;
     },
@@ -391,6 +416,11 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.predefined-list-dropdown {
+  display: flex;
+  margin-bottom: 1rem;
+}
+
 .tree-bar-container {
   display: flex;
   flex-flow: column nowrap;
@@ -409,7 +439,7 @@ export default defineComponent({
 }
 
 .tab-container {
-  height: calc(100vh - 17.7rem);
+  height: calc(100vh - 21rem);
   overflow: auto;
 }
 
@@ -440,7 +470,6 @@ export default defineComponent({
 .tabView {
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 
 .delete-icon {
