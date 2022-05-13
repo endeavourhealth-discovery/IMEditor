@@ -5,7 +5,7 @@ import TypeSelector from "@/components/creator/TypeSelector.vue";
 import SummaryEditor from "@/components/edit/SummaryEditor.vue";
 import ParentsEditor from "@/components/edit/ParentsEditor.vue";
 import MemberEditor from "@/components/edit/MemberEditor.vue";
-import { AccessDenied, SnomedLicense, Env } from "im-library";
+import { AccessDenied, SnomedLicense, Env, PageNotFound } from "im-library";
 import MapperWizard from "../views/MapperWizard.vue";
 import TaskDefinition from "../components/mapper/TaskDefinition.vue";
 import TaskSelection from "../components/mapper/TaskSelection.vue";
@@ -82,6 +82,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/401",
     name: "AccessDenied",
     component: AccessDenied
+  },
+  {
+    path: "/:pathMatch(.*)*",
+    name: "PageNotFound",
+    component: PageNotFound
   }
 ];
 
