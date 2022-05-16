@@ -5,7 +5,7 @@ import TypeSelector from "@/components/creator/TypeSelector.vue";
 import SummaryEditor from "@/components/edit/SummaryEditor.vue";
 import ParentsEditor from "@/components/edit/ParentsEditor.vue";
 import MemberEditor from "@/components/edit/MemberEditor.vue";
-import { AccessDenied, SnomedLicense, Env, PageNotFound } from "im-library";
+import { AccessDenied, SnomedLicense, Env, PageNotFound, EntityNotFound, Helpers } from "im-library";
 import MapperWizard from "../views/MapperWizard.vue";
 import TaskDefinition from "../components/mapper/TaskDefinition.vue";
 import TaskSelection from "../components/mapper/TaskSelection.vue";
@@ -14,6 +14,10 @@ import MappingConfirmation from "../components/mapper/MappingConfirmation.vue";
 
 import store from "@/store/index";
 import { nextTick } from "vue";
+import EntityService from "@/services/EntityService";
+const {
+  DataTypeCheckers: { isObjectHasKeys }
+} = Helpers;
 
 const APP_TITLE = "IM Editor";
 
@@ -84,6 +88,11 @@ const routes: Array<RouteRecordRaw> = [
     component: AccessDenied
   },
   {
+    path: "/404",
+    name: "EntityNotFound",
+    component: EntityNotFound
+  },
+  {
     path: "/:pathMatch(.*)*",
     name: "PageNotFound",
     component: PageNotFound
@@ -124,6 +133,19 @@ router.beforeEach(async (to, from) => {
       };
     }
   }
+
+  if (to.name === "Editor" && isObjectHasKeys(to.params, ["selectedIri"])) {
+    const iri = to.params.selectedIri as string;
+    try {
+      new URL(iri);
+      if (!(await EntityService.iriExists(iri))) {
+        router.push({ name: "EntityNotFound" });
+      }
+    } catch (_error) {
+      router.push({ name: "EntityNotFound" });
+    }
+  }
+
   return true;
 });
 
