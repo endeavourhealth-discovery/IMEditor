@@ -1,1 +1,1 @@
-rm -rf /opt/tomcat/webapps/editor
+rm -rf /usr/share/nginx/editor
