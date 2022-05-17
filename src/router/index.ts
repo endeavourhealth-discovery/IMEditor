@@ -5,6 +5,7 @@ import TypeSelector from "@/components/creator/TypeSelector.vue";
 import SummaryEditor from "@/components/edit/SummaryEditor.vue";
 import ParentsEditor from "@/components/edit/ParentsEditor.vue";
 import MemberEditor from "@/components/edit/MemberEditor.vue";
+import SelectEntity from "@/views/SelectEntity.vue";
 import { AccessDenied, SnomedLicense, Env } from "im-library";
 import MapperWizard from "../views/MapperWizard.vue";
 import TaskDefinition from "../components/mapper/TaskDefinition.vue";
@@ -18,6 +19,7 @@ import { nextTick } from "vue";
 const APP_TITLE = "IM Editor";
 
 const routes: Array<RouteRecordRaw> = [
+  { path: "/", redirect: { name: "SelectEntity" } },
   {
     path: "/creator",
     name: "Creator",
@@ -41,6 +43,13 @@ const routes: Array<RouteRecordRaw> = [
       requiresAuth: true,
       requiresLicense: true
     }
+  },
+  {
+    path: "/selectEntity",
+    name: "SelectEntity",
+    component: SelectEntity,
+    meta: { requiredAuth: true, requiresLicense: true },
+    props: { returnUrl: null }
   },
   {
     path: "/mapper",
