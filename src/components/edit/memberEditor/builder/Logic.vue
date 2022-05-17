@@ -73,6 +73,7 @@ export default defineComponent({
     },
     logicBuild: {
       handler() {
+        this.updateRefinementsAssociatedMembers();
         this.onConfirm();
       },
       deep: true
@@ -102,7 +103,7 @@ export default defineComponent({
       if (isObjectHasKeys(this.value, ["options"])) {
         found = this.value.options.find(option => option.iri === this.value.iri);
       }
-      this.selected = found ? found : this.value.options[0];
+      this.selected = found ? found : this.value.options[1];
       await this.createBuild();
       this.loading = false;
     },
@@ -158,7 +159,36 @@ export default defineComponent({
 
     processRefinement(child: any, position: number) {
       for (const [key, value] of Object.entries(child)) {
-        return generateNewComponent(ComponentType.REFINEMENT, position, { propertyIri: key, children: value }, this.builderType, { minus: true, plus: true });
+        const associatedMember = this.getRefinementAssociatedmember(position);
+        return generateNewComponent(
+          ComponentType.REFINEMENT,
+          position,
+          { propertyIri: key, children: value, associatedMember: associatedMember },
+          this.builderType,
+          { minus: true, plus: true }
+        );
+      }
+    },
+
+    getRefinementAssociatedmember(position: number) {
+      let associatedMember = {} as TTIriRef;
+      let i = position - 1;
+      while (i >= 0) {
+        if (this.logicBuild[i] && this.logicBuild[i].type === ComponentType.ENTITY) {
+          associatedMember = this.logicBuild[i].value.entity;
+          i = -1;
+        }
+        i--;
+      }
+      return associatedMember;
+    },
+
+    updateRefinementsAssociatedMembers() {
+      for (const item of this.logicBuild) {
+        if (item.type === ComponentType.REFINEMENT && item.value) {
+          const associatedMember = this.getRefinementAssociatedmember(item.position);
+          item.value.associatedMember = associatedMember;
+        }
       }
     },
 
@@ -195,6 +225,7 @@ export default defineComponent({
     },
 
     addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
+      console.log(data);
       if (data.selectedType === ComponentType.ENTITY) {
         const typeOptions = this.filterOptions.types.filter(
           (type: EntityReferenceNode) =>

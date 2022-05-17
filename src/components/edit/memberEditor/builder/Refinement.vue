@@ -39,12 +39,11 @@
 import { defineComponent, PropType } from "@vue/runtime-core";
 import { mapState } from "vuex";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
-import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
+import Property from "@/components/edit/memberEditor/builder/Property.vue";
 import Quantifier from "@/components/edit/memberEditor/builder/Quantifier.vue";
 import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
-import EntityService from "@/services/EntityService";
 import { Vocabulary, Helpers, Enums } from "im-library";
-import { EntityReferenceNode, NextComponentSummary, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
+import { EntityReferenceNode, NextComponentSummary, ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 const {
   EditorBuilderJsonMethods: { generateNewComponent, updateItem, deleteItem, addItem, addNextOptions, scrollIntoView }
 } = Helpers;
@@ -56,7 +55,7 @@ export default defineComponent({
   props: {
     id: { type: String, required: true },
     position: { type: Number, required: true },
-    value: { type: Object as PropType<{ propertyIri: string; children: any[] }>, required: false },
+    value: { type: Object as PropType<{ propertyIri: string; children: any[]; associatedMember: TTIriRef | undefined }>, required: false },
     showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
@@ -66,7 +65,7 @@ export default defineComponent({
     deleteClicked: (_payload: ComponentDetails) => true,
     addClicked: (_payload: any) => true
   },
-  components: { AddDeleteButtons, Entity, Quantifier, AddNext },
+  components: { AddDeleteButtons, Property, Quantifier, AddNext },
   watch: {
     refinementBuild: {
       handler() {
@@ -82,31 +81,22 @@ export default defineComponent({
   data() {
     return {
       refinementBuild: [] as ComponentDetails[],
-      loading: true,
-      propertyOptions: {} as any
+      loading: true
     };
   },
   methods: {
     async createBuild() {
       this.loading = true;
       this.refinementBuild = [];
-      const propertyTypeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === RDF.PROPERTY);
-      this.propertyOptions = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: propertyTypeOptions };
       if (!this.hasData(this.value)) this.createDefaultBuild();
       else {
         let position = 0;
-        const typeOptions = [{ "@id": RDF.PROPERTY }];
-        const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
-        const result = await EntityService.getPartialEntity(this.value.propertyIri, [RDFS.LABEL]);
-        const propertyName = result ? result[RDFS.LABEL] : "";
         const property = generateNewComponent(
-          ComponentType.ENTITY,
+          ComponentType.PROPERTY,
           position,
           {
-            filterOptions: options,
-            entity: { "@id": this.value.propertyIri, name: propertyName },
-            type: ComponentType.ENTITY,
-            label: "Property"
+            propertyIri: this.value.propertyIri,
+            associatedMember: this.value.associatedMember
           },
           this.builderType,
           { minus: false, plus: false }
@@ -135,20 +125,20 @@ export default defineComponent({
 
     createDefaultBuild() {
       this.refinementBuild = [];
-      const property = generateNewComponent(
-        ComponentType.ENTITY,
-        0,
-        { filterOptions: this.propertyOptions, entity: undefined, type: ComponentType.ENTITY, label: "Property" },
-        this.builderType,
-        { minus: false, plus: false }
-      );
+      const property = generateNewComponent(ComponentType.PROPERTY, 0, { propertyIri: "", associatedMember: {} }, this.builderType, {
+        minus: false,
+        plus: false
+      });
       if (property) this.refinementBuild.push(property);
-      const quantifier = generateNewComponent(ComponentType.QUANTIFIER, 1, undefined, this.builderType, { minus: false, plus: false });
+      const quantifier = generateNewComponent(ComponentType.QUANTIFIER, 1, { propertyIri: "", quantifier: {} }, this.builderType, {
+        minus: false,
+        plus: false
+      });
       if (quantifier) this.refinementBuild.push(quantifier);
     },
 
-    hasData(data: any): data is { propertyIri: string; children: any[] } {
-      if (data && (data as { propertyIri: string; children: any[] }).propertyIri) return true;
+    hasData(data: any): data is { propertyIri: string; children: any[]; associatedMember: TTIriRef } {
+      if (data && (data as { propertyIri: string; children: any[]; associatedMember: TTIriRef }).propertyIri) return true;
       return false;
     },
 
@@ -160,11 +150,11 @@ export default defineComponent({
         this.createDefaultBuild();
         return;
       }
-      if (this.refinementBuild[0].type !== ComponentType.ENTITY) {
+      if (this.refinementBuild[0].type !== ComponentType.PROPERTY) {
         const property = generateNewComponent(
-          ComponentType.ENTITY,
+          ComponentType.PROPERTY,
           0,
-          { filterOptions: this.propertyOptions, entity: undefined, type: ComponentType.ENTITY, label: "Property" },
+          { propertyIri: this.value?.propertyIri || "", associatedMember: this.value?.associatedMember || {} },
           this.builderType,
           { minus: false, plus: false }
         );
@@ -184,10 +174,8 @@ export default defineComponent({
     },
 
     addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
-      if (data.selectedType === ComponentType.ENTITY) {
-        const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === RDF.PROPERTY);
-        const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
-        data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Property" };
+      if (data.selectedType === ComponentType.PROPERTY) {
+        data.value = { propertyIri: this.value?.propertyIri, associatedMember: this.value?.associatedMember };
       }
       addItem(data, this.refinementBuild, this.builderType, { minus: false, plus: false });
     },
@@ -221,7 +209,7 @@ export default defineComponent({
       let propertyIri = "";
       let children = [] as any[];
       for (const [index, item] of this.refinementBuild.entries()) {
-        if (index === 0) propertyIri = item.value.entity ? item.value.entity["@id"] : "";
+        if (index === 0) propertyIri = item.value.propertyIri ? item.value.propertyIri : "";
         else if (item.type !== ComponentType.ADD_NEXT) children.push(item.json);
       }
       json[propertyIri] = children;
@@ -232,10 +220,10 @@ export default defineComponent({
       const children = [];
       let propertyIri = "";
       for (const [index, child] of this.refinementBuild.entries()) {
-        if (index === 0) propertyIri = child.value.entity ? child.value.entity["@id"] : "";
+        if (index === 0) propertyIri = child.value.propertyIri ? child.value.propertyIri : "";
         else children.push(child.value);
       }
-      return { propertyIri: propertyIri, children: children };
+      return { propertyIri: propertyIri, children: children, associatedMember: this.value?.associatedMember };
     },
 
     addNextClicked(item: any): void {

@@ -16,12 +16,15 @@ import { Vocabulary, Helpers } from "im-library";
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
-const { IM, RDFS } = Vocabulary;
+const { IM, RDFS, RDF } = Vocabulary;
 
 export default defineComponent({
   name: "ParentsEditor",
   props: { updatedConcept: { type: Object, required: true }, mode: { type: String, required: true } },
   components: { Builder },
+  provide() {
+    return { entityType: this.updatedConcept[RDF.TYPE] };
+  },
   emits: { "concept-updated": (_payload: any) => true },
   watch: {
     updatedConcept: {
