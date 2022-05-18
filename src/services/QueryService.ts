@@ -2,7 +2,7 @@ import axios from "axios";
 import { Env } from "im-library";
 
 export default class QueryService {
-  static api = Env.api;
+  static api = Env.API;
 
   public static async queryIM(query: any): Promise<{ entities: any[]; "@context": any }> {
     try {
