@@ -16,7 +16,7 @@ const {
 } = Models;
 
 export default class EntityService {
-  static api = Env.api;
+  static api = Env.API;
 
   public static async saveMapping(mappings: Map<string, string[]>): Promise<any[]> {
     try {
@@ -94,7 +94,7 @@ export default class EntityService {
 
   public static async getFullExportSet(iri: string): Promise<any> {
     const client = axios.create({
-      baseURL: Env.api as string,
+      baseURL: Env.API as string,
       timeout: 0
     });
 
