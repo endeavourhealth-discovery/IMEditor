@@ -5,7 +5,7 @@ const {
 import EntityService from "@/services/EntityService";
 import axios from "axios";
 
-const api = Env.api;
+const api = Env.API;
 const SEARCH_PAYLOAD = {
   size: 100,
   query: {
@@ -255,7 +255,7 @@ describe("EntityService.ts ___ axios success", () => {
 });
 
 describe("EntityService.ts ___ axios fail", () => {
-  const api = Env.api;
+  const api = Env.API;
 
   beforeEach(() => {
     vi.resetAllMocks();
