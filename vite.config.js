@@ -4,6 +4,7 @@ const path = require("path");
 import { esbuildCommonjs } from "@originjs/vite-plugin-commonjs";
 
 export default defineConfig({
+  base: "./",
   plugins: [vue()],
   optimizeDeps: {
     esbuildOptions: {
