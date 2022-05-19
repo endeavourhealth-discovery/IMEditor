@@ -6,7 +6,6 @@ import PrimeVue from "primevue/config";
 import VueClipboard from "vue3-clipboard";
 
 // Font Awesome
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { library, dom } from "@fortawesome/fontawesome-svg-core";
 import { fas } from "@fortawesome/free-solid-svg-icons";
 import { far } from "@fortawesome/free-regular-svg-icons";
@@ -136,7 +135,6 @@ const app = createApp(App)
   .component("MultiSelect", MultiSelect)
   .component("OverlayPanel", OverlayPanel)
   .component("Menu", Menu)
-  .component("font-awesome-icon", FontAwesomeIcon)
   .component("Menubar", Menubar)
   .component("InlineMessage", InlineMessage)
   .component("Message", Message)
