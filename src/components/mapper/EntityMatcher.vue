@@ -13,7 +13,7 @@
     >
       <template #option="slotProps">
         <span :style="'color: ' + getColourFromType(slotProps.option.type)" class="p-mx-1 type-icon">
-          <font-awesome-icon :icon="getFAIconFromType(slotProps.option.type)" />
+          <i :class="getFAIconFromType(slotProps.option.type)" aria-hidden="true" />
         </span>
         <span>{{ slotProps.option.name }}</span>
       </template>

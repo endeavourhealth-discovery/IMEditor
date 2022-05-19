@@ -12,17 +12,17 @@
       >
         <template #default="slotProps">
           <span :style="'color: ' + slotProps.node.colour" class="p-mx-1 type-icon">
-            <font-awesome-icon :icon="slotProps.node.icon" />
+            <i :class="slotProps.node.icon" aria-hidden="true" />
           </span>
           <span>{{ slotProps.node.label }}</span>
           <span style="color: red" class="p-mx-1 delete-icon clickable">
-            <font-awesome-icon :icon="['fas', 'trash']" @click="deleteTaskAction(slotProps.node)" />
+            <i :class="'fa-solid fa-trash'" @click="deleteTaskAction(slotProps.node)" />
           </span>
         </template>
         <template #task="slotProps">
           <div @drop="onDrop(slotProps.node)" @dragover.prevent @dragenter.prevent @dblclick="editFolder(slotProps.node)">
             <span :style="'color: ' + slotProps.node.colour" class="p-mx-1 type-icon">
-              <font-awesome-icon :icon="slotProps.node.icon" />
+              <i :class="slotProps.node.icon" aria-hidden="true" />
             </span>
             <span>{{ slotProps.node.label }}</span>
           </div>
