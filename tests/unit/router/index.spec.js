@@ -106,7 +106,7 @@ describe("router", () => {
       window.location = mockLocation;
       router.push({ name: "Editor", params: { selectedIri: "http://snomed.info/sct#298382003" } });
       await flushPromises();
-      expect(window.location.href).toBe(Env.AUTH_URL + "login?returnUrl=" + Env.EDITOR_URL + "#/editor/http:%2F%2Fsnomed.info%2Fsct%23298382003");
+      expect(window.location.href).toBe(Env.AUTH_URL + "#/login?returnUrl=" + Env.EDITOR_URL + "#/editor/http:%2F%2Fsnomed.info%2Fsct%23298382003");
       window.location = location;
     });
   });
