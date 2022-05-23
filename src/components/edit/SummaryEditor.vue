@@ -142,7 +142,8 @@ export default defineComponent({
     scheme: {
       async handler(newValue, oldValue) {
         const newIri = await this.updateIri();
-        if (newValue !== oldValue && newIri) this.updateEntity({ "@id": newIri });
+        if (newValue !== oldValue && newIri) this.updateEntity({ "@id": newIri, "http://endhealth.info/im#scheme": newValue });
+        else if (newValue !== oldValue) this.updateEntity({ "http://endhealth.info#scheme": newValue });
       },
       deep: true
     },
@@ -198,9 +199,14 @@ export default defineComponent({
       if (isObjectHasKeys(this.updatedConcept, ["@id"])) {
         this.iri = this.updatedConcept["@id"];
         if (!isObjectHasKeys(this.updatedConcept, [IM.CODE])) this.code = this.iri.substring(this.iri.indexOf("#") + 1);
-      }
-      if (isObjectHasKeys(this.updatedConcept, [IM.CODE])) {
-        this.code = this.updatedConcept[IM.CODE];
+        else this.code = this.updatedConcept[IM.CODE];
+
+        if (!isObjectHasKeys(this.updatedConcept, [IM.SCHEME])) {
+          const found = this.filterOptions.schemes.find((scheme: any) => scheme.iri === this.iri.substring(0, this.iri.indexOf("#") + 1));
+          if (found) this.scheme = { iri: found.iri, name: found.name };
+        } else {
+          this.scheme = this.updatedConcept[IM.SCHEME];
+        }
       }
       if (isObjectHasKeys(this.updatedConcept, [RDFS.LABEL])) this.name = this.updatedConcept[RDFS.LABEL];
       if (isObjectHasKeys(this.updatedConcept, [IM.HAS_STATUS])) {
@@ -213,8 +219,6 @@ export default defineComponent({
           if (found && !this.types.includes(found)) this.types.push(found);
         });
       }
-      const found = this.filterOptions.schemes.find((scheme: any) => scheme.iri === this.iri.substring(0, this.iri.indexOf("#") + 1));
-      if (found) this.scheme = found;
       if (isObjectHasKeys(this.updatedConcept, [RDFS.COMMENT])) this.description = this.updatedConcept[RDFS.COMMENT];
     },
 
