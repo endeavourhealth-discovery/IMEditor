@@ -83,7 +83,7 @@ export default defineComponent({
         if (isObjectHasKeys(queryResult, ["entities", "@context"]) && isArrayHasLength(queryResult.entities)) {
           this.dropdownOptions = queryResult.entities
             .map(result => {
-              return { "@id": result["@id"][0], name: result[RDFS.LABEL][0] };
+              return { "@id": result["@id"], name: result[RDFS.LABEL][0] };
             })
             .sort(byName);
         }

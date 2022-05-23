@@ -95,7 +95,7 @@ export default defineComponent({
       filteredOptions: [] as any[],
       invalidAssociatedProperty: false,
       request: {} as { cancel: any; msg: string },
-      propertyQuantiferKeys: [] as TTIriRef[]
+      propertyQuantiferKeys: [] as string[]
     };
   },
   methods: {
@@ -108,7 +108,7 @@ export default defineComponent({
         if (isObjectHasKeys(queryResult, ["entities", "@context"]) && isArrayHasLength(queryResult.entities)) {
           this.propertyQuantiferKeys = queryResult.entities
             .map(result => {
-              return { "@id": result["@id"][0], name: result[RDFS.LABEL][0] };
+              return result["@id"];
             })
             .sort(byName);
         }
@@ -160,6 +160,7 @@ export default defineComponent({
         this.dropdownOptions = [];
         const searchRequest = new SearchRequest();
         searchRequest.termFilter = event.query;
+        searchRequest.isA = this.propertyQuantiferKeys;
         searchRequest.sortBy = SortBy.Usage;
         searchRequest.page = 1;
         searchRequest.size = 100;
@@ -187,7 +188,7 @@ export default defineComponent({
 
       searchRequest.statusFilter = [];
       for (const status of filteredFilterOptions.status) {
-        searchRequest.statusFilter.push(status["@id"]);
+        if (status["@id"] === IM.ACTIVE) searchRequest.statusFilter.push(status["@id"]);
       }
 
       searchRequest.typeFilter = [];
