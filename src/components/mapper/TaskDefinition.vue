@@ -12,7 +12,7 @@
       >
         <template #default="slotProps">
           <span :style="'color: ' + slotProps.node.colour" class="p-mx-1 type-icon">
-            <i :class="slotProps.node.icon" aria-hidden="true" />
+            <i :class="slotProps.node.treeIcon" aria-hidden="true" />
           </span>
           <span>{{ slotProps.node.label }}</span>
           <span style="color: red" class="p-mx-1 delete-icon clickable">
@@ -22,7 +22,7 @@
         <template #task="slotProps">
           <div @drop="onDrop(slotProps.node)" @dragover.prevent @dragenter.prevent @dblclick="editFolder(slotProps.node)">
             <span :style="'color: ' + slotProps.node.colour" class="p-mx-1 type-icon">
-              <i :class="slotProps.node.icon" aria-hidden="true" />
+              <i :class="slotProps.node.treeIcon" aria-hidden="true" />
             </span>
             <span>{{ slotProps.node.label }}</span>
           </div>
@@ -240,7 +240,7 @@ export default defineComponent({
       for (const node of root) {
         node.children = [];
         node.key = node["@id"];
-        node.icon = getFAIconFromType(node.type);
+        node.treeIcon = getFAIconFromType(node.type);
         node.colour = getColourFromType(node.type);
         node.type = "task";
         node.label = node.name;
@@ -252,7 +252,7 @@ export default defineComponent({
             data: child["@id"],
             children: [],
             type: child.type,
-            icon: getFAIconFromType(child.type),
+            treeIcon: getFAIconFromType(child.type),
             colour: getColourFromType(child.type),
             parentKey: node.key
           };
