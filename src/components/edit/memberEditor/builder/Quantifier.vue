@@ -5,19 +5,21 @@
       <div v-if="loading" class="loading-container">
         <ProgressSpinner style="width:1.5rem;height:1.5rem;" strokeWidth="6" />
       </div>
-      <InputText
-        v-else
-        ref="miniSearchInput"
-        v-model="searchTerm"
-        @input="search"
-        @keyup.enter="search"
-        @focus="showOverlay"
-        @change="showOverlay"
-        placeholder="Search"
-        :dropdown="true"
-        :disabled="invalidAssociatedProperty"
-        class="search-input"
-      />
+      <div v-else class="input-treebutton-container">
+        <InputText
+          ref="miniSearchInput"
+          v-model="searchTerm"
+          @input="search"
+          @keyup.enter="search"
+          @focus="showOverlay"
+          @change="showOverlay"
+          placeholder="Search"
+          :dropdown="true"
+          :disabled="invalidAssociatedProperty"
+          class="search-input"
+        />
+        <Button icon="fa-solid fa-sitemap" @click="showTreeDialog($event)" />
+      </div>
       <small v-if="invalidAssociatedProperty" class="validate-error">Missing property for refinement. Please select a property first.</small>
     </div>
     <AddDeleteButtons :show="showButtons" :position="position" :options="[]" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
@@ -25,12 +27,16 @@
   <OverlayPanel class="search-op" ref="miniSearchOP" :showCloseIcon="true" :dismissable="true">
     <SearchMiniOverlay :searchTerm="searchTerm" :searchResults="searchResults" :loading="loading" @searchResultSelected="updateSelectedResult" />
   </OverlayPanel>
+  <OverlayPanel class="tree-op" ref="treeOP" :showCloseIcon="true" :dismissable="true">
+    <QuantifierTree :isAs="isAs" :quantifier="selectedResult" @treeNodeSelected="updateSelectedResult" />
+  </OverlayPanel>
 </template>
 
 <script lang="ts">
 import { defineComponent, PropType } from "@vue/runtime-core";
 import axios from "axios";
 import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/SearchMiniOverlay.vue";
+import QuantifierTree from "@/components/edit/memberEditor/builder/quantifier/QuantifierTree.vue";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums, Models } from "im-library";
@@ -63,7 +69,7 @@ export default defineComponent({
     deleteClicked: (_payload: ComponentDetails) => true,
     addClicked: (_payload: any) => true
   },
-  components: { AddDeleteButtons, SearchMiniOverlay },
+  components: { AddDeleteButtons, SearchMiniOverlay, QuantifierTree },
   computed: mapState(["filterOptions", "selectedFilters"]),
   watch: {
     value: {
@@ -127,6 +133,11 @@ export default defineComponent({
 
     showOverlay(event: any): void {
       const x = this.$refs.miniSearchOP as any;
+      if (x) x.show(event, event.target);
+    },
+
+    showTreeDialog(event: any): void {
+      const x = this.$refs.treeOP as any;
       if (x) x.show(event, event.target);
     },
 
@@ -329,6 +340,12 @@ export default defineComponent({
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.input-treebutton-container {
+  display: flex;
+  flex-flow: row nowrap;
+  width: 100%;
 }
 
 .validate-error {

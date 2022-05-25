@@ -373,4 +373,22 @@ export default class EntityService {
       return {};
     }
   }
+
+  public static async getPathBetweenNodes(descendant: string, ancestor: string): Promise<TTIriRef[]> {
+    try {
+      return await axios.get(Env.API + "api/entity/public/shortestParentHierarchy", {
+        params: { descendant: descendant, ancestor: ancestor }
+      });
+    } catch (error) {
+      return [];
+    }
+  }
+
+  public static async getEntityAsEntityReferenceNode(iri: string): Promise<EntityReferenceNode> {
+    try {
+      return await axios.get(Env.API + "api/entity/public/asEntityReferenceNode", { params: { iri: iri } });
+    } catch (error) {
+      return {} as EntityReferenceNode;
+    }
+  }
 }
