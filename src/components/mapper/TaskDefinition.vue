@@ -54,6 +54,7 @@
             optionLabel="name"
             placeholder="Select a predifined list"
             class="predefined-list-dropdown"
+            @change="unselectAll"
           />
           <ExpansionTable
             :contents="selectedList"
@@ -155,10 +156,12 @@ export default defineComponent({
   watch: {
     async refreshTree() {
       await this.init();
+      await this.getPredefinedList(true, this.selectedListOption.path)
+      this.unselectAll();
     },
 
     async selectedListOption() {
-      await this.getPredefinedList(this.selectedListOption.path);
+      await this.getPredefinedList(false, this.selectedListOption.path);
     }
   },
   data() {
@@ -192,9 +195,9 @@ export default defineComponent({
     this.loading = false;
   },
   methods: {
-    async getPredefinedList(listName: string) {
+    async getPredefinedList(refresh: boolean, listName: string) {
       this.loading = true;
-      if (!this.predefinedListMap.has(listName)) {
+      if (!this.predefinedListMap.has(listName) || refresh) {
         const list = (await EntityService.getPredefinedList(listName)).map(unmapped => {
           return { iri: unmapped["@id"], name: unmapped.name };
         });
