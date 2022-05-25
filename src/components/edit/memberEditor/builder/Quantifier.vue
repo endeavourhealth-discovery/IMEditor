@@ -112,7 +112,6 @@ export default defineComponent({
           this.isAs = queryResult.entities.map(result => result["@id"]);
         }
         if (isArrayHasLength(this.isAs)) {
-          // await this.fetchTree();
           if (this.value && isTTIriRef(this.value.quantifier)) {
             this.searchTerm = this.value.quantifier.name;
             await this.search();
@@ -141,6 +140,11 @@ export default defineComponent({
       if (x) x.show(event, event.target);
     },
 
+    hideTreeOverlay(): void {
+      const x = this.$refs.treeOP as any;
+      if (x) x.hide();
+    },
+
     updateSelectedResult(data: Models.Search.ConceptSummary | TTIriRef) {
       if (!isObjectHasKeys(data)) {
         this.selectedResult = {} as TTIriRef;
@@ -154,6 +158,7 @@ export default defineComponent({
       }
       this.onConfirm();
       this.hideOverlay();
+      this.hideTreeOverlay();
     },
 
     createQuantifierOptionsQuery(iri: string) {
@@ -206,22 +211,6 @@ export default defineComponent({
         }
         this.loading = false;
       }
-    },
-
-    async fetchTree() {
-      this.loading = true;
-      this.dropdownOptions = [];
-      const searchRequest = new SearchRequest();
-      searchRequest.isA = this.isAs;
-      searchRequest.select = ["iri", "name"];
-      this.setFilters(searchRequest);
-      const result = await EntityService.osSearchFilter(searchRequest);
-      if (isArrayHasLength(result)) {
-        this.dropdownOptions = result.map(item => {
-          return { "@id": item.iri, name: item.name };
-        });
-      }
-      this.loading = false;
     },
 
     setFilters(searchRequest: Models.Search.SearchRequest) {

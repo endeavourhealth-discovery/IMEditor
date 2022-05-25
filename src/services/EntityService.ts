@@ -190,14 +190,6 @@ export default class EntityService {
     }
   }
 
-  public static async osSearchFilter(request: Models.Search.SearchRequest): Promise<Models.Search.ConceptSummary[]> {
-    try {
-      return await axios.post(this.api + "api/entity/public/osSearchFilter", request);
-    } catch (error) {
-      return [] as Models.Search.ConceptSummary[];
-    }
-  }
-
   public static async getEntityDefinitionDto(iri: string): Promise<EntityDefinitionDto> {
     try {
       return await axios.get(this.api + "api/entity/public/definition", {
