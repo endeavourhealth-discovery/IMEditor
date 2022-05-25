@@ -1,12 +1,4 @@
 <template>
-  <Dialog header="Updated entities" v-model:visible="displayUpdatedEntities">
-    <ExpansionTable v-if="updatedEntities.length" :contents="updatedEntities" :paginable="true" :expandable="true" />
-    <template #footer>
-      <Button label="Go to editor" @click="goToEditor" />
-      <Button label="Create new task" @click="goToTaskDefinition" />
-      <Button label="Select task" @click="goToTaskSelection" />
-    </template>
-  </Dialog>
   <DataTable :value="mappingsDisplay" responsiveLayout="scroll" class="mapping-table-container">
     <Column field="mappedFrom" header="From"><i class="pi pi-arrow-right"></i> </Column>
     <Column><template #body> </template></Column>
@@ -46,7 +38,6 @@ import { Vocabulary, Helpers, Models, Enums, LoggerService } from "im-library";
 const {
   ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType },
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  ContainerDimensionGetters: { getContainerElementOptimalHeight }
 } = Helpers;
 const { IM, RDF, RDFS } = Vocabulary;
 
@@ -78,7 +69,6 @@ export default defineComponent({
     return {
       pageIndex: 3,
       mappingsMap: new Map<string, any>(),
-      displayUpdatedEntities: false,
       updatedEntities: [] as any[]
     };
   },
@@ -94,30 +84,25 @@ export default defineComponent({
       data.mappedTo = (data.mappedTo as any[]).filter(mappedTo => mappedTo.iri !== mapping.iri);
       this.mappingsMap.set(data.mappedFrom, data.mappedTo);
     },
-    goToEditor() {
-      this.$router.push({ name: "Home" });
-      this.displayUpdatedEntities = false;
-    },
     goToTaskDefinition() {
       this.$router.push({ name: "TaskDefinition" });
       this.$store.commit("updateRefreshTree");
-      this.displayUpdatedEntities = false;
-    },
-    goToTaskSelection() {
-      this.$router.push({ name: "TaskSelection" });
-      this.displayUpdatedEntities = false;
     },
     async submit() {
       const mappings = {} as any;
       this.mappingsMap.forEach((value, key) => {
         mappings[key] = value.map((mappedTo: { iri: string }) => mappedTo.iri);
       });
-      const updatedEntities = await EntityService.saveMapping(mappings);
-      this.updatedEntities = updatedEntities.map(entity => {
-        return { iri: entity["@id"], name: entity[RDFS.LABEL], type: entity[RDF.TYPE] };
-      });
-      this.$toast.add(LoggerService.success("Saved new mappings successfully"));
-      this.displayUpdatedEntities = true;
+      try {
+        const updatedEntities = await EntityService.saveMapping(mappings);
+        this.updatedEntities = updatedEntities.map(entity => {
+          return { iri: entity["@id"], name: entity[RDFS.LABEL], type: entity[RDF.TYPE] };
+        });
+        this.$toast.add(LoggerService.success("Saved new mappings successfully"));
+        this.goToTaskDefinition();
+      } catch (error) {
+        this.$toast.add(LoggerService.error("Something went wrong"));
+      }
     },
     previous() {
       this.$emit("prevPage", { pageIndex: this.pageIndex, data: {} });
