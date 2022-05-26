@@ -53,6 +53,18 @@
       </template>
     </Column>
 
+    <Column v-if="showActions" :exportable="false" bodyStyle="text-align: center; overflow: visible; justify-content: flex-end; gap: 0.25rem;">
+      <template #body="{data}">
+        <Button icon="pi pi-fw pi-eye" class="p-button-rounded p-button-text p-button-plain row-button" @click="view(data.iri)" v-tooltip.top="'View'" />
+        <Button
+          icon="pi pi-fw pi-info-circle"
+          class="p-button-rounded p-button-text p-button-plain row-button"
+          @click="showInfo(data.iri)"
+          v-tooltip.top="'Info'"
+        />
+      </template>
+    </Column>
+
     <template #expansion="{data}">
       <TabView :lazy="true" class="tabView">
         <TabPanel header="JSON">
@@ -70,7 +82,8 @@
 import EntityService from "@/services/EntityService";
 import { defineComponent } from "vue";
 import VueJsonPretty from "vue-json-pretty";
-import { Vocabulary, Helpers, Models, Enums } from "im-library";
+import { Vocabulary, Helpers, Models, Enums, Env } from "im-library";
+import DirectService from "@/services/DirectService";
 
 const {
   ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType },
@@ -88,10 +101,9 @@ export default defineComponent({
     paginable: { type: Boolean, required: false },
     rows: { type: Number, required: false },
     drag: { type: Boolean, required: false },
-    expandable: { type: Boolean, required: false },
-    removableRows: { type: Boolean, required: false }
+    removableRows: { type: Boolean, required: false },
+    showActions: { type: Boolean, required: false }
   },
-  // emits: ["search", "startDrag", "select", "unselect", "remove", "selectAll", "unselectAll"],
   emits: {
     search: (_payload: string) => true,
     startDrag: (_payload: any) => true,
@@ -99,7 +111,8 @@ export default defineComponent({
     unselect: (_payload: any) => true,
     remove: (_payload: any) => true,
     selectAll: (_payload: any) => true,
-    unselectAll: () => true
+    unselectAll: () => true,
+    showDetails: (_payload: string) => true
   },
   components: {
     VueJsonPretty
@@ -112,6 +125,14 @@ export default defineComponent({
     };
   },
   methods: {
+    view(iri: string) {
+      DirectService.directTo(Env.VIEWER_URL, iri, this, "concept");
+    },
+
+    showInfo(iri: string) {
+      this.$emit("showDetails", iri);
+    },
+
     remove(data: any) {
       this.$emit("remove", data);
     },

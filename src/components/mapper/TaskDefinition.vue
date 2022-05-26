@@ -60,9 +60,10 @@
             :contents="selectedList"
             :drag="true"
             :paginable="true"
+            :show-actions="true"
+            @show-details="showDetails"
             @startDrag="startDrag"
             :loading="loading"
-            :expandable="true"
             :selectable="true"
             @select="tableSelect"
             @unselect="tableUnselect"
@@ -72,13 +73,14 @@
           />
         </TabPanel>
         <TabPanel header="Contents">
-          <ExpansionTable :contents="selected.contents" :expandable="true" class="tab-container" />
+          <ExpansionTable :contents="selected.contents" :show-actions="true" @show-details="showDetails" class="tab-container" />
         </TabPanel>
         <TabPanel header="Search">
           <ExpansionTable
             :contents="searchResults"
+            :show-actions="true"
+            @show-details="showDetails"
             :inputSearch="true"
-            :expandable="true"
             @search="search"
             :paginable="true"
             :drag="true"
@@ -148,7 +150,10 @@ export default defineComponent({
   },
   emits: {
     nextPage: (_payload: { pageIndex: number; data: {} }) => true,
-    prevPage: (_payload: { pageIndex: number; data: {} }) => true
+    prevPage: (_payload: { pageIndex: number; data: {} }) => true,
+    showDetails: (_payload: string) => true,
+    updateSelected: (_payload: string) => true,
+    hideDetails: () => true
   },
   computed: {
     ...mapState(["filterOptions", "refreshTree"])
@@ -156,7 +161,7 @@ export default defineComponent({
   watch: {
     async refreshTree() {
       await this.init();
-      await this.getPredefinedList(true, this.selectedListOption.path)
+      await this.getPredefinedList(true, this.selectedListOption.path);
       this.unselectAll();
     },
 
@@ -195,6 +200,9 @@ export default defineComponent({
     this.loading = false;
   },
   methods: {
+    showDetails(selectedIri: string) {
+      this.$emit("showDetails", selectedIri);
+    },
     async getPredefinedList(refresh: boolean, listName: string) {
       this.loading = true;
       if (!this.predefinedListMap.has(listName) || refresh) {
@@ -361,6 +369,7 @@ export default defineComponent({
 
     onNodeSelect(node: any) {
       this.selected = node;
+      this.$emit("updateSelected", node.key);
     },
 
     selectAll(selectedList: any[]) {

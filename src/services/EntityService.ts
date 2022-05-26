@@ -365,4 +365,29 @@ export default class EntityService {
       return {};
     }
   }
+
+  public static async getNames(iris: string[]): Promise<TTIriRef[]> {
+    try {
+      return await axios.post(Env.API + "api/entity/public/getNames", iris);
+    } catch (error) {
+      return [];
+    }
+  }
+
+  public static async getChildrenAndTotalCount(
+    iri: string,
+    pageIndex: number,
+    pageSize: number,
+    filters?: FiltersAsIris,
+    cancelToken?: CancelToken
+  ): Promise<any> {
+    try {
+      return await axios.get(Env.API + "api/entity/public/childrenAndTotalCount", {
+        params: { iri: iri, page: pageIndex, size: pageSize, schemeIris: filters?.schemes.join(",") },
+        cancelToken: cancelToken
+      });
+    } catch (error) {
+      return {} as any;
+    }
+  }
 }

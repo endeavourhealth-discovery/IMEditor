@@ -2,7 +2,6 @@
   <div class="task-selection-container">
     <ExpansionTable :contents="tasks" :selectable="true" @select="select" @unselect="unselect" @selectAll="selectAll" @unselectAll="unselectAll" />
   </div>
-
   <div class="button-bar">
     <Button icon="pi pi-times" label="Back" class="p-button-secondary" @click="previous" />
     <Button icon="pi pi-check" label="Next" class="save-button" @click="next" />
@@ -85,10 +84,15 @@ export default defineComponent({
 
 <style scoped>
 .task-selection-container {
-  height: calc(100% - 11.6rem);
+  height: calc(100vh - 11.6rem);
   width: 100%;
   overflow: auto;
   background-color: #ffffff;
+}
+
+.select-table {
+  display: flex;
+  flex-direction: column;
 }
 
 .button-bar {

@@ -1,14 +1,17 @@
 import { createStore } from "vuex";
-import { HistoryItem, Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
-import { Models, LoggerService } from "im-library";
+import { HistoryItem, Namespace, EntityReferenceNode, RecentActivityItem } from "im-library/dist/types/interfaces/Interfaces";
+import { Models, LoggerService, Vocabulary } from "im-library";
 const { User, CustomAlert } = Models;
 import AuthService from "@/services/AuthService";
 import ConfigService from "@/services/ConfigService";
-
+const { IM, RDF, RDFS } = Vocabulary;
 export default createStore({
   // update stateType.ts when adding new state!
   state: {
+    arrayObjectNameListboxWithLabelStartExpanded: [],
+    defaultPredicateNames: {} as any,
     history: [] as HistoryItem[],
+    recentLocalActivity: JSON.parse(localStorage.getItem("recentLocalActivity") || "[]") as RecentActivityItem[],
     currentUser: {} as Models.User,
     isLoggedIn: false as boolean,
     snomedLicenseAccepted: localStorage.getItem("snomedLicenseAccepted") as string,
@@ -17,6 +20,12 @@ export default createStore({
     authReturnUrl: "",
     editorSavedEntity: localStorage.getItem("editorUpdatedEntity") as any,
     blockedIris: [] as string[],
+    tagSeverityMatches: [
+      { "@id": IM.ACTIVE, severity: "success" },
+      { "@id": IM.DRAFT, severity: "warning" },
+      { "@id": IM.INACTIVE, severity: "danger" }
+    ],
+    textDefinitionStartExpanded: ["Definition"],
     filterOptions: {
       status: [] as EntityReferenceNode[],
       schemes: [] as Namespace[],
@@ -35,6 +44,31 @@ export default createStore({
     refreshTree: false as boolean
   },
   mutations: {
+    updateRecentLocalActivity(state, recentActivityItem: RecentActivityItem) {
+      let activity: RecentActivityItem[] = JSON.parse(localStorage.getItem("recentLocalActivity") || "[]");
+      activity.forEach(activityItem => {
+        activityItem.dateTime = new Date(activityItem.dateTime);
+      });
+      const foundIndex = activity.findIndex(activityItem => activityItem.iri === recentActivityItem.iri && activityItem.app === recentActivityItem.app);
+      if (foundIndex !== -1) {
+        activity[foundIndex].dateTime = recentActivityItem.dateTime;
+        activity.sort((a, b) => {
+          if (a.dateTime.getTime() > b.dateTime.getTime()) {
+            return 1;
+          } else if (b.dateTime.getTime() > a.dateTime.getTime()) {
+            return -1;
+          } else {
+            return 0;
+          }
+        });
+      } else {
+        while (activity.length > 4) activity.shift();
+        activity.push(recentActivityItem);
+      }
+
+      localStorage.setItem("recentLocalActivity", JSON.stringify(activity));
+      state.recentLocalActivity = activity;
+    },
     updateBlockedIris(state, blockedIris) {
       state.blockedIris = blockedIris;
     },
@@ -43,6 +77,9 @@ export default createStore({
         return el.conceptName !== historyItem.conceptName;
       });
       state.history.splice(0, 0, historyItem);
+    },
+    updateDefaultPredicateNames(state, names) {
+      state.defaultPredicateNames = names;
     },
     updateFilterOptions(state, filters) {
       filters.types.forEach((type: any) => {

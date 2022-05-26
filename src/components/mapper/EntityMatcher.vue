@@ -279,7 +279,7 @@ export default defineComponent({
 }
 
 .entity-mapper-container {
-  height: calc(100% - 11.6rem);
+  height: calc(100vh - 11.6rem);
   width: 100%;
   overflow: auto;
   background-color: #ffffff;

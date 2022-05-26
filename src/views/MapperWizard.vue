@@ -11,9 +11,39 @@
       </div>
     </div>
 
-    <router-view v-slot="{ Component }">
+    <div v-if="showDetails" class="main-container">
+      <div class="main-view">
+        <router-view v-slot="{ Component }">
+          <keep-alive>
+            <component
+              :is="Component"
+              :data="stepsObject"
+              @prevPage="prevPage($event)"
+              @nextPage="nextPage($event)"
+              @showDetails="showSelectedDetails"
+              @hideDetails="hideDetails"
+              @updateSelected="updateSelected"
+            />
+          </keep-alive>
+        </router-view>
+      </div>
+
+      <div class="details-view">
+        <InfoSideBar :selectedConceptIri="selectedConceptIri" @closeBar="hideDetails" />
+      </div>
+    </div>
+
+    <router-view v-else v-slot="{ Component }">
       <keep-alive>
-        <component :is="Component" :data="stepsObject" @prevPage="prevPage($event)" @nextPage="nextPage($event)" />
+        <component
+          :is="Component"
+          :data="stepsObject"
+          @prevPage="prevPage($event)"
+          @nextPage="nextPage($event)"
+          @showDetails="showSelectedDetails"
+          @hideDetails="hideDetails"
+          @updateSelected="updateSelected"
+        />
       </keep-alive>
     </router-view>
   </div>
@@ -21,10 +51,17 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import InfoSideBar from "@/components/mapper/infobar/InfoSideBar.vue";
+
 export default defineComponent({
   name: "MapperWizard",
+  components: {
+    InfoSideBar
+  },
   data() {
     return {
+      showDetails: false,
+      selectedConceptIri: "",
       items: [
         {
           label: "Define task",
@@ -47,6 +84,17 @@ export default defineComponent({
     };
   },
   methods: {
+    updateSelected(selectedIri: string) {
+      this.selectedConceptIri = selectedIri;
+    },
+
+    showSelectedDetails(selectedIri: string) {
+      this.selectedConceptIri = selectedIri;
+      this.showDetails = true;
+    },
+    hideDetails() {
+      this.showDetails = false;
+    },
     nextPage(event: any) {
       for (const property in event.data) {
         this.stepsObject[property] = event.data[property];
@@ -95,5 +143,17 @@ export default defineComponent({
 
 .p-steps {
   width: 100%;
+}
+
+.main-container {
+  display: flex;
+}
+
+.main-view {
+  flex: 75%;
+}
+
+.details-view {
+  flex: 25%;
 }
 </style>
