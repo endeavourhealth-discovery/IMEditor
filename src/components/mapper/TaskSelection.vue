@@ -1,6 +1,15 @@
 <template>
   <div class="task-selection-container">
-    <ExpansionTable :contents="tasks" :selectable="true" @select="select" @unselect="unselect" @selectAll="selectAll" @unselectAll="unselectAll" />
+    <ExpansionTable
+      :contents="tasks"
+      :selectable="true"
+      @select="select"
+      @unselect="unselect"
+      @selectAll="selectAll"
+      @unselectAll="unselectAll"
+      :show-actions="true"
+      @show-details="showDetails"
+    />
   </div>
   <div class="button-bar">
     <Button icon="pi pi-times" label="Back" class="p-button-secondary" @click="previous" />
@@ -26,7 +35,8 @@ export default defineComponent({
   },
   emits: {
     nextPage: (_payload: { pageIndex: number; data: {} }) => true,
-    prevPage: (_payload: { pageIndex: number; data: {} }) => true
+    prevPage: (_payload: { pageIndex: number; data: {} }) => true,
+    showDetails: (_payload: string) => true
   },
   data() {
     return {
@@ -42,6 +52,9 @@ export default defineComponent({
     });
   },
   methods: {
+    showDetails(selectedIri: string) {
+      this.$emit("showDetails", selectedIri);
+    },
     select(data: any) {
       this.selectedTasks.push(data);
     },

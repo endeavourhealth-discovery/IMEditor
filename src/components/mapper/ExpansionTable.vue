@@ -33,7 +33,6 @@
     </template>
     <Column v-if="drag" :rowReorder="true" headerStyle="width: 3rem" />
     <Column v-if="selectable" selectionMode="multiple" headerStyle="width: 3em" />
-    <Column v-if="expandable" :expander="true" headerStyle="width: 3rem" />
     <Column field="name" header="Name">
       <template #body="{data}">
         <span :style="'color: ' + getColourFromType(data.type)" class="p-mx-1 type-icon">

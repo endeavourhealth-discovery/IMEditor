@@ -152,8 +152,7 @@ export default defineComponent({
     nextPage: (_payload: { pageIndex: number; data: {} }) => true,
     prevPage: (_payload: { pageIndex: number; data: {} }) => true,
     showDetails: (_payload: string) => true,
-    updateSelected: (_payload: string) => true,
-    hideDetails: () => true
+    updateSelected: (_payload: string) => true
   },
   computed: {
     ...mapState(["filterOptions", "refreshTree"])

@@ -20,9 +20,6 @@
     </Listbox>
 
     <TabView :lazy="true" class="tabView col" @tab-change="selectedEntities = []">
-      <TabPanel header="Details">
-        <VueJsonPretty class="mapping-item-container" :data="selectedView" />
-      </TabPanel>
       <TabPanel header="Suggestions" v-if="isObjectHasKeys(selected)">
         <ExpansionTable
           class="mapping-item-container"
@@ -30,11 +27,12 @@
           :selectable="true"
           :inputSearch="false"
           :paginable="true"
-          :expandable="true"
           @select="select"
           @unselect="unselect"
           @selectAll="selectAll"
           @unselectAll="unselectAll"
+          :show-actions="true"
+          @show-details="showDetails"
         />
       </TabPanel>
       <TabPanel header="Search">
@@ -43,13 +41,14 @@
           :contents="searchResults"
           :selectable="true"
           :inputSearch="true"
-          :expandable="true"
           @search="search"
           :paginable="true"
           @select="select"
           @unselect="unselect"
           @selectAll="selectAll"
           @unselectAll="unselectAll"
+          :show-actions="true"
+          @show-details="showDetails"
         />
       </TabPanel>
       <TabPanel header="Mapped to" v-if="isObjectHasKeys(selected)">
@@ -62,9 +61,6 @@
           :removableRows="true"
           @remove="removeMapping"
         />
-      </TabPanel>
-      <TabPanel header="Hierarchy position" class="tab-container" v-if="isObjectHasKeys(selected)">
-        <SecondaryTree :conceptIri="selected.iri" />
       </TabPanel>
     </TabView>
   </div>
@@ -106,7 +102,10 @@ export default defineComponent({
   },
   emits: {
     nextPage: (_payload: { pageIndex: number; data: {} }) => true,
-    prevPage: (_payload: { pageIndex: number; data: {} }) => true
+    prevPage: (_payload: { pageIndex: number; data: {} }) => true,
+    showDetails: (_payload: string) => true,
+    updateSelected: (_payload: string) => true,
+    hideDetails: () => true
   },
   props: {
     data: { type: Object, required: true }
@@ -117,6 +116,7 @@ export default defineComponent({
         this.selected = oldValue;
       }
       if (this.selected) {
+        this.$emit("updateSelected", this.selected.iri);
         const fullEntity = await EntityService.getPartialEntity(this.selected.iri, []);
         this.selectedView = { ...fullEntity };
         this.selected.suggestions = await this.getMappingSuggestions(this.selected.iri, this.selected.name);
@@ -142,6 +142,10 @@ export default defineComponent({
   },
 
   methods: {
+    showDetails(selectedIri: string) {
+      this.$emit("showDetails", selectedIri);
+    },
+
     directToCreator() {
       this.$router.push({ name: "Creator" });
     },
@@ -194,6 +198,7 @@ export default defineComponent({
     next() {
       const data = this.data;
       data.mappingsMap = this.mappingsMap;
+      this.$emit("hideDetails");
       this.$emit("nextPage", { pageIndex: this.pageIndex, data: data });
     },
 
@@ -205,7 +210,7 @@ export default defineComponent({
       if (isArrayHasLength(this.selectedEntities)) {
         this.addMapping(this.selectedEntities);
       }
-      this.$toast.add(LoggerService.success("Mapping added to list"));
+      this.$toast.add(LoggerService.success("Mapping added to list") as any);
     },
 
     addMapping(entities: any[]) {

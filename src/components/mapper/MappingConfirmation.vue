@@ -37,7 +37,7 @@ import { Vocabulary, Helpers, Models, Enums, LoggerService } from "im-library";
 
 const {
   ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType },
-  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
 } = Helpers;
 const { IM, RDF, RDFS } = Vocabulary;
 
@@ -48,7 +48,7 @@ export default defineComponent({
   },
   emits: {
     nextPage: (_payload: { pageIndex: number; data: {} }) => true,
-    prevPage: (_payload: { pageIndex: number; data: {} }) => true
+    prevPage: (_payload: { pageIndex: number; data: {} }) => true,
   },
   components: {
     ExpansionTable
@@ -98,10 +98,10 @@ export default defineComponent({
         this.updatedEntities = updatedEntities.map(entity => {
           return { iri: entity["@id"], name: entity[RDFS.LABEL], type: entity[RDF.TYPE] };
         });
-        this.$toast.add(LoggerService.success("Saved new mappings successfully"));
+        this.$toast.add(LoggerService.success("Saved new mappings successfully") as any);
         this.goToTaskDefinition();
       } catch (error) {
-        this.$toast.add(LoggerService.error("Something went wrong"));
+        this.$toast.add(LoggerService.error("Something went wrong") as any);
       }
     },
     previous() {
