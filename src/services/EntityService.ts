@@ -60,7 +60,7 @@ export default class EntityService {
     }
   }
 
-  public static async getPredefinedList(listPath: string): Promise<TTIriRef[]> {
+  public static async getPredefinedList(listPath: string): Promise<any[]> {
     try {
       return await axios.get(this.api + "api/entity/public/" + listPath);
     } catch (error) {

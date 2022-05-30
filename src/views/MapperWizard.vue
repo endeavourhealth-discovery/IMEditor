@@ -11,8 +11,8 @@
       </div>
     </div>
 
-    <div v-if="showDetails" class="main-container">
-      <div class="main-view">
+    <div :class="showDetails ? 'main-container' : ''">
+      <div :class="showDetails ? 'main-view' : ''">
         <router-view v-slot="{ Component }">
           <keep-alive>
             <component
@@ -28,30 +28,22 @@
         </router-view>
       </div>
 
-      <div class="details-view">
+      <div v-if="showDetails" class="details-view">
         <InfoSideBar :selectedConceptIri="selectedConceptIri" @closeBar="hideDetails" />
       </div>
     </div>
-
-    <router-view v-else v-slot="{ Component }">
-      <keep-alive>
-        <component
-          :is="Component"
-          :data="stepsObject"
-          @prevPage="prevPage($event)"
-          @nextPage="nextPage($event)"
-          @showDetails="showSelectedDetails"
-          @hideDetails="hideDetails"
-          @updateSelected="updateSelected"
-        />
-      </keep-alive>
-    </router-view>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
 import InfoSideBar from "@/components/mapper/infobar/InfoSideBar.vue";
+import EntityService from "@/services/EntityService";
+import { Vocabulary, Helpers, Models, Enums } from "im-library";
+const {
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
+} = Helpers;
+const { IM, RDF, RDFS } = Vocabulary;
 
 export default defineComponent({
   name: "MapperWizard",
@@ -83,7 +75,21 @@ export default defineComponent({
       stepsObject: {} as any
     };
   },
+  async mounted() {
+    await this.getFilterOptions();
+  },
   methods: {
+    async getFilterOptions(): Promise<void> {
+      const schemeOptions = await EntityService.getNamespaces();
+      const typeOptions = await EntityService.getEntityChildren(IM.MODELLING_ENTITY_TYPE);
+      const statusOptions = await EntityService.getEntityChildren(IM.STATUS);
+
+      this.$store.commit("updateFilterOptions", {
+        status: statusOptions,
+        schemes: schemeOptions,
+        types: typeOptions
+      });
+    },
     updateSelected(selectedIri: string) {
       this.selectedConceptIri = selectedIri;
     },

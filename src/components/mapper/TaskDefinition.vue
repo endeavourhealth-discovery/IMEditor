@@ -15,9 +15,6 @@
             <i :class="slotProps.node.treeIcon" aria-hidden="true" />
           </span>
           <span>{{ slotProps.node.label }}</span>
-          <span style="color: red" class="p-mx-1 delete-icon clickable">
-            <i :class="'fa-solid fa-trash'" @click="deleteTaskAction(slotProps.node)" />
-          </span>
         </template>
         <template #task="slotProps">
           <div @drop="onDrop(slotProps.node)" @dragover.prevent @dragenter.prevent @dblclick="editFolder(slotProps.node)">
@@ -73,7 +70,14 @@
           />
         </TabPanel>
         <TabPanel header="Contents">
-          <ExpansionTable :contents="selected.contents" :show-actions="true" @show-details="showDetails" class="tab-container" />
+          <ExpansionTable
+            :contents="selected.contents"
+            :removableRows="true"
+            @remove="deleteTaskAction"
+            :show-actions="true"
+            @show-details="showDetails"
+            class="tab-container"
+          />
         </TabPanel>
         <TabPanel header="Search">
           <ExpansionTable
@@ -92,12 +96,6 @@
             @unselectAll="unselectAll"
             class="tab-container"
           />
-        </TabPanel>
-
-        <TabPanel header="Hierarchy position" v-if="isObjectHasKeys(selected) && selected.type !== 'task'">
-          <div class="tab-container">
-            <SecondaryTree :conceptIri="selected.data" />
-          </div>
         </TabPanel>
       </TabView>
     </div>
@@ -206,7 +204,7 @@ export default defineComponent({
       this.loading = true;
       if (!this.predefinedListMap.has(listName) || refresh) {
         const list = (await EntityService.getPredefinedList(listName)).map(unmapped => {
-          return { iri: unmapped["@id"], name: unmapped.name };
+          return { iri: unmapped["@id"], name: unmapped.name || unmapped[RDFS.LABEL], scheme: unmapped[IM.SCHEME][0] };
         });
         this.predefinedListMap.set(listName, list);
       }
@@ -262,6 +260,7 @@ export default defineComponent({
             data: child["@id"],
             children: [],
             type: child.type,
+            scheme: child.scheme,
             treeIcon: getFAIconFromType(child.type),
             colour: getColourFromType(child.type),
             parentKey: node.key
@@ -279,7 +278,13 @@ export default defineComponent({
     getTableDataFromNodes(nodes: any) {
       if (!isArrayHasLength(nodes)) return [];
       return nodes.map((node: any) => {
-        return { iri: node.data, name: node.label, type: node.type || node[RDF.TYPE], children: this.getTableDataFromNodes(node.children) };
+        return {
+          iri: node.data,
+          name: node.label,
+          type: node.type || node[RDF.TYPE],
+          scheme: node.scheme,
+          children: this.getTableDataFromNodes(node.children)
+        };
       });
     },
 
@@ -314,7 +319,7 @@ export default defineComponent({
 
     async deleteTaskAction(removedNode: any) {
       this.loading = true;
-      await EntityService.removeTaskAction(removedNode.parentKey, removedNode.key);
+      await EntityService.removeTaskAction(this.selected.key, removedNode.iri);
       await this.getTasks();
       this.loading = false;
     },
@@ -415,7 +420,7 @@ export default defineComponent({
       const result = await EntityService.advancedSearch(searchRequest, cancelToken);
       if (result && isArrayHasLength(result)) {
         this.searchResults = result.map(item => {
-          return { iri: item.iri, name: item.name, type: item.entityType };
+          return { iri: item.iri, name: item.name, type: item.entityType, scheme: item.scheme };
         });
       } else {
         this.searchResults = [];

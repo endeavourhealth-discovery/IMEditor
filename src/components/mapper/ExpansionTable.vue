@@ -16,6 +16,8 @@
     :rows="rows || 18"
     :loading="loading"
     class="p-datatable-sm"
+    v-model:filters="filters"
+    filterDisplay="menu"
   >
     <template #empty>
       No records found.
@@ -46,9 +48,19 @@
         {{ data.iri }}
       </template>
     </Column>
-    <Column v-if="removableRows" headerStyle="width: 3rem">
+    <Column filterField="scheme" sortField="scheme.name" header="Scheme" sortable :showFilterMatchModes="false" :filterMenuStyle="{ width: '14rem' }">
       <template #body="{data}">
-        <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text" @click="remove(data)" />
+        {{ data.scheme }}
+      </template>
+      <template #filter="{filterModel}">
+        <div class="mb-3 font-bold">Scheme Select</div>
+        <MultiSelect v-model="filterModel.value" :options="filterOptions.schemes" optionLabel="name" placeholder="Any" class="p-column-filter">
+          <template #option="slotProps">
+            <div class="p-multiselect-representative-option">
+              <span class="image-text">{{ slotProps.option.name }}</span>
+            </div>
+          </template>
+        </MultiSelect>
       </template>
     </Column>
 
@@ -64,16 +76,11 @@
       </template>
     </Column>
 
-    <template #expansion="{data}">
-      <TabView :lazy="true" class="tabView">
-        <TabPanel header="JSON">
-          <VueJsonPretty class="suggestion-json" :data="data.expandView" />
-        </TabPanel>
-        <TabPanel header="Hierarchy position">
-          <SecondaryTree :conceptIri="data.iri" class="suggestion-json" />
-        </TabPanel>
-      </TabView>
-    </template>
+    <Column v-if="removableRows" headerStyle="width: 3rem">
+      <template #body="{data}">
+        <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text" @click="remove(data)" />
+      </template>
+    </Column>
   </DataTable>
 </template>
 
@@ -83,6 +90,8 @@ import { defineComponent } from "vue";
 import VueJsonPretty from "vue-json-pretty";
 import { Vocabulary, Helpers, Models, Enums, Env } from "im-library";
 import DirectService from "@/services/DirectService";
+import { FilterMatchMode } from "primevue/api";
+import { mapState } from "vuex";
 
 const {
   ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType },
@@ -116,11 +125,15 @@ export default defineComponent({
   components: {
     VueJsonPretty
   },
+  computed: {
+    ...mapState(["filterOptions"])
+  },
   data() {
     return {
       selected: [] as any[],
       expandedRows: [] as any[],
-      searchTerm: ""
+      searchTerm: "",
+      filters: { scheme: { value: null, matchMode: FilterMatchMode.IN } }
     };
   },
   methods: {

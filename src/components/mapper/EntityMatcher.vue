@@ -162,7 +162,7 @@ export default defineComponent({
         results.splice(i, 1);
       }
       return results.map(entity => {
-        return { iri: entity.iri, name: entity.name, type: entity.entityType };
+        return { iri: entity.iri, name: entity.name, type: entity.entityType, scheme: entity.scheme };
       });
     },
 
@@ -268,7 +268,7 @@ export default defineComponent({
       const result = await EntityService.advancedSearch(searchRequest, cancelToken);
       if (result && isArrayHasLength(result)) {
         this.searchResults = result.map(item => {
-          return { iri: item.iri, name: item.name, type: item.entityType };
+          return { iri: item.iri, name: item.name, type: item.entityType, scheme: item.scheme };
         });
       } else {
         this.searchResults = [];
