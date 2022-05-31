@@ -5,37 +5,38 @@
       <div v-if="loading" class="loading-container">
         <ProgressSpinner style="width:1.5rem;height:1.5rem;" strokeWidth="6" />
       </div>
-      <AutoComplete
-        v-else-if="filteredOptions.length < 25"
-        v-model="selectedResult"
-        :suggestions="filteredOptions"
-        @complete="selectFromDropdown"
-        field="name"
-        :dropdown="true"
-        :disabled="invalidAssociatedProperty"
-        :forceSelection="true"
-      />
-      <AutoComplete
-        v-else
-        v-model="selectedResult"
-        :suggestions="filteredOptions"
-        @complete="selectFromDropdown"
-        :virtualScrollerOptions="{ itemSize: 25 }"
-        field="name"
-        :dropdown="true"
-        :disabled="invalidAssociatedProperty"
-        :forceSelection="true"
-      />
+      <div v-else class="input-treebutton-container">
+        <InputText
+          ref="miniSearchInput"
+          v-model="searchTerm"
+          @input="search"
+          @keyup.enter="search"
+          @focus="showOverlay"
+          @change="showOverlay"
+          placeholder="Search"
+          :dropdown="true"
+          :disabled="invalidAssociatedProperty"
+          class="search-input"
+        />
+        <Button icon="fa-solid fa-sitemap" @click="showTreeDialog($event)" />
+      </div>
       <small v-if="invalidAssociatedProperty" class="validate-error">Missing property for refinement. Please select a property first.</small>
     </div>
     <AddDeleteButtons :show="showButtons" :position="position" :options="[]" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
   </div>
+  <OverlayPanel class="search-op" ref="miniSearchOP" :showCloseIcon="true" :dismissable="true">
+    <SearchMiniOverlay :searchTerm="searchTerm" :searchResults="searchResults" :loading="loading" @searchResultSelected="updateSelectedResult" />
+  </OverlayPanel>
+  <OverlayPanel class="tree-op" ref="treeOP" :showCloseIcon="true" :dismissable="true">
+    <QuantifierTree :isAs="isAs" :quantifier="selectedResult" @treeNodeSelected="updateSelectedResult" />
+  </OverlayPanel>
 </template>
 
 <script lang="ts">
 import { defineComponent, PropType } from "@vue/runtime-core";
 import axios from "axios";
 import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/SearchMiniOverlay.vue";
+import QuantifierTree from "@/components/edit/memberEditor/builder/quantifier/QuantifierTree.vue";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums, Models } from "im-library";
@@ -68,7 +69,7 @@ export default defineComponent({
     deleteClicked: (_payload: ComponentDetails) => true,
     addClicked: (_payload: any) => true
   },
-  components: { AddDeleteButtons, SearchMiniOverlay },
+  components: { AddDeleteButtons, SearchMiniOverlay, QuantifierTree },
   computed: mapState(["filterOptions", "selectedFilters"]),
   watch: {
     value: {
@@ -90,12 +91,14 @@ export default defineComponent({
   data() {
     return {
       loading: false,
-      selectedResult: null as TTIriRef | null,
+      selectedResult: {} as TTIriRef,
       dropdownOptions: [] as any[],
       filteredOptions: [] as any[],
       invalidAssociatedProperty: false,
       request: {} as { cancel: any; msg: string },
-      propertyQuantiferKeys: [] as TTIriRef[]
+      isAs: [] as string[],
+      searchTerm: "",
+      searchResults: [] as Models.Search.ConceptSummary[]
     };
   },
   methods: {
@@ -106,21 +109,56 @@ export default defineComponent({
         const query = this.createQuantifierOptionsQuery(this.value.propertyIri);
         const queryResult = await QueryService.queryIM(query);
         if (isObjectHasKeys(queryResult, ["entities", "@context"]) && isArrayHasLength(queryResult.entities)) {
-          this.propertyQuantiferKeys = queryResult.entities
-            .map(result => {
-              return { "@id": result["@id"][0], name: result[RDFS.LABEL][0] };
-            })
-            .sort(byName);
+          this.isAs = queryResult.entities.map(result => result["@id"]);
         }
-        await this.search({ query: this.value.propertyIri });
-        if (this.value && isTTIriRef(this.value.quantifier)) {
-          const found = this.dropdownOptions?.find(item => item["@id"] === this.value.quantifier["@id"]);
-          if (found) this.selectedResult = found;
+        if (isArrayHasLength(this.isAs)) {
+          if (this.value && isTTIriRef(this.value.quantifier)) {
+            this.searchTerm = this.value.quantifier.name;
+            await this.search();
+            const found = this.searchResults.find(item => item.iri === this.value.quantifier["@id"]);
+            if (found) this.selectedResult = { "@id": found.iri, name: found.name };
+          }
         }
       } else {
         this.invalidAssociatedProperty = true;
       }
       this.loading = false;
+    },
+
+    hideOverlay(): void {
+      const x = this.$refs.miniSearchOP as any;
+      if (x) x.hide();
+    },
+
+    showOverlay(event: any): void {
+      const x = this.$refs.miniSearchOP as any;
+      if (x) x.show(event, event.target);
+    },
+
+    showTreeDialog(event: any): void {
+      const x = this.$refs.treeOP as any;
+      if (x) x.show(event, event.target);
+    },
+
+    hideTreeOverlay(): void {
+      const x = this.$refs.treeOP as any;
+      if (x) x.hide();
+    },
+
+    updateSelectedResult(data: Models.Search.ConceptSummary | TTIriRef) {
+      if (!isObjectHasKeys(data)) {
+        this.selectedResult = {} as TTIriRef;
+        this.searchTerm = "";
+      } else if (isTTIriRef(data)) {
+        this.selectedResult = data;
+        this.searchTerm = data.name;
+      } else {
+        this.selectedResult = { "@id": data.iri, name: data.name };
+        this.searchTerm = data.name;
+      }
+      this.onConfirm();
+      this.hideOverlay();
+      this.hideTreeOverlay();
     },
 
     createQuantifierOptionsQuery(iri: string) {
@@ -154,15 +192,13 @@ export default defineComponent({
       };
     },
 
-    async search(event: any) {
-      if (event.query.length > 0) {
+    async search() {
+      if (this.searchTerm.length > 0) {
         this.loading = true;
-        this.dropdownOptions = [];
+        this.searchResults = [];
         const searchRequest = new SearchRequest();
-        searchRequest.termFilter = event.query;
-        searchRequest.sortBy = SortBy.Usage;
-        searchRequest.page = 1;
-        searchRequest.size = 100;
+        searchRequest.termFilter = this.searchTerm;
+        searchRequest.isA = this.isAs;
         this.setFilters(searchRequest);
         if (isObjectHasKeys(this.request, ["cancel", "msg"])) {
           await this.request.cancel({ status: 499, message: "Search cancelled by user" });
@@ -171,9 +207,7 @@ export default defineComponent({
         this.request = { cancel: axiosSource.cancel, msg: "Loading..." };
         const result = await EntityService.advancedSearch(searchRequest, axiosSource.token);
         if (isArrayHasLength(result)) {
-          this.dropdownOptions = result.map(item => {
-            return { "@id": item.iri, name: item.name };
-          });
+          this.searchResults = result;
         }
         this.loading = false;
       }
@@ -187,7 +221,7 @@ export default defineComponent({
 
       searchRequest.statusFilter = [];
       for (const status of filteredFilterOptions.status) {
-        searchRequest.statusFilter.push(status["@id"]);
+        if (status["@id"] === IM.ACTIVE) searchRequest.statusFilter.push(status["@id"]);
       }
 
       searchRequest.typeFilter = [];
@@ -224,15 +258,7 @@ export default defineComponent({
     },
 
     onConfirm() {
-      this.$emit("updateClicked", {
-        id: this.id,
-        value: this.createAsJson(),
-        position: this.position,
-        type: ComponentType.QUANTIFIER,
-        builderType: this.builderType,
-        json: this.selectedResult,
-        showButtons: this.showButtons
-      });
+      this.$emit("updateClicked", this.createQuantifier());
     },
 
     createAsJson() {
@@ -240,15 +266,7 @@ export default defineComponent({
     },
 
     deleteClicked(): void {
-      this.$emit("deleteClicked", {
-        id: this.id,
-        value: this.createAsJson(),
-        position: this.position,
-        type: ComponentType.QUANTIFIER,
-        builderType: this.builderType,
-        json: this.selectedResult,
-        showButtons: this.showButtons
-      });
+      this.$emit("deleteClicked", this.createQuantifier());
     },
 
     addNextClicked(): void {
@@ -306,15 +324,17 @@ export default defineComponent({
   color: #6c757d;
 }
 
-.p-autocomplete {
+.search-input {
   width: 100%;
-}
-
-.p-autocomplete:deep(.p-autocomplete-input) {
-  flex: 1 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.input-treebutton-container {
+  display: flex;
+  flex-flow: row nowrap;
+  width: 100%;
 }
 
 .validate-error {

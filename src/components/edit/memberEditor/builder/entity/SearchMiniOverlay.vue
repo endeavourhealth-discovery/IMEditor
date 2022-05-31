@@ -97,14 +97,14 @@ export default defineComponent({
   name: "SearchMiniOverlay",
   props: {
     searchTerm: { type: String, required: false },
-    searchResults: { type: Array as PropType<Array<typeof ConceptSummary>>, required: false },
+    searchResults: { type: Array as PropType<Array<Models.Search.ConceptSummary>>, required: false },
     loading: { type: Boolean, required: true }
   },
-  emits: { searchResultSelected: (_payload: typeof ConceptSummary) => true },
+  emits: { searchResultSelected: (_payload: Models.Search.ConceptSummary) => true },
   data() {
     return {
-      selectedResult: {} as typeof ConceptSummary,
-      hoveredResult: {} as typeof ConceptSummary
+      selectedResult: {} as Models.Search.ConceptSummary,
+      hoveredResult: {} as Models.Search.ConceptSummary
     };
   },
   methods: {
@@ -128,7 +128,7 @@ export default defineComponent({
       const x = this.$refs.detailsOP as any;
       x.hide();
     },
-    showDetailsOverlay(event: any, data: typeof ConceptSummary) {
+    showDetailsOverlay(event: any, data: Models.Search.ConceptSummary) {
       this.hoveredResult = data;
       if (this.hoveredResult.name === "ANY") {
         return;
