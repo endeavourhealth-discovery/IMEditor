@@ -25,7 +25,11 @@
           </div>
         </template>
         <template #targetheader>
-          Task contents
+          <div class="flex justify-content-center align-items-center">
+            Task contents
+            <Button icon="pi pi-fw pi-eye" class="p-button-rounded p-button-text p-button-plain row-button" @click="view" v-tooltip.top="'View'" />
+            <Button icon="pi pi-fw pi-info-circle" class="p-button-rounded p-button-text p-button-plain row-button" @click="showInfo" v-tooltip.top="'Info'" />
+          </div>
         </template>
         <template #item="slotProps">
           {{ slotProps.item.name }}
@@ -85,6 +89,9 @@ export default defineComponent({
     ...mapState(["filterOptions"])
   },
   watch: {
+    selected() {
+      this.$emit("updateSelected", this.selected.iri);
+    },
     async searchTerm() {
       if (!this.searchTerm.length) {
         await this.getPredefinedList();
@@ -102,6 +109,7 @@ export default defineComponent({
       request: {} as { cancel: any; msg: string },
       searchTerm: "",
       saveLoading: false,
+      selected: {} as any,
       taskTypes: [
         {
           "@id": "http://endhealth.info/im#Task",
@@ -121,8 +129,8 @@ export default defineComponent({
     this.loading = false;
   },
   methods: {
-    showDetails(selectedIri: string) {
-      this.$emit("showDetails", selectedIri);
+    onSelect(selected: any) {
+      this.selected = selected[0][0];
     },
 
     async getPredefinedList() {
@@ -161,12 +169,11 @@ export default defineComponent({
     },
 
     view() {
-      if (isArrayHasLength(this.selection) && isArrayHasLength(this.selection[0]))
-        DirectService.directTo(Env.VIEWER_URL, this.selection[0][0].iri, this, "concept");
+      DirectService.directTo(Env.VIEWER_URL, this.selected.iri, this, "concept");
     },
 
     showInfo() {
-      if (isArrayHasLength(this.selection) && isArrayHasLength(this.selection[0])) this.$emit("showDetails", this.selection[0][0].iri);
+      this.$emit("showDetails", this.selected.iri);
     },
 
     async search(): Promise<void> {
