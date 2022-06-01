@@ -9,7 +9,6 @@
         @input="search"
         @keyup.enter="search"
         @focus="showOverlay"
-        @blur="hideOverlay"
         @change="showOverlay"
         placeholder="Search"
         class="p-inputtext search-input"
@@ -19,7 +18,7 @@
     </div>
     <AddDeleteButtons :show="showButtons" :position="position" :options="getButtonOptions()" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
   </div>
-  <OverlayPanel class="search-op" ref="miniSearchOP">
+  <OverlayPanel class="search-op" ref="miniSearchOP" :showCloseIcon="true" :dismissable="true">
     <SearchMiniOverlay :searchTerm="searchTerm" :searchResults="searchResults" :loading="loading" @searchResultSelected="updateSelectedResult" />
   </OverlayPanel>
 </template>

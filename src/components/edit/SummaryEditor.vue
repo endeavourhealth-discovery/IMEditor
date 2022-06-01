@@ -203,7 +203,7 @@ export default defineComponent({
 
         if (!isObjectHasKeys(this.updatedConcept, [IM.SCHEME])) {
           const found = this.filterOptions.schemes.find((scheme: any) => scheme.iri === this.iri.substring(0, this.iri.indexOf("#") + 1));
-          if (found) this.scheme = { iri: found.iri, name: found.name };
+          if (found) this.scheme = found;
         } else {
           this.scheme = this.updatedConcept[IM.SCHEME];
         }
