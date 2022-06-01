@@ -25,9 +25,10 @@
     <template #loading>
       Loading data. Please wait.
     </template>
-    <template v-if="inputSearch" #header>
-      <div class="flex justify-content-end">
-        <span class="p-input-icon-left ">
+    <template #header>
+      <div class="flex justify-content-center align-items-center">
+        <h5 class="m-0">{{ title }}</h5>
+        <span v-if="inputSearch" class="p-input-icon-left">
           <i class="pi pi-search" />
           <InputText v-model="searchTerm" type="text" placeholder="Search" @input="search" />
         </span>
@@ -103,6 +104,7 @@ export default defineComponent({
   name: "ExpansionTable",
   props: {
     contents: { type: Array, required: true },
+    title: { type: String, required: false },
     loading: { type: Boolean, required: false },
     selectable: { type: Boolean, required: false },
     inputSearch: { type: Boolean, required: false },

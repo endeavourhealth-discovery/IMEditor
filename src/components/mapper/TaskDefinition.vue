@@ -1,114 +1,42 @@
 <template>
   <ConfirmDialog></ConfirmDialog>
-  <div class="task-definition-container">
-    <div class="tree-bar-container col-3">
-      <Tree
-        :value="root"
-        selectionMode="single"
-        v-model:selectionKeys="selectedNode"
-        @node-select="onNodeSelect"
-        :loading="loading"
-        class="task-tree-container"
-      >
-        <template #default="slotProps">
-          <span :style="'color: ' + slotProps.node.colour" class="p-mx-1 type-icon">
-            <i :class="slotProps.node.treeIcon" aria-hidden="true" />
-          </span>
-          <span>{{ slotProps.node.label }}</span>
-        </template>
-        <template #task="slotProps">
-          <div @drop="onDrop(slotProps.node)" @dragover.prevent @dragenter.prevent @dblclick="editFolder(slotProps.node)">
-            <span :style="'color: ' + slotProps.node.colour" class="p-mx-1 type-icon">
-              <i :class="slotProps.node.treeIcon" aria-hidden="true" />
+  <Card class="task-definition-container">
+    <template #header>
+      <span class="field p-float-label">
+        <InputText id="name" type="text" class="p-inputtext-lg input-text" v-model="createTask.name" />
+        <label for="name">Name</label>
+      </span>
+      <span class="field p-float-label">
+        <Dropdown class="p-inputtext-lg input-text" id="type" v-model="createTask.type" :options="taskTypes" optionLabel="name" />
+        <label for="type">Type</label>
+      </span>
+    </template>
+    <template #content>
+      <PickList v-model="pickLists" dataKey="iri" v-model:selection="selection">
+        <template #sourceheader>
+          <div class="flex justify-content-center align-items-center">
+            <span class="p-input-icon-left">
+              <i class="pi pi-search" />
+              <InputText type="text" v-model="searchTerm" placeholder="Search" @keydown.enter="search" />
             </span>
-            <span>{{ slotProps.node.label }}</span>
+            <i v-if="loading" class="pi pi-spin pi-spinner" />
+            <Button icon="pi pi-fw pi-eye" class="p-button-rounded p-button-text p-button-plain row-button" @click="view" v-tooltip.top="'View'" />
+            <Button icon="pi pi-fw pi-info-circle" class="p-button-rounded p-button-text p-button-plain row-button" @click="showInfo" v-tooltip.top="'Info'" />
           </div>
         </template>
-        <template #newFolder="slotProps">
-          <InputText
-            type="text"
-            aria-describedby="foldername-help"
-            v-model="slotProps.node.label"
-            v-on:keyup.enter="saveNewFolder(slotProps.node)"
-            :class="slotProps.node.class"
-            @dblclick="slotProps.node.type = 'newFolder'"
-          />
-          <Button icon="pi pi-check" class="p-button-rounded p-button-text" @click="saveNewFolder(slotProps.node)" />
-          <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text" @click="deleteNewFolder(slotProps.node)" />
-          <div>
-            <small v-if="slotProps.node.class === 'p-invalid'" id="foldername-help" class="p-error">{{ slotProps.node.message }}</small>
-          </div>
+        <template #targetheader>
+          Task contents
         </template>
-      </Tree>
-      <Button label="Add folder" @click="addNewFolder" />
-    </div>
-    <div class="col">
-      <TabView :lazy="true" class="tabView" @tab-change="tableSelectedList = []">
-        <TabPanel header="List">
-          <Dropdown
-            v-model="selectedListOption"
-            :options="predefinedListOptions"
-            optionLabel="name"
-            placeholder="Select a predifined list"
-            class="predefined-list-dropdown"
-            @change="unselectAll"
-          />
-          <ExpansionTable
-            :contents="selectedList"
-            :drag="true"
-            :paginable="true"
-            :show-actions="true"
-            @show-details="showDetails"
-            @startDrag="startDrag"
-            :loading="loading"
-            :selectable="true"
-            @select="tableSelect"
-            @unselect="tableUnselect"
-            @selectAll="selectAll"
-            @unselectAll="unselectAll"
-            class="tab-container"
-          />
-        </TabPanel>
-        <TabPanel header="Contents">
-          <ExpansionTable
-            :contents="selected.contents"
-            :removableRows="true"
-            @remove="deleteTaskAction"
-            :show-actions="true"
-            @show-details="showDetails"
-            class="tab-container"
-          />
-        </TabPanel>
-        <TabPanel header="Search">
-          <ExpansionTable
-            :contents="searchResults"
-            :show-actions="true"
-            @show-details="showDetails"
-            :inputSearch="true"
-            @search="search"
-            :paginable="true"
-            :drag="true"
-            @startDrag="startDrag"
-            :selectable="true"
-            @select="tableSelect"
-            @unselect="tableUnselect"
-            @selectAll="selectAll"
-            @unselectAll="unselectAll"
-            class="tab-container"
-          />
-        </TabPanel>
-      </TabView>
-    </div>
-  </div>
+        <template #item="slotProps">
+          {{ slotProps.item.name }}
+        </template>
+      </PickList>
+    </template>
+  </Card>
   <div class="button-bar">
     <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
-    <Button icon="pi pi-folder" label="Add to task" class="p-button-help" @click="addSelectedToFolder" />
-    <Button icon="pi pi-check" label="Next" class="save-button" @click="next" />
+    <Button :loading="saveLoading" icon="pi pi-check" label="Save" class="save-button" @click="save" />
   </div>
-
-  <Dialog header="Select task" v-if="isArrayHasLength(tasks)" v-model:visible="displayAddToTask">
-    <MultipleTaskSelection :tasks="tasks" @addToTasks="addActionsToTasks" @closeTaskDialog="displayAddToTask = false" />
-  </Dialog>
 </template>
 
 <script lang="ts">
@@ -118,11 +46,12 @@ import ConfirmDialog from "primevue/confirmdialog";
 import ExpansionTable from "@/components/mapper/ExpansionTable.vue";
 import MultipleTaskSelection from "@/components/mapper/MultipleTaskSelection.vue";
 import { mapState } from "vuex";
-import { Vocabulary, Helpers, Models, Enums } from "im-library";
+import { Vocabulary, Helpers, Models, Enums, Env } from "im-library";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import axios from "axios";
 import { Namespace, EntityReferenceNode, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import DirectService from "@/services/DirectService";
 
 const { IM, RDF, RDFS } = Vocabulary;
 const {
@@ -153,46 +82,41 @@ export default defineComponent({
     updateSelected: (_payload: string) => true
   },
   computed: {
-    ...mapState(["filterOptions", "refreshTree"])
+    ...mapState(["filterOptions"])
   },
   watch: {
-    async refreshTree() {
-      await this.init();
-      await this.getPredefinedList(true, this.selectedListOption.path);
-      this.unselectAll();
-    },
-
-    async selectedListOption() {
-      await this.getPredefinedList(false, this.selectedListOption.path);
+    async searchTerm() {
+      if (!this.searchTerm.length) {
+        await this.getPredefinedList();
+      }
     }
   },
   data() {
     return {
       pageIndex: 0,
-      root: [] as any[],
-      selectedNode: {} as any,
-      selected: {} as any,
-      contentHeight: "",
+      pickLists: [[] as any, [] as any],
+      createTask: { contents: [] } as any,
+      selection: [] as any[],
       loading: true,
       searchResults: [] as any[],
       request: {} as { cancel: any; msg: string },
-      draggedItem: {} as any,
-      tableSelectedList: [] as any[],
-      displayAddToTask: false,
-      tasks: [] as any[],
+      searchTerm: "",
+      saveLoading: false,
+      taskTypes: [
+        {
+          "@id": "http://endhealth.info/im#Task",
+          name: "Task"
+        }
+      ],
       predefinedListOptions: [
         { name: "Unmapped", path: "unmapped" },
         { name: "Unassigned", path: "unassigned" },
         { name: "Unclassified", path: "unclassified" }
-      ],
-      predefinedListMap: new Map(),
-      selectedListOption: {} as { name: string; path: string },
-      selectedList: [] as any[]
+      ]
     };
   },
   async mounted() {
     this.loading = true;
-    this.predefinedListMap = new Map();
     await this.init();
     this.loading = false;
   },
@@ -200,22 +124,15 @@ export default defineComponent({
     showDetails(selectedIri: string) {
       this.$emit("showDetails", selectedIri);
     },
-    async getPredefinedList(refresh: boolean, listName: string) {
-      this.loading = true;
-      if (!this.predefinedListMap.has(listName) || refresh) {
-        const list = (await EntityService.getPredefinedList(listName)).map(unmapped => {
-          return { iri: unmapped["@id"], name: unmapped.name || unmapped[RDFS.LABEL], scheme: unmapped[IM.SCHEME][0] };
-        });
-        this.predefinedListMap.set(listName, list);
-      }
 
-      this.selectedList = this.predefinedListMap.get(listName);
-      this.loading = false;
+    async getPredefinedList() {
+      this.pickLists[0] = (await EntityService.getPredefinedList("unmapped")).map(unmapped => {
+        return { iri: unmapped["@id"], name: unmapped.name || unmapped[RDFS.LABEL] };
+      });
     },
 
     async init() {
-      this.selectedListOption = this.predefinedListOptions[0];
-      await this.getTasks();
+      await this.getPredefinedList();
     },
 
     isObjectHasKeys(object: any, keys?: string[]) {
@@ -224,55 +141,6 @@ export default defineComponent({
 
     isArrayHasLength(array: any) {
       return isArrayHasLength(array);
-    },
-
-    async addSelectedToFolder() {
-      this.displayAddToTask = true;
-      const tasks = (await EntityService.getEntityChildren(IM.MODULE_TASKS)) as any[];
-      this.tasks = tasks.map(task => {
-        return { iri: task["@id"], name: task.name, type: task.type };
-      });
-    },
-
-    tableSelect(tableSelected: any) {
-      this.tableSelectedList.push(tableSelected);
-    },
-
-    tableUnselect(tableUnselected: any) {
-      this.tableSelectedList = this.tableSelectedList.filter(selected => selected.iri !== tableUnselected.iri);
-    },
-
-    async getTasks() {
-      this.root = [];
-      const root = (await EntityService.getEntityChildren(IM.MODULE_TASKS)) as any[];
-      for (const node of root) {
-        node.children = [];
-        node.key = node["@id"];
-        node.treeIcon = getFAIconFromType(node.type);
-        node.colour = getColourFromType(node.type);
-        node.type = "task";
-        node.label = node.name;
-        const children = (await EntityService.getEntityChildren(node["@id"])) as any[];
-        node.children = children.map(child => {
-          return {
-            key: child["@id"],
-            label: child.name,
-            data: child["@id"],
-            children: [],
-            type: child.type,
-            scheme: child.scheme,
-            treeIcon: getFAIconFromType(child.type),
-            colour: getColourFromType(child.type),
-            parentKey: node.key
-          };
-        });
-        node.contents = this.getTableDataFromNodes(node.children);
-      }
-      this.root = root;
-    },
-
-    editFolder(node: any) {
-      node.type = "newFolder";
     },
 
     getTableDataFromNodes(nodes: any) {
@@ -288,107 +156,25 @@ export default defineComponent({
       });
     },
 
-    startDrag(item: any) {
-      this.draggedItem = item;
-    },
-
-    async onDrop(node: any) {
-      this.loading = true;
-      const entity = { "@id": this.draggedItem.iri } as any;
-      entity[IM.IN_TASK] = node["@id"];
-      await this.addActionToTask(this.draggedItem.iri, node["@id"]);
-      await this.getTasks();
-      this.selectedNode = {};
-      this.loading = false;
-    },
-
     async addActionToTask(entityIri: string, taskIri: string) {
       await EntityService.addTaskAction(entityIri, taskIri);
     },
 
-    async addActionsToTasks(data: any[]) {
-      for (const action of this.tableSelectedList) {
-        for (const task of data) {
-          await this.addActionToTask(action.iri, task.iri);
-        }
-      }
-      await this.getTasks();
-      this.loading = false;
-      this.displayAddToTask = false;
+    view() {
+      if (isArrayHasLength(this.selection) && isArrayHasLength(this.selection[0]))
+        DirectService.directTo(Env.VIEWER_URL, this.selection[0][0].iri, this, "concept");
     },
 
-    async deleteTaskAction(removedNode: any) {
+    showInfo() {
+      if (isArrayHasLength(this.selection) && isArrayHasLength(this.selection[0])) this.$emit("showDetails", this.selection[0][0].iri);
+    },
+
+    async search(): Promise<void> {
       this.loading = true;
-      await EntityService.removeTaskAction(this.selected.key, removedNode.iri);
-      await this.getTasks();
-      this.loading = false;
-    },
-
-    addNewFolder() {
-      this.root.push({
-        key: this.root.length.toString(),
-        label: "",
-        data: "",
-        type: "newFolder",
-        children: [],
-        icon: getFAIconFromType([{ "@id": IM.TASK, name: "" }]),
-        colour: getColourFromType([{ "@id": IM.TASK, name: "" }])
-      });
-    },
-
-    async saveNewFolder(node: any) {
-      if (!node.label) {
-        node.class = "p-invalid";
-        node.message = "Name undefined";
-        return;
-      }
-
-      const nameExists = this.root.findIndex(rootNode => rootNode.label === node.label && rootNode.type !== "newFolder");
-      const iri = IM.NAMESPACE + (node.label as string).replaceAll(" ", "");
-      const iriEntity = await EntityService.getPartialEntity(iri, []);
-      if (nameExists !== -1 || isObjectHasKeys(iriEntity, [RDFS.LABEL])) {
-        node.class = "p-invalid";
-        node.message = "Task already exists";
-        return;
-      }
-
-      node.data = iri;
-      node.type = "task";
-      delete node.class;
-      await EntityService.createTask(this.buildEntityFromNode(node));
-      this.getTasks();
-    },
-
-    buildEntityFromNode(node: any) {
-      const entity = {} as any;
-      entity[RDFS.LABEL] = node.label;
-      entity["@id"] = node.data;
-      return entity;
-    },
-
-    deleteNewFolder(node: any) {
-      const i = this.root.findIndex(rootNode => rootNode.key === node.key);
-      if (i !== -1) this.root.splice(i, 1);
-    },
-
-    onNodeSelect(node: any) {
-      this.selected = node;
-      this.$emit("updateSelected", node.key);
-    },
-
-    selectAll(selectedList: any[]) {
-      this.tableSelectedList = selectedList;
-    },
-
-    unselectAll() {
-      this.tableSelectedList = [];
-    },
-
-    async search(searchTerm: string): Promise<void> {
-      if (searchTerm.length > 0) {
+      if (this.searchTerm.length > 0) {
         this.searchResults = [];
         const searchRequest = new SearchRequest();
-        searchRequest.termFilter = searchTerm;
+        searchRequest.termFilter = this.searchTerm;
         searchRequest.sortBy = SortBy.Usage;
         searchRequest.page = 1;
         searchRequest.size = 100;
@@ -400,6 +186,7 @@ export default defineComponent({
         this.request = { cancel: axiosSource.cancel, msg: "Loading..." };
         await this.fetchSearchResults(searchRequest, axiosSource.token);
       }
+      this.loading = false;
     },
 
     setFilters(searchRequest: Models.Search.SearchRequest) {
@@ -420,45 +207,50 @@ export default defineComponent({
       const result = await EntityService.advancedSearch(searchRequest, cancelToken);
       if (result && isArrayHasLength(result)) {
         this.searchResults = result.map(item => {
-          return { iri: item.iri, name: item.name, type: item.entityType, scheme: item.scheme };
+          return { iri: item.iri, name: item.name, type: item.entityType };
         });
       } else {
         this.searchResults = [];
       }
+
+      this.pickLists[0] = this.searchResults;
     },
     next() {
       this.$emit("nextPage", { pageIndex: this.pageIndex, data: {} });
+    },
+
+    async save() {
+      this.saveLoading = true;
+      const entity = { "@id": IM.NAMESPACE + this.createTask.name } as any;
+      entity[RDFS.LABEL] = this.createTask.name;
+      entity[RDF.TYPE] = [this.createTask.type];
+      entity[IM.HAS_STATUS] = { "@id": IM.ACTIVE, name: "Active" };
+      entity[IM.IS_CONTAINED_IN] = { "@id": IM.NAMESPACE + "Tasks", name: "Tasks" };
+      if (!(await EntityService.iriExists(entity["@id"]))) {
+        const created = await EntityService.createEntity(entity);
+        for (const action of this.pickLists[1]) {
+          await EntityService.addTaskAction(created["@id"], action.iri);
+        }
+      }
+      this.saveLoading = false;
     }
   }
 });
 </script>
 
 <style scoped>
-.predefined-list-dropdown {
-  display: flex;
-  margin-bottom: 1rem;
-}
-
-.tree-bar-container {
+.task-definition-container {
+  flex: 0 1 auto;
+  overflow: auto;
+  width: 100%;
+  height: calc(100vh - 11.6rem);
+  padding: 2.5rem 1rem 1rem 1rem;
   display: flex;
   flex-flow: column nowrap;
-  background-color: #ffffff;
-}
-
-.task-definition-container {
-  flex: 1 1 auto;
-  width: 100%;
-  display: flex;
-  flex-flow: row nowrap;
   justify-content: flex-start;
-  overflow: auto;
-  position: relative;
+  align-items: center;
+  row-gap: 1.75rem;
   background-color: #ffffff;
-}
-
-.tab-container {
-  height: calc(100vh - 21rem);
-  overflow: auto;
 }
 
 .button-bar {
@@ -476,25 +268,19 @@ export default defineComponent({
   justify-content: flex-end;
 }
 
-.task-tree-container {
-  flex: 1 1 auto;
+.field {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.input-text {
   width: 100%;
-  overflow: auto;
-  display: flex;
-  flex-flow: column nowrap;
-  justify-content: flex-start;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
-.tabView {
-  display: flex;
-  flex-direction: column;
-}
-
-.delete-icon {
-  padding-left: 0.5rem;
-}
-
-.type-icon {
-  padding-right: 0.5rem;
+.p-picklist-listwrapper {
+  height: calc(100vh - 1.6rem);
 }
 </style>
