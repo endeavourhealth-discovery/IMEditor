@@ -185,7 +185,7 @@ export default defineComponent({
 
     showInfo(selectedList: string) {
       const selectedIri = this.getSelected(selectedList);
-      if (selectedIri) this.$emit("showDetails", this.selected.iri);
+      if (selectedIri) this.$emit("showDetails", selectedIri);
     },
 
     getSelected(selectedList: string) {

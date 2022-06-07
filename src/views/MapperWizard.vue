@@ -11,8 +11,8 @@
       </div>
     </div>
 
-    <div :class="showDetails ? 'main-container' : ''">
-      <div :class="showDetails ? 'main-view' : ''">
+    <div :class="showInfo ? 'main-container' : ''">
+      <div :class="showInfo ? 'main-view' : ''">
         <router-view v-slot="{ Component }">
           <keep-alive>
             <component
@@ -28,7 +28,7 @@
         </router-view>
       </div>
 
-      <div v-if="showDetails" class="details-view">
+      <div v-if="showInfo" class="details-view">
         <InfoSideBar :selectedConceptIri="selectedConceptIri" @closeBar="hideDetails" />
       </div>
     </div>
@@ -52,7 +52,7 @@ export default defineComponent({
   },
   data() {
     return {
-      showDetails: false,
+      showInfo: false,
       selectedConceptIri: "",
       items: [
         {
@@ -95,11 +95,12 @@ export default defineComponent({
     },
 
     showSelectedDetails(selectedIri: string) {
+      console.log(selectedIri);
       this.selectedConceptIri = selectedIri;
-      this.showDetails = true;
+      this.showInfo = true;
     },
     hideDetails() {
-      this.showDetails = false;
+      this.showInfo = false;
     },
     nextPage(event: any) {
       for (const property in event.data) {
