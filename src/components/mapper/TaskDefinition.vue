@@ -20,15 +20,25 @@
               <InputText type="text" v-model="searchTerm" placeholder="Search" @keydown.enter="search" />
             </span>
             <i v-if="loading" class="pi pi-spin pi-spinner" />
-            <Button icon="pi pi-fw pi-eye" class="p-button-rounded p-button-text p-button-plain row-button" @click="view" v-tooltip.top="'View'" />
-            <Button icon="pi pi-fw pi-info-circle" class="p-button-rounded p-button-text p-button-plain row-button" @click="showInfo" v-tooltip.top="'Info'" />
+            <Button icon="pi pi-fw pi-eye" class="p-button-rounded p-button-text p-button-plain row-button" @click="view('left')" v-tooltip.top="'View'" />
+            <Button
+              icon="pi pi-fw pi-info-circle"
+              class="p-button-rounded p-button-text p-button-plain row-button"
+              @click="showInfo('left')"
+              v-tooltip.top="'Info'"
+            />
           </div>
         </template>
         <template #targetheader>
           <div class="flex justify-content-center align-items-center">
             Task contents
-            <Button icon="pi pi-fw pi-eye" class="p-button-rounded p-button-text p-button-plain row-button" @click="view" v-tooltip.top="'View'" />
-            <Button icon="pi pi-fw pi-info-circle" class="p-button-rounded p-button-text p-button-plain row-button" @click="showInfo" v-tooltip.top="'Info'" />
+            <Button icon="pi pi-fw pi-eye" class="p-button-rounded p-button-text p-button-plain row-button" @click="view('right')" v-tooltip.top="'View'" />
+            <Button
+              icon="pi pi-fw pi-info-circle"
+              class="p-button-rounded p-button-text p-button-plain row-button"
+              @click="showInfo('right')"
+              v-tooltip.top="'Info'"
+            />
           </div>
         </template>
         <template #item="slotProps">
@@ -168,12 +178,23 @@ export default defineComponent({
       await EntityService.addTaskAction(entityIri, taskIri);
     },
 
-    view() {
-      DirectService.directTo(Env.VIEWER_URL, this.selected.iri, this, "concept");
+    view(selectedList: string) {
+      const selectedIri = this.getSelected(selectedList);
+      if (selectedIri) DirectService.directTo(Env.VIEWER_URL, selectedIri, this, "concept");
     },
 
-    showInfo() {
-      this.$emit("showDetails", this.selected.iri);
+    showInfo(selectedList: string) {
+      const selectedIri = this.getSelected(selectedList);
+      if (selectedIri) this.$emit("showDetails", this.selected.iri);
+    },
+
+    getSelected(selectedList: string) {
+      let selectedIri = "";
+      const selectedItems = selectedList === "left" ? this.selection[0] : this.selection[1];
+      if (selectedItems.length) {
+        selectedIri = selectedItems.length === 1 ? selectedItems[0].iri : selectedItems[selectedItems.length - 1].iri;
+      }
+      return selectedIri;
     },
 
     async search(): Promise<void> {
@@ -236,7 +257,12 @@ export default defineComponent({
       if (!(await EntityService.iriExists(entity["@id"]))) {
         const created = await EntityService.createEntity(entity);
         for (const action of this.pickLists[1]) {
-          await EntityService.addTaskAction(created["@id"], action.iri);
+          await EntityService.addTaskAction(action.iri, created["@id"]);
+        }
+      } else {
+        const updated = await EntityService.updateEntity(entity);
+        for (const action of this.pickLists[1]) {
+          await EntityService.addTaskAction(action.iri, updated["@id"]);
         }
       }
       this.saveLoading = false;

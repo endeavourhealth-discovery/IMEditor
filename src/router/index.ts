@@ -9,7 +9,9 @@ import { AccessDenied, SnomedLicense, Env, PageNotFound, EntityNotFound, Helpers
 import MapperWizard from "../views/MapperWizard.vue";
 import TaskDefinition from "../components/mapper/TaskDefinition.vue";
 import TaskSelection from "../components/mapper/TaskSelection.vue";
+import TaskViewer from "../components/mapper/TaskViewer.vue";
 import EntityMatcher from "../components/mapper/EntityMatcher.vue";
+import EntityMapper from "../components/mapper/EntityMapper.vue";
 import MappingConfirmation from "../components/mapper/MappingConfirmation.vue";
 
 import store from "@/store/index";
@@ -62,13 +64,13 @@ const routes: Array<RouteRecordRaw> = [
       },
       {
         path: "selection",
-        name: "TaskSelection",
-        component: TaskSelection
+        name: "TaskViewer",
+        component: TaskViewer
       },
       {
         path: "match",
-        name: "EntityMatcher",
-        component: EntityMatcher
+        name: "EntityMapper",
+        component: EntityMapper
       },
       {
         path: "confirmation",

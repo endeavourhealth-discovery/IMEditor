@@ -12,7 +12,7 @@ import { far } from "@fortawesome/free-regular-svg-icons";
 
 dom.watch();
 
-library.add(fas, far);
+library.add(fas as any, far as any);
 
 import "primevue/resources/themes/saga-blue/theme.css"; //theme
 
@@ -76,6 +76,7 @@ import Tag from "primevue/tag";
 import AutoComplete from "primevue/autocomplete";
 import Sidebar from "primevue/sidebar";
 import Steps from "primevue/steps";
+import Chips from "primevue/chips";
 
 import { Amplify, Auth } from "aws-amplify";
 import awsconfig from "./aws-exports";
@@ -95,7 +96,7 @@ Amplify.configure(awsconfig);
 Auth.configure(awsconfig);
 
 const app = createApp(App)
-  .use(store)
+  .use(store as any)
   .use(router)
   .use(PrimeVue, { ripple: true })
   .use(IMLibrary.install as Plugin, { store })
@@ -155,6 +156,7 @@ const app = createApp(App)
   .component("Tag", Tag)
   .component("AutoComplete", AutoComplete)
   .component("Sidebar", Sidebar)
+  .component("Chips", Chips)
   .component("Steps", Steps);
 
 const vm = app.mount("#app");

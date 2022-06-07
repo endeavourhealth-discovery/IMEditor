@@ -1,5 +1,9 @@
 <template>
+  <div v-if="loading" class="flex flex-row justify-content-center align-items-center loading-container">
+    <ProgressSpinner />
+  </div>
   <DataTable
+    v-else
     :value="contents"
     v-model:selection="selected"
     v-model:expandedRows="expandedRows"
