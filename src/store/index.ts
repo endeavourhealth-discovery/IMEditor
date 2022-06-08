@@ -1,9 +1,8 @@
 import { createStore } from "vuex";
 import { HistoryItem, Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
-import { Models, LoggerService } from "im-library";
+import { Models, LoggerService, ConfigService } from "im-library";
 const { User, CustomAlert } = Models;
 import AuthService from "@/services/AuthService";
-import ConfigService from "@/services/ConfigService";
 
 export default createStore({
   // update stateType.ts when adding new state!
