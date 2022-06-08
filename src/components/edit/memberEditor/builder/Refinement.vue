@@ -45,7 +45,7 @@ import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
 import { Vocabulary, Helpers, Enums } from "im-library";
 import { EntityReferenceNode, NextComponentSummary, ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 const {
-  EditorBuilderJsonMethods: { generateNewComponent, updateItem, deleteItem, addItem, addNextOptions, scrollIntoView }
+  EditorBuilderJsonMethods: { generateNewComponent, updateItem, addItem, addNextOptions, scrollIntoView, updatePositions }
 } = Helpers;
 const { RDFS, RDF } = Vocabulary;
 const { ComponentType } = Enums;
@@ -158,9 +158,9 @@ export default defineComponent({
           this.builderType,
           { minus: false, plus: false }
         );
-        if (property) this.refinementBuild.unshift();
+        if (property) this.refinementBuild.unshift(property);
       }
-      deleteItem(data, this.refinementBuild, ComponentType.REFINEMENT, this.builderType);
+      updatePositions(this.refinementBuild);
     },
 
     updateItemWrapper(data: ComponentDetails) {
