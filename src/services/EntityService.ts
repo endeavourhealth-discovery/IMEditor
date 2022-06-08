@@ -304,16 +304,6 @@ export default class EntityService {
     }
   }
 
-  public static async getEntitySummary(iri: string): Promise<typeof ConceptSummary> {
-    try {
-      return await axios.get(this.api + "api/entity/public/summary", {
-        params: { iri: iri }
-      });
-    } catch (error) {
-      return {} as typeof ConceptSummary;
-    }
-  }
-
   public static async getNamespaces(): Promise<Namespace[]> {
     try {
       return await axios.get(this.api + "api/entity/public/namespaces");
@@ -382,6 +372,16 @@ export default class EntityService {
       });
     } catch (error) {
       return {} as any;
+    }
+  }
+
+  public static async getEntitySummary(iri: string): Promise<Models.Search.ConceptSummary> {
+    try {
+      return await axios.get(Env.API + "api/entity/public/summary", {
+        params: { iri: iri }
+      });
+    } catch (error) {
+      return {} as Models.Search.ConceptSummary;
     }
   }
 }
