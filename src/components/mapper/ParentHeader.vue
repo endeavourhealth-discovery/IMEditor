@@ -28,6 +28,12 @@
           @click="edit(concept['@id'])"
           v-tooltip.left="'Edit'"
         />
+        <Button
+          icon="fa-solid fa-pen-to-square"
+          class="p-button-secondary p-button-outlined concept-button"
+          @click="starTask(concept['@id'])"
+          v-tooltip.left="'Start task'"
+        />
       </div>
     </div>
     <TextWithLabel label="Iri" :data="concept['@id']" :show="true" />
@@ -54,7 +60,7 @@ const {
 
 export default defineComponent({
   name: "ParentHeader",
-  emits: { openBar: () => true },
+  emits: { showDetails: (_payload: string) => true },
   props: { conceptIri: { type: String, required: true } },
   watch: {
     async conceptIri() {
@@ -83,8 +89,7 @@ export default defineComponent({
     },
 
     showInfo(iri: string) {
-      this.$store.commit("updateSelectedConceptIri", iri);
-      this.$emit("openBar");
+      this.$emit("showDetails", iri);
     },
 
     view(iri: string) {
@@ -92,7 +97,13 @@ export default defineComponent({
     },
 
     edit(iri: string) {
-      DirectService.directTo(Env.EDITOR_URL, iri, this, "editor");
+      console.log(iri);
+      this.$router.push({ name: "TaskDefinition", params: { taskIri: iri } });
+    },
+
+    starTask(iri: string) {
+      console.log(iri);
+      this.$router.push({ name: "EntityMapper", params: { taskIri: iri } });
     },
 
     updateFavourites(iri: string) {

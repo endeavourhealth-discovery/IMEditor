@@ -49,7 +49,7 @@ const routes: Array<RouteRecordRaw> = [
     }
   },
   {
-    path: "/mapper",
+    path: "/task",
     name: "MapperWizard",
     component: MapperWizard,
     meta: {
@@ -63,19 +63,14 @@ const routes: Array<RouteRecordRaw> = [
         component: TaskDefinition
       },
       {
-        path: "selection",
+        path: "view",
         name: "TaskViewer",
         component: TaskViewer
       },
       {
-        path: "match",
+        path: "mapper",
         name: "EntityMapper",
         component: EntityMapper
-      },
-      {
-        path: "confirmation",
-        name: "MappingConfirmation",
-        component: MappingConfirmation
       }
     ]
   },

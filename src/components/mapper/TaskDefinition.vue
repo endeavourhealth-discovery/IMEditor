@@ -1,55 +1,62 @@
 <template>
   <ConfirmDialog></ConfirmDialog>
-  <Card class="task-definition-container">
-    <template #header>
-      <span class="field p-float-label">
-        <InputText id="name" type="text" class="p-inputtext-lg input-text" v-model="createTask.name" />
-        <label for="name">Name</label>
-      </span>
-      <span class="field p-float-label">
-        <Dropdown class="p-inputtext-lg input-text" id="type" v-model="createTask.type" :options="taskTypes" optionLabel="name" />
-        <label for="type">Type</label>
-      </span>
-    </template>
-    <template #content>
-      <PickList v-model="pickLists" dataKey="iri" v-model:selection="selection">
-        <template #sourceheader>
-          <div class="flex justify-content-center align-items-center">
-            <span class="p-input-icon-left">
-              <i class="pi pi-search" />
-              <InputText type="text" v-model="searchTerm" placeholder="Search" @keydown.enter="search" />
-            </span>
-            <i v-if="loading" class="pi pi-spin pi-spinner" />
-            <Button icon="pi pi-fw pi-eye" class="p-button-rounded p-button-text p-button-plain row-button" @click="view('left')" v-tooltip.top="'View'" />
-            <Button
-              icon="pi pi-fw pi-info-circle"
-              class="p-button-rounded p-button-text p-button-plain row-button"
-              @click="showInfo('left')"
-              v-tooltip.top="'Info'"
-            />
-          </div>
-        </template>
-        <template #targetheader>
-          <div class="flex justify-content-center align-items-center">
-            Task contents
-            <Button icon="pi pi-fw pi-eye" class="p-button-rounded p-button-text p-button-plain row-button" @click="view('right')" v-tooltip.top="'View'" />
-            <Button
-              icon="pi pi-fw pi-info-circle"
-              class="p-button-rounded p-button-text p-button-plain row-button"
-              @click="showInfo('right')"
-              v-tooltip.top="'Info'"
-            />
-          </div>
-        </template>
-        <template #item="slotProps">
-          {{ slotProps.item.name }}
-        </template>
-      </PickList>
-    </template>
-  </Card>
-  <div class="button-bar">
-    <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
-    <Button :loading="saveLoading" icon="pi pi-check" label="Save" class="save-button" @click="save" />
+  <div class="definition-main-container">
+    <h5>Task Definition</h5>
+    <Card class="task-definition-container">
+      <template #header>
+        <span class="field p-float-label">
+          <InputText id="name" type="text" class="p-inputtext-lg input-text" v-model="createTask.iri" />
+          <label for="name">Iri</label>
+        </span>
+        <span class="field p-float-label">
+          <InputText id="name" type="text" class="p-inputtext-lg input-text" v-model="createTask.name" />
+          <label for="name">Name</label>
+        </span>
+        <span class="field p-float-label">
+          <Dropdown class="p-inputtext-lg input-text" id="type" v-model="createTask.type" :options="taskTypes" optionLabel="name" />
+          <label for="type">Type</label>
+        </span>
+      </template>
+      <template #content>
+        <PickList v-model="pickLists" dataKey="iri" v-model:selection="selection">
+          <template #sourceheader>
+            <div class="flex justify-content-center align-items-center">
+              <span class="p-input-icon-left">
+                <i class="pi pi-search" />
+                <InputText type="text" v-model="searchTerm" placeholder="Search" @keydown.enter="search" />
+              </span>
+              <i v-if="loading" class="pi pi-spin pi-spinner" />
+            </div>
+          </template>
+          <template #targetheader>
+            <div class="flex justify-content-center align-items-center">
+              Task contents
+            </div>
+          </template>
+          <template #item="slotProps">
+            <div class="pick-list-row">
+              <span class="pick-list-row">{{ slotProps.item.name }}</span>
+              <Button
+                icon="pi pi-fw pi-eye"
+                class="action-button p-button-rounded p-button-text p-button-plain row-button"
+                @click="view(slotProps.item.iri)"
+                v-tooltip.top="'View'"
+              />
+              <Button
+                icon="pi pi-fw pi-info-circle"
+                class="p-button-rounded p-button-text p-button-plain row-button"
+                @click="showInfo(slotProps.item.iri)"
+                v-tooltip.top="'Info'"
+              />
+            </div>
+          </template>
+        </PickList>
+      </template>
+    </Card>
+    <div class="button-bar">
+      <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
+      <Button :loading="saveLoading" icon="pi pi-check" label="Save" class="save-button" @click="save" />
+    </div>
   </div>
 </template>
 
@@ -111,8 +118,9 @@ export default defineComponent({
   data() {
     return {
       pageIndex: 0,
+      taskIri: "",
       pickLists: [[] as any, [] as any],
-      createTask: { contents: [] } as any,
+      createTask: {} as any,
       selection: [] as any[],
       loading: true,
       searchResults: [] as any[],
@@ -134,6 +142,7 @@ export default defineComponent({
     };
   },
   async mounted() {
+    this.taskIri = this.$route.params.taskIri as string;
     this.loading = true;
     await this.init();
     this.loading = false;
@@ -151,6 +160,16 @@ export default defineComponent({
 
     async init() {
       await this.getPredefinedList();
+      if (this.taskIri) {
+        const updateTask = await EntityService.getPartialEntity(this.taskIri, []);
+        this.createTask.iri = this.taskIri;
+        this.createTask.name = updateTask[RDFS.LABEL];
+        this.createTask.type = updateTask[RDF.TYPE][0];
+        const children = await EntityService.getEntityChildren(this.taskIri);
+        this.pickLists[1] = children.map(child => {
+          return { iri: child["@id"], name: child.name };
+        });
+      }
     },
 
     isObjectHasKeys(object: any, keys?: string[]) {
@@ -178,14 +197,13 @@ export default defineComponent({
       await EntityService.addTaskAction(entityIri, taskIri);
     },
 
-    view(selectedList: string) {
-      const selectedIri = this.getSelected(selectedList);
-      if (selectedIri) DirectService.directTo(Env.VIEWER_URL, selectedIri, this, "concept");
+    view(iri: string) {
+      if (iri) DirectService.directTo(Env.VIEWER_URL, iri, this, "concept");
     },
 
-    showInfo(selectedList: string) {
-      const selectedIri = this.getSelected(selectedList);
-      if (selectedIri) this.$emit("showDetails", selectedIri);
+    showInfo(iri: string) {
+      console.log(iri);
+      if (iri) this.$emit("showDetails", iri);
     },
 
     getSelected(selectedList: string) {
@@ -249,7 +267,7 @@ export default defineComponent({
 
     async save() {
       this.saveLoading = true;
-      const entity = { "@id": IM.NAMESPACE + this.createTask.name } as any;
+      const entity = { "@id": this.createTask.iri } as any;
       entity[RDFS.LABEL] = this.createTask.name;
       entity[RDF.TYPE] = [this.createTask.type];
       entity[IM.HAS_STATUS] = { "@id": IM.ACTIVE, name: "Active" };
@@ -276,13 +294,17 @@ export default defineComponent({
   flex: 0 1 auto;
   overflow: auto;
   width: 100%;
-  height: calc(100vh - 11.6rem);
+  height: calc(100vh - 10.6rem);
   padding: 2.5rem 1rem 1rem 1rem;
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-start;
   align-items: center;
   row-gap: 1.75rem;
+  background-color: #ffffff;
+}
+
+.definition-main-container {
   background-color: #ffffff;
 }
 
@@ -313,7 +335,14 @@ export default defineComponent({
   white-space: nowrap;
 }
 
-.p-picklist-listwrapper {
-  height: calc(100vh - 1.6rem);
+.pick-list-row {
+  display: flex;
+  align-items: center;
+}
+
+.row-button:hover {
+  background-color: #6c757d !important;
+  color: #ffffff !important;
+  z-index: 2;
 }
 </style>

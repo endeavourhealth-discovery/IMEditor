@@ -1,33 +1,32 @@
 <template>
-  <div class="task-definition-container">
-    <div class="tree-bar-container col-3">
-      <Tree
-        :value="root"
-        selectionMode="single"
-        v-model:selectionKeys="selectedNode"
-        @node-select="onNodeSelect"
-        :loading="loading"
-        class="task-tree-container"
-      >
-        <template #default="slotProps">
-          <span :style="'color: ' + slotProps.node.colour" class="p-mx-1 type-icon">
-            <i :class="slotProps.node.treeIcon" aria-hidden="true" />
-          </span>
-          <span>{{ slotProps.node.label }}</span>
-        </template>
-      </Tree>
-      <Button label="Create task" @click="createTask" />
-    </div>
-    <div class="col">
-      <div class="tabView">
-        <div class="header-container"><ParentHeader :concept-iri="selected.key" /></div>
-        <ExpansionTable :contents="selected.contents" :loading="loading" :show-actions="true" @show-details="showDetails" class="tab-container" />
+  <div class="viewer-main-container">
+    <h5>Task Viewer</h5>
+    <div class="task-viewer-container">
+      <div class="tree-bar-container col-3">
+        <Tree
+          :value="root"
+          selectionMode="single"
+          v-model:selectionKeys="selectedNode"
+          @node-select="onNodeSelect"
+          :loading="loading"
+          class="task-tree-container"
+        >
+          <template #default="slotProps">
+            <span :style="'color: ' + slotProps.node.colour" class="p-mx-1 type-icon">
+              <i :class="slotProps.node.treeIcon" aria-hidden="true" />
+            </span>
+            <span>{{ slotProps.node.label }}</span>
+          </template>
+        </Tree>
+        <Button label="Create task" @click="createTask" />
+      </div>
+      <div class="col">
+        <div class="tabView">
+          <div class="header-container"><ParentHeader :concept-iri="selected.key" @show-details="showDetails" /></div>
+          <ExpansionTable :contents="selected.contents" :loading="loading" :show-actions="true" @show-details="showDetails" class="tab-container" />
+        </div>
       </div>
     </div>
-  </div>
-  <div class="button-bar">
-    <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
-    <Button :disabled="!isTaskSelected" icon="pi pi-check" label="Start Task" class="save-button" @click="startTask" />
   </div>
 </template>
 
@@ -108,6 +107,7 @@ export default defineComponent({
   },
   methods: {
     showDetails(selectedIri: string) {
+      console.log(selectedIri);
       this.$emit("showDetails", selectedIri);
     },
     async getPredefinedList(refresh: boolean, listName: string) {
@@ -234,7 +234,11 @@ export default defineComponent({
     },
 
     createTask() {
-      console.log("create");
+      this.$router.push({ name: "TaskDefinition", params: { iri: "" } });
+    },
+
+    editTask(iri: string) {
+      this.$router.push({ name: "TaskDefinition", params: { iri: iri } });
     },
 
     onNodeSelect(node: any) {
@@ -295,7 +299,7 @@ export default defineComponent({
   background-color: #ffffff;
 }
 
-.task-definition-container {
+.task-viewer-container {
   flex: 1 1 auto;
   width: 100%;
   display: flex;
@@ -307,23 +311,8 @@ export default defineComponent({
 }
 
 .tab-container {
-  height: calc(100vh - 27.3rem);
+  height: calc(100vh - 22rem);
   overflow: auto;
-}
-
-.button-bar {
-  flex: 0 1 auto;
-  padding: 1rem 1rem 1rem 0;
-  gap: 0.5rem;
-  width: 100%;
-  border-bottom: 1px solid #dee2e6;
-  border-left: 1px solid #dee2e6;
-  border-right: 1px solid #dee2e6;
-  border-radius: 3px;
-  background-color: #ffffff;
-  display: flex;
-  flex-flow: row;
-  justify-content: flex-end;
 }
 
 .task-tree-container {
@@ -342,5 +331,9 @@ export default defineComponent({
 .header-container {
   display: flex;
   flex-flow: column nowrap;
+}
+
+.viewer-main-container {
+  background-color: #ffffff;
 }
 </style>

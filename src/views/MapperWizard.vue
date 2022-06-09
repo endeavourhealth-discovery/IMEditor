@@ -5,11 +5,6 @@
         <span class="title"><strong>IM Mapper</strong></span>
       </template>
     </TopBar>
-    <div class="steps-json-container">
-      <div class="steps-content">
-        <Steps :model="items" :readonly="false" />
-      </div>
-    </div>
 
     <div :class="showInfo ? 'main-container' : ''">
       <div :class="showInfo ? 'main-view' : ''">
@@ -56,20 +51,17 @@ export default defineComponent({
       selectedConceptIri: "",
       items: [
         {
-          label: "Define task",
-          to: "/mapper/definition"
-        },
-        {
           label: "Select task",
-          to: "/mapper/selection"
+          to: "/task/view"
         },
         {
-          label: "Map to",
-          to: "/mapper/match"
+          label: "Define task",
+          to: "/task/definition"
         },
+
         {
-          label: "Confirm",
-          to: "/mapper/confirmation"
+          label: "Mappper",
+          to: "/task/mapper"
         }
       ],
       stepsObject: {} as any

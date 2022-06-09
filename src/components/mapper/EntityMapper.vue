@@ -102,6 +102,7 @@ export default defineComponent({
     showDetails: (_payload: string) => true
   },
   async mounted() {
+    this.taskIri = this.$route.params.taskIri as string;
     this.actions = await EntityService.getEntityChildren(this.taskIri);
     for (const action of this.actions) {
       this.suggestions = await EntityService.getMappingSuggestions(action["@id"], action.name);
@@ -274,7 +275,7 @@ export default defineComponent({
   overflow: auto;
   position: relative;
   background-color: #ffffff;
-  height: calc(100vh - 11.6rem);
+  height: calc(100vh - 8rem);
 }
 .button-bar {
   flex: 0 1 auto;
