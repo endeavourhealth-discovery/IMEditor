@@ -1,13 +1,9 @@
 <template>
   <ConfirmDialog></ConfirmDialog>
   <div class="definition-main-container">
-    <h5>Task Definition</h5>
+    <h5 class="title">Task Definition</h5>
     <Card class="task-definition-container">
       <template #header>
-        <span class="field p-float-label">
-          <InputText id="name" type="text" class="p-inputtext-lg input-text" v-model="createTask.iri" />
-          <label for="name">Iri</label>
-        </span>
         <span class="field p-float-label">
           <InputText id="name" type="text" class="p-inputtext-lg input-text" v-model="createTask.name" />
           <label for="name">Name</label>
@@ -294,7 +290,7 @@ export default defineComponent({
   flex: 0 1 auto;
   overflow: auto;
   width: 100%;
-  height: calc(100vh - 10.6rem);
+  height: calc(100vh - 11.6rem);
   padding: 2.5rem 1rem 1rem 1rem;
   display: flex;
   flex-flow: column nowrap;
@@ -344,5 +340,9 @@ export default defineComponent({
   background-color: #6c757d !important;
   color: #ffffff !important;
   z-index: 2;
+}
+
+.title {
+  padding: 1rem 1rem 0 1rem;
 }
 </style>

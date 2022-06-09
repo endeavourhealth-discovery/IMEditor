@@ -1,6 +1,6 @@
 <template>
   <div class="viewer-main-container">
-    <h5>Task Viewer</h5>
+    <h5 class="title">Task Viewer</h5>
     <div class="task-viewer-container">
       <div class="tree-bar-container col-3">
         <Tree
@@ -311,7 +311,7 @@ export default defineComponent({
 }
 
 .tab-container {
-  height: calc(100vh - 22rem);
+  height: calc(100vh - 23rem);
   overflow: auto;
 }
 
@@ -335,5 +335,9 @@ export default defineComponent({
 
 .viewer-main-container {
   background-color: #ffffff;
+}
+
+.title {
+  padding: 1rem 1rem 0 1rem;
 }
 </style>
