@@ -42,7 +42,6 @@ import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums, Models } from "im-library";
 import { TTIriRef, ComponentDetails, Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
 import QueryService from "@/services/QueryService";
-import EntityService from "@/services/EntityService";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   TypeGuards: { isTTIriRef },
@@ -205,7 +204,7 @@ export default defineComponent({
         }
         const axiosSource = axios.CancelToken.source();
         this.request = { cancel: axiosSource.cancel, msg: "Loading..." };
-        const result = await EntityService.advancedSearch(searchRequest, axiosSource.token);
+        const result = await this.$entityService.advancedSearch(searchRequest, axiosSource.token);
         if (isArrayHasLength(result)) {
           this.searchResults = result;
         }

@@ -17,7 +17,6 @@ import { defineComponent, PropType } from "@vue/runtime-core";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import { Enums, Helpers, Vocabulary } from "im-library";
 import { ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
-import EntityService from "@/services/EntityService";
 import QueryService from "@/services/QueryService";
 const { RDFS } = Vocabulary;
 const { ComponentType } = Enums;
@@ -72,7 +71,7 @@ export default defineComponent({
     async init() {
       this.loading = true;
       if (this.value.propertyIri) {
-        const result = await EntityService.getPartialEntity(this.value.propertyIri, [RDFS.LABEL]);
+        const result = await this.$entityService.getPartialEntity(this.value.propertyIri, [RDFS.LABEL]);
         const propertyName = result ? result[RDFS.LABEL] : "";
         this.selected = { "@id": this.value.propertyIri, name: propertyName };
       }

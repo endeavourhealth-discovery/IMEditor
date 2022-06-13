@@ -67,7 +67,6 @@
 </template>
 
 <script lang="ts">
-import EntityService from "@/services/EntityService";
 import { defineComponent } from "vue";
 import VueJsonPretty from "vue-json-pretty";
 import { Vocabulary, Helpers, Models, Enums } from "im-library";
@@ -122,7 +121,7 @@ export default defineComponent({
       return getFAIconFromType(type);
     },
     async onRowExpand(event: any) {
-      event.data.expandView = await EntityService.getPartialEntity(event.data.iri, []);
+      event.data.expandView = await this.$entityService.getPartialEntity(event.data.iri, []);
     },
     search() {
       this.$emit("search", this.searchTerm);

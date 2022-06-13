@@ -14,11 +14,10 @@
 
 <script lang="ts">
 import { TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
-import SetService from "@/services/SetService";
 import { defineComponent } from "@vue/runtime-core";
 import axios from "axios";
 import EclResults from "@/components/edit/memberEditor/EclResults.vue";
-import {Helpers, Vocabulary} from 'im-library';
+import { Helpers, Vocabulary } from "im-library";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
 } = Helpers;
@@ -51,7 +50,7 @@ export default defineComponent({
       }
       const axiosSource = axios.CancelToken.source();
       this.request = { cancel: axiosSource.cancel, msg: "Loading..." };
-      this.eclAsNode = await SetService.evaluateEcl(this.ecl, axiosSource.token);
+      this.eclAsNode = await this.$setService.evaluateEcl(this.ecl, axiosSource.token);
       if (isArrayHasLength(this.eclAsNode)) {
         this.eclAsIriRefs = this.eclAsNode.map(item => {
           return { "@id": item.iri, name: item.name };

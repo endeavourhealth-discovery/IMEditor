@@ -28,7 +28,6 @@ import { defineComponent, PropType } from "@vue/runtime-core";
 import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/SearchMiniOverlay.vue";
 import { mapState } from "vuex";
 import axios from "axios";
-import EntityService from "@/services/EntityService";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import { Namespace, TTIriRef, EntityReferenceNode, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 import { Helpers, Models, Enums } from "im-library";
@@ -160,7 +159,7 @@ export default defineComponent({
     },
 
     async fetchSearchResults(searchRequest: Models.Search.SearchRequest, cancelToken: any) {
-      const result = await EntityService.advancedSearch(searchRequest, cancelToken);
+      const result = await this.$entityService.advancedSearch(searchRequest, cancelToken);
       if (result && isArrayHasLength(result)) {
         this.searchResults = result;
       } else {

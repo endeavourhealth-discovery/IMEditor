@@ -10,10 +10,29 @@ const {
   CustomAlert
 } = Models;
 
+vi.mock("@/main", () => {
+  return {
+    default: {
+      $configService: {
+        getXmlSchemaDataTypes: vi.fn(),
+        getFilterDefaults: vi.fn()
+      },
+      $entityService: {
+        advancedSearch: vi.fn()
+      }
+    }
+  };
+});
+
+import vm from "@/main";
+
 describe("state", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     window.sessionStorage.clear();
+    vm.$configService.getXmlSchemaDataTypes = vi
+      .fn()
+      .mockResolvedValue(["http://www.w3.org/2001/XMLSchema#string", "http://www.w3.org/2001/XMLSchema#boolean"]);
   });
 
   afterAll(() => {
@@ -137,12 +156,10 @@ describe("mutations", () => {
 
 describe("actions", () => {
   it("can fetchBlockedIris", async () => {
-    const iris = ["http://www.w3.org/2001/XMLSchema#string", "http://www.w3.org/2001/XMLSchema#boolean"];
-    ConfigService.getXmlSchemaDataTypes = vi.fn().mockResolvedValue(iris);
     store.dispatch("fetchBlockedIris");
     await flushPromises();
-    expect(ConfigService.getXmlSchemaDataTypes).toHaveBeenCalledTimes(1);
-    expect(store.state.blockedIris).toStrictEqual(iris);
+    expect(vm.$configService.getXmlSchemaDataTypes).toHaveBeenCalledTimes(1);
+    expect(store.state.blockedIris).toStrictEqual(["http://www.w3.org/2001/XMLSchema#string", "http://www.w3.org/2001/XMLSchema#boolean"]);
   });
 
   it("can logoutCurrentUser ___ 200", async () => {

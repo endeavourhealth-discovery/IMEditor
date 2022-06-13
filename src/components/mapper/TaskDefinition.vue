@@ -112,7 +112,6 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import EntityService from "@/services/EntityService";
 import ConfirmDialog from "primevue/confirmdialog";
 import ExpansionTable from "@/components/mapper/ExpansionTable.vue";
 import MultipleTaskSelection from "@/components/mapper/MultipleTaskSelection.vue";
@@ -195,7 +194,7 @@ export default defineComponent({
     async getPredefinedList(listName: string) {
       this.loading = true;
       if (!this.predefinedListMap.has(listName)) {
-        const list = (await EntityService.getPredefinedList(listName)).map(unmapped => {
+        const list = (await this.$entityService.getPredefinedList(listName)).map(unmapped => {
           return { iri: unmapped["@id"], name: unmapped.name };
         });
         this.predefinedListMap.set(listName, list);
@@ -220,7 +219,7 @@ export default defineComponent({
 
     async addSelectedToFolder() {
       this.displayAddToTask = true;
-      const tasks = (await EntityService.getEntityChildren(IM.MODULE_TASKS)) as any[];
+      const tasks = (await this.$entityService.getEntityChildren(IM.MODULE_TASKS)) as any[];
       this.tasks = tasks.map(task => {
         return { iri: task["@id"], name: task.name, type: task.type };
       });
@@ -236,7 +235,7 @@ export default defineComponent({
 
     async getTasks() {
       this.root = [];
-      const root = (await EntityService.getEntityChildren(IM.MODULE_TASKS)) as any[];
+      const root = (await this.$entityService.getEntityChildren(IM.MODULE_TASKS)) as any[];
       for (const node of root) {
         node.children = [];
         node.key = node["@id"];
@@ -244,7 +243,7 @@ export default defineComponent({
         node.colour = getColourFromType(node.type);
         node.type = "task";
         node.label = node.name;
-        const children = (await EntityService.getEntityChildren(node["@id"])) as any[];
+        const children = (await this.$entityService.getEntityChildren(node["@id"])) as any[];
         node.children = children.map(child => {
           return {
             key: child["@id"],
@@ -288,7 +287,7 @@ export default defineComponent({
     },
 
     async addActionToTask(entityIri: string, taskIri: string) {
-      await EntityService.addTaskAction(entityIri, taskIri);
+      await this.$entityService.addTaskAction(entityIri, taskIri);
     },
 
     async addActionsToTasks(data: any[]) {
@@ -304,7 +303,7 @@ export default defineComponent({
 
     async deleteTaskAction(removedNode: any) {
       this.loading = true;
-      await EntityService.removeTaskAction(removedNode.parentKey, removedNode.key);
+      await this.$entityService.removeTaskAction(removedNode.parentKey, removedNode.key);
       await this.getTasks();
       this.loading = false;
     },
@@ -330,7 +329,7 @@ export default defineComponent({
 
       const nameExists = this.root.findIndex(rootNode => rootNode.label === node.label && rootNode.type !== "newFolder");
       const iri = IM.NAMESPACE + (node.label as string).replaceAll(" ", "");
-      const iriEntity = await EntityService.getPartialEntity(iri, []);
+      const iriEntity = await this.$entityService.getPartialEntity(iri, []);
       if (nameExists !== -1 || isObjectHasKeys(iriEntity, [RDFS.LABEL])) {
         node.class = "p-invalid";
         node.message = "Task already exists";
@@ -340,7 +339,7 @@ export default defineComponent({
       node.data = iri;
       node.type = "task";
       delete node.class;
-      await EntityService.createTask(this.buildEntityFromNode(node));
+      await this.$entityService.createTask(this.buildEntityFromNode(node));
       this.getTasks();
     },
 
@@ -401,7 +400,7 @@ export default defineComponent({
     },
 
     async fetchSearchResults(searchRequest: Models.Search.SearchRequest, cancelToken: any) {
-      const result = await EntityService.advancedSearch(searchRequest, cancelToken);
+      const result = await this.$entityService.advancedSearch(searchRequest, cancelToken);
       if (result && isArrayHasLength(result)) {
         this.searchResults = result.map(item => {
           return { iri: item.iri, name: item.name, type: item.entityType };
