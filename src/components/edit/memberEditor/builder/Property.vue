@@ -17,7 +17,6 @@ import { defineComponent, PropType } from "@vue/runtime-core";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import { Enums, Helpers, Vocabulary } from "im-library";
 import { ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
-import QueryService from "@/services/QueryService";
 const { RDFS } = Vocabulary;
 const { ComponentType } = Enums;
 const {
@@ -78,7 +77,7 @@ export default defineComponent({
       if (isTTIriRef(this.value.associatedMember)) {
         this.invalidAssociatedMember = false;
         const query = this.createPropertyOptionsQuery(this.value.associatedMember["@id"]);
-        const queryResult = await QueryService.queryIM(query);
+        const queryResult = await this.$queryService.queryIM(query);
         if (isObjectHasKeys(queryResult, ["entities", "@context"]) && isArrayHasLength(queryResult.entities)) {
           this.dropdownOptions = queryResult.entities
             .map(result => {

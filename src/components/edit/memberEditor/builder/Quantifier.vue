@@ -41,7 +41,6 @@ import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteBu
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums, Models } from "im-library";
 import { TTIriRef, ComponentDetails, Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
-import QueryService from "@/services/QueryService";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   TypeGuards: { isTTIriRef },
@@ -106,7 +105,7 @@ export default defineComponent({
       if (this.value.propertyIri) {
         this.invalidAssociatedProperty = false;
         const query = this.createQuantifierOptionsQuery(this.value.propertyIri);
-        const queryResult = await QueryService.queryIM(query);
+        const queryResult = await this.$queryService.queryIM(query);
         if (isObjectHasKeys(queryResult, ["entities", "@context"]) && isArrayHasLength(queryResult.entities)) {
           this.isAs = queryResult.entities.map(result => result["@id"]);
         }

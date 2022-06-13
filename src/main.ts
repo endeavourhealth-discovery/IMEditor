@@ -86,13 +86,14 @@ import "sweetalert2/dist/sweetalert2.min.css";
 
 // IMLibrary imports
 import "im-library/dist/style.css";
-import IMLibrary, { Helpers, Env, ConfigService, EntityService, SetService } from "im-library";
+import IMLibrary, { Helpers, Env, ConfigService, EntityService, QueryService, SetService } from "im-library";
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
 
 const configService = new ConfigService(axios);
 const entityService = new EntityService(axios);
+const queryService = new QueryService(axios);
 const setService = new SetService(axios);
 
 Amplify.configure(awsconfig);
@@ -163,6 +164,7 @@ const app = createApp(App)
 
 app.config.globalProperties.$configService = configService;
 app.config.globalProperties.$entityService = entityService;
+app.config.globalProperties.$queryService = queryService;
 app.config.globalProperties.$setService = setService;
 
 const vm = app.mount("#app");
