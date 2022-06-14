@@ -38,7 +38,6 @@
 </template>
 
 <script lang="ts">
-import EntityService from "@/services/EntityService";
 import { defineComponent } from "vue";
 import ExpansionTable from "./ExpansionTable.vue";
 import { Vocabulary, Helpers, Models, Enums, LoggerService } from "im-library";
@@ -112,7 +111,7 @@ export default defineComponent({
       this.mappingsMap.forEach((value, key) => {
         mappings[key] = value.map((mappedTo: { iri: string }) => mappedTo.iri);
       });
-      const updatedEntities = await EntityService.saveMapping(mappings);
+      const updatedEntities = await this.$entityService.saveMapping(mappings);
       this.updatedEntities = updatedEntities.map(entity => {
         return { iri: entity["@id"], name: entity[RDFS.LABEL], type: entity[RDF.TYPE] };
       });

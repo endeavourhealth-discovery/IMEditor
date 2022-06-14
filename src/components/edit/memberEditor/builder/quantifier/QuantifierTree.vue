@@ -27,7 +27,6 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "@vue/runtime-core";
-import EntityService from "@/services/EntityService";
 import { EntityReferenceNode, TreeNode } from "im-library/dist/types/interfaces/Interfaces";
 import { TTIriRef } from "im-library/dist/types/interfaces/modules/TTIriRef";
 import { Helpers } from "im-library";
@@ -62,7 +61,7 @@ export default defineComponent({
   methods: {
     async addIsAsToRoot() {
       for (const isA of this.isAs) {
-        const asNode = await EntityService.getEntityAsEntityReferenceNode(isA);
+        const asNode = await this.$entityService.getEntityAsEntityReferenceNode(isA);
         const hasNode = !!this.root.find(node => node.data === asNode["@id"]);
         if (!hasNode) this.root.push(this.createTreeNode(asNode.name, asNode["@id"], asNode.type, asNode.hasGrandChildren));
       }

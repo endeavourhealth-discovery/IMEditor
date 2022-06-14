@@ -14,7 +14,8 @@ import MappingConfirmation from "../components/mapper/MappingConfirmation.vue";
 
 import store from "@/store/index";
 import { nextTick } from "vue";
-import EntityService from "@/services/EntityService";
+import vm from "@/main";
+
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
@@ -138,7 +139,7 @@ router.beforeEach(async (to, from) => {
     const iri = to.params.selectedIri as string;
     try {
       new URL(iri);
-      if (!(await EntityService.iriExists(iri))) {
+      if (!(await vm.$entityService.iriExists(iri))) {
         router.push({ name: "EntityNotFound" });
       }
     } catch (_error) {

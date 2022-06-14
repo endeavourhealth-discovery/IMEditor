@@ -86,10 +86,15 @@ import "sweetalert2/dist/sweetalert2.min.css";
 
 // IMLibrary imports
 import "im-library/dist/style.css";
-import IMLibrary, { Helpers, Env } from "im-library";
+import IMLibrary, { Helpers, Env, ConfigService, EntityService, QueryService, SetService } from "im-library";
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
+
+const configService = new ConfigService(axios);
+const entityService = new EntityService(axios);
+const queryService = new QueryService(axios);
+const setService = new SetService(axios);
 
 Amplify.configure(awsconfig);
 Auth.configure(awsconfig);
@@ -157,7 +162,14 @@ const app = createApp(App)
   .component("Sidebar", Sidebar)
   .component("Steps", Steps);
 
+app.config.globalProperties.$configService = configService;
+app.config.globalProperties.$entityService = entityService;
+app.config.globalProperties.$queryService = queryService;
+app.config.globalProperties.$setService = setService;
+
 const vm = app.mount("#app");
+
+export default vm;
 
 axios.interceptors.request.use(async request => {
   if (store.state.isLoggedIn && Env.API && request.url?.startsWith(Env.API)) {
