@@ -81,7 +81,7 @@
 import { defineComponent } from "vue";
 import { mapState } from "vuex";
 import ExpansionTable from "./ExpansionTable.vue";
-import { Vocabulary, Helpers, Models, Enums, LoggerService } from "im-library";
+import { Vocabulary, Helpers, Models, Enums } from "im-library";
 import { Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
 import VueJsonPretty from "vue-json-pretty";
 import axios from "axios";
@@ -204,7 +204,7 @@ export default defineComponent({
       if (isArrayHasLength(this.selectedEntities)) {
         this.addMapping(this.selectedEntities);
       }
-      this.$toast.add(LoggerService.success("Mapping added to list"));
+      this.$toast.add(this.$loggerService.success("Mapping added to list"));
     },
 
     addMapping(entities: any[]) {

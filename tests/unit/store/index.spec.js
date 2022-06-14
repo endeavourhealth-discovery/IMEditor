@@ -1,7 +1,7 @@
 import store from "@/store/index";
 import { flushPromises } from "@vue/test-utils";
 import AuthService from "@/services/AuthService";
-import { Vocabulary, Models, LoggerService, ConfigService } from "im-library";
+import { Vocabulary, Models } from "im-library";
 import { expect } from "vitest";
 const { IM } = Vocabulary;
 const {
@@ -19,7 +19,8 @@ vi.mock("@/main", () => {
       },
       $entityService: {
         advancedSearch: vi.fn()
-      }
+      },
+      $loggerService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), success: vi.fn(), debug: vi.fn() }
     }
   };
 });
@@ -164,7 +165,7 @@ describe("actions", () => {
 
   it("can logoutCurrentUser ___ 200", async () => {
     AuthService.signOut = vi.fn().mockResolvedValue(new CustomAlert(200, "logout successful"));
-    LoggerService.error = vi.fn();
+    vm.$loggerService.error = vi.fn();
     let result = false;
     await store.dispatch("logoutCurrentUser").then(res => (result = res));
     await flushPromises();
@@ -177,7 +178,7 @@ describe("actions", () => {
 
   it("can logoutCurrentUser ___ 400", async () => {
     AuthService.signOut = vi.fn().mockResolvedValue(new CustomAlert(400, "logout failed 400"));
-    LoggerService.error = vi.fn();
+    vm.$loggerService.error = vi.fn();
     let result = false;
     await store.dispatch("logoutCurrentUser").then(res => (result = res));
     await flushPromises();
@@ -218,7 +219,7 @@ describe("actions", () => {
   it("can authenticateCurrentUser___ 403 ___ logout 200", async () => {
     AuthService.getCurrentAuthenticatedUser = vi.fn().mockResolvedValue(new CustomAlert(403, "user authenticated"));
     AuthService.signOut = vi.fn().mockResolvedValue(new CustomAlert(200, "logout successful"));
-    LoggerService.info = vi.fn();
+    vm.$loggerService.info = vi.fn();
     let result = { authenticated: false };
     await store.dispatch("authenticateCurrentUser").then(res => (result = res));
     await flushPromises();
@@ -229,14 +230,14 @@ describe("actions", () => {
     expect(store.state.isLoggedIn).toBe(false);
     expect(store.state.currentUser).toBe(null);
     expect(result.authenticated).toBe(false);
-    expect(LoggerService.info).toBeCalledTimes(1);
-    expect(LoggerService.info).toBeCalledWith(undefined, "Force logout successful");
+    expect(vm.$loggerService.info).toBeCalledTimes(1);
+    expect(vm.$loggerService.info).toBeCalledWith(undefined, "Force logout successful");
   });
 
   it("can authenticateCurrentUser___ 403 ___ logout 200", async () => {
     AuthService.getCurrentAuthenticatedUser = vi.fn().mockResolvedValue(new CustomAlert(403, "user authenticated"));
     AuthService.signOut = vi.fn().mockResolvedValue(new CustomAlert(400, "logout failed"));
-    LoggerService.error = vi.fn();
+    vm.$loggerService.error = vi.fn();
     let result = { authenticated: false };
     await store.dispatch("authenticateCurrentUser").then(res => (result = res));
     await flushPromises();
@@ -247,7 +248,7 @@ describe("actions", () => {
     expect(store.state.isLoggedIn).toBe(false);
     expect(store.state.currentUser).toBe(null);
     expect(result.authenticated).toBe(false);
-    expect(LoggerService.error).toBeCalledTimes(1);
-    expect(LoggerService.error).toBeCalledWith(undefined, "Force logout failed");
+    expect(vm.$loggerService.error).toBeCalledTimes(1);
+    expect(vm.$loggerService.error).toBeCalledWith(undefined, "Force logout failed");
   });
 });

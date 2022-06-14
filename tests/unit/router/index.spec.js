@@ -3,14 +3,16 @@ import App from "@/App.vue";
 import Toast from "primevue/toast";
 import store from "@/store/index";
 import { flushPromises, shallowMount } from "@vue/test-utils";
-import { Env } from "im-library";
+import { Services } from "im-library";
+const { Env } = Services;
 
 vi.mock("@/main", () => {
   return {
     default: {
       $entityService: {
         iriExists: vi.fn()
-      }
+      },
+      $loggerService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), success: vi.fn(), debug: vi.fn() }
     }
   };
 });

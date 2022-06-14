@@ -49,7 +49,7 @@
 <script lang="ts">
 import { defineComponent } from "@vue/runtime-core";
 import { mapState } from "vuex";
-import { Helpers, Vocabulary, Env } from "im-library";
+import { Helpers, Vocabulary } from "im-library";
 import TypeSelector from "@/components/creator/TypeSelector.vue";
 import VueJsonPretty from "vue-json-pretty";
 const {
@@ -218,7 +218,7 @@ export default defineComponent({
                 })
                 .then((result: any) => {
                   if (result.isConfirmed) {
-                    window.location.href = Env.VIEWER_URL + "concept?selectedIri=" + iriToUrl(this.conceptUpdated["@id"]);
+                    window.location.href = this.$env.VIEWER_URL + "concept?selectedIri=" + iriToUrl(this.conceptUpdated["@id"]);
                   } else {
                     this.$router.push({ name: "Editor", params: { selectedIri: this.conceptUpdated["@id"] } });
                   }
