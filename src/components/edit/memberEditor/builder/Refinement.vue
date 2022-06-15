@@ -264,8 +264,7 @@ export default defineComponent({
 .refinement-children-container {
   flex: 1 1 auto;
   display: flex;
-  flex-flow: column wrap;
-  gap: 1rem;
+  flex-flow: row nowrap;
 }
 
 .label-container {

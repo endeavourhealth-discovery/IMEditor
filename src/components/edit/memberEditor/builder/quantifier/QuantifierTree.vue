@@ -89,7 +89,7 @@ export default defineComponent({
     async onNodeExpand(node: any) {
       if (isObjectHasKeys(node)) {
         node.loading = true;
-        const children = await EntityService.getEntityChildren(node.data);
+        const children = await this.$entityService.getEntityChildren(node.data);
         children.forEach(child => {
           if (!this.nodeHasChild(node, child)) node.children.push(this.createTreeNode(child.name, child["@id"], child.type, child.hasChildren));
         });
@@ -112,7 +112,7 @@ export default defineComponent({
       this.loading = true;
       let path = [] as any[];
       for (const isA of this.isAs) {
-        const result = await EntityService.getPathBetweenNodes(iri, isA);
+        const result = await this.$entityService.getPathBetweenNodes(iri, isA);
         if (isArrayHasLength(result)) path = result;
       }
       if (!isArrayHasLength(path)) {

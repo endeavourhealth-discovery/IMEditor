@@ -9,6 +9,7 @@
       <small v-if="invalidAssociatedMember" class="validate-error">Missing member for refinement. Please select a member first.</small>
     </div>
     <AddDeleteButtons :show="showButtons" :position="position" :options="[]" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
+    <p>=</p>
   </div>
 </template>
 
@@ -96,22 +97,12 @@ export default defineComponent({
         name: "AllowablePropertiesForCovid",
         description: "gets the active properties and their subtypes that have a domain which is a super type of covid.",
         activeOnly: true,
+        resultFormat: "OBJECT",
         select: {
           distinct: true,
           entityType: {
             includeSubtypes: true,
             "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
-          },
-          filter: {
-            property: {
-              "@id": "http://www.w3.org/2000/01/rdf-schema#domain"
-            },
-            valueConcept: [
-              {
-                includeSupertypes: true,
-                "@id": iri
-              }
-            ]
           },
           property: [
             {
@@ -120,8 +111,20 @@ export default defineComponent({
             {
               "@id": "http://www.w3.org/2000/01/rdf-schema#label"
             }
-          ]
+          ],
+          match: {
+            property: {
+              "@id": "http://www.w3.org/2000/01/rdf-schema#domain"
+            },
+            isConcept: [
+              {
+                includeSupertypes: true,
+                "@id": iri
+              }
+            ]
+          }
         }
+        // usePrefixes: true
       };
     },
 
@@ -165,13 +168,12 @@ export default defineComponent({
 
 <style scoped>
 .property-container {
-  flex: 1 1 auto;
   display: flex;
   flex-flow: row nowrap;
   justify-content: flex-start;
   align-items: center;
   gap: 1rem;
-  width: 100%;
+  width: 50%;
 }
 
 .loading-container {
