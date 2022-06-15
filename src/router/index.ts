@@ -5,12 +5,13 @@ import TypeSelector from "@/components/creator/TypeSelector.vue";
 import SummaryEditor from "@/components/edit/SummaryEditor.vue";
 import ParentsEditor from "@/components/edit/ParentsEditor.vue";
 import MemberEditor from "@/components/edit/MemberEditor.vue";
-import { AccessDenied, SnomedLicense, Env, PageNotFound, EntityNotFound, Helpers } from "im-library";
+import { AccessDenied, SnomedLicense, Services, PageNotFound, EntityNotFound, Helpers } from "im-library";
 import MapperWizard from "../views/MapperWizard.vue";
 import TaskDefinition from "../components/mapper/TaskDefinition.vue";
 import TaskSelection from "../components/mapper/TaskSelection.vue";
 import EntityMatcher from "../components/mapper/EntityMatcher.vue";
 import MappingConfirmation from "../components/mapper/MappingConfirmation.vue";
+const { Env } = Services;
 
 import store from "@/store/index";
 import { nextTick } from "vue";

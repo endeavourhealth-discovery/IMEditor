@@ -40,7 +40,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import ExpansionTable from "./ExpansionTable.vue";
-import { Vocabulary, Helpers, Models, Enums, LoggerService } from "im-library";
+import { Vocabulary, Helpers, Models, Enums } from "im-library";
 
 const {
   ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType },
@@ -115,7 +115,7 @@ export default defineComponent({
       this.updatedEntities = updatedEntities.map(entity => {
         return { iri: entity["@id"], name: entity[RDFS.LABEL], type: entity[RDF.TYPE] };
       });
-      this.$toast.add(LoggerService.success("Saved new mappings successfully"));
+      this.$toast.add(this.$loggerService.success("Saved new mappings successfully"));
       this.displayUpdatedEntities = true;
     },
     previous() {

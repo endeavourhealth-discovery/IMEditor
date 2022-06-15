@@ -79,7 +79,7 @@ import ParentsEditor from "@/components/edit/ParentsEditor.vue";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import { mapState } from "vuex";
-import { Vocabulary, Helpers, Env } from "im-library";
+import { Vocabulary, Helpers } from "im-library";
 const { IM, RDF, RDFS } = Vocabulary;
 const {
   ConceptTypeMethods: { isValueSet },
@@ -226,7 +226,7 @@ export default defineComponent({
                 })
                 .then((result: any) => {
                   if (result.isConfirmed) {
-                    window.location.href = Env.VIEWER_URL + "concept?selectedIri=" + iriToUrl(this.conceptUpdated["@id"]);
+                    window.location.href = this.$env.VIEWER_URL + "concept?selectedIri=" + iriToUrl(this.conceptUpdated["@id"]);
                   } else {
                     this.fetchConceptData();
                   }
