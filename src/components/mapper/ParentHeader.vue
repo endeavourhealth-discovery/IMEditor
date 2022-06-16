@@ -23,13 +23,13 @@
           v-tooltip.left="'Show summary panel'"
         />
         <Button
-          icon="fa-solid fa-pen-to-square"
+          icon="pi pi-fw pi-pencil"
           class="p-button-secondary p-button-outlined concept-button"
           @click="edit(concept['@id'])"
           v-tooltip.left="'Edit'"
         />
         <Button
-          icon="fa-solid fa-pen-to-square"
+          icon="pi pi-fw pi-play"
           class="p-button-secondary p-button-outlined concept-button"
           @click="starTask(concept['@id'])"
           v-tooltip.left="'Start task'"
