@@ -49,9 +49,8 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { Helpers, Vocabulary, Env } from "im-library";
+import { Helpers, Vocabulary } from "im-library";
 import DirectService from "@/services/DirectService";
-import EntityService from "@/services/EntityService";
 const { IM, RDF } = Vocabulary;
 const {
   ConceptTypeMethods: { getColourFromType, getFAIconFromType },
@@ -77,7 +76,7 @@ export default defineComponent({
   },
   methods: {
     async getConcept() {
-      this.concept = await EntityService.getPartialEntity(this.conceptIri, []);
+      this.concept = await this.$entityService.getPartialEntity(this.conceptIri, []);
     },
     getIcon(concept: any) {
       if (concept["@id"] === IM.NAMESPACE + "Favourites") return ["fa-solid", "star"];
@@ -93,7 +92,7 @@ export default defineComponent({
     },
 
     view(iri: string) {
-      DirectService.directTo(Env.VIEWER_URL, iri, this, "concept");
+      DirectService.directTo(this.$env.VIEWER_URL, iri, this, "concept");
     },
 
     edit(iri: string) {

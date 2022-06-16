@@ -73,7 +73,6 @@
 </template>
 
 <script lang="ts">
-import EntityService from "@/services/EntityService";
 import { defineComponent } from "vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Models, Enums } from "im-library";
@@ -103,9 +102,9 @@ export default defineComponent({
   },
   async mounted() {
     this.taskIri = this.$route.params.taskIri as string;
-    this.actions = await EntityService.getEntityChildren(this.taskIri);
+    this.actions = await this.$entityService.getEntityChildren(this.taskIri);
     for (const action of this.actions) {
-      this.suggestions = await EntityService.getMappingSuggestions(action["@id"], action.name);
+      this.suggestions = await this.$entityService.getMappingSuggestions(action["@id"], action.name);
     }
   },
   data() {
@@ -143,7 +142,7 @@ export default defineComponent({
     async getMappingSuggestions(iri: string, term: string) {
       this.loading = true;
       const { searchRequest, token } = await this.prepareSearchRequestWithToken(term);
-      let results = await EntityService.getMappingSuggestions(searchRequest, token);
+      let results = await this.$entityService.getMappingSuggestions(searchRequest, token);
       const i = results.findIndex(entity => entity.iri === iri);
       if (i !== -1) {
         results.splice(i, 1);
@@ -236,7 +235,7 @@ export default defineComponent({
     },
 
     async fetchSearchResults(searchRequest: Models.Search.SearchRequest, cancelToken: any) {
-      const result = await EntityService.advancedSearch(searchRequest, cancelToken);
+      const result = await this.$entityService.advancedSearch(searchRequest, cancelToken);
       if (result && isArrayHasLength(result)) {
         this.searchResults = result.map(item => {
           return { iri: item.iri, name: item.name, type: item.entityType };
@@ -251,7 +250,7 @@ export default defineComponent({
         const x = this.$refs.navTreeOP as any;
         this.overlayLocation = event;
         x.show(this.overlayLocation);
-        this.hoveredResult = await EntityService.getEntitySummary(iri);
+        this.hoveredResult = await this.$entityService.getEntitySummary(iri);
       }
     },
 

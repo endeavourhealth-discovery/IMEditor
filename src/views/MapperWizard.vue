@@ -10,15 +10,7 @@
       <div :class="showInfo ? 'main-view' : ''">
         <router-view v-slot="{ Component }">
           <keep-alive>
-            <component
-              :is="Component"
-              :data="stepsObject"
-              @prevPage="prevPage($event)"
-              @nextPage="nextPage($event)"
-              @showDetails="showSelectedDetails"
-              @hideDetails="hideDetails"
-              @updateSelected="updateSelected"
-            />
+            <component :is="Component" @showDetails="showSelectedDetails" @hideDetails="hideDetails" @updateSelected="updateSelected" />
           </keep-alive>
         </router-view>
       </div>
@@ -33,7 +25,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import InfoSideBar from "@/components/mapper/infobar/InfoSideBar.vue";
-import EntityService from "@/services/EntityService";
 import { Vocabulary, Helpers, Models, Enums } from "im-library";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
@@ -67,21 +58,7 @@ export default defineComponent({
       stepsObject: {} as any
     };
   },
-  async mounted() {
-    await this.getFilterOptions();
-  },
   methods: {
-    async getFilterOptions(): Promise<void> {
-      const schemeOptions = await EntityService.getNamespaces();
-      const typeOptions = await EntityService.getEntityChildren(IM.MODELLING_ENTITY_TYPE);
-      const statusOptions = await EntityService.getEntityChildren(IM.STATUS);
-
-      this.$store.commit("updateFilterOptions", {
-        status: statusOptions,
-        schemes: schemeOptions,
-        types: typeOptions
-      });
-    },
     updateSelected(selectedIri: string) {
       this.selectedConceptIri = selectedIri;
     },
@@ -93,15 +70,6 @@ export default defineComponent({
     },
     hideDetails() {
       this.showInfo = false;
-    },
-    nextPage(event: any) {
-      for (const property in event.data) {
-        this.stepsObject[property] = event.data[property];
-      }
-      this.$router.push(this.items[event.pageIndex + 1].to);
-    },
-    prevPage(event: any) {
-      this.$router.push(this.items[event.pageIndex - 1].to);
     }
   }
 });

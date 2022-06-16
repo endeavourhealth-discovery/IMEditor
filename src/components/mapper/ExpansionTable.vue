@@ -92,7 +92,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import VueJsonPretty from "vue-json-pretty";
-import { Vocabulary, Helpers, Models, Enums, Env } from "im-library";
+import { Vocabulary, Helpers, Models, Enums } from "im-library";
 import DirectService from "@/services/DirectService";
 import { FilterMatchMode } from "primevue/api";
 import { mapState } from "vuex";
@@ -143,7 +143,7 @@ export default defineComponent({
   },
   methods: {
     view(iri: string) {
-      DirectService.directTo(Env.VIEWER_URL, iri, this, "concept");
+      DirectService.directTo(this.$env.VIEWER_URL, iri, this, "concept");
     },
 
     showInfo(iri: string) {

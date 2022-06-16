@@ -1,17 +1,10 @@
 import { createStore } from "vuex";
-import { HistoryItem, Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
-import { Models } from "im-library";
-const { User, CustomAlert } = Models;
 import AuthService from "@/services/AuthService";
 import vm from "@/main";
-
 import { HistoryItem, Namespace, EntityReferenceNode, RecentActivityItem, FilterDefaultsConfig } from "im-library/dist/types/interfaces/Interfaces";
-import { Models, LoggerService, Vocabulary } from "im-library";
-const { User, CustomAlert } = Models;
-import AuthService from "@/services/AuthService";
-import ConfigService from "@/services/ConfigService";
-import EntityService from "@/services/EntityService";
+import { Models, Vocabulary } from "im-library";
 const { IM, RDF, RDFS } = Vocabulary;
+const { User, CustomAlert } = Models;
 export default createStore({
   // update stateType.ts when adding new state!
   state: {
@@ -160,12 +153,12 @@ export default createStore({
       return result;
     },
     async fetchFilterSettings({ commit, state }) {
-      const configs = await ConfigService.getFilterDefaults();
+      const configs = await vm.$configService.getFilterDefaults();
       commit("updateFilterDefaults", configs);
 
-      const schemeOptions = await EntityService.getNamespaces();
-      const statusOptions = await EntityService.getEntityChildren(IM.STATUS);
-      const typeOptions = (await EntityService.getPartialEntities(state.filterDefaults.typeOptions, [RDFS.LABEL])).map(typeOption => {
+      const schemeOptions = await vm.$entityService.getNamespaces();
+      const statusOptions = await vm.$entityService.getEntityChildren(IM.STATUS);
+      const typeOptions = (await vm.$entityService.getPartialEntities(state.filterDefaults.typeOptions, [RDFS.LABEL])).map((typeOption: any) => {
         return { "@id": typeOption["@id"], name: typeOption[RDFS.LABEL] };
       });
       commit("updateFilterOptions", {

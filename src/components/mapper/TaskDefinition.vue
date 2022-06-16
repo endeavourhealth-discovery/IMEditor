@@ -56,8 +56,13 @@
             <template #loading>
               Loading contents.
             </template>
-            <Column field="iri" header="Iri"></Column>
-            <Column field="name" header="Name"></Column>
+            <Column field="name" header="Name"> </Column>
+            <Column field="scheme" header="Scheme">
+              <template #body="{data}">
+                {{ getNameDisplay(data.scheme) }}
+              </template>
+            </Column>
+            <Column field="code" header="Code"></Column>
           </DataTable>
         </div>
       </template>
@@ -72,10 +77,9 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import ConfirmDialog from "primevue/confirmdialog";
-import ExpansionTable from "@/components/mapper/ExpansionTable.vue";
-import MultipleTaskSelection from "@/components/mapper/MultipleTaskSelection.vue";
+
 import { mapState } from "vuex";
-import { Vocabulary, Helpers, Models, Enums, Env } from "im-library";
+import { Vocabulary, Helpers, Models, Enums } from "im-library";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import axios from "axios";
@@ -98,11 +102,7 @@ import { FilterMatchMode, FilterOperator } from "primevue/api";
 export default defineComponent({
   name: "Mapper",
   components: {
-    ConfirmDialog,
-    VueJsonPretty,
-    ExpansionTable,
-    MultipleTaskSelection,
-    Filters
+    ConfirmDialog
   },
 
   props: {
@@ -168,7 +168,7 @@ export default defineComponent({
 
   methods: {
     async setIriExists() {
-      this.taskIriExists = await EntityService.iriExists(this.taskIri);
+      this.taskIriExists = await this.$entityService.iriExists(this.taskIri);
     },
 
     generateTaskIri() {
@@ -180,34 +180,37 @@ export default defineComponent({
     },
 
     async getTaskTypes() {
-      this.taskTypes = (await EntityService.getEntityChildren(IM.NAMESPACE + "Task")).map(child => {
+      this.taskTypes = (await this.$entityService.getEntityChildren(IM.NAMESPACE + "Task")).map(child => {
         return { "@id": child["@id"], name: child.name };
       });
     },
 
     async getUnmapped(limit?: number) {
       this.loading = true;
-      this.unmapped = (
-        await EntityService.getUnmapped(
-          undefined,
-          this.selectedFilters.status,
-          this.selectedFilters.scheme,
-          this.selectedFilters.type,
-          this.selectedFilters.usage,
-          limit || 100
-        )
-      ).map(unmapped => {
+      const unmapped = await this.$entityService.getUnmapped(
+        undefined,
+        this.selectedFilters.status,
+        this.selectedFilters.scheme,
+        this.selectedFilters.type,
+        this.selectedFilters.usage,
+        limit || 100
+      );
+      this.unmapped = this.buildTableEntityList(unmapped);
+      this.loading = false;
+    },
+
+    buildTableEntityList(entityList: any[]) {
+      return entityList.map(entity => {
         return {
-          iri: unmapped["@id"],
-          name: unmapped[RDFS.LABEL],
-          type: unmapped[RDF.TYPE],
-          usage: unmapped[IM.NAMESPACE + "usageTotal"],
-          scheme: unmapped[IM.SCHEME],
-          status: unmapped[IM.HAS_STATUS],
-          code: unmapped[IM.CODE]
+          iri: entity["@id"],
+          name: entity[RDFS.LABEL],
+          type: entity[RDF.TYPE],
+          usage: entity[IM.NAMESPACE + "usageTotal"],
+          scheme: entity[IM.SCHEME],
+          status: entity[IM.HAS_STATUS],
+          code: entity[IM.CODE]
         };
       });
-      this.loading = false;
     },
 
     getNameDisplay(properties: any[]) {
@@ -223,13 +226,11 @@ export default defineComponent({
       await this.getTaskTypes();
       if (this.taskIri) {
         await this.setIriExists();
-        const updateTask = await EntityService.getPartialEntity(this.taskIri, []);
+        const updateTask = await this.$entityService.getPartialEntity(this.taskIri, []);
         this.name = updateTask[RDFS.LABEL];
         this.type = updateTask[RDF.TYPE][0];
-        const children = await EntityService.getEntityChildren(this.taskIri);
-        this.contents = children.map(child => {
-          return { iri: child["@id"], name: child.name };
-        });
+        const children = await this.$entityService.getTaskActions(this.taskIri);
+        this.contents = this.buildTableEntityList(children);
       }
     },
 
@@ -242,7 +243,7 @@ export default defineComponent({
     },
 
     view(iri: string) {
-      if (iri) DirectService.directTo(Env.VIEWER_URL, iri, this, "concept");
+      if (iri) DirectService.directTo(this.$env.VIEWER_URL, iri, this, "concept");
     },
 
     showInfo(iri: string) {
@@ -297,15 +298,15 @@ export default defineComponent({
     async save() {
       this.saveLoading = true;
       const entity = this.buildEntity();
-      if (!(await EntityService.iriExists(entity["@id"]))) {
-        const created = await EntityService.createEntity(entity);
+      if (!(await this.$entityService.iriExists(entity["@id"]))) {
+        const created = await this.$entityService.createEntity(entity);
         for (const action of this.contents) {
-          await EntityService.addTaskAction(action.iri, created["@id"]);
+          await this.$entityService.addTaskAction(action.iri, created["@id"]);
         }
       } else {
-        const updated = await EntityService.updateEntity(entity);
+        const updated = await this.$entityService.updateEntity(entity);
         for (const action of this.contents) {
-          await EntityService.addTaskAction(action.iri, updated["@id"]);
+          await this.$entityService.addTaskAction(action.iri, updated["@id"]);
         }
       }
       this.saveLoading = false;
