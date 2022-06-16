@@ -1,9 +1,10 @@
 import { createStore } from "vuex";
-import { HistoryItem, Namespace, EntityReferenceNode, RecentActivityItem } from "im-library/dist/types/interfaces/Interfaces";
+import { HistoryItem, Namespace, EntityReferenceNode, RecentActivityItem, FilterDefaultsConfig } from "im-library/dist/types/interfaces/Interfaces";
 import { Models, LoggerService, Vocabulary } from "im-library";
 const { User, CustomAlert } = Models;
 import AuthService from "@/services/AuthService";
 import ConfigService from "@/services/ConfigService";
+import EntityService from "@/services/EntityService";
 const { IM, RDF, RDFS } = Vocabulary;
 export default createStore({
   // update stateType.ts when adding new state!
@@ -13,6 +14,7 @@ export default createStore({
     history: [] as HistoryItem[],
     recentLocalActivity: JSON.parse(localStorage.getItem("recentLocalActivity") || "[]") as RecentActivityItem[],
     currentUser: {} as Models.User,
+    filterDefaults: {} as FilterDefaultsConfig,
     isLoggedIn: false as boolean,
     snomedLicenseAccepted: localStorage.getItem("snomedLicenseAccepted") as string,
     editorIri: localStorage.getItem("editorSelectedIri") as string,
@@ -27,11 +29,6 @@ export default createStore({
     ],
     textDefinitionStartExpanded: ["Definition"],
     filterOptions: {
-      status: [] as EntityReferenceNode[],
-      schemes: [] as Namespace[],
-      types: [] as EntityReferenceNode[]
-    },
-    selectedFilters: {
       status: [] as EntityReferenceNode[],
       schemes: [] as Namespace[],
       types: [] as EntityReferenceNode[]
@@ -92,9 +89,6 @@ export default createStore({
       });
       state.filterOptions = filters;
     },
-    updateSelectedFilters(state, filters) {
-      state.selectedFilters = filters;
-    },
     updateQuickFiltersStatus(state, status) {
       state.quickFiltersStatus.set(status.key, status.value);
     },
@@ -121,6 +115,9 @@ export default createStore({
     updateEditorSavedEntity(state, entity) {
       state.editorSavedEntity = entity;
       localStorage.setItem("editorSavedEntity", entity);
+    },
+    updateFilterDefaults(state, defaults) {
+      state.filterDefaults = defaults;
     },
     updateRefreshTree(state) {
       state.refreshTree = !state.refreshTree;
@@ -155,6 +152,21 @@ export default createStore({
         }
       });
       return result;
+    },
+    async fetchFilterSettings({ commit, state }) {
+      const configs = await ConfigService.getFilterDefaults();
+      commit("updateFilterDefaults", configs);
+
+      const schemeOptions = await EntityService.getNamespaces();
+      const statusOptions = await EntityService.getEntityChildren(IM.STATUS);
+      const typeOptions = (await EntityService.getPartialEntities(state.filterDefaults.typeOptions, [RDFS.LABEL])).map(typeOption => {
+        return { "@id": typeOption["@id"], name: typeOption[RDFS.LABEL] };
+      });
+      commit("updateFilterOptions", {
+        status: statusOptions,
+        schemes: schemeOptions,
+        types: typeOptions
+      });
     },
     async authenticateCurrentUser({ commit, dispatch }) {
       const result = { authenticated: false };

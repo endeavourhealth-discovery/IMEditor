@@ -77,6 +77,7 @@ import AutoComplete from "primevue/autocomplete";
 import Sidebar from "primevue/sidebar";
 import Steps from "primevue/steps";
 import Chips from "primevue/chips";
+import InputNumber from 'primevue/inputnumber';
 
 import { Amplify, Auth } from "aws-amplify";
 import awsconfig from "./aws-exports";
@@ -157,6 +158,7 @@ const app = createApp(App)
   .component("AutoComplete", AutoComplete)
   .component("Sidebar", Sidebar)
   .component("Chips", Chips)
+  .component("InputNumber", InputNumber)
   .component("Steps", Steps);
 
 const vm = app.mount("#app");

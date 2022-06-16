@@ -18,6 +18,23 @@ const {
 export default class EntityService {
   static api = Env.API;
 
+  public static async getUnmapped(term?: string, status?: string[], scheme?: string[], type?: string[], usage?: number, limit?: number): Promise<any[]> {
+    try {
+      return await axios.get(this.api + "api/entity/public/unmapped", {
+        params: {
+          term: term,
+          status: status?.join(","),
+          scheme: scheme?.join(","),
+          type: type?.join(","),
+          usage: usage,
+          limit: limit
+        },
+      });
+    } catch (error) {
+      return [] as any[];
+    }
+  }
+
   public static async saveMapping(mappings: Map<string, string[]>): Promise<any[]> {
     try {
       return await axios.post(this.api + "api/entity/mapping", mappings);
