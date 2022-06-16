@@ -49,8 +49,7 @@
 <script lang="ts">
 import { defineComponent } from "@vue/runtime-core";
 import { mapState } from "vuex";
-import { Helpers, Vocabulary, Env } from "im-library";
-import EntityService from "@/services/EntityService";
+import { Helpers, Vocabulary } from "im-library";
 import TypeSelector from "@/components/creator/TypeSelector.vue";
 import VueJsonPretty from "vue-json-pretty";
 const {
@@ -114,9 +113,9 @@ export default defineComponent({
   methods: {
     async getFilterOptions(): Promise<void> {
       if (!(isObjectHasKeys(this.filterOptions) && isArrayHasLength(this.filterOptions.schemes))) {
-        const schemeOptions = await EntityService.getNamespaces();
-        const typeOptions = await EntityService.getEntityChildren(IM.MODELLING_ENTITY_TYPE);
-        const statusOptions = await EntityService.getEntityChildren(IM.STATUS);
+        const schemeOptions = await this.$entityService.getNamespaces();
+        const typeOptions = await this.$entityService.getEntityChildren(IM.MODELLING_ENTITY_TYPE);
+        const statusOptions = await this.$entityService.getEntityChildren(IM.STATUS);
         this.$store.commit("updateFilterOptions", {
           status: statusOptions,
           schemes: schemeOptions,
@@ -199,7 +198,7 @@ export default defineComponent({
             showLoaderOnConfirm: true,
             allowOutsideClick: () => !this.$swal.isLoading(),
             preConfirm: async () => {
-              const res = await EntityService.createEntity(this.conceptUpdated);
+              const res = await this.$entityService.createEntity(this.conceptUpdated);
               if (res) return res;
               else this.$swal.showValidationMessage("Error creating entity from server.");
             }
@@ -219,7 +218,7 @@ export default defineComponent({
                 })
                 .then((result: any) => {
                   if (result.isConfirmed) {
-                    window.location.href = Env.VIEWER_URL + "concept?selectedIri=" + iriToUrl(this.conceptUpdated["@id"]);
+                    window.location.href = this.$env.VIEWER_URL + "concept?selectedIri=" + iriToUrl(this.conceptUpdated["@id"]);
                   } else {
                     this.$router.push({ name: "Editor", params: { selectedIri: this.conceptUpdated["@id"] } });
                   }
@@ -246,7 +245,7 @@ export default defineComponent({
       }
       const creatorValidity = [] as { key: string; valid: boolean }[];
       creatorValidity.push({ key: "iri", valid: hasValidIri(entity) });
-      if (hasValidIri(entity)) creatorValidity.push({ key: "iriExists", valid: !(await EntityService.iriExists(entity["@id"])) });
+      if (hasValidIri(entity)) creatorValidity.push({ key: "iriExists", valid: !(await this.$entityService.iriExists(entity["@id"])) });
       creatorValidity.push({ key: "name", valid: hasValidName(entity) });
       creatorValidity.push({ key: "types", valid: hasValidTypes(entity) });
       creatorValidity.push({ key: "status", valid: hasValidStatus(entity) });

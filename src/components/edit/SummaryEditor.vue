@@ -92,7 +92,6 @@
 </template>
 
 <script lang="ts">
-import EntityService from "@/services/EntityService";
 import { defineComponent, PropType } from "@vue/runtime-core";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers } from "im-library";
@@ -241,7 +240,8 @@ export default defineComponent({
     },
 
     async checkIriExists() {
-      if (this.scheme && this.scheme.iri && this.code && this.mode === "create") this.iriExists = await EntityService.iriExists(this.scheme.iri + this.code);
+      if (this.scheme && this.scheme.iri && this.code && this.mode === "create")
+        this.iriExists = await this.$entityService.iriExists(this.scheme.iri + this.code);
       else this.iriExists = false;
     },
 

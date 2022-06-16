@@ -30,10 +30,9 @@
 </template>
 
 <script lang="ts">
-import EntityService from "@/services/EntityService";
 import { defineComponent } from "vue";
 import ExpansionTable from "./ExpansionTable.vue";
-import { Vocabulary, Helpers, Models, Enums, LoggerService } from "im-library";
+import { Vocabulary, Helpers, Models, Enums } from "im-library";
 
 const {
   ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType },
@@ -93,16 +92,12 @@ export default defineComponent({
       this.mappingsMap.forEach((value, key) => {
         mappings[key] = value.map((mappedTo: { iri: string }) => mappedTo.iri);
       });
-      try {
-        const updatedEntities = await EntityService.saveMapping(mappings);
-        this.updatedEntities = updatedEntities.map(entity => {
-          return { iri: entity["@id"], name: entity[RDFS.LABEL], type: entity[RDF.TYPE] };
-        });
-        this.$toast.add(LoggerService.success("Saved new mappings successfully") as any);
-        this.goToTaskDefinition();
-      } catch (error) {
-        this.$toast.add(LoggerService.error("Something went wrong") as any);
-      }
+      const updatedEntities = await this.$entityService.saveMapping(mappings);
+      this.updatedEntities = updatedEntities.map(entity => {
+        return { iri: entity["@id"], name: entity[RDFS.LABEL], type: entity[RDF.TYPE] };
+      });
+      this.$toast.add(this.$loggerService.success("Saved new mappings successfully"));
+      this.displayUpdatedEntities = true;
     },
     previous() {
       this.$emit("prevPage", { pageIndex: this.pageIndex, data: {} });

@@ -3,8 +3,21 @@ import App from "@/App.vue";
 import Toast from "primevue/toast";
 import store from "@/store/index";
 import { flushPromises, shallowMount } from "@vue/test-utils";
-import { Env } from "im-library";
-import EntityService from "@/services/EntityService";
+import { Services } from "im-library";
+const { Env } = Services;
+
+vi.mock("@/main", () => {
+  return {
+    default: {
+      $entityService: {
+        iriExists: vi.fn()
+      },
+      $loggerService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), success: vi.fn(), debug: vi.fn() }
+    }
+  };
+});
+
+import vm from "@/main";
 
 describe("router", () => {
   beforeEach(() => {
@@ -53,7 +66,7 @@ describe("router", () => {
       window.sessionStorage.clear();
       store.commit("updateSnomedLicenseAccepted", "true");
       store.dispatch = vi.fn().mockResolvedValue({ authenticated: true });
-      EntityService.iriExists = vi.fn().mockResolvedValue(true);
+      vm.$entityService.iriExists = vi.fn().mockResolvedValue(true);
       router.push("/");
       await router.isReady();
 
@@ -119,7 +132,7 @@ describe("router", () => {
       window.sessionStorage.clear();
       store.state.snomedLicenseAccepted = "true";
       store.dispatch = vi.fn().mockResolvedValue({ authenticated: true });
-      EntityService.iriExists = vi.fn().mockResolvedValue(true);
+      vm.$entityService.iriExists = vi.fn().mockResolvedValue(true);
       router.push("/");
       await router.isReady();
 
@@ -182,7 +195,7 @@ describe("router", () => {
       store.state.snomedLicenseAccepted = "true";
       store.commit = vi.fn();
       store.dispatch = vi.fn().mockResolvedValue({ authenticated: true });
-      EntityService.iriExists = vi.fn().mockResolvedValue(true);
+      vm.$entityService.iriExists = vi.fn().mockResolvedValue(true);
       router.push("/");
       await router.isReady();
 

@@ -9,6 +9,7 @@
       <small v-if="invalidAssociatedMember" class="validate-error">Missing member for refinement. Please select a member first.</small>
     </div>
     <AddDeleteButtons :show="showButtons" :position="position" :options="[]" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
+    <p>=</p>
   </div>
 </template>
 
@@ -17,8 +18,6 @@ import { defineComponent, PropType } from "@vue/runtime-core";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import { Enums, Helpers, Vocabulary } from "im-library";
 import { ComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
-import EntityService from "@/services/EntityService";
-import QueryService from "@/services/QueryService";
 const { RDFS } = Vocabulary;
 const { ComponentType } = Enums;
 const {
@@ -72,14 +71,14 @@ export default defineComponent({
     async init() {
       this.loading = true;
       if (this.value.propertyIri) {
-        const result = await EntityService.getPartialEntity(this.value.propertyIri, [RDFS.LABEL]);
+        const result = await this.$entityService.getPartialEntity(this.value.propertyIri, [RDFS.LABEL]);
         const propertyName = result ? result[RDFS.LABEL] : "";
         this.selected = { "@id": this.value.propertyIri, name: propertyName };
       }
       if (isTTIriRef(this.value.associatedMember)) {
         this.invalidAssociatedMember = false;
         const query = this.createPropertyOptionsQuery(this.value.associatedMember["@id"]);
-        const queryResult = await QueryService.queryIM(query);
+        const queryResult = await this.$queryService.queryIM(query);
         if (isObjectHasKeys(queryResult, ["entities", "@context"]) && isArrayHasLength(queryResult.entities)) {
           this.dropdownOptions = queryResult.entities
             .map(result => {
@@ -98,22 +97,12 @@ export default defineComponent({
         name: "AllowablePropertiesForCovid",
         description: "gets the active properties and their subtypes that have a domain which is a super type of covid.",
         activeOnly: true,
+        resultFormat: "OBJECT",
         select: {
           distinct: true,
           entityType: {
             includeSubtypes: true,
             "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
-          },
-          filter: {
-            property: {
-              "@id": "http://www.w3.org/2000/01/rdf-schema#domain"
-            },
-            valueConcept: [
-              {
-                includeSupertypes: true,
-                "@id": iri
-              }
-            ]
           },
           property: [
             {
@@ -122,8 +111,20 @@ export default defineComponent({
             {
               "@id": "http://www.w3.org/2000/01/rdf-schema#label"
             }
-          ]
+          ],
+          match: {
+            property: {
+              "@id": "http://www.w3.org/2000/01/rdf-schema#domain"
+            },
+            isConcept: [
+              {
+                includeSupertypes: true,
+                "@id": iri
+              }
+            ]
+          }
         }
+        // usePrefixes: true
       };
     },
 
@@ -167,13 +168,12 @@ export default defineComponent({
 
 <style scoped>
 .property-container {
-  flex: 1 1 auto;
   display: flex;
   flex-flow: row nowrap;
   justify-content: flex-start;
   align-items: center;
   gap: 1rem;
-  width: 100%;
+  width: 50%;
 }
 
 .loading-container {

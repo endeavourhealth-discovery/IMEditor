@@ -71,7 +71,6 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import EntityService from "@/services/EntityService";
 import ConfirmDialog from "primevue/confirmdialog";
 import ExpansionTable from "@/components/mapper/ExpansionTable.vue";
 import MultipleTaskSelection from "@/components/mapper/MultipleTaskSelection.vue";
@@ -279,7 +278,7 @@ export default defineComponent({
     },
 
     async fetchSearchResults(searchRequest: Models.Search.SearchRequest, cancelToken: any) {
-      const result = await EntityService.advancedSearch(searchRequest, cancelToken);
+      const result = await this.$entityService.advancedSearch(searchRequest, cancelToken);
       if (result && isArrayHasLength(result)) {
         this.searchResults = result.map(item => {
           return { iri: item.iri, name: item.name, type: item.entityType, scheme: item.scheme, status: item.status, usage: item.weighting };

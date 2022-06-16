@@ -5,7 +5,7 @@ import TypeSelector from "@/components/creator/TypeSelector.vue";
 import SummaryEditor from "@/components/edit/SummaryEditor.vue";
 import ParentsEditor from "@/components/edit/ParentsEditor.vue";
 import MemberEditor from "@/components/edit/MemberEditor.vue";
-import { AccessDenied, SnomedLicense, Env, PageNotFound, EntityNotFound, Helpers } from "im-library";
+import { AccessDenied, SnomedLicense, Services, PageNotFound, EntityNotFound, Helpers } from "im-library";
 import MapperWizard from "../views/MapperWizard.vue";
 import TaskDefinition from "../components/mapper/TaskDefinition.vue";
 import TaskSelection from "../components/mapper/TaskSelection.vue";
@@ -13,10 +13,12 @@ import TaskViewer from "../components/mapper/TaskViewer.vue";
 import EntityMatcher from "../components/mapper/EntityMatcher.vue";
 import EntityMapper from "../components/mapper/EntityMapper.vue";
 import MappingConfirmation from "../components/mapper/MappingConfirmation.vue";
+const { Env } = Services;
 
 import store from "@/store/index";
 import { nextTick } from "vue";
-import EntityService from "@/services/EntityService";
+import vm from "@/main";
+
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
@@ -135,7 +137,7 @@ router.beforeEach(async (to, from) => {
     const iri = to.params.selectedIri as string;
     try {
       new URL(iri);
-      if (!(await EntityService.iriExists(iri))) {
+      if (!(await vm.$entityService.iriExists(iri))) {
         router.push({ name: "EntityNotFound" });
       }
     } catch (_error) {

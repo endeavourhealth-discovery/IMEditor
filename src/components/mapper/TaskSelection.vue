@@ -20,7 +20,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import ExpansionTable from "@/components/mapper/ExpansionTable.vue";
-import EntityService from "@/services/EntityService";
 import { Vocabulary, Helpers, Models, Enums } from "im-library";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
@@ -46,7 +45,7 @@ export default defineComponent({
     };
   },
   async mounted() {
-    this.tasks = await EntityService.getEntityChildren(IM.MODULE_TASKS);
+    this.tasks = await this.$entityService.getEntityChildren(IM.MODULE_TASKS);
     this.tasks.forEach(task => {
       task.iri = task["@id"];
     });
@@ -68,10 +67,10 @@ export default defineComponent({
       this.selectedTasks = [];
     },
     async getTaskActions(data: any) {
-      data.children = await EntityService.getEntityChildren(data.iri);
+      data.children = await this.$entityService.getEntityChildren(data.iri);
       data.children.forEach(async (child: { [x: string]: any; iri: any }) => {
         child.iri = child["@id"];
-        const entity = await EntityService.getPartialEntity(child.iri, [IM.MATCHED_TO]);
+        const entity = await this.$entityService.getPartialEntity(child.iri, [IM.MATCHED_TO]);
         child.mappings = [];
         if (isArrayHasLength(entity[IM.MATCHED_TO])) {
           entity[IM.MATCHED_TO].forEach((mappedTo: any) => {

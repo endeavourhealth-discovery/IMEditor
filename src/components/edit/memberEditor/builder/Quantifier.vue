@@ -2,10 +2,10 @@
   <div class="quantifier-item-container" :id="id">
     <div class="label-container">
       <span class="float-text">Quantifier</span>
-      <div v-if="loading" class="loading-container">
+      <!-- <div v-if="loading" class="loading-container">
         <ProgressSpinner style="width:1.5rem;height:1.5rem;" strokeWidth="6" />
-      </div>
-      <div v-else class="input-treebutton-container">
+      </div> -->
+      <div class="input-treebutton-container">
         <InputText
           ref="miniSearchInput"
           v-model="searchTerm"
@@ -41,8 +41,6 @@ import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteBu
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums, Models } from "im-library";
 import { TTIriRef, ComponentDetails, Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
-import QueryService from "@/services/QueryService";
-import EntityService from "@/services/EntityService";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   TypeGuards: { isTTIriRef },
@@ -92,8 +90,6 @@ export default defineComponent({
     return {
       loading: false,
       selectedResult: {} as TTIriRef,
-      dropdownOptions: [] as any[],
-      filteredOptions: [] as any[],
       invalidAssociatedProperty: false,
       request: {} as { cancel: any; msg: string },
       isAs: [] as string[],
@@ -107,7 +103,7 @@ export default defineComponent({
       if (this.value.propertyIri) {
         this.invalidAssociatedProperty = false;
         const query = this.createQuantifierOptionsQuery(this.value.propertyIri);
-        const queryResult = await QueryService.queryIM(query);
+        const queryResult = await this.$queryService.queryIM(query);
         if (isObjectHasKeys(queryResult, ["entities", "@context"]) && isArrayHasLength(queryResult.entities)) {
           this.isAs = queryResult.entities.map(result => result["@id"]);
         }
@@ -166,20 +162,8 @@ export default defineComponent({
         name: "Ranges for finding site",
         description: "retrieves the high level concepts allowable as values of the attribute finding side",
         activeOnly: true,
+        resultFormat: "OBJECT",
         select: {
-          distinct: true,
-          filter: {
-            property: {
-              "@id": "http://www.w3.org/2000/01/rdf-schema#range"
-            },
-            inverseOf: true,
-            valueConcept: [
-              {
-                includeSupertypes: true,
-                "@id": iri
-              }
-            ]
-          },
           property: [
             {
               "@id": "http://endhealth.info/im#id"
@@ -187,7 +171,19 @@ export default defineComponent({
             {
               "@id": "http://www.w3.org/2000/01/rdf-schema#label"
             }
-          ]
+          ],
+          match: {
+            property: {
+              "@id": "http://www.w3.org/2000/01/rdf-schema#range"
+            },
+            inverseOf: true,
+            isConcept: [
+              {
+                includeSupertypes: true,
+                "@id": iri
+              }
+            ]
+          }
         }
       };
     },
@@ -205,7 +201,7 @@ export default defineComponent({
         }
         const axiosSource = axios.CancelToken.source();
         this.request = { cancel: axiosSource.cancel, msg: "Loading..." };
-        const result = await EntityService.advancedSearch(searchRequest, axiosSource.token);
+        const result = await this.$entityService.advancedSearch(searchRequest, axiosSource.token);
         if (isArrayHasLength(result)) {
           this.searchResults = result;
         }
@@ -228,21 +224,6 @@ export default defineComponent({
       for (const type of filteredFilterOptions.types) {
         searchRequest.typeFilter.push(type["@id"]);
       }
-    },
-
-    selectFromDropdown(event: any) {
-      const query = event.query;
-      let filteredItems = [];
-      if (this.dropdownOptions) {
-        for (let i = 0; i < this.dropdownOptions.length; i++) {
-          let item = this.dropdownOptions[i];
-          if (item.name.toLowerCase().indexOf(query.toLowerCase()) === 0) {
-            filteredItems.push(item);
-          }
-        }
-      }
-      if (filteredItems.length) this.filteredOptions = filteredItems;
-      else this.filteredOptions = this.dropdownOptions;
     },
 
     createQuantifier(): ComponentDetails {
@@ -281,13 +262,12 @@ export default defineComponent({
 
 <style scoped>
 .quantifier-item-container {
-  flex: 1 1 auto;
   display: flex;
   flex-flow: row nowrap;
   justify-content: flex-start;
   align-items: center;
   gap: 1rem;
-  width: 100%;
+  width: 50%;
 }
 
 .loading-container {

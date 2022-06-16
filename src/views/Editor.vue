@@ -73,14 +73,13 @@
 import { defineComponent } from "vue";
 import { Auth } from "aws-amplify";
 import SummaryEditor from "@/components/edit/SummaryEditor.vue";
-import EntityService from "@/services/EntityService";
 import ConfirmDialog from "primevue/confirmdialog";
 import MemberEditor from "@/components/edit/MemberEditor.vue";
 import ParentsEditor from "@/components/edit/ParentsEditor.vue";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import { mapState } from "vuex";
-import { Vocabulary, Helpers, Env } from "im-library";
+import { Vocabulary, Helpers } from "im-library";
 const { IM, RDF, RDFS } = Vocabulary;
 const {
   ConceptTypeMethods: { isValueSet },
@@ -139,7 +138,7 @@ export default defineComponent({
   methods: {
     async fetchConceptData(): Promise<void> {
       if (this.editorIri) {
-        const fullEntity = await EntityService.getFullEntity(this.editorIri);
+        const fullEntity = await this.$entityService.getFullEntity(this.editorIri);
         if (fullEntity) {
           this.conceptOriginal = fullEntity;
           this.entityName = this.conceptOriginal[RDFS.LABEL];
@@ -154,9 +153,9 @@ export default defineComponent({
 
     async getFilterOptions(): Promise<void> {
       if (!(isObjectHasKeys(this.filterOptions) && isArrayHasLength(this.filterOptions.schemes))) {
-        const schemeOptions = await EntityService.getNamespaces();
-        const typeOptions = await EntityService.getEntityChildren(IM.MODELLING_ENTITY_TYPE);
-        const statusOptions = await EntityService.getEntityChildren(IM.STATUS);
+        const schemeOptions = await this.$entityService.getNamespaces();
+        const typeOptions = await this.$entityService.getEntityChildren(IM.MODELLING_ENTITY_TYPE);
+        const statusOptions = await this.$entityService.getEntityChildren(IM.STATUS);
 
         this.$store.commit("updateFilterOptions", {
           status: statusOptions,
@@ -207,7 +206,7 @@ export default defineComponent({
             showLoaderOnConfirm: true,
             allowOutsideClick: () => !this.$swal.isLoading(),
             preConfirm: async () => {
-              const res = await EntityService.updateEntity(this.conceptUpdated);
+              const res = await this.$entityService.updateEntity(this.conceptUpdated);
               if (res) return res;
               else this.$swal.showValidationMessage("Error saving entity to server.");
             }
@@ -227,7 +226,7 @@ export default defineComponent({
                 })
                 .then((result: any) => {
                   if (result.isConfirmed) {
-                    window.location.href = Env.VIEWER_URL + "concept?selectedIri=" + iriToUrl(this.conceptUpdated["@id"]);
+                    window.location.href = this.$env.VIEWER_URL + "concept?selectedIri=" + iriToUrl(this.conceptUpdated["@id"]);
                   } else {
                     this.fetchConceptData();
                   }
@@ -254,7 +253,7 @@ export default defineComponent({
       }
       const editorValidity = [] as { key: string; valid: boolean }[];
       editorValidity.push({ key: "iri", valid: hasValidIri(entity) });
-      if (hasValidIri(entity)) editorValidity.push({ key: "iriExists", valid: await EntityService.iriExists(entity["@id"]) });
+      if (hasValidIri(entity)) editorValidity.push({ key: "iriExists", valid: await this.$entityService.iriExists(entity["@id"]) });
       editorValidity.push({ key: "name", valid: hasValidName(entity) });
       editorValidity.push({ key: "types", valid: hasValidTypes(entity) });
       editorValidity.push({ key: "status", valid: hasValidStatus(entity) });

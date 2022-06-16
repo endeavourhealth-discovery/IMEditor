@@ -273,6 +273,7 @@ export default defineComponent({
           });
         }
       }
+      updatePositions(this.logicBuild);
     },
 
     deleteClicked(): void {

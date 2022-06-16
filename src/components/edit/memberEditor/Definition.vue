@@ -37,7 +37,6 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "@vue/runtime-core";
-import EntityService from "@/services/EntityService";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
 import Logic from "@/components/edit/memberEditor/builder/Logic.vue";
@@ -151,7 +150,7 @@ export default defineComponent({
     },
 
     async processIri(iri: TTIriRef, position: number): Promise<any> {
-      const types = await EntityService.getPartialEntity(iri["@id"], [RDF.TYPE]);
+      const types = await this.$entityService.getPartialEntity(iri["@id"], [RDF.TYPE]);
       if (isValueSet(types)) {
         const typeOptions = this.filterOptions.types.filter(
           (type: EntityReferenceNode) => type["@id"] === IM.VALUE_SET || type["@id"] === IM.CONCEPT_SET || type["@id"] === IM.CONCEPT_SET_GROUP

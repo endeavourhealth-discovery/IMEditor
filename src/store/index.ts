@@ -1,4 +1,10 @@
 import { createStore } from "vuex";
+import { HistoryItem, Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
+import { Models } from "im-library";
+const { User, CustomAlert } = Models;
+import AuthService from "@/services/AuthService";
+import vm from "@/main";
+
 import { HistoryItem, Namespace, EntityReferenceNode, RecentActivityItem, FilterDefaultsConfig } from "im-library/dist/types/interfaces/Interfaces";
 import { Models, LoggerService, Vocabulary } from "im-library";
 const { User, CustomAlert } = Models;
@@ -137,7 +143,7 @@ export default createStore({
   },
   actions: {
     async fetchBlockedIris({ commit }) {
-      const blockedIris = await ConfigService.getXmlSchemaDataTypes();
+      const blockedIris = await vm.$configService.getXmlSchemaDataTypes();
       commit("updateBlockedIris", blockedIris);
     },
     async logoutCurrentUser({ commit }) {
@@ -179,9 +185,9 @@ export default createStore({
         } else {
           dispatch("logoutCurrentUser").then(resLogout => {
             if (resLogout.status === 200) {
-              LoggerService.info(undefined, "Force logout successful");
+              vm.$loggerService.info(undefined, "Force logout successful");
             } else {
-              LoggerService.error(undefined, "Force logout failed");
+              vm.$loggerService.error(undefined, "Force logout failed");
             }
           });
         }

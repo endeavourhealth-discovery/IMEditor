@@ -77,9 +77,8 @@
 import { defineComponent } from "vue";
 import { mapState } from "vuex";
 import ExpansionTable from "./ExpansionTable.vue";
-import { Vocabulary, Helpers, Models, Enums, LoggerService } from "im-library";
+import { Vocabulary, Helpers, Models, Enums } from "im-library";
 import { Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
-import EntityService from "@/services/EntityService";
 import VueJsonPretty from "vue-json-pretty";
 import axios from "axios";
 
@@ -116,8 +115,8 @@ export default defineComponent({
         this.selected = oldValue;
       }
       if (this.selected) {
+        const fullEntity = await this.$entityService.getPartialEntity(this.selected.iri, []);
         this.$emit("updateSelected", this.selected.iri);
-        const fullEntity = await EntityService.getPartialEntity(this.selected.iri, []);
         this.selectedView = { ...fullEntity };
         this.selected.suggestions = await this.getMappingSuggestions(this.selected.iri, this.selected.name);
         this.selectedEntities = [];
@@ -156,12 +155,12 @@ export default defineComponent({
 
     async getMappingSuggestions(iri: string, term: string) {
       const { searchRequest, token } = await this.prepareSearchRequestWithToken(term);
-      let results = await EntityService.getMappingSuggestions(searchRequest, token);
-      const i = results.findIndex(entity => entity.iri === iri);
+      let results = await this.$entityService.getMappingSuggestions(searchRequest, token);
+      const i = results.findIndex((entity: Models.Search.ConceptSummary) => entity.iri === iri);
       if (i !== -1) {
         results.splice(i, 1);
       }
-      return results.map(entity => {
+      return results.map((entity: Models.Search.ConceptSummary) => {
         return { iri: entity.iri, name: entity.name, type: entity.entityType, scheme: entity.scheme };
       });
     },
@@ -265,9 +264,9 @@ export default defineComponent({
     },
 
     async fetchSearchResults(searchRequest: Models.Search.SearchRequest, cancelToken: any) {
-      const result = await EntityService.advancedSearch(searchRequest, cancelToken);
+      const result = await this.$entityService.advancedSearch(searchRequest, cancelToken);
       if (result && isArrayHasLength(result)) {
-        this.searchResults = result.map(item => {
+        this.searchResults = result.map((item: Models.Search.ConceptSummary) => {
           return { iri: item.iri, name: item.name, type: item.entityType, scheme: item.scheme };
         });
       } else {
