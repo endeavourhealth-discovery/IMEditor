@@ -48,6 +48,7 @@
               </AccordionTab>
             </Accordion>
           </div>
+
           <div class="col-5">
             <DataTable
               class="flex-1 flex justify-content-center"
@@ -71,6 +72,24 @@
                 </template>
               </Column>
               <Column field="code" header="Code"></Column>
+              <Column>
+                <template #body="{data}">
+                  <div class="buttons-container">
+                    <Button
+                      icon="pi pi-fw pi-eye"
+                      class="p-button-rounded p-button-text p-button-plain row-button"
+                      @click="view(data.iri)"
+                      v-tooltip.top="'View'"
+                    />
+                    <Button
+                      icon="pi pi-fw pi-info-circle"
+                      class="p-button-rounded p-button-text p-button-plain row-button"
+                      @click="showInfo(data.iri)"
+                      v-tooltip.top="'Info'"
+                    />
+                  </div>
+                </template>
+              </Column>
             </DataTable>
           </div>
           <div class="col">
@@ -82,7 +101,7 @@
           <div class="col-5">
             <DataTable
               class="flex-1 flex justify-content-center"
-              v-model:selection="selectedResults"
+              v-model:selection="selectedContents"
               dataKey="iri"
               :value="contents"
               responsiveLayout="scroll"
@@ -102,6 +121,24 @@
                 </template>
               </Column>
               <Column field="code" header="Code"></Column>
+              <Column>
+                <template #body="{data}">
+                  <div class="buttons-container">
+                    <Button
+                      icon="pi pi-fw pi-eye"
+                      class="p-button-rounded p-button-text p-button-plain row-button"
+                      @click="view(data.iri)"
+                      v-tooltip.top="'View'"
+                    />
+                    <Button
+                      icon="pi pi-fw pi-info-circle"
+                      class="p-button-rounded p-button-text p-button-plain row-button"
+                      @click="showInfo(data.iri)"
+                      v-tooltip.top="'Info'"
+                    />
+                  </div>
+                </template>
+              </Column>
             </DataTable>
           </div>
         </div>
@@ -219,7 +256,7 @@ export default defineComponent({
     },
 
     removeSelectedTasks() {
-      for (const selectedAction of this.contents) {
+      for (const selectedAction of this.selectedContents) {
         const foundIndex = this.contents.findIndex(action => action.iri === selectedAction.iri);
         if (foundIndex !== -1) {
           this.contents.splice(foundIndex, 1);
@@ -347,12 +384,7 @@ export default defineComponent({
       } else {
         this.searchResults = [];
       }
-      console.log(this.searchResults);
       this.unmapped = this.searchResults;
-    },
-
-    searchFilter() {
-      console.log("search");
     },
 
     async save() {
