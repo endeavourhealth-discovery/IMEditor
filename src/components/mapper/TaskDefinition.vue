@@ -56,7 +56,7 @@
               dataKey="iri"
               :value="unmapped"
               responsiveLayout="scroll"
-              :loading="loading"
+              :loading="searching"
             >
               <template #empty>
                 No results found.
@@ -228,6 +228,7 @@ export default defineComponent({
       request: {} as { cancel: any; msg: string },
       searchTerm: "",
       loading: true,
+      searching: true,
       saveLoading: false,
       selectedFilters: {
         scheme: [] as any,
@@ -241,7 +242,9 @@ export default defineComponent({
   async mounted() {
     this.taskIri = this.$route.params.taskIri as string;
     this.loading = true;
+    this.searching = true;
     await this.init();
+    this.searching = false;
     this.loading = false;
   },
 
@@ -283,7 +286,7 @@ export default defineComponent({
     },
 
     async getUnmapped(limit?: number) {
-      this.loading = true;
+      this.searching = true;
       const unmapped = await this.$entityService.getUnmapped(
         undefined,
         this.selectedFilters.status,
@@ -293,7 +296,7 @@ export default defineComponent({
         limit || 100
       );
       this.unmapped = this.buildTableEntityList(unmapped);
-      this.loading = false;
+      this.searching = false;
     },
 
     buildTableEntityList(entityList: any[]) {
@@ -348,7 +351,7 @@ export default defineComponent({
     },
 
     async search(): Promise<void> {
-      this.loading = true;
+      this.searching = true;
       if (this.searchTerm.length > 0) {
         this.searchResults = [];
         const searchRequest = new SearchRequest();
@@ -366,7 +369,7 @@ export default defineComponent({
       } else {
         await this.getUnmapped();
       }
-      this.loading = false;
+      this.searching = false;
     },
 
     setFilters(searchRequest: Models.Search.SearchRequest) {
