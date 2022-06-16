@@ -21,49 +21,89 @@
         <small v-if="taskIriExists" id="iri" class="field p-error">Iri exists. Saving will update the entity.</small>
       </template>
       <template #content>
-        <Accordion>
-          <AccordionTab header="Search filters">
-            <div class="flex justify-content-between">
-              <MultiSelect v-model="selectedFilters.scheme" :options="filterOptions.schemes" optionLabel="name" optionValue="iri" placeholder="Select scheme" />
-              <MultiSelect v-model="selectedFilters.type" :options="filterOptions.types" optionLabel="name" optionValue="iri" placeholder="Select type" />
-              <MultiSelect v-model="selectedFilters.status" :options="filterOptions.status" optionLabel="name" optionValue="iri" placeholder="Select status" />
-              <InputNumber v-model="selectedFilters.usage" placeholder="Usage threshold" :min="0" />
-              <InputText v-model="searchTerm" placeholder="Keyword Search" />
-              <Button :loading="loading" icon="pi pi-search" label="Search" class="save-button" @click="search()" />
+        <div class="grid">
+          <div class="col-12">
+            <Accordion>
+              <AccordionTab header="Search filters">
+                <div class="flex justify-content-between">
+                  <MultiSelect
+                    v-model="selectedFilters.scheme"
+                    :options="filterOptions.schemes"
+                    optionLabel="name"
+                    optionValue="iri"
+                    placeholder="Select scheme"
+                  />
+                  <MultiSelect v-model="selectedFilters.type" :options="filterOptions.types" optionLabel="name" optionValue="iri" placeholder="Select type" />
+                  <MultiSelect
+                    v-model="selectedFilters.status"
+                    :options="filterOptions.status"
+                    optionLabel="name"
+                    optionValue="iri"
+                    placeholder="Select status"
+                  />
+                  <InputNumber v-model="selectedFilters.usage" placeholder="Usage threshold" :min="0" />
+                  <InputText v-model="searchTerm" placeholder="Keyword Search" />
+                  <Button :loading="loading" icon="pi pi-search" label="Search" class="save-button" @click="search()" />
+                </div>
+              </AccordionTab>
+            </Accordion>
+          </div>
+          <div class="col-5">
+            <DataTable
+              class="flex-1 flex justify-content-center"
+              v-model:selection="selectedResults"
+              dataKey="iri"
+              :value="unmapped"
+              responsiveLayout="scroll"
+              :loading="loading"
+            >
+              <template #empty>
+                No results found.
+              </template>
+              <template #loading>
+                Loading results.
+              </template>
+              <Column selectionMode="multiple" headerStyle="width: 3em"></Column>
+              <Column field="name" header="Name"> </Column>
+              <Column field="scheme" header="Scheme">
+                <template #body="{data}">
+                  {{ getNameDisplay(data.scheme) }}
+                </template>
+              </Column>
+              <Column field="code" header="Code"></Column>
+            </DataTable>
+          </div>
+          <div class="col">
+            <div class="flex flex-column align-items-center">
+              <Button class="pick-button" icon="pi pi-arrow-right" @click="addSelectedTasks" />
+              <Button class="pick-button" icon="pi pi-arrow-left" @click="removeSelectedTasks" />
             </div>
-          </AccordionTab>
-        </Accordion>
-        <div class="flex">
-          <DataTable class="flex-1 flex justify-content-center" dataKey="iri" :value="unmapped" responsiveLayout="scroll" :loading="loading">
-            <template #empty>
-              No results found.
-            </template>
-            <template #loading>
-              Loading results.
-            </template>
-            <Column field="name" header="Name"> </Column>
-            <Column field="scheme" header="Scheme">
-              <template #body="{data}">
-                {{ getNameDisplay(data.scheme) }}
+          </div>
+          <div class="col-5">
+            <DataTable
+              class="flex-1 flex justify-content-center"
+              v-model:selection="selectedResults"
+              dataKey="iri"
+              :value="contents"
+              responsiveLayout="scroll"
+              :loading="loading"
+            >
+              <template #empty>
+                No actions added.
               </template>
-            </Column>
-            <Column field="code" header="Code"></Column>
-          </DataTable>
-          <DataTable class="flex-1 flex justify-content-center" dataKey="iri" :value="contents" responsiveLayout="scroll" :loading="loading">
-            <template #empty>
-              No actions added.
-            </template>
-            <template #loading>
-              Loading contents.
-            </template>
-            <Column field="name" header="Name"> </Column>
-            <Column field="scheme" header="Scheme">
-              <template #body="{data}">
-                {{ getNameDisplay(data.scheme) }}
+              <template #loading>
+                Loading contents.
               </template>
-            </Column>
-            <Column field="code" header="Code"></Column>
-          </DataTable>
+              <Column selectionMode="multiple" headerStyle="width: 3em"></Column>
+              <Column field="name" header="Name"> </Column>
+              <Column field="scheme" header="Scheme">
+                <template #body="{data}">
+                  {{ getNameDisplay(data.scheme) }}
+                </template>
+              </Column>
+              <Column field="code" header="Code"></Column>
+            </DataTable>
+          </div>
         </div>
       </template>
     </Card>
@@ -144,7 +184,9 @@ export default defineComponent({
       taskTypes: [] as any[],
       taskIriExists: false,
       unmapped: [] as any[],
+      selectedResults: [] as any[],
       contents: [] as any[],
+      selectedContents: [] as any[],
       searchResults: [] as any[],
       request: {} as { cancel: any; msg: string },
       searchTerm: "",
@@ -167,6 +209,24 @@ export default defineComponent({
   },
 
   methods: {
+    addSelectedTasks() {
+      for (const selectedResult of this.selectedResults) {
+        const found = this.contents.find(action => action.iri === selectedResult.iri);
+        if (!found) {
+          this.contents.push(selectedResult);
+        }
+      }
+    },
+
+    removeSelectedTasks() {
+      for (const selectedAction of this.contents) {
+        const foundIndex = this.contents.findIndex(action => action.iri === selectedAction.iri);
+        if (foundIndex !== -1) {
+          this.contents.splice(foundIndex, 1);
+        }
+      }
+    },
+
     async setIriExists() {
       this.taskIriExists = await this.$entityService.iriExists(this.taskIri);
     },
@@ -387,5 +447,9 @@ label {
 
 .title {
   padding: 1rem 1rem 0 1rem;
+}
+
+.pick-button {
+  margin-top: 1rem;
 }
 </style>
