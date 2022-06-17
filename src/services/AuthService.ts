@@ -1,4 +1,5 @@
 import { Auth } from "aws-amplify";
+import jwt_decode from "jwt-decode";
 import { Models } from "im-library";
 const { User, CustomAlert } = Models;
 
@@ -27,6 +28,14 @@ export default {
       return new CustomAlert(200, "User authenticated successfully", undefined, authenticatedUser);
     } catch (err) {
       return new CustomAlert(403, "Error authenticating current user", err);
+    }
+  },
+
+  async getRoles() {
+    try {
+      return (await Auth.currentSession()).getIdToken().payload["cognito:groups"];
+    } catch (error) {
+      return [];
     }
   }
 };
