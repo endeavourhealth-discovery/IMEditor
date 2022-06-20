@@ -1,5 +1,9 @@
 <template>
   <ConfirmDialog></ConfirmDialog>
+  <OverlayPanel ref="summary_overlay" id="summary_overlay_panel" style="width: 50vw" :breakpoints="{ '960px': '75vw' }">
+    <OverlaySummary :hoveredResult="hoveredItem" />
+  </OverlayPanel>
+
   <div class="definition-main-container">
     <h5 class="title">Task Definition</h5>
     <Card class="task-definition-container">
@@ -23,40 +27,39 @@
       <template #content>
         <div class="grid">
           <div class="col-12">
-            <Accordion>
-              <AccordionTab header="Search filters">
-                <div class="flex justify-content-between">
-                  <MultiSelect
-                    v-model="selectedFilters.scheme"
-                    :options="filterOptions.schemes"
-                    optionLabel="name"
-                    optionValue="iri"
-                    placeholder="Select scheme"
-                  />
-                  <MultiSelect v-model="selectedFilters.type" :options="filterOptions.types" optionLabel="name" optionValue="iri" placeholder="Select type" />
-                  <MultiSelect
-                    v-model="selectedFilters.status"
-                    :options="filterOptions.status"
-                    optionLabel="name"
-                    optionValue="iri"
-                    placeholder="Select status"
-                  />
-                  <InputNumber v-model="selectedFilters.usage" placeholder="Usage threshold" :min="0" />
-                  <InputText v-model="searchTerm" placeholder="Keyword Search" />
-                  <Button :loading="loading" icon="pi pi-search" label="Search" class="save-button" @click="search()" />
-                </div>
-              </AccordionTab>
-            </Accordion>
+            <Panel header="Search filters" :toggleable="false">
+              <div class="flex justify-content-between">
+                <MultiSelect
+                  v-model="selectedFilters.scheme"
+                  :options="filterOptions.schemes"
+                  optionLabel="name"
+                  optionValue="iri"
+                  placeholder="Select scheme"
+                />
+                <MultiSelect v-model="selectedFilters.type" :options="filterOptions.types" optionLabel="name" optionValue="@id" placeholder="Select type" />
+                <MultiSelect
+                  v-model="selectedFilters.status"
+                  :options="filterOptions.status"
+                  optionLabel="name"
+                  optionValue="@id"
+                  placeholder="Select status"
+                />
+                <InputNumber v-model="selectedFilters.usage" placeholder="Usage threshold" :min="0" />
+                <InputText v-model="searchTerm" placeholder="Keyword Search" />
+                <Button :loading="loading" icon="pi pi-search" label="Search" class="save-button" @click="search()" />
+              </div>
+            </Panel>
           </div>
 
-          <div class="col-5">
+          <div class="col-5 result-table-container">
             <DataTable
-              class="flex-1 flex justify-content-center"
+              class="flex-1 flex justify-content-center p-datatable-sm result-table"
               v-model:selection="selectedResults"
               dataKey="iri"
               :value="unmapped"
               responsiveLayout="scroll"
               :loading="searching"
+              selectionMode="multiple"
             >
               <template #empty>
                 No results found.
@@ -64,14 +67,14 @@
               <template #loading>
                 Loading results.
               </template>
-              <Column selectionMode="multiple" headerStyle="width: 3em"></Column>
-              <Column field="name" header="Name"> </Column>
-              <Column field="scheme" header="Scheme">
+              <Column field="name" header="Name">
                 <template #body="{data}">
-                  {{ getNameDisplay(data.scheme) }}
+                  <div class="hover-name" @mouseenter="showOverlay($event, data)" @mouseleave="hideOverlay()">
+                    {{ data.name }}
+                  </div>
                 </template>
               </Column>
-              <Column field="code" header="Code"></Column>
+              <Column field="usage" header="Usage"> </Column>
               <Column>
                 <template #body="{data}">
                   <div class="buttons-container">
@@ -100,12 +103,13 @@
           </div>
           <div class="col-5">
             <DataTable
-              class="flex-1 flex justify-content-center"
+              class="flex-1 flex justify-content-center p-datatable-sm content-table"
               v-model:selection="selectedContents"
               dataKey="iri"
               :value="contents"
               responsiveLayout="scroll"
               :loading="loading"
+              selectionMode="multiple"
             >
               <template #empty>
                 No actions added.
@@ -113,14 +117,14 @@
               <template #loading>
                 Loading contents.
               </template>
-              <Column selectionMode="multiple" headerStyle="width: 3em"></Column>
-              <Column field="name" header="Name"> </Column>
-              <Column field="scheme" header="Scheme">
+              <Column field="name" header="Name">
                 <template #body="{data}">
-                  {{ getNameDisplay(data.scheme) }}
+                  <div @mouseenter="showOverlay($event, data)" @mouseleave="hideOverlay()">
+                    {{ data.name }}
+                  </div>
                 </template>
               </Column>
-              <Column field="code" header="Code"></Column>
+              <Column field="usage" header="Usage"></Column>
               <Column>
                 <template #body="{data}">
                   <div class="buttons-container">
@@ -154,7 +158,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import ConfirmDialog from "primevue/confirmdialog";
-
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Models, Enums } from "im-library";
 import VueJsonPretty from "vue-json-pretty";
@@ -220,6 +223,7 @@ export default defineComponent({
       name: "",
       taskTypes: [] as any[],
       taskIriExists: false,
+      hoveredItem: {} as any,
       unmapped: [] as any[],
       selectedResults: [] as any[],
       contents: [] as any[],
@@ -249,6 +253,16 @@ export default defineComponent({
   },
 
   methods: {
+    hideOverlay(): void {
+      const x = this.$refs.summary_overlay as any;
+      x.hide();
+    },
+
+    showOverlay(event: any, data: Models.Search.ConceptSummary): void {
+      this.hoveredItem = data;
+      const x = this.$refs.summary_overlay as any;
+      x.show(event, event.target);
+    },
     addSelectedTasks() {
       for (const selectedResult of this.selectedResults) {
         const found = this.contents.find(action => action.iri === selectedResult.iri);
@@ -306,8 +320,8 @@ export default defineComponent({
           name: entity[RDFS.LABEL],
           type: entity[RDF.TYPE],
           usage: entity[IM.NAMESPACE + "usageTotal"],
-          scheme: entity[IM.SCHEME],
-          status: entity[IM.HAS_STATUS],
+          scheme: entity[IM.SCHEME][0],
+          status: entity[IM.HAS_STATUS][0],
           code: entity[IM.CODE]
         };
       });
@@ -452,7 +466,6 @@ export default defineComponent({
 .field {
   padding: 0.3rem;
   margin: 0.5rem;
-  /* padding-bottom: 0.5rem; */
 }
 
 .input-text {
@@ -486,5 +499,10 @@ label {
 
 .pick-button {
   margin-top: 1rem;
+}
+
+.result-table,
+.content-table {
+  height: calc(100vh - 33rem);
 }
 </style>
