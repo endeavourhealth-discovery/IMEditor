@@ -119,6 +119,7 @@ export default defineComponent({
         this.loading = false;
         return;
       }
+      // Recursively expand
       let n = this.root.find(c => path.find(p => p["@id"] === c.data));
       let i = 0;
       if (n) {
@@ -130,11 +131,13 @@ export default defineComponent({
           }
           this.expandedKeys[n.key] = true;
 
+          // Find relevant child
           n = n.children.find(c => path.find(p => p["@id"] === c.data));
         }
 
         if (n && n.data === path[0]["@id"]) {
           this.selectKey(n.key);
+          // Expand node if necessary
           if (!n.children || n.children.length == 0) {
             await this.onNodeExpand(n);
           }
