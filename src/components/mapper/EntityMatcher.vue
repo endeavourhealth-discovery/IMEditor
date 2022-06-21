@@ -80,17 +80,15 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { mapState } from "vuex";
+import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import ExpansionTable from "./ExpansionTable.vue";
 import { Vocabulary, Helpers, Models, Enums } from "im-library";
 import { Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
 import VueJsonPretty from "vue-json-pretty";
-import axios from "axios";
 
-const { IM, RDF, RDFS } = Vocabulary;
 const {
   ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType },
-  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  ContainerDimensionGetters: { getContainerElementOptimalHeight }
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject }
 } = Helpers;
 const {
   Search: { SearchRequest }
@@ -134,7 +132,7 @@ export default defineComponent({
       selectedView: {} as any,
       selected: {} as any,
       searchResults: [] as any[],
-      request: {} as { cancel: any; msg: string },
+      controller: {} as AbortController,
       selectedEntities: [] as any[],
       mappingsMap: new Map<string, any>()
     };
@@ -150,8 +148,8 @@ export default defineComponent({
     },
 
     async getMappingSuggestions(iri: string, term: string) {
-      const { searchRequest, token } = await this.prepareSearchRequestWithToken(term);
-      let results = await this.$entityService.getMappingSuggestions(searchRequest, token);
+      const { searchRequest, controller } = await this.prepareSearchRequestWithToken(term);
+      let results = await this.$entityService.getMappingSuggestions(searchRequest, controller);
       const i = results.findIndex((entity: Models.Search.ConceptSummary) => entity.iri === iri);
       if (i !== -1) {
         results.splice(i, 1);
@@ -223,8 +221,8 @@ export default defineComponent({
 
     async search(searchTerm: string): Promise<void> {
       if (searchTerm.length > 0) {
-        const { searchRequest, token } = await this.prepareSearchRequestWithToken(searchTerm);
-        await this.fetchSearchResults(searchRequest, token);
+        const { searchRequest, controller } = await this.prepareSearchRequestWithToken(searchTerm);
+        await this.fetchSearchResults(searchRequest, controller);
       }
     },
 
@@ -236,12 +234,11 @@ export default defineComponent({
       searchRequest.page = 1;
       searchRequest.size = 100;
       this.setFilters(searchRequest);
-      if (isObjectHasKeys(this.request, ["cancel", "msg"])) {
-        await this.request.cancel({ status: 499, message: "Search cancelled by user" });
+      if (!isObject(this.controller)) {
+        this.controller.abort();
       }
-      const axiosSource = axios.CancelToken.source();
-      this.request = { cancel: axiosSource.cancel, msg: "Loading..." };
-      return { searchRequest: searchRequest, token: axiosSource.token };
+      this.controller = new AbortController();
+      return { searchRequest: searchRequest, controller: this.controller };
     },
 
     setFilters(searchRequest: Models.Search.SearchRequest) {
@@ -258,8 +255,8 @@ export default defineComponent({
       }
     },
 
-    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, cancelToken: any) {
-      const result = await this.$entityService.advancedSearch(searchRequest, cancelToken);
+    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, controller: AbortController) {
+      const result = await this.$entityService.advancedSearch(searchRequest, controller);
       if (result && isArrayHasLength(result)) {
         this.searchResults = result.map((item: Models.Search.ConceptSummary) => {
           return { iri: item.iri, name: item.name, type: item.entityType };

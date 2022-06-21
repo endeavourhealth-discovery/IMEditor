@@ -119,13 +119,14 @@ import { mapState } from "vuex";
 import { Vocabulary, Helpers, Models, Enums } from "im-library";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
+import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import axios from "axios";
 import { Namespace, EntityReferenceNode, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 
 const { IM, RDF, RDFS } = Vocabulary;
 const {
   ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType, isOfTypes },
-  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject },
   ContainerDimensionGetters: { getContainerElementOptimalHeight }
 } = Helpers;
 const {
@@ -169,7 +170,7 @@ export default defineComponent({
       contentHeight: "",
       loading: true,
       searchResults: [] as any[],
-      request: {} as { cancel: any; msg: string },
+      controller: {} as AbortController,
       draggedItem: {} as any,
       tableSelectedList: [] as any[],
       displayAddToTask: false,
@@ -376,12 +377,11 @@ export default defineComponent({
         searchRequest.page = 1;
         searchRequest.size = 100;
         this.setFilters(searchRequest);
-        if (isObjectHasKeys(this.request, ["cancel", "msg"])) {
-          await this.request.cancel({ status: 499, message: "Search cancelled by user" });
+        if (!isObject(this.controller)) {
+          this.controller.abort();
         }
-        const axiosSource = axios.CancelToken.source();
-        this.request = { cancel: axiosSource.cancel, msg: "Loading..." };
-        await this.fetchSearchResults(searchRequest, axiosSource.token);
+        this.controller = new AbortController();
+        await this.fetchSearchResults(searchRequest, this.controller);
       }
     },
 
@@ -399,8 +399,8 @@ export default defineComponent({
       }
     },
 
-    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, cancelToken: any) {
-      const result = await this.$entityService.advancedSearch(searchRequest, cancelToken);
+    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, controller: AbortController) {
+      const result = await this.$entityService.advancedSearch(searchRequest, controller);
       if (result && isArrayHasLength(result)) {
         this.searchResults = result.map(item => {
           return { iri: item.iri, name: item.name, type: item.entityType };
