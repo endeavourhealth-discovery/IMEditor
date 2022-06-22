@@ -104,8 +104,7 @@ export default defineComponent({
   name: "SummaryEditor",
   props: {
     updatedConcept: { type: Object, required: true },
-    mode: { type: String, required: true },
-    userRoles: { type: Array as PropType<Array<string>>, default: [] }
+    mode: { type: String, required: true }
   },
   emits: { "concept-updated": (payload: any) => isObjectHasKeys(payload) },
   watch: {
@@ -169,6 +168,7 @@ export default defineComponent({
   computed: {
     ...mapState(["filterOptions", "creatorInvalidEntity", "creatorValidity", "editorInvalidEntity", "editorValidity"])
   },
+  inject: ["userRoles"],
   data() {
     return {
       iri: "",
