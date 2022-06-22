@@ -170,6 +170,8 @@ app.config.globalProperties.$loggerService = LoggerService;
 app.config.globalProperties.$queryService = queryService;
 app.config.globalProperties.$setService = setService;
 
+app.config.unwrapInjectedRef = true;
+
 const vm = app.mount("#app");
 
 export default vm;

@@ -23,7 +23,6 @@
                     v-if="active === 0 && isObjectHasKeysWrapper(conceptUpdated)"
                     :updatedConcept="conceptUpdated"
                     @concept-updated="updateConcept"
-                    :userRoles="userRoles"
                     mode="edit"
                   />
                 </div>
@@ -116,6 +115,7 @@ export default defineComponent({
     },
     ...mapState(["editorIri", "editorSavedEntity", "filterOptions", "editorInvalidEntity", "editorValidity"])
   },
+  inject: ["userRoles"],
   data() {
     return {
       conceptOriginal: {} as any,
@@ -123,13 +123,11 @@ export default defineComponent({
       active: 0,
       loading: true,
       entityName: "",
-      showJson: false,
-      userRoles: [] as string[]
+      showJson: false
     };
   },
   async mounted() {
     this.loading = true;
-    await this.getUserRoles();
     await this.fetchConceptData();
     await this.getFilterOptions();
     this.loading = false;
@@ -318,16 +316,6 @@ export default defineComponent({
     handleClick(data: any) {
       console.log("click");
       console.log(data);
-    },
-
-    async getUserRoles() {
-      await Auth.currentSession()
-        .then(data => {
-          this.userRoles = data.getIdToken().payload["cognito:groups"];
-        })
-        .catch(() => {
-          this.userRoles = [];
-        });
     }
   }
 });
