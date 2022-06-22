@@ -1,5 +1,4 @@
 import { Auth } from "aws-amplify";
-import jwt_decode from "jwt-decode";
 import { Models } from "im-library";
 const { User, CustomAlert } = Models;
 
