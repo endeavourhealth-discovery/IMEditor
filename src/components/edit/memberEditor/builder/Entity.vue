@@ -27,12 +27,13 @@
 import { defineComponent, PropType } from "@vue/runtime-core";
 import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/SearchMiniOverlay.vue";
 import { mapState } from "vuex";
+import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import axios from "axios";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import { Namespace, TTIriRef, EntityReferenceNode, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 import { Helpers, Models, Enums } from "im-library";
 const {
-  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject },
   TypeGuards: { isTTIriRef }
 } = Helpers;
 const { ComponentType, BuilderType, SortBy } = Enums;
@@ -79,7 +80,7 @@ export default defineComponent({
     return {
       loading: false,
       debounce: 0,
-      request: {} as { cancel: any; msg: string },
+      controller: {} as AbortController,
       selectedResult: {} as TTIriRef,
       searchTerm: "",
       searchResults: [] as Models.Search.ConceptSummary[],
@@ -128,12 +129,11 @@ export default defineComponent({
         // });
         // searchRequest.typeFilter = [];
         // searchRequest.typeFilter.push(IM.CONCEPT);
-        if (isObjectHasKeys(this.request, ["cancel", "msg"])) {
-          await this.request.cancel({ status: 499, message: "Search cancelled by user" });
+        if (!isObject(this.controller)) {
+          this.controller.abort();
         }
-        const axiosSource = axios.CancelToken.source();
-        this.request = { cancel: axiosSource.cancel, msg: "Loading..." };
-        await this.fetchSearchResults(searchRequest, axiosSource.token);
+        this.controller = new AbortController();
+        await this.fetchSearchResults(searchRequest, this.controller);
         this.loading = false;
       }
     },
@@ -158,8 +158,8 @@ export default defineComponent({
       }
     },
 
-    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, cancelToken: any) {
-      const result = await this.$entityService.advancedSearch(searchRequest, cancelToken);
+    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, controller: AbortController) {
+      const result = await this.$entityService.advancedSearch(searchRequest, controller);
       if (result && isArrayHasLength(result)) {
         this.searchResults = result;
       } else {

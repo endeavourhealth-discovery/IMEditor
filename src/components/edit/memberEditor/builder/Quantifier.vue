@@ -34,6 +34,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "@vue/runtime-core";
+import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import axios from "axios";
 import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/SearchMiniOverlay.vue";
 import QuantifierTree from "@/components/edit/memberEditor/builder/quantifier/QuantifierTree.vue";
@@ -42,7 +43,7 @@ import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums, Models } from "im-library";
 import { TTIriRef, ComponentDetails, Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
 const {
-  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject },
   TypeGuards: { isTTIriRef },
   Sorters: { byName }
 } = Helpers;
@@ -91,7 +92,7 @@ export default defineComponent({
       loading: false,
       selectedResult: {} as TTIriRef,
       invalidAssociatedProperty: false,
-      request: {} as { cancel: any; msg: string },
+      controller: {} as AbortController,
       isAs: [] as string[],
       searchTerm: "",
       searchResults: [] as Models.Search.ConceptSummary[]
@@ -196,12 +197,11 @@ export default defineComponent({
         searchRequest.termFilter = this.searchTerm;
         searchRequest.isA = this.isAs;
         this.setFilters(searchRequest);
-        if (isObjectHasKeys(this.request, ["cancel", "msg"])) {
-          await this.request.cancel({ status: 499, message: "Search cancelled by user" });
+        if (!isObject(this.controller)) {
+          this.controller.abort();
         }
-        const axiosSource = axios.CancelToken.source();
-        this.request = { cancel: axiosSource.cancel, msg: "Loading..." };
-        const result = await this.$entityService.advancedSearch(searchRequest, axiosSource.token);
+        this.controller = new AbortController();
+        const result = await this.$entityService.advancedSearch(searchRequest, this.controller);
         if (isArrayHasLength(result)) {
           this.searchResults = result;
         }

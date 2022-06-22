@@ -16,10 +16,11 @@
 import { TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 import { defineComponent } from "@vue/runtime-core";
 import axios from "axios";
+import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import EclResults from "@/components/edit/memberEditor/EclResults.vue";
 import { Helpers, Vocabulary } from "im-library";
 const {
-  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject }
 } = Helpers;
 const { IM, SHACL, RDF } = Vocabulary;
 
@@ -35,7 +36,7 @@ export default defineComponent({
   data() {
     return {
       ecl: "",
-      request: {} as { cancel: any; msg: string },
+      controller: {} as AbortController,
       eclAsNode: [] as any[],
       eclAsIriRefs: [] as TTIriRef[],
       eclError: false,
@@ -45,12 +46,11 @@ export default defineComponent({
   methods: {
     async submitEcl() {
       this.loading = true;
-      if (isObjectHasKeys(this.request, ["cancel", "msg"])) {
-        await this.request.cancel({ status: 499, message: "Process cancelled by user" });
+      if (!isObject(this.controller)) {
+        this.controller.abort();
       }
-      const axiosSource = axios.CancelToken.source();
-      this.request = { cancel: axiosSource.cancel, msg: "Loading..." };
-      this.eclAsNode = await this.$setService.evaluateEcl(this.ecl, axiosSource.token);
+      this.controller = new AbortController();
+      this.eclAsNode = await this.$setService.evaluateEcl(this.ecl, this.controller);
       if (isArrayHasLength(this.eclAsNode)) {
         this.eclAsIriRefs = this.eclAsNode.map(item => {
           return { "@id": item.iri, name: item.name };

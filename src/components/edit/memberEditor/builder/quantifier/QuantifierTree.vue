@@ -126,7 +126,6 @@ export default defineComponent({
         this.expandedKeys = {};
         while (n && n.data != path[0]["@id"] && i++ < 50) {
           this.selectKey(n.key);
-          // Expand node if necessary
           if (!n.children || n.children.length == 0) {
             await this.onNodeExpand(n);
           }
