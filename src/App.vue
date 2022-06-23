@@ -9,23 +9,32 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { computed, defineComponent } from "vue";
 import ProgressSpinner from "primevue/progressspinner";
+import AuthService from "@/services/AuthService";
 
 export default defineComponent({
   name: "App",
   components: { ProgressSpinner: ProgressSpinner },
+  provide() {
+    return {
+      userRoles: computed(() => this.userRoles)
+    };
+  },
   async mounted() {
     // check for user and log them in if found or logout if not
     this.loading = true;
     await this.$store.dispatch("authenticateCurrentUser");
     await this.$store.dispatch("fetchBlockedIris");
     await this.$store.dispatch("fetchFilterSettings");
+    const roles = await AuthService.getRoles();
+    if (roles) this.userRoles = roles;
     this.loading = false;
   },
   data() {
     return {
-      loading: false
+      loading: false,
+      userRoles: [] as string[]
     };
   }
 });

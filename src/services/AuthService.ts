@@ -28,5 +28,13 @@ export default {
     } catch (err) {
       return new CustomAlert(403, "Error authenticating current user", err);
     }
+  },
+
+  async getRoles() {
+    try {
+      return (await Auth.currentSession()).getIdToken().payload["cognito:groups"];
+    } catch (error) {
+      return [];
+    }
   }
 };
