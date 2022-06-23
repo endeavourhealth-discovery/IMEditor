@@ -16,7 +16,7 @@
         <div class="content-json-container">
           <div class="content">
             <div class="panel-content" id="query-builder-container">
-              <QueryBuilder :updatedConcept="queryUpdated" @concept-updated="updateQuery" />
+              <QueryBuilder :updatedQuery="queryUpdated" @query-updated="updateQuery" />
             </div>
           </div>
           <Divider v-if="showJson" layout="vertical" />
@@ -24,7 +24,6 @@
             <div class="json-header-container">
               <span class="json-header">JSON viewer</span>
             </div>
-
             <VueJsonPretty v-if="isObjectHasKeys(queryUpdated)" class="json" :path="'res'" :data="queryUpdated" />
           </div>
           <Button
@@ -44,43 +43,88 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref, reactive, computed, watch, getCurrentInstance } from "vue";
-import { useStore } from "vuex";
+import { defineComponent, onMounted, ref, reactive, computed, watch, provide, inject } from "vue";
+import type { Ref } from "vue";
 import VueJsonPretty from "vue-json-pretty";
-import { Helpers } from "im-library";
+import QueryBuilder from "@/components/query/QueryBuilder.vue";
+import * as injectionKeys from "@/injectionKeys/injectionKeys";
+import Swal from "sweetalert2";
+import { useRouter, useRoute } from "vue-router";
+import axios from "axios";
+import store from "@/store/index";
+import { Helpers, Services, Vocabulary } from "im-library";
 import _ from "lodash";
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength }
 } = Helpers;
+const { QueryService, EntityService, Env, ConfigService, SetService } = Services;
+const { IM } = Vocabulary;
 
 export default defineComponent({
   name: "Query",
-  components: { VueJsonPretty },
+  components: { VueJsonPretty, QueryBuilder },
   setup() {
-    const _instance = getCurrentInstance();
+    const configService = new ConfigService(axios);
+    const queryService = new QueryService(axios);
+    const entityService = new EntityService(axios);
+    const setService = new SetService(axios);
+    const router = useRouter();
+    const route = useRoute();
 
-    const { $store, $router, $swal, $queryService, $env } = _instance?.appContext.app.config.globalProperties;
+    provide(injectionKeys.$store, store);
+    provide(injectionKeys.$router, router);
+    provide(injectionKeys.$swal, Swal);
+    provide(injectionKeys.$queryService, queryService);
+    provide(injectionKeys.$env, Env);
+    provide(injectionKeys.$entityService, entityService);
+    provide(injectionKeys.$setService, setService);
+    provide(injectionKeys.$configService, configService);
+    provide(injectionKeys.$route, route);
 
-    const filterOptions = computed(() => $store.state.filterOptions);
+    const userRoles = inject("userRoles");
 
     let loading = ref(true);
     onMounted(() => {
       loading.value = false;
     });
 
-    let queryOriginal = ref({} as any);
+    let queryOriginal: any = ref({});
 
-    let queryUpdated = ref({} as any);
+    let queryUpdated: any = ref({});
+    watch(
+      () => _.cloneDeep(queryUpdated.value),
+      () => {
+        toggleConfirmLeaveDialog();
+      }
+    );
 
-    let showJson = ref(true);
+    let showJson: Ref<boolean> = ref(true);
 
-    const toggleConfirmLeaveDialog = computed(() => {
+    const filterOptions = computed(() => store.state.filterOptions);
+
+    async function getFilterOptions(): Promise<void> {
+      if (!(isObjectHasKeys(filterOptions.value) && isArrayHasLength(filterOptions.value.schemes))) {
+        const schemeOptions = await entityService.getNamespaces();
+        const typeOptions = await entityService.getEntityChildren(IM.MODELLING_ENTITY_TYPE);
+        const statusOptions = await entityService.getEntityChildren(IM.STATUS);
+        store.commit("updateFilterOptions", {
+          status: statusOptions,
+          schemes: schemeOptions,
+          types: typeOptions
+        });
+      }
+    }
+    onMounted(async () => {
+      await getFilterOptions();
+    });
+
+    function toggleConfirmLeaveDialog() {
       if (checkForChanges()) {
         window.addEventListener("beforeunload", beforeWindowUnload);
       } else {
         window.removeEventListener("beforeunload", beforeWindowUnload);
       }
-    });
+    }
 
     function beforeWindowUnload(e: any) {
       if (checkForChanges()) {
@@ -101,55 +145,51 @@ export default defineComponent({
       }
     }
 
-    function checkForChanges() {
+    function checkForChanges(): boolean {
       return !(JSON.stringify(queryOriginal.value) === JSON.stringify(queryUpdated.value));
     }
 
     async function submit(): Promise<void> {
       if (isValidQuery(queryUpdated.value)) {
-        $swal
-          .fire({
-            icon: "info",
-            title: "Confirm create",
-            text: "Are you sure you want to create this entity?",
-            showCancelButton: true,
-            confirmButtonText: "Create",
-            reverseButtons: true,
-            confirmButtonColor: "#689F38",
-            cancelButtonColor: "#607D8B",
-            showLoaderOnConfirm: true,
-            allowOutsideClick: () => !$swal.isLoading(),
-            preConfirm: async () => {
-              const res = await $queryService.createQuery(queryUpdated);
-              if (res) return res;
-              else $swal.showValidationMessage("Error creating entity from server.");
-            }
-          })
-          .then((result: any) => {
-            if (result.isConfirmed) {
-              $swal
-                .fire({
-                  title: "Success",
-                  text: "Query has been created.",
-                  icon: "success",
-                  showCancelButton: true,
-                  reverseButtons: true,
-                  confirmButtonText: "Open in Viewer",
-                  confirmButtonColor: "#2196F3",
-                  cancelButtonColor: "#607D8B"
-                })
-                .then((result: any) => {
-                  if (result.isConfirmed) {
-                    window.location.href = $env.QUERY_URL;
-                  } else {
-                    window.location.href = $env.DIRECTORY_URL;
-                  }
-                });
-            }
-          });
+        Swal.fire({
+          icon: "info",
+          title: "Confirm create",
+          text: "Are you sure you want to create this entity?",
+          showCancelButton: true,
+          confirmButtonText: "Create",
+          reverseButtons: true,
+          confirmButtonColor: "#689F38",
+          cancelButtonColor: "#607D8B",
+          showLoaderOnConfirm: true,
+          allowOutsideClick: () => !Swal.isLoading(),
+          preConfirm: async () => {
+            const res = await queryService.createQuery(queryUpdated);
+            if (res) return res;
+            else Swal.showValidationMessage("Error creating entity from server.");
+          }
+        }).then((result: any) => {
+          if (result.isConfirmed) {
+            Swal.fire({
+              title: "Success",
+              text: "Query has been created.",
+              icon: "success",
+              showCancelButton: true,
+              reverseButtons: true,
+              confirmButtonText: "Open in Viewer",
+              confirmButtonColor: "#2196F3",
+              cancelButtonColor: "#607D8B"
+            }).then((result: any) => {
+              if (result.isConfirmed) {
+                window.location.href = Env.QUERY_URL;
+              } else {
+                window.location.href = Env.DIRECTORY_URL;
+              }
+            });
+          }
+        });
       } else {
         console.log("invalid entity");
-        $swal.fire({
+        Swal.fire({
           icon: "warning",
           title: "Warning",
           text: "Invalid values found. Please review your entries.",
@@ -163,24 +203,22 @@ export default defineComponent({
       return true;
     }
 
-    function resetQuery() {
-      $swal
-        .fire({
-          icon: "warning",
-          title: "Warning",
-          text: "This action will reset all progress. Are you sure you want to proceed?",
-          showCancelButton: true,
-          confirmButtonText: "Reset",
-          reverseButtons: true,
-          confirmButtonColor: "#FBC02D",
-          cancelButtonColor: "#607D8B",
-          customClass: { confirmButton: "swal-reset-button" }
-        })
-        .then((result: any) => {
-          if (result.isConfirmed) {
-            queryUpdated.value = { ...queryOriginal.value };
-          }
-        });
+    function resetQuery(): void {
+      Swal.fire({
+        icon: "warning",
+        title: "Warning",
+        text: "This action will reset all progress. Are you sure you want to proceed?",
+        showCancelButton: true,
+        confirmButtonText: "Reset",
+        reverseButtons: true,
+        confirmButtonColor: "#FBC02D",
+        cancelButtonColor: "#607D8B",
+        customClass: { confirmButton: "swal-reset-button" }
+      }).then((result: any) => {
+        if (result.isConfirmed) {
+          queryUpdated.value = { ...queryOriginal.value };
+        }
+      });
     }
 
     return {
@@ -191,7 +229,8 @@ export default defineComponent({
       resetQuery,
       updateQuery,
       showJson,
-      submit
+      submit,
+      userRoles
     };
   }
 });

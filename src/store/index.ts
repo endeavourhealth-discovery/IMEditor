@@ -1,9 +1,12 @@
 import { createStore } from "vuex";
+import axios from "axios";
 import { HistoryItem, Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
-import { Models } from "im-library";
+import { Models, Services } from "im-library";
 const { User, CustomAlert } = Models;
 import AuthService from "@/services/AuthService";
-import vm from "@/main";
+const { ConfigService, LoggerService } = Services;
+
+const configService = new ConfigService(axios);
 
 export default createStore({
   // update stateType.ts when adding new state!
@@ -39,7 +42,7 @@ export default createStore({
       state.blockedIris = blockedIris;
     },
     updateHistory(state, historyItem) {
-      state.history = state.history.filter(function(el) {
+      state.history = state.history.filter(function (el) {
         return el.conceptName !== historyItem.conceptName;
       });
       state.history.splice(0, 0, historyItem);
@@ -103,7 +106,7 @@ export default createStore({
   },
   actions: {
     async fetchBlockedIris({ commit }) {
-      const blockedIris = await vm.$configService.getXmlSchemaDataTypes();
+      const blockedIris = await configService.getXmlSchemaDataTypes();
       commit("updateBlockedIris", blockedIris);
     },
     async logoutCurrentUser({ commit }) {
@@ -130,9 +133,9 @@ export default createStore({
         } else {
           dispatch("logoutCurrentUser").then(resLogout => {
             if (resLogout.status === 200) {
-              vm.$loggerService.info(undefined, "Force logout successful");
+              LoggerService.info(undefined, "Force logout successful");
             } else {
-              vm.$loggerService.error(undefined, "Force logout failed");
+              LoggerService.error(undefined, "Force logout failed");
             }
           });
         }
