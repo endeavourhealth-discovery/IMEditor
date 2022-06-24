@@ -228,7 +228,7 @@ export default defineComponent({
 
     async prepareSearchRequestWithToken(term: string) {
       this.searchResults = [];
-      const searchRequest = new SearchRequest();
+      const searchRequest = {} as SearchRequest;
       searchRequest.termFilter = term;
       searchRequest.sortBy = SortBy.Usage;
       searchRequest.page = 1;

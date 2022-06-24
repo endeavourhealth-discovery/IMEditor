@@ -371,7 +371,7 @@ export default defineComponent({
     async search(searchTerm: string): Promise<void> {
       if (searchTerm.length > 0) {
         this.searchResults = [];
-        const searchRequest = new SearchRequest();
+        const searchRequest = {} as SearchRequest
         searchRequest.termFilter = searchTerm;
         searchRequest.sortBy = SortBy.Usage;
         searchRequest.page = 1;
