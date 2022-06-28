@@ -369,7 +369,7 @@ export default defineComponent({
       this.searching = true;
       if (this.searchTerm.length > 0) {
         this.searchResults = [];
-        const searchRequest = new SearchRequest();
+        const searchRequest = {} as SearchRequest
         searchRequest.termFilter = this.searchTerm;
         searchRequest.sortBy = SortBy.Usage;
         searchRequest.page = 1;

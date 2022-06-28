@@ -193,7 +193,7 @@ export default defineComponent({
       if (this.searchTerm.length > 0) {
         this.loading = true;
         this.searchResults = [];
-        const searchRequest = new SearchRequest();
+        const searchRequest = {} as SearchRequest;
         searchRequest.termFilter = this.searchTerm;
         searchRequest.isA = this.isAs;
         this.setFilters(searchRequest);
