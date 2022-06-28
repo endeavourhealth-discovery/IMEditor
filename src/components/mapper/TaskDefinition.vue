@@ -61,14 +61,10 @@
               :loading="searching"
               selectionMode="multiple"
             >
-              <template #empty>
-                No results found.
-              </template>
-              <template #loading>
-                Loading results.
-              </template>
+              <template #empty> No results found. </template>
+              <template #loading> Loading results. </template>
               <Column field="name" header="Name">
-                <template #body="{data}">
+                <template #body="{ data }">
                   <div class="hover-name" @mouseenter="showOverlay($event, data)" @mouseleave="hideOverlay()">
                     {{ data.name }}
                   </div>
@@ -76,7 +72,7 @@
               </Column>
               <Column field="usage" header="Usage"> </Column>
               <Column>
-                <template #body="{data}">
+                <template #body="{ data }">
                   <div class="buttons-container">
                     <Button
                       icon="pi pi-fw pi-eye"
@@ -111,14 +107,10 @@
               :loading="loading"
               selectionMode="multiple"
             >
-              <template #empty>
-                No actions added.
-              </template>
-              <template #loading>
-                Loading contents.
-              </template>
+              <template #empty> No actions added. </template>
+              <template #loading> Loading contents. </template>
               <Column field="name" header="Name">
-                <template #body="{data}">
+                <template #body="{ data }">
                   <div @mouseenter="showOverlay($event, data)" @mouseleave="hideOverlay()">
                     {{ data.name }}
                   </div>
@@ -126,7 +118,7 @@
               </Column>
               <Column field="usage" header="Usage"></Column>
               <Column>
-                <template #body="{data}">
+                <template #body="{ data }">
                   <div class="buttons-container">
                     <Button
                       icon="pi pi-fw pi-eye"
@@ -369,7 +361,7 @@ export default defineComponent({
       this.searching = true;
       if (this.searchTerm.length > 0) {
         this.searchResults = [];
-        const searchRequest = {} as SearchRequest
+        const searchRequest = {} as SearchRequest;
         searchRequest.termFilter = this.searchTerm;
         searchRequest.sortBy = SortBy.Usage;
         searchRequest.page = 1;

@@ -28,12 +28,12 @@
           @click="edit(concept['@id'])"
           v-tooltip.left="'Edit'"
         />
-        <Button
+        <!-- <Button
           icon="pi pi-fw pi-play"
           class="p-button-secondary p-button-outlined concept-button"
           @click="starTask(concept['@id'])"
           v-tooltip.left="'Start task'"
-        />
+        /> -->
       </div>
     </div>
     <TextWithLabel label="Iri" :data="concept['@id']" :show="true" />
@@ -96,12 +96,10 @@ export default defineComponent({
     },
 
     edit(iri: string) {
-      console.log(iri);
       this.$router.push({ name: "TaskDefinition", params: { taskIri: iri } });
     },
 
     starTask(iri: string) {
-      console.log(iri);
       this.$router.push({ name: "EntityMapper", params: { taskIri: iri } });
     },
 

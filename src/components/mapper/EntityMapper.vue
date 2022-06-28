@@ -5,7 +5,7 @@
       <Column field="name" header="Name"></Column>
       <Column field="@id" header="Iri"></Column>
       <Column class="col-4" field="mappings" header="Map To">
-        <template #body="{data}">
+        <template #body="{ data }">
           <Chips v-model="data.mappings">
             <template #chip="slotProps">
               <div @click="showDetails(slotProps.value.iri)">{{ slotProps.value.name }}</div>
@@ -34,7 +34,7 @@
     </DataTable>
 
     <OverlayPanel ref="navTreeOP" id="nav_tree_overlay_panel" style="width: 50vw" :breakpoints="{ '960px': '75vw' }">
-      <div v-if="hoveredResult.name" class="flex flex-row justify-contents-start result-overlay" style="width: 100%; gap: 1rem;">
+      <div v-if="hoveredResult.name" class="flex flex-row justify-contents-start result-overlay" style="width: 100%; gap: 1rem">
         <div class="left-side" style="width: 50%">
           <p>
             <strong>Name: </strong>
@@ -42,7 +42,7 @@
           </p>
           <p>
             <strong>Iri: </strong>
-            <span style="word-break:break-all;">{{ hoveredResult.iri }}</span>
+            <span style="word-break: break-all">{{ hoveredResult.iri }}</span>
           </p>
           <p v-if="hoveredResult.code">
             <strong>Code: </strong>
@@ -78,6 +78,7 @@ import { mapState } from "vuex";
 import { Vocabulary, Helpers, Models, Enums } from "im-library";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
+import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import axios from "axios";
 import { Namespace, EntityReferenceNode, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 
@@ -117,13 +118,15 @@ export default defineComponent({
       mappingsMap: new Map<string, any>(),
       loading: false,
       hoveredResult: {} as Models.Search.ConceptSummary,
-      overlayLocation: {} as any
+      overlayLocation: {} as any,
+      controller: {} as AbortController
     };
   },
   methods: {
     saveMappings() {
       console.log("save");
     },
+    
     showDetails(selectedIri: string) {
       this.$emit("showDetails", selectedIri);
     },
@@ -141,8 +144,9 @@ export default defineComponent({
 
     async getMappingSuggestions(iri: string, term: string) {
       this.loading = true;
-      const { searchRequest, token } = await this.prepareSearchRequestWithToken(term);
-      let results = await this.$entityService.getMappingSuggestions(searchRequest, token);
+      const searchRequest = await this.prepareSearchRequest(term);
+      this.controller = new AbortController();
+      let results = await this.$entityService.getMappingSuggestions(searchRequest, this.controller);
       const i = results.findIndex(entity => entity.iri === iri);
       if (i !== -1) {
         results.splice(i, 1);
@@ -153,8 +157,7 @@ export default defineComponent({
         : [
             {
               iri: "http://snomed.info/sct#999030171000230104",
-              name:
-                "United Kingdom National Health Service primary care data extraction - General practice data extraction - chest discomfort simple reference set (foundation metadata concept)",
+              name: "United Kingdom National Health Service primary care data extraction - General practice data extraction - chest discomfort simple reference set (foundation metadata concept)",
               type: [{ name: "Concept Set", "@id": "http://endhealth.info/im#ConceptSet" }]
             }
           ];
@@ -162,7 +165,7 @@ export default defineComponent({
       this.loading = false;
     },
 
-    async prepareSearchRequestWithToken(term: string) {
+    async prepareSearchRequest(term: string) {
       this.searchResults = [];
       const searchRequest = new SearchRequest();
       searchRequest.termFilter = term;
@@ -175,14 +178,14 @@ export default defineComponent({
       }
       const axiosSource = axios.CancelToken.source();
       this.request = { cancel: axiosSource.cancel, msg: "Loading..." };
-      return { searchRequest: searchRequest, token: axiosSource.token };
+      return searchRequest;
     },
 
     async search(event: any): Promise<void> {
       const searchTerm = event.query;
       if (searchTerm.length > 0) {
         this.searchResults = [];
-        const searchRequest = new SearchRequest();
+        const searchRequest = {} as SearchRequest;
         searchRequest.termFilter = searchTerm;
         searchRequest.sortBy = SortBy.Usage;
         searchRequest.page = 1;

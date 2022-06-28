@@ -23,12 +23,8 @@
     v-model:filters="filters"
     filterDisplay="menu"
   >
-    <template #empty>
-      No records found.
-    </template>
-    <template #loading>
-      Loading data. Please wait.
-    </template>
+    <template #empty> No records found. </template>
+    <template #loading> Loading data. Please wait. </template>
     <template #header>
       <div class="flex justify-content-center align-items-center">
         <h5 class="m-0">{{ title }}</h5>
@@ -41,7 +37,7 @@
     <Column v-if="drag" :rowReorder="true" headerStyle="width: 3rem" />
     <Column v-if="selectable" selectionMode="multiple" headerStyle="width: 3em" />
     <Column field="name" header="Name">
-      <template #body="{data}">
+      <template #body="{ data }">
         <span :style="'color: ' + getColourFromType(data.type)" class="p-mx-1 type-icon">
           <i :class="getFAIconFromType(data.type)" aria-hidden="true" />
         </span>
@@ -49,15 +45,15 @@
       </template>
     </Column>
     <Column field="iri" header="Iri">
-      <template #body="{data}">
+      <template #body="{ data }">
         {{ data.iri }}
       </template>
     </Column>
     <Column filterField="scheme" sortField="scheme.name" header="Scheme" sortable :showFilterMatchModes="false" :filterMenuStyle="{ width: '14rem' }">
-      <template #body="{data}">
+      <template #body="{ data }">
         {{ data.scheme }}
       </template>
-      <template #filter="{filterModel}">
+      <template #filter="{ filterModel }">
         <div class="mb-3 font-bold">Scheme Select</div>
         <MultiSelect v-model="filterModel.value" :options="filterOptions.schemes" optionLabel="name" placeholder="Any" class="p-column-filter">
           <template #option="slotProps">
@@ -70,7 +66,7 @@
     </Column>
 
     <Column v-if="showActions" :exportable="false" bodyStyle="text-align: center; overflow: visible; justify-content: flex-end; gap: 0.25rem;">
-      <template #body="{data}">
+      <template #body="{ data }">
         <Button icon="pi pi-fw pi-eye" class="p-button-rounded p-button-text p-button-plain row-button" @click="view(data.iri)" v-tooltip.top="'View'" />
         <Button
           icon="pi pi-fw pi-info-circle"
@@ -78,11 +74,17 @@
           @click="showInfo(data.iri)"
           v-tooltip.top="'Info'"
         />
+        <Button
+          icon="pi pi-fw pi-play"
+          class="p-button-rounded p-button-text p-button-plain row-button"
+          @click="starMapping(data.iri)"
+          v-tooltip.left="'Start task'"
+        />
       </template>
     </Column>
 
     <Column v-if="removableRows" headerStyle="width: 3rem">
-      <template #body="{data}">
+      <template #body="{ data }">
         <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text" @click="remove(data)" />
       </template>
     </Column>
@@ -148,6 +150,10 @@ export default defineComponent({
 
     showInfo(iri: string) {
       this.$emit("showDetails", iri);
+    },
+
+    starMapping(iri: string) {
+      this.$router.push({ name: "EntityMapper", params: { taskIri: iri } });
     },
 
     remove(data: any) {
