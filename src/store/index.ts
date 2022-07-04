@@ -2,14 +2,13 @@ import { createStore } from "vuex";
 import AuthService from "@/services/AuthService";
 import vm from "@/main";
 import { HistoryItem, Namespace, EntityReferenceNode, RecentActivityItem, FilterDefaultsConfig } from "im-library/dist/types/interfaces/Interfaces";
-import { Models, Vocabulary } from "im-library";
+import { Config, Models, Vocabulary } from "im-library";
 const { IM, RDF, RDFS } = Vocabulary;
 const { User, CustomAlert } = Models;
 export default createStore({
   // update stateType.ts when adding new state!
   state: {
     arrayObjectNameListboxWithLabelStartExpanded: [],
-    defaultPredicateNames: {} as any,
     history: [] as HistoryItem[],
     recentLocalActivity: JSON.parse(localStorage.getItem("recentLocalActivity") || "[]") as RecentActivityItem[],
     currentUser: {} as Models.User,
@@ -20,7 +19,6 @@ export default createStore({
     snomedReturnUrl: "",
     authReturnUrl: "",
     editorSavedEntity: localStorage.getItem("editorUpdatedEntity") as any,
-    blockedIris: [] as string[],
     tagSeverityMatches: [
       { "@id": IM.ACTIVE, severity: "success" },
       { "@id": IM.DRAFT, severity: "warning" },
@@ -30,7 +28,16 @@ export default createStore({
     filterOptions: {
       status: [] as EntityReferenceNode[],
       schemes: [] as Namespace[],
-      types: [] as EntityReferenceNode[]
+      types: [] as EntityReferenceNode[],
+      sortFields: [] as { label: string; value: any }[],
+      sortDirections: [] as { label: string; value: any }[]
+    },
+    selectedFilters: {
+      status: [] as EntityReferenceNode[],
+      schemes: [] as Namespace[],
+      types: [] as EntityReferenceNode[],
+      sortField: "",
+      sortDirection: ""
     },
     quickFiltersStatus: new Map<string, boolean>(),
     creatorInvalidEntity: false,
@@ -65,17 +72,11 @@ export default createStore({
       localStorage.setItem("recentLocalActivity", JSON.stringify(activity));
       state.recentLocalActivity = activity;
     },
-    updateBlockedIris(state, blockedIris) {
-      state.blockedIris = blockedIris;
-    },
     updateHistory(state, historyItem) {
-      state.history = state.history.filter(function(el) {
+      state.history = state.history.filter(function (el) {
         return el.conceptName !== historyItem.conceptName;
       });
       state.history.splice(0, 0, historyItem);
-    },
-    updateDefaultPredicateNames(state, names) {
-      state.defaultPredicateNames = names;
     },
     updateFilterOptions(state, filters) {
       filters.types.forEach((type: any) => {
@@ -96,6 +97,9 @@ export default createStore({
     },
     updateIsLoggedIn(state, status) {
       state.isLoggedIn = status;
+    },
+    updateSelectedFilters(state, filters) {
+      state.selectedFilters = filters;
     },
     updateSnomedLicenseAccepted(state, status: string) {
       state.snomedLicenseAccepted = status;
@@ -135,10 +139,6 @@ export default createStore({
     }
   },
   actions: {
-    async fetchBlockedIris({ commit }) {
-      const blockedIris = await vm.$configService.getXmlSchemaDataTypes();
-      commit("updateBlockedIris", blockedIris);
-    },
     async logoutCurrentUser({ commit }) {
       let result = new CustomAlert(500, "Logout (store) failed");
       await AuthService.signOut().then(res => {
@@ -153,20 +153,27 @@ export default createStore({
       return result;
     },
     async fetchFilterSettings({ commit, state }) {
-      const configs = await vm.$configService.getFilterDefaults();
-      commit("updateFilterDefaults", configs);
-
-      const schemeOptions = await vm.$entityService.getNamespaces();
-      const statusOptions = await vm.$entityService.getEntityChildren(IM.STATUS);
-      const typeOptions = (await vm.$entityService.getPartialEntities(state.filterDefaults.typeOptions, [RDFS.LABEL])).map((typeOption: any) => {
-        return { "@id": typeOption["@id"], name: typeOption[RDFS.LABEL] };
-      });
+      const filterDefaults = await vm.$entityService.getFilterOptions();
       commit("updateFilterOptions", {
-        status: statusOptions,
-        schemes: schemeOptions,
-        types: typeOptions
+        status: filterDefaults.status,
+        schemes: filterDefaults.schemes,
+        types: filterDefaults.types,
+        sortFields: filterDefaults.sortFields,
+        sortDirections: filterDefaults.sortDirections
+      });
+
+      const selectedStatus = state.filterOptions.status.filter((item: EntityReferenceNode) =>
+        Config.Values.FILTER_DEFAULTS.statusOptions.includes(item["@id"])
+      );
+      const selectedSchemes = state.filterOptions.schemes.filter((item: Namespace) => Config.Values.FILTER_DEFAULTS.schemeOptions.includes(item.iri));
+      const selectedTypes = state.filterOptions.types.filter((item: EntityReferenceNode) => Config.Values.FILTER_DEFAULTS.typeOptions.includes(item["@id"]));
+      commit("updateSelectedFilters", {
+        status: selectedStatus,
+        schemes: selectedSchemes,
+        types: selectedTypes
       });
     },
+
     async authenticateCurrentUser({ commit, dispatch }) {
       const result = { authenticated: false };
       await AuthService.getCurrentAuthenticatedUser().then(res => {

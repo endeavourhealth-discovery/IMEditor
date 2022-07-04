@@ -5,7 +5,7 @@ import TypeSelector from "@/components/creator/TypeSelector.vue";
 import SummaryEditor from "@/components/edit/SummaryEditor.vue";
 import ParentsEditor from "@/components/edit/ParentsEditor.vue";
 import MemberEditor from "@/components/edit/MemberEditor.vue";
-import { AccessDenied, SnomedLicense, Services, PageNotFound, EntityNotFound, Helpers } from "im-library";
+import { AccessDenied, SnomedLicense, Services, PageNotFound, EntityNotFound, Helpers, Config } from "im-library";
 import MapperWizard from "../views/MapperWizard.vue";
 import TaskDefinition from "../components/mapper/TaskDefinition.vue";
 import TaskSelection from "../components/mapper/TaskSelection.vue";
@@ -110,7 +110,7 @@ router.beforeEach(async (to, from) => {
     store.commit("updateAuthReturnUrl", currentUrl);
   }
   const iri = to.params.selectedIri as string;
-  if (iri && store.state.blockedIris.includes(iri)) {
+  if (iri && Config.Values.XML_SCHEMA_DATATYPES.includes(iri)) {
     return false;
   }
   if (to.name?.toString() == "Editor") {

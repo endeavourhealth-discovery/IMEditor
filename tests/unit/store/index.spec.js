@@ -42,15 +42,19 @@ describe("state", () => {
 
   it("should start with the correct values", () => {
     expect(Object.keys(store.state)).toStrictEqual([
+      "arrayObjectNameListboxWithLabelStartExpanded",
       "history",
+      "recentLocalActivity",
       "currentUser",
+      "filterDefaults",
       "isLoggedIn",
       "snomedLicenseAccepted",
       "editorIri",
       "snomedReturnUrl",
       "authReturnUrl",
       "editorSavedEntity",
-      "blockedIris",
+      "tagSeverityMatches",
+      "textDefinitionStartExpanded",
       "filterOptions",
       "selectedFilters",
       "quickFiltersStatus",
@@ -66,13 +70,14 @@ describe("state", () => {
     expect(store.state.snomedLicenseAccepted).toBeNull();
     expect(store.state.editorIri).toBeNull();
     expect(store.state.editorSavedEntity).toBeNull();
-    expect(store.state.blockedIris).toStrictEqual([]);
     expect(store.state.selectedFilters).toEqual({
       status: [],
       schemes: [],
-      types: []
+      types: [],
+      sortDirection: "",
+      sortField: ""
     });
-    expect(store.state.filterOptions).toStrictEqual({ status: [], schemes: [], types: [] });
+    expect(store.state.filterOptions).toStrictEqual({ status: [], schemes: [], types: [], sortDirections: [], sortFields: [] });
     expect(store.state.quickFiltersStatus).toEqual(new Map());
   });
 });
@@ -115,12 +120,6 @@ describe("mutations", () => {
     expect(store.state.editorIri).toBe("testIri");
   });
 
-  it("can update blockedIris", () => {
-    const testIris = ["iri1", "iri2", "iri3"];
-    store.commit("updateBlockedIris", testIris);
-    expect(store.state.blockedIris).toStrictEqual(testIris);
-  });
-
   it("can updateSelectedFilters", () => {
     const testFilter = {
       selectedStatus: ["testActive", "testDraft"],
@@ -156,13 +155,6 @@ describe("mutations", () => {
 });
 
 describe("actions", () => {
-  it("can fetchBlockedIris", async () => {
-    store.dispatch("fetchBlockedIris");
-    await flushPromises();
-    expect(vm.$configService.getXmlSchemaDataTypes).toHaveBeenCalledTimes(1);
-    expect(store.state.blockedIris).toStrictEqual(["http://www.w3.org/2001/XMLSchema#string", "http://www.w3.org/2001/XMLSchema#boolean"]);
-  });
-
   it("can logoutCurrentUser ___ 200", async () => {
     AuthService.signOut = vi.fn().mockResolvedValue(new CustomAlert(200, "logout successful"));
     vm.$loggerService.error = vi.fn();
