@@ -1,12 +1,9 @@
 import { createStore } from "vuex";
-import axios from "axios";
 import { HistoryItem, Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
-import { Models, Services } from "im-library";
-const { User, CustomAlert } = Models;
+import { Config, Models, Services } from "im-library";
+const { CustomAlert } = Models;
 import AuthService from "@/services/AuthService";
-const { ConfigService, LoggerService } = Services;
-
-const configService = new ConfigService(axios);
+const { LoggerService } = Services;
 
 export default createStore({
   // update stateType.ts when adding new state!
@@ -105,8 +102,8 @@ export default createStore({
     }
   },
   actions: {
-    async fetchBlockedIris({ commit }) {
-      const blockedIris = await configService.getXmlSchemaDataTypes();
+    fetchBlockedIris({ commit }) {
+      const blockedIris = Config.XmlSchemaDatatypes;
       commit("updateBlockedIris", blockedIris);
     },
     async logoutCurrentUser({ commit }) {

@@ -31,7 +31,7 @@ import { defineComponent, onMounted, Ref, ref, watch } from "vue";
 import _ from "lodash";
 import Logic from "@/components/query/queryBuilder/Logic.vue";
 import { Enums, Helpers } from "im-library";
-import { ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
+import { QueryComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isObjectHasKeys },
   QueryBuilderMethods: { generateNewComponent, addItem, updateItem, updatePositions }
@@ -93,7 +93,7 @@ export default defineComponent({
       emit("query-updated", query);
     }
 
-    function deleteItem(data: ComponentDetails): void {
+    function deleteItem(data: QueryComponentDetails): void {
       const index = queryBuild.value.findIndex(item => item.position === data.position);
       queryBuild.value.splice(index, 1);
       if (queryBuild.value.length === 0) {
@@ -107,7 +107,7 @@ export default defineComponent({
       addItem(data, queryBuild.value, BuilderType.QUERY, { minus: true, plus: true });
     }
 
-    function updateItemWrapper(data: ComponentDetails) {
+    function updateItemWrapper(data: QueryComponentDetails) {
       updateItem(data, queryBuild.value);
     }
 

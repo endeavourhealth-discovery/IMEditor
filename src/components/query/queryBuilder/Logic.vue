@@ -32,19 +32,17 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
-import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
-import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
-import Refinement from "@/components/edit/memberEditor/builder/Refinement.vue";
+import AddDeleteButtons from "@/components/query/queryBuilder/AddDeleteButtons.vue";
+import AddNext from "@/components/query/queryBuilder/AddNext.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums } from "im-library";
-import { EntityReferenceNode, TTIriRef, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
+import { EntityReferenceNode, TTIriRef, QueryComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, updateItem, addItem, updatePositions }
+  QueryBuilderMethods: { genNextOptions, generateNewComponent, updateItem, addItem, updatePositions }
 } = Helpers;
 const { SHACL, IM } = Vocabulary;
-const { ComponentType } = Enums;
+const { QueryComponentType } = Enums;
 
 export default defineComponent({
   name: "Logic",
@@ -58,11 +56,11 @@ export default defineComponent({
     showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
-  components: { AddDeleteButtons, AddNext, Entity, Refinement },
+  components: { AddDeleteButtons, AddNext },
   emits: {
     addNextOptionsClicked: (_payload: any) => true,
-    deleteClicked: (_payload: ComponentDetails) => true,
-    updateClicked: (_payload: ComponentDetails) => true
+    deleteClicked: (_payload: QueryComponentDetails) => true,
+    updateClicked: (_payload: QueryComponentDetails) => true
   },
   computed: mapState(["filterOptions"]),
   watch: {
@@ -80,7 +78,7 @@ export default defineComponent({
     },
     value: {
       async handler() {
-        if (!this.value.children && this.logicBuild[0].type !== ComponentType.ADD_NEXT) await this.init();
+        if (!this.value.children && this.logicBuild[0].type !== QueryComponentType.ADD_NEXT) await this.init();
       },
       deep: true
     }
@@ -93,7 +91,7 @@ export default defineComponent({
       selected: {} as { iri: string; name: string },
       logicBuild: [] as any[],
       loading: true,
-      addDefaultOptions: [ComponentType.LOGIC, ComponentType.ENTITY, ComponentType.REFINEMENT]
+      addDefaultOptions: [QueryComponentType.LOGIC]
     };
   },
   methods: {
@@ -126,7 +124,7 @@ export default defineComponent({
 
     createDefaultBuild() {
       this.selected = this.value.options[0];
-      this.logicBuild = [genNextOptions(-1, ComponentType.LOGIC, this.builderType)];
+      this.logicBuild = [genNextOptions(-1, QueryComponentType.LOGIC, this.builderType)];
     },
 
     async processChild(child: any, position: number) {
@@ -138,7 +136,7 @@ export default defineComponent({
 
     processLogic(child: any, position: number) {
       for (const [key, value] of Object.entries(child)) {
-        return generateNewComponent(ComponentType.LOGIC, position, { iri: key, children: value }, this.builderType, { minus: true, plus: true });
+        return generateNewComponent(QueryComponentType.LOGIC, position, { iri: key, children: value }, this.builderType, { minus: true, plus: true });
       }
     },
 
@@ -149,9 +147,9 @@ export default defineComponent({
       );
       const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
       return generateNewComponent(
-        ComponentType.ENTITY,
+        QueryComponentType.ENTITY,
         position,
-        { filterOptions: options, entity: iri, type: ComponentType.ENTITY, label: "Member" },
+        { filterOptions: options, entity: iri, type: QueryComponentType.ENTITY, label: "Member" },
         this.builderType,
         { minus: true, plus: true }
       );
@@ -161,7 +159,7 @@ export default defineComponent({
       for (const [key, value] of Object.entries(child)) {
         const associatedMember = this.getRefinementAssociatedmember(position);
         return generateNewComponent(
-          ComponentType.REFINEMENT,
+          QueryComponentType.REFINEMENT,
           position,
           { propertyIri: key, children: value, associatedMember: associatedMember },
           this.builderType,
@@ -174,7 +172,7 @@ export default defineComponent({
       let associatedMember = {} as TTIriRef;
       let i = position - 1;
       while (i >= 0) {
-        if (this.logicBuild[i] && this.logicBuild[i].type === ComponentType.ENTITY) {
+        if (this.logicBuild[i] && this.logicBuild[i].type === QueryComponentType.ENTITY) {
           associatedMember = this.logicBuild[i].value.entity;
           i = -1;
         }
@@ -185,7 +183,7 @@ export default defineComponent({
 
     updateRefinementsAssociatedMembers() {
       for (const item of this.logicBuild) {
-        if (item.type === ComponentType.REFINEMENT && item.value) {
+        if (item.type === QueryComponentType.REFINEMENT && item.value) {
           const associatedMember = this.getRefinementAssociatedmember(item.position);
           item.value.associatedMember = associatedMember;
         }
@@ -202,7 +200,7 @@ export default defineComponent({
         id: this.id,
         value: { iri: this.selected.iri, children: this.logicBuild, options: this.value.options },
         position: this.position,
-        type: ComponentType.LOGIC,
+        type: QueryComponentType.LOGIC,
         json: this.createLogicJson(),
         builderType: this.builderType,
         showButtons: this.showButtons
@@ -214,27 +212,27 @@ export default defineComponent({
       if (this.selected.iri) json[this.selected.iri] = [];
       if (this.logicBuild.length) {
         for (const item of this.logicBuild) {
-          if (item.type !== ComponentType.ADD_NEXT) json[this.selected.iri].push(item.json);
+          if (item.type !== QueryComponentType.ADD_NEXT) json[this.selected.iri].push(item.json);
         }
       }
       return json;
     },
 
-    updateItemWrapper(data: ComponentDetails) {
+    updateItemWrapper(data: QueryComponentDetails) {
       updateItem(data, this.logicBuild);
     },
 
-    addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
+    addItemWrapper(data: { selectedType: Enums.QueryComponentType; position: number; value: any }): void {
       console.log(data);
-      if (data.selectedType === ComponentType.ENTITY) {
+      if (data.selectedType === QueryComponentType.ENTITY_TYPE) {
         const typeOptions = this.filterOptions.types.filter(
           (type: EntityReferenceNode) =>
             type["@id"] === IM.VALUE_SET || type["@id"] === IM.CONCEPT_SET || type["@id"] === IM.CONCEPT_SET_GROUP || type["@id"] === IM.CONCEPT
         );
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
-        data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Member" };
+        data.value = { filterOptions: options, entity: undefined, type: QueryComponentType.ENTITY_TYPE, label: "Entity type" };
       }
-      if (data.selectedType === ComponentType.LOGIC) {
+      if (data.selectedType === QueryComponentType.LOGIC) {
         data.value = { options: this.value.options, iri: "", children: undefined };
       }
       addItem(data, this.logicBuild, this.builderType, { minus: true, plus: true });
@@ -242,13 +240,13 @@ export default defineComponent({
     },
 
     removeAddNexts() {
-      if (this.logicBuild.some(child => child.type === ComponentType.ADD_NEXT) && this.logicBuild.length > 1) {
-        this.logicBuild = this.logicBuild.filter(child => child.type !== ComponentType.ADD_NEXT);
+      if (this.logicBuild.some(child => child.type === QueryComponentType.ADD_NEXT) && this.logicBuild.length > 1) {
+        this.logicBuild = this.logicBuild.filter(child => child.type !== QueryComponentType.ADD_NEXT);
         updatePositions(this.logicBuild);
       }
     },
 
-    deleteItem(data: ComponentDetails): void {
+    deleteItem(data: QueryComponentDetails): void {
       const index = this.logicBuild.findIndex(item => item.position === data.position);
       this.logicBuild.splice(index, 1);
       const length = this.logicBuild.length;
@@ -266,7 +264,7 @@ export default defineComponent({
               parentGroup: data.builderType
             },
             position: 0,
-            type: ComponentType.ADD_NEXT,
+            type: QueryComponentType.ADD_NEXT,
             json: {},
             builderType: data.builderType,
             showButtons: { minus: true, plus: true }
@@ -281,7 +279,7 @@ export default defineComponent({
         id: this.id,
         value: this.selected,
         position: this.position,
-        type: ComponentType.LOGIC,
+        type: QueryComponentType.LOGIC,
         builderType: this.builderType,
         json: this.selected.iri,
         showButtons: this.showButtons
@@ -296,7 +294,7 @@ export default defineComponent({
     },
 
     getButtonOptions() {
-      return [ComponentType.ENTITY, ComponentType.LOGIC, ComponentType.REFINEMENT];
+      return [QueryComponentType.LOGIC];
     }
   }
 });
