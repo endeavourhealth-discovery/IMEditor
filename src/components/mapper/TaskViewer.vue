@@ -47,9 +47,6 @@ const {
   ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType, isOfTypes },
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
 } = Helpers;
-const {
-  Search: { SearchRequest }
-} = Models;
 const { SortBy } = Enums;
 
 export default defineComponent({
@@ -104,7 +101,6 @@ export default defineComponent({
   },
   methods: {
     showDetails(selectedIri: string) {
-      console.log(selectedIri);
       this.$emit("showDetails", selectedIri);
     },
     async getPredefinedList(refresh: boolean, listName: string) {
@@ -241,49 +237,6 @@ export default defineComponent({
     onNodeSelect(node: any) {
       this.selected = node;
       this.$emit("updateSelected", node.key);
-    },
-
-    async search(searchTerm: string): Promise<void> {
-      if (searchTerm.length > 0) {
-        this.searchResults = [];
-        const searchRequest = new SearchRequest();
-        searchRequest.termFilter = searchTerm;
-        searchRequest.sortBy = SortBy.Usage;
-        searchRequest.page = 1;
-        searchRequest.size = 100;
-        this.setFilters(searchRequest);
-        if (isObjectHasKeys(this.request, ["cancel", "msg"])) {
-          await this.request.cancel({ status: 499, message: "Search cancelled by user" });
-        }
-        const axiosSource = axios.CancelToken.source();
-        this.request = { cancel: axiosSource.cancel, msg: "Loading..." };
-        await this.fetchSearchResults(searchRequest, axiosSource.token);
-      }
-    },
-
-    setFilters(searchRequest: Models.Search.SearchRequest) {
-      let options = {} as { status: EntityReferenceNode[]; schemes: Namespace[]; types: EntityReferenceNode[] };
-      options = this.filterOptions;
-      searchRequest.schemeFilter = options.schemes.map((scheme: Namespace) => scheme.iri);
-      searchRequest.statusFilter = [];
-      for (const status of options.status) {
-        searchRequest.statusFilter.push(status["@id"]);
-      }
-      searchRequest.typeFilter = [];
-      for (const type of options.types) {
-        searchRequest.typeFilter.push(type["@id"]);
-      }
-    },
-
-    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, cancelToken: any) {
-      const result = await this.$entityService.advancedSearch(searchRequest, cancelToken);
-      if (result && isArrayHasLength(result)) {
-        this.searchResults = result.map(item => {
-          return { iri: item.iri, name: item.name, type: item.entityType };
-        });
-      } else {
-        this.searchResults = [];
-      }
     }
   }
 });

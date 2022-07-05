@@ -44,7 +44,6 @@
                   optionValue="@id"
                   placeholder="Select status"
                 />
-                <InputNumber v-model="selectedFilters.usage" placeholder="Usage threshold" :min="0" />
                 <InputText v-model="searchTerm" placeholder="Keyword Search" />
                 <Button :loading="loading" icon="pi pi-search" label="Search" class="save-button" @click="search()" />
               </div>

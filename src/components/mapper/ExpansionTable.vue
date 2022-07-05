@@ -49,22 +49,6 @@
         {{ data.iri }}
       </template>
     </Column>
-    <Column filterField="scheme" sortField="scheme.name" header="Scheme" sortable :showFilterMatchModes="false" :filterMenuStyle="{ width: '14rem' }">
-      <template #body="{ data }">
-        {{ data.scheme }}
-      </template>
-      <template #filter="{ filterModel }">
-        <div class="mb-3 font-bold">Scheme Select</div>
-        <MultiSelect v-model="filterModel.value" :options="filterOptions.schemes" optionLabel="name" placeholder="Any" class="p-column-filter">
-          <template #option="slotProps">
-            <div class="p-multiselect-representative-option">
-              <span class="image-text">{{ slotProps.option.name }}</span>
-            </div>
-          </template>
-        </MultiSelect>
-      </template>
-    </Column>
-
     <Column v-if="showActions" :exportable="false" bodyStyle="text-align: center; overflow: visible; justify-content: flex-end; gap: 0.25rem;">
       <template #body="{ data }">
         <Button icon="pi pi-fw pi-eye" class="p-button-rounded p-button-text p-button-plain row-button" @click="view(data.iri)" v-tooltip.top="'View'" />

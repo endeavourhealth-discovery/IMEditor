@@ -1,96 +1,161 @@
 <template>
   <div class="entity-mapper-container">
-    <h5>Entity Mapper</h5>
-    <DataTable :value="actions" editMode="cell" @cell-edit-complete="onCellEditComplete" class="editable-cells-table" responsiveLayout="scroll">
-      <Column field="name" header="Name"></Column>
-      <Column field="@id" header="Iri"></Column>
-      <Column class="col-4" field="mappings" header="Map To">
-        <template #body="{ data }">
-          <Chips v-model="data.mappings">
-            <template #chip="slotProps">
-              <div @click="showDetails(slotProps.value.iri)">{{ slotProps.value.name }}</div>
-            </template>
-          </Chips>
-        </template>
-        <template #editor="{ data, field }">
-          <AutoComplete
-            v-model="data[field]"
-            :suggestions="suggestions"
-            @complete="search($event)"
-            :dropdown="true"
-            :multiple="true"
-            :loading="loading"
-            @dropdown-click="getMappingSuggestions(data['@id'], data.name)"
-          >
-            <template #item="slotProps">
-              <div @mouseover="showOverlay($event, slotProps.item.iri)" @mouseleave="hideOverlay($event)">{{ slotProps.item.name }}</div>
-            </template>
-            <template #chip="slotProps">
-              <div @click="showDetails(slotProps.value.iri)">{{ slotProps.value.name }}</div>
-            </template>
-          </AutoComplete>
-        </template>
-      </Column>
-    </DataTable>
-
-    <OverlayPanel ref="navTreeOP" id="nav_tree_overlay_panel" style="width: 50vw" :breakpoints="{ '960px': '75vw' }">
-      <div v-if="hoveredResult.name" class="flex flex-row justify-contents-start result-overlay" style="width: 100%; gap: 1rem">
-        <div class="left-side" style="width: 50%">
-          <p>
-            <strong>Name: </strong>
-            <span>{{ hoveredResult.name }}</span>
-          </p>
-          <p>
-            <strong>Iri: </strong>
-            <span style="word-break: break-all">{{ hoveredResult.iri }}</span>
-          </p>
-          <p v-if="hoveredResult.code">
-            <strong>Code: </strong>
-            <span>{{ hoveredResult.code }}</span>
-          </p>
-        </div>
-        <div class="right-side" style="width: 50%">
-          <p v-if="hoveredResult.status">
-            <strong>Status: </strong>
-            <span>{{ hoveredResult.status.name }}</span>
-          </p>
-          <p v-if="hoveredResult.scheme">
-            <strong>Scheme: </strong>
-            <span>{{ hoveredResult.scheme.name }}</span>
-          </p>
-          <p v-if="hoveredResult.entityType">
-            <strong>Type: </strong>
-            <span>{{ getConceptTypes(hoveredResult.entityType) }}</span>
-          </p>
+    <h5>Map: {{ taskName }}</h5>
+    <div class="grid">
+      <div class="col-4">
+        <SecondaryTree v-if="taskIri" :conceptIri="taskIri" />
+      </div>
+      <div class="col-8">
+        <OverlayPanel ref="summary_overlay" id="summary_overlay_panel" style="width: 50vw" :breakpoints="{ '960px': '75vw' }">
+          <OverlaySummary :hoveredResult="hoveredItem" />
+        </OverlayPanel>
+        <div class="grid">
+          <div class="col-12 suggestion-table">
+            <div class="col-12">
+              <Panel header="Search filters" :toggleable="false">
+                <div class="grid justify-content-between">
+                  <MultiSelect
+                    class="col-3"
+                    v-model="selectedFilters.scheme"
+                    :options="filterOptions.schemes"
+                    optionLabel="name"
+                    optionValue="iri"
+                    placeholder="Select scheme"
+                  />
+                  <MultiSelect
+                    class="col-2"
+                    v-model="selectedFilters.type"
+                    :options="filterOptions.types"
+                    optionLabel="name"
+                    optionValue="@id"
+                    placeholder="Select type"
+                  />
+                  <MultiSelect
+                    class="col-2"
+                    v-model="selectedFilters.status"
+                    :options="filterOptions.status"
+                    optionLabel="name"
+                    optionValue="@id"
+                    placeholder="Select status"
+                  />
+                  <InputText class="col-3" v-model="searchTerm" placeholder="Keyword Search" />
+                  <Button class="col-2 save-button" :loading="loading" icon="pi pi-search" label="Search" @click="search()" />
+                </div>
+              </Panel>
+            </div>
+            <h5>Suggestions</h5>
+            <DataTable
+              class="p-datatable-sm"
+              v-model:selection="selectedSuggestions"
+              dataKey="iri"
+              :value="suggestions"
+              responsiveLayout="scroll"
+              :loading="false"
+              selectionMode="multiple"
+              @row-dblclick="addToMappings"
+            >
+              <template #empty> No results found. </template>
+              <template #loading> Loading results. </template>
+              <Column field="name" header="Name">
+                <template #body="{ data }">
+                  <div class="hover-name" @mouseenter="showOverlay($event, data)" @mouseleave="hideOverlay()">
+                    {{ data.name }}
+                  </div>
+                </template>
+              </Column>
+              <Column field="usage" header="Usage"> </Column>
+              <Column>
+                <template #body="{ data }">
+                  <div class="buttons-container">
+                    <Button
+                      icon="pi pi-fw pi-eye"
+                      class="p-button-rounded p-button-text p-button-plain row-button"
+                      @click="view(data.iri)"
+                      v-tooltip.top="'View'"
+                    />
+                    <Button
+                      icon="pi pi-fw pi-info-circle"
+                      class="p-button-rounded p-button-text p-button-plain row-button"
+                      @click="showInfo(data.iri)"
+                      v-tooltip.top="'Info'"
+                    />
+                  </div>
+                </template>
+              </Column>
+            </DataTable>
+          </div>
+          <div class="col-12">
+            <div class="grid">
+              <div class="col-offset-4 center-button"><Button class="pick-button" icon="pi pi-arrow-down" @click="addSelected" /></div>
+              <div class="col-offset-3 center-button"><Button class="pick-button" icon="pi pi-arrow-up" @click="removeSelected" /></div>
+            </div>
+          </div>
+          <div class="col-12 mappings-table">
+            <h5>Mappings</h5>
+            <DataTable
+              class="p-datatable-sm"
+              v-model:selection="selectedMappings"
+              dataKey="iri"
+              :value="mappings"
+              responsiveLayout="scroll"
+              :loading="false"
+              selectionMode="multiple"
+            >
+              <template #empty> No results found. </template>
+              <template #loading> Loading results. </template>
+              <Column field="name" header="Name">
+                <template #body="{ data }">
+                  <div class="hover-name" @mouseenter="showOverlay($event, data)" @mouseleave="hideOverlay()">
+                    {{ data.name }}
+                  </div>
+                </template>
+              </Column>
+              <Column field="usage" header="Usage"> </Column>
+              <Column>
+                <template #body="{ data }">
+                  <div class="buttons-container">
+                    <Button
+                      icon="pi pi-fw pi-eye"
+                      class="p-button-rounded p-button-text p-button-plain row-button"
+                      @click="view(data.iri)"
+                      v-tooltip.top="'View'"
+                    />
+                    <Button
+                      icon="pi pi-fw pi-info-circle"
+                      class="p-button-rounded p-button-text p-button-plain row-button"
+                      @click="showInfo(data.iri)"
+                      v-tooltip.top="'Info'"
+                    />
+                  </div>
+                </template>
+              </Column>
+            </DataTable>
+          </div>
         </div>
       </div>
-    </OverlayPanel>
+    </div>
   </div>
   <div class="button-bar">
     <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
-    <Button icon="pi pi-check" label="Save mappings" class="save-button" @click="saveMappings" />
+    <Button :loading="saveLoading" icon="pi pi-check" label="Save mappings" class="save-button" @click="saveMappings" />
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
 import { mapState } from "vuex";
-import { Vocabulary, Helpers, Models, Enums } from "im-library";
+import { Vocabulary, Helpers, Models, Enums, Config } from "im-library";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import axios from "axios";
 import { Namespace, EntityReferenceNode, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import DirectService from "@/services/DirectService";
 
-const { IM, RDF, RDFS } = Vocabulary;
 const {
-  ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType, isOfTypes, getNamesAsStringFromTypes },
-  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
-  ContainerDimensionGetters: { getContainerElementOptimalHeight }
+  ConceptTypeMethods: { getNamesAsStringFromTypes },
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
 } = Helpers;
-const {
-  Search: { SearchRequest }
-} = Models;
 const { SortBy } = Enums;
 
 export default defineComponent({
@@ -101,45 +166,114 @@ export default defineComponent({
   emits: {
     showDetails: (_payload: string) => true
   },
+
   async mounted() {
     this.taskIri = this.$route.params.taskIri as string;
-    this.actions = await this.$entityService.getEntityChildren(this.taskIri);
-    for (const action of this.actions) {
-      this.suggestions = await this.$entityService.getMappingSuggestions(action["@id"], action.name);
+    if (this.taskIri) {
+      this.taskName = (await this.$entityService.getPartialEntity(this.taskIri, [Vocabulary.RDFS.LABEL]))[Vocabulary.RDFS.LABEL];
+      await this.getMappings();
+      await this.getMappingSuggestions(this.taskIri, this.taskName);
     }
   },
   data() {
     return {
       actions: [] as any[],
-      taskIri: "http://endhealth.info/im#MappingTask1",
+      taskIri: "",
+      taskName: "",
+      searching: false,
+      searchTerm: "",
       searchResults: [] as any[],
       request: {} as { cancel: any; msg: string },
       suggestions: [] as any[],
-      mappingsMap: new Map<string, any>(),
+      selectedSuggestions: [] as any[],
+      selectedMappings: [] as any[],
+      mappings: [] as any[],
       loading: false,
+      saveLoading: false,
       hoveredResult: {} as Models.Search.ConceptSummary,
       overlayLocation: {} as any,
-      controller: {} as AbortController
+      controller: {} as AbortController,
+      hoveredItem: {} as any,
+      selectedFilters: {
+        scheme: Config.FilterDefaults.schemeOptions,
+        type: [Vocabulary.IM.CONCEPT],
+        status: [],
+        usage: undefined
+      }
     };
   },
   methods: {
-    saveMappings() {
-      console.log("save");
-    },
-    
-    showDetails(selectedIri: string) {
-      this.$emit("showDetails", selectedIri);
+    async saveMappings() {
+      this.saveLoading = true;
+      const mappingsMap = {} as any;
+      const mappingIris = [] as string[];
+      for (const mapping of this.mappings) {
+        mappingIris.push(mapping.iri);
+      }
+      mappingsMap[this.taskIri] = mappingIris;
+      try {
+        await this.$entityService.saveMapping(mappingsMap);
+        this.$toast.add(this.$loggerService.success("Mappings were saved"));
+      } catch (error) {
+        this.$toast.add(this.$loggerService.error("Mappings were not saved"));
+      }
+      this.saveLoading = false;
     },
 
-    onCellEditComplete(event: any) {
-      const action = this.actions.find(action => action["@id"] === event.data["@id"]);
-      if (action) {
-        action.mappings = event.newValue;
+    view(iri: string) {
+      if (iri) DirectService.directTo(this.$env.VIEWER_URL, iri, this, "concept");
+    },
+
+    showInfo(iri: string) {
+      if (iri) this.$emit("showDetails", iri);
+    },
+
+    hideOverlay(): void {
+      const x = this.$refs.summary_overlay as any;
+      x.hide();
+    },
+
+    async getMappings() {
+      this.mappings = [];
+      const mappings = (await this.$entityService.getPartialEntity(this.taskIri, [Vocabulary.IM.MATCHED_TO]))[Vocabulary.IM.MATCHED_TO] as any[];
+      if (Helpers.DataTypeCheckers.isArrayHasLength(mappings))
+        this.mappings = mappings.map(mapping => {
+          return {
+            iri: mapping["@id"],
+            name: mapping.name
+          };
+        });
+    },
+
+    addToMappings(row: any) {
+      const found = this.mappings.find(mapping => mapping.iri === row.data.iri);
+      if (!found) {
+        this.mappings.push(row.data);
       }
     },
 
-    getMappingsDisplay(iri: string) {
-      this.mappingsMap.get(iri)?.map((mapping: any) => mapping["@id"]);
+    showOverlay(event: any, data: Models.Search.ConceptSummary): void {
+      this.hoveredItem = data;
+      const x = this.$refs.summary_overlay as any;
+      x.show(event, event.target);
+    },
+
+    addSelected() {
+      for (const selected of this.selectedSuggestions) {
+        const found = this.mappings.find(mapping => mapping.iri === selected.iri);
+        if (!found) {
+          this.mappings.push(selected);
+        }
+      }
+    },
+
+    removeSelected() {
+      for (const selected of this.selectedMappings) {
+        const foundIndex = this.mappings.findIndex(mapping => mapping.iri === selected.iri);
+        if (foundIndex !== -1) {
+          this.mappings.splice(foundIndex, 1);
+        }
+      }
     },
 
     async getMappingSuggestions(iri: string, term: string) {
@@ -151,23 +285,13 @@ export default defineComponent({
       if (i !== -1) {
         results.splice(i, 1);
       }
-
-      this.suggestions = results.length
-        ? results
-        : [
-            {
-              iri: "http://snomed.info/sct#999030171000230104",
-              name: "United Kingdom National Health Service primary care data extraction - General practice data extraction - chest discomfort simple reference set (foundation metadata concept)",
-              type: [{ name: "Concept Set", "@id": "http://endhealth.info/im#ConceptSet" }]
-            }
-          ];
-
+      this.suggestions = results.length ? results : [];
       this.loading = false;
     },
 
     async prepareSearchRequest(term: string) {
       this.searchResults = [];
-      const searchRequest = new SearchRequest();
+      const searchRequest = {} as Models.Search.SearchRequest;
       searchRequest.termFilter = term;
       searchRequest.sortBy = SortBy.Usage;
       searchRequest.page = 1;
@@ -181,86 +305,43 @@ export default defineComponent({
       return searchRequest;
     },
 
-    async search(event: any): Promise<void> {
-      const searchTerm = event.query;
-      if (searchTerm.length > 0) {
+    async search(): Promise<void> {
+      this.searching = true;
+      if (this.searchTerm.length > 0) {
         this.searchResults = [];
-        const searchRequest = {} as SearchRequest;
-        searchRequest.termFilter = searchTerm;
+        const searchRequest = {} as Models.Search.SearchRequest;
+        searchRequest.termFilter = this.searchTerm;
         searchRequest.sortBy = SortBy.Usage;
         searchRequest.page = 1;
         searchRequest.size = 100;
         this.setFilters(searchRequest);
-        if (isObjectHasKeys(this.request, ["cancel", "msg"])) {
-          await this.request.cancel({ status: 499, message: "Search cancelled by user" });
+        if (!Helpers.DataTypeCheckers.isObject(this.controller)) {
+          this.controller.abort();
         }
-        const axiosSource = axios.CancelToken.source();
-        this.request = { cancel: axiosSource.cancel, msg: "Loading..." };
-        await this.fetchSearchResults(searchRequest, axiosSource.token);
+        this.controller = new AbortController();
+        await this.fetchSearchResults(searchRequest, this.controller);
+      } else {
+        await this.getMappingSuggestions(this.taskIri, this.taskName);
       }
-      this.suggestions = this.searchResults;
+      this.searching = false;
     },
 
     setFilters(searchRequest: Models.Search.SearchRequest) {
-      searchRequest.schemeFilter = [
-        "http://endhealth.info/bc#",
-        "http://endhealth.info/ceg/qry#",
-        "http://endhealth.info/emis#",
-        "http://endhealth.info/icd10#",
-        "http://endhealth.info/im#",
-        "http://endhealth.info/nhstfc#",
-        "http://endhealth.info/ods#",
-        "http://endhealth.info/opcs4#",
-        "http://www.w3.org/2002/07/owl#",
-        "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-        "http://www.w3.org/2000/01/rdf-schema#",
-        "http://www.w3.org/ns/shacl#",
-        "http://snomed.info/sct#",
-        "http://endhealth.info/tpp#",
-        "http://endhealth.info/vis#",
-        "http://rdf4j.org/schema/rdf4j#",
-        "http://www.geonames.org/ontology#",
-        "http://www.ontotext.com/path#",
-        "http://www.openrdf.org/schema/sesame#",
-        "http://www.w3.org/2001/XMLSchema#",
-        "http://www.w3.org/2003/01/geo/wgs84_pos#",
-        "http://www.w3.org/2005/xpath-functions#"
-      ];
-      searchRequest.statusFilter = ["http://endhealth.info/im#Active", "http://endhealth.info/im#Draft"];
-      searchRequest.typeFilter = [
-        "http://endhealth.info/im#Concept",
-        "http://endhealth.info/im#ValueSet",
-        "http://endhealth.info/im#ConceptSet",
-        "http://endhealth.info/im#DataModelEntity",
-        "http://endhealth.info/im#dataModelProperty",
-        "http://endhealth.info/im#Query"
-      ];
+      searchRequest.schemeFilter = this.selectedFilters.scheme;
+      searchRequest.statusFilter = this.selectedFilters.status;
+      searchRequest.typeFilter = this.selectedFilters.type;
     },
 
-    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, cancelToken: any) {
-      const result = await this.$entityService.advancedSearch(searchRequest, cancelToken);
+    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, controller: AbortController) {
+      const result = await this.$entityService.advancedSearch(searchRequest, controller);
       if (result && isArrayHasLength(result)) {
         this.searchResults = result.map(item => {
-          return { iri: item.iri, name: item.name, type: item.entityType };
+          return { iri: item.iri, name: item.name, type: item.entityType, scheme: item.scheme, status: item.status, usage: item.weighting };
         });
       } else {
         this.searchResults = [];
       }
-    },
-
-    async showOverlay(event: any, iri?: string): Promise<void> {
-      if (iri) {
-        const x = this.$refs.navTreeOP as any;
-        this.overlayLocation = event;
-        x.show(this.overlayLocation);
-        this.hoveredResult = await this.$entityService.getEntitySummary(iri);
-      }
-    },
-
-    hideOverlay(event: any): void {
-      const x = this.$refs.navTreeOP as any;
-      x.hide(event);
-      this.overlayLocation = {} as any;
+      this.suggestions = this.searchResults;
     },
 
     getConceptTypes(types: TTIriRef[]): string {
@@ -271,6 +352,14 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.suggestion-table {
+  overflow: auto;
+  height: calc(100vh - 50rem);
+}
+.mappings-table {
+  overflow: auto;
+  height: calc(100vh - 50rem);
+}
 .entity-mapper-container {
   width: 100%;
   padding: 2rem 2rem 0 2rem;
