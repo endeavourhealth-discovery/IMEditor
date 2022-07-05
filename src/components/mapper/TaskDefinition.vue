@@ -121,7 +121,7 @@ import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import axios from "axios";
-import { Namespace, EntityReferenceNode, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { Namespace, EntityReferenceNode, TTIriRef, SearchRequest } from "im-library/dist/types/interfaces/Interfaces";
 
 const { IM, RDF, RDFS } = Vocabulary;
 const {
@@ -129,9 +129,6 @@ const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject },
   ContainerDimensionGetters: { getContainerElementOptimalHeight }
 } = Helpers;
-const {
-  Search: { SearchRequest }
-} = Models;
 const { SortBy } = Enums;
 
 export default defineComponent({
@@ -371,7 +368,7 @@ export default defineComponent({
     async search(searchTerm: string): Promise<void> {
       if (searchTerm.length > 0) {
         this.searchResults = [];
-        const searchRequest = new SearchRequest();
+        const searchRequest = {} as SearchRequest;
         searchRequest.termFilter = searchTerm;
         searchRequest.sortBy = SortBy.Usage;
         searchRequest.page = 1;
@@ -385,7 +382,7 @@ export default defineComponent({
       }
     },
 
-    setFilters(searchRequest: Models.Search.SearchRequest) {
+    setFilters(searchRequest: SearchRequest) {
       let options = {} as { status: EntityReferenceNode[]; schemes: Namespace[]; types: EntityReferenceNode[] };
       options = this.filterOptions;
       searchRequest.schemeFilter = options.schemes.map((scheme: Namespace) => scheme.iri);
@@ -399,7 +396,7 @@ export default defineComponent({
       }
     },
 
-    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, controller: AbortController) {
+    async fetchSearchResults(searchRequest: SearchRequest, controller: AbortController) {
       const result = await this.$entityService.advancedSearch(searchRequest, controller);
       if (result && isArrayHasLength(result)) {
         this.searchResults = result.map(item => {

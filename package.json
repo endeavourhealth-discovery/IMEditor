@@ -33,7 +33,7 @@
     "sass": "1.52.3",
     "tslib": "2.4.0",
     "vue": "3.2.37",
-    "vue-json-pretty": "1.8.3",
+    "vue-json-pretty": "2.1.1",
     "vue-router": "4.0.16",
     "vue-sweetalert2": "5.0.5",
     "vue3-clipboard": "1.0.0",

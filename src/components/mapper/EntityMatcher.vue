@@ -83,16 +83,13 @@ import { mapState } from "vuex";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import ExpansionTable from "./ExpansionTable.vue";
 import { Vocabulary, Helpers, Models, Enums } from "im-library";
-import { Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
+import { Namespace, EntityReferenceNode, SearchRequest, ConceptSummary } from "im-library/dist/types/interfaces/Interfaces";
 import VueJsonPretty from "vue-json-pretty";
 
 const {
   ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType },
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject }
 } = Helpers;
-const {
-  Search: { SearchRequest }
-} = Models;
 const { SortBy } = Enums;
 
 export default defineComponent({
@@ -150,11 +147,11 @@ export default defineComponent({
     async getMappingSuggestions(iri: string, term: string) {
       const { searchRequest, controller } = await this.prepareSearchRequestWithToken(term);
       let results = await this.$entityService.getMappingSuggestions(searchRequest, controller);
-      const i = results.findIndex((entity: Models.Search.ConceptSummary) => entity.iri === iri);
+      const i = results.findIndex((entity: ConceptSummary) => entity.iri === iri);
       if (i !== -1) {
         results.splice(i, 1);
       }
-      return results.map((entity: Models.Search.ConceptSummary) => {
+      return results.map((entity: ConceptSummary) => {
         return { iri: entity.iri, name: entity.name, type: entity.entityType };
       });
     },
@@ -228,7 +225,7 @@ export default defineComponent({
 
     async prepareSearchRequestWithToken(term: string) {
       this.searchResults = [];
-      const searchRequest = new SearchRequest();
+      const searchRequest = {} as SearchRequest;
       searchRequest.termFilter = term;
       searchRequest.sortBy = SortBy.Usage;
       searchRequest.page = 1;
@@ -255,10 +252,10 @@ export default defineComponent({
       }
     },
 
-    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, controller: AbortController) {
+    async fetchSearchResults(searchRequest: SearchRequest, controller: AbortController) {
       const result = await this.$entityService.advancedSearch(searchRequest, controller);
       if (result && isArrayHasLength(result)) {
-        this.searchResults = result.map((item: Models.Search.ConceptSummary) => {
+        this.searchResults = result.map((item: ConceptSummary) => {
           return { iri: item.iri, name: item.name, type: item.entityType };
         });
       } else {

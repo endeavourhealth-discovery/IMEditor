@@ -30,13 +30,14 @@
 import { defineComponent, onMounted, Ref, ref, watch } from "vue";
 import _ from "lodash";
 import Logic from "@/components/query/queryBuilder/Logic.vue";
-import { Enums, Helpers } from "im-library";
+import { Enums, Helpers, Vocabulary } from "im-library";
 import { QueryComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isObjectHasKeys },
   QueryBuilderMethods: { generateNewComponent, addItem, updateItem, updatePositions }
 } = Helpers;
 const { BuilderType, QueryComponentType } = Enums;
+const { IM } = Vocabulary;
 
 export default defineComponent({
   name: "QueryBuilder",
@@ -71,7 +72,7 @@ export default defineComponent({
       loading.value = false;
     }
 
-    const logicOptions: Ref<{ iri: string; name: string }[]> = ref([{ iri: "select", name: "SELECT" }]);
+    const logicOptions: Ref<{ iri: string; name: string }[]> = ref([{ iri: IM.SELECT, name: "SELECT" }]);
 
     function createDefaultBuild() {
       queryBuild.value = [
@@ -86,11 +87,13 @@ export default defineComponent({
     }
 
     function builderUpdated(data: any) {
-      let query = {} as any;
-      for (const [key, value] of Object.entries(data)) {
-        query[key] = value;
+      let json = [] as string[];
+      if (data.length) {
+        for (const item of data) {
+          json.push(item.json);
+        }
       }
-      emit("query-updated", query);
+      emit("query-updated", json);
     }
 
     function deleteItem(data: QueryComponentDetails): void {

@@ -29,17 +29,17 @@ import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/Sea
 import { mapState } from "vuex";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import axios from "axios";
-import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
-import { Namespace, TTIriRef, EntityReferenceNode, ComponentDetails, SearchRequest, ConceptSummary } from "im-library/dist/types/interfaces/Interfaces";
+import AddDeleteButtons from "@/components/query/queryBuilder/AddDeleteButtons.vue";
+import { Namespace, TTIriRef, EntityReferenceNode, QueryComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
 import { Helpers, Models, Enums } from "im-library";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject },
   TypeGuards: { isTTIriRef }
 } = Helpers;
-const { ComponentType, BuilderType, SortBy } = Enums;
+const { QueryComponentType, BuilderType, SortBy } = Enums;
 
 export default defineComponent({
-  name: "Entity",
+  name: "Property",
   props: {
     id: { type: String, required: true },
     position: { type: Number, required: true },
@@ -47,7 +47,7 @@ export default defineComponent({
       type: Object as PropType<{
         filterOptions: { status: EntityReferenceNode[]; schemes: Namespace[]; types: EntityReferenceNode[] };
         entity: TTIriRef | undefined;
-        type: Enums.ComponentType;
+        type: Enums.QueryComponentType;
         label: string;
       }>,
       required: true
@@ -56,9 +56,9 @@ export default defineComponent({
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
-    updateClicked: (_payload: ComponentDetails) => true,
+    updateClicked: (_payload: QueryComponentDetails) => true,
     addNextOptionsClicked: (_payload: any) => true,
-    deleteClicked: (_payload: ComponentDetails) => true,
+    deleteClicked: (_payload: QueryComponentDetails) => true,
     addClicked: (_payload: any) => true
   },
   components: { SearchMiniOverlay, AddDeleteButtons },
@@ -80,7 +80,7 @@ export default defineComponent({
       controller: {} as AbortController,
       selectedResult: {} as TTIriRef,
       searchTerm: "",
-      searchResults: [] as ConceptSummary[],
+      searchResults: [] as Models.Search.ConceptSummary[],
       label: ""
     };
   },
@@ -135,7 +135,7 @@ export default defineComponent({
       }
     },
 
-    setFilters(searchRequest: SearchRequest) {
+    setFilters(searchRequest: Models.Search.SearchRequest) {
       let options = {} as { status: EntityReferenceNode[]; schemes: Namespace[]; types: EntityReferenceNode[] };
       if (this.value && isObjectHasKeys(this.value.filterOptions)) {
         options = this.value.filterOptions;
@@ -155,7 +155,7 @@ export default defineComponent({
       }
     },
 
-    async fetchSearchResults(searchRequest: SearchRequest, controller: AbortController) {
+    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, controller: AbortController) {
       const result = await this.$entityService.advancedSearch(searchRequest, controller);
       if (result && isArrayHasLength(result)) {
         this.searchResults = result;
@@ -174,7 +174,7 @@ export default defineComponent({
       if (x) x.show(event, event.target);
     },
 
-    updateSelectedResult(data: ConceptSummary | TTIriRef) {
+    updateSelectedResult(data: Models.Search.ConceptSummary | TTIriRef) {
       if (!isObjectHasKeys(data)) {
         this.selectedResult = {} as TTIriRef;
         this.searchTerm = "";
@@ -193,7 +193,7 @@ export default defineComponent({
       this.showOverlay(event);
     },
 
-    createEntity(): ComponentDetails {
+    createEntity(): QueryComponentDetails {
       if (this.value)
         return {
           value: { entity: this.selectedResult, filterOptions: this.value.filterOptions, type: this.value.type, label: this.value.label },
@@ -206,10 +206,10 @@ export default defineComponent({
         };
       else {
         return {
-          value: { entity: this.selectedResult, filterOptions: this.filterOptions, type: ComponentType.ENTITY, label: "Entity" },
+          value: { entity: this.selectedResult, filterOptions: this.filterOptions, type: QueryComponentType.ENTITY_TYPE, label: "Entity type" },
           id: this.id,
           position: this.position,
-          type: ComponentType.ENTITY,
+          type: QueryComponentType.ENTITY_TYPE,
           json: {},
           builderType: this.builderType,
           showButtons: this.showButtons
@@ -222,7 +222,7 @@ export default defineComponent({
         id: this.id,
         value: this.selectedResult,
         position: this.position,
-        type: ComponentType.ENTITY,
+        type: QueryComponentType.ENTITY_TYPE,
         builderType: this.builderType,
         json: this.selectedResult,
         showButtons: this.showButtons
@@ -237,8 +237,7 @@ export default defineComponent({
     },
 
     getButtonOptions() {
-      if (this.builderType === BuilderType.PARENT) return [ComponentType.ENTITY];
-      else return [ComponentType.ENTITY, ComponentType.LOGIC, ComponentType.REFINEMENT];
+      return [QueryComponentType.MATCH, QueryComponentType.PROPERTY, QueryComponentType.LOGIC];
     }
   }
 });

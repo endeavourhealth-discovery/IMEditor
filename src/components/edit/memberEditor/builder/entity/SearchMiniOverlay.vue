@@ -14,12 +14,8 @@
       @page="scrollToTop"
       :loading="loading"
     >
-      <template #empty>
-        None
-      </template>
-      <template #loading>
-        Loading...
-      </template>
+      <template #empty> None </template>
+      <template #loading> Loading... </template>
       <Column field="name" header="Results">
         <template #body="slotProps">
           <div class="result-container" @mouseenter="showDetailsOverlay($event, slotProps.data)" @mouseleave="hideDetailsOverlay()">
@@ -28,7 +24,7 @@
             </div>
             <div class="result-text-container">
               {{ slotProps.data.name }}<br />
-              <small style="color:lightgrey">{{ slotProps.data.name }}</small>
+              <small style="color: lightgrey">{{ slotProps.data.name }}</small>
             </div>
           </div>
         </template>
@@ -46,7 +42,7 @@
           </p>
           <p>
             <strong>Iri: </strong>
-            <span style="word-break:break-all;">
+            <span style="word-break: break-all">
               {{ hoveredResult.iri }}
             </span>
           </p>
@@ -85,26 +81,23 @@
 <script lang="ts">
 import { defineComponent, PropType } from "@vue/runtime-core";
 import { Helpers, Models } from "im-library";
-import { TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { ConceptSummary, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 const {
   ConceptTypeMethods: { getFAIconFromType, getColourFromType }
 } = Helpers;
-const {
-  Search: { ConceptSummary }
-} = Models;
 
 export default defineComponent({
   name: "SearchMiniOverlay",
   props: {
     searchTerm: { type: String, required: false },
-    searchResults: { type: Array as PropType<Array<Models.Search.ConceptSummary>>, required: false },
+    searchResults: { type: Array as PropType<Array<ConceptSummary>>, required: false },
     loading: { type: Boolean, required: true }
   },
-  emits: { searchResultSelected: (_payload: Models.Search.ConceptSummary) => true },
+  emits: { searchResultSelected: (_payload: ConceptSummary) => true },
   data() {
     return {
-      selectedResult: {} as Models.Search.ConceptSummary,
-      hoveredResult: {} as Models.Search.ConceptSummary
+      selectedResult: {} as ConceptSummary,
+      hoveredResult: {} as ConceptSummary
     };
   },
   methods: {
@@ -128,7 +121,7 @@ export default defineComponent({
       const x = this.$refs.detailsOP as any;
       x.hide();
     },
-    showDetailsOverlay(event: any, data: Models.Search.ConceptSummary) {
+    showDetailsOverlay(event: any, data: ConceptSummary) {
       this.hoveredResult = data;
       if (this.hoveredResult.name === "ANY") {
         return;
@@ -136,9 +129,9 @@ export default defineComponent({
       const x = this.$refs.detailsOP as any;
       x.show(event, event.target);
     },
-    getConceptTypes(concept: Models.Search.ConceptSummary): any {
+    getConceptTypes(concept: ConceptSummary): any {
       return concept.entityType
-        .map(function(type: any) {
+        .map(function (type: any) {
           return type.name;
         })
         .join(", ");

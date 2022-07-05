@@ -34,6 +34,7 @@
 import { defineComponent, PropType } from "vue";
 import AddDeleteButtons from "@/components/query/queryBuilder/AddDeleteButtons.vue";
 import AddNext from "@/components/query/queryBuilder/AddNext.vue";
+import Property from "@/components/query/queryBuilder/Property.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums } from "im-library";
 import { EntityReferenceNode, TTIriRef, QueryComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
@@ -41,7 +42,7 @@ const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   QueryBuilderMethods: { genNextOptions, generateNewComponent, updateItem, addItem, updatePositions }
 } = Helpers;
-const { SHACL, IM } = Vocabulary;
+const { SHACL, IM, RDF } = Vocabulary;
 const { QueryComponentType } = Enums;
 
 export default defineComponent({
@@ -56,7 +57,7 @@ export default defineComponent({
     showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
-  components: { AddDeleteButtons, AddNext },
+  components: { AddDeleteButtons, AddNext, Property },
   emits: {
     addNextOptionsClicked: (_payload: any) => true,
     deleteClicked: (_payload: QueryComponentDetails) => true,
@@ -71,7 +72,6 @@ export default defineComponent({
     },
     logicBuild: {
       handler() {
-        this.updateRefinementsAssociatedMembers();
         this.onConfirm();
       },
       deep: true
@@ -91,7 +91,7 @@ export default defineComponent({
       selected: {} as { iri: string; name: string },
       logicBuild: [] as any[],
       loading: true,
-      addDefaultOptions: [QueryComponentType.LOGIC]
+      addDefaultOptions: [QueryComponentType.PROPERTY, QueryComponentType.MATCH, QueryComponentType.ENTITY_TYPE]
     };
   },
   methods: {
@@ -128,66 +128,30 @@ export default defineComponent({
     },
 
     async processChild(child: any, position: number) {
-      if (isObjectHasKeys(child, ["@id"])) return await this.processIri(child, position);
-      else if (isObjectHasKeys(child, [SHACL.AND]) || isObjectHasKeys(child, [SHACL.OR]) || isObjectHasKeys(child, [SHACL.NOT]))
-        return this.processLogic(child, position);
-      else return this.processRefinement(child, position);
+      if (isObjectHasKeys(child, [IM.PROPERTY])) return this.processProperty(child, position);
+      if (isObjectHasKeys(child, [IM.MATCH])) return this.processMatch(child, position);
+      if (isObjectHasKeys(child, [IM.ENTITY_TYPE])) return this.processEntityType(child, position);
+      throw new Error("invalid child while processing logic children");
     },
 
-    processLogic(child: any, position: number) {
-      for (const [key, value] of Object.entries(child)) {
-        return generateNewComponent(QueryComponentType.LOGIC, position, { iri: key, children: value }, this.builderType, { minus: true, plus: true });
-      }
-    },
-
-    async processIri(iri: TTIriRef, position: number) {
-      const typeOptions = this.filterOptions.types.filter(
-        (type: EntityReferenceNode) =>
-          type["@id"] === IM.VALUE_SET || type["@id"] === IM.CONCEPT_SET || type["@id"] === IM.CONCEPT_SET_GROUP || type["@id"] === IM.CONCEPT
-      );
+    processProperty(iri: TTIriRef, position: number) {
+      const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === RDF.PROPERTY);
       const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
       return generateNewComponent(
-        QueryComponentType.ENTITY,
+        QueryComponentType.PROPERTY,
         position,
-        { filterOptions: options, entity: iri, type: QueryComponentType.ENTITY, label: "Member" },
+        { filterOptions: options, entity: iri, type: QueryComponentType.PROPERTY, label: "Property" },
         this.builderType,
         { minus: true, plus: true }
       );
     },
 
-    processRefinement(child: any, position: number) {
-      for (const [key, value] of Object.entries(child)) {
-        const associatedMember = this.getRefinementAssociatedmember(position);
-        return generateNewComponent(
-          QueryComponentType.REFINEMENT,
-          position,
-          { propertyIri: key, children: value, associatedMember: associatedMember },
-          this.builderType,
-          { minus: true, plus: true }
-        );
-      }
+    processMatch(child: any, position: number) {
+      return generateNewComponent(QueryComponentType.MATCH, position, child, this.builderType, { minus: true, plus: true });
     },
 
-    getRefinementAssociatedmember(position: number) {
-      let associatedMember = {} as TTIriRef;
-      let i = position - 1;
-      while (i >= 0) {
-        if (this.logicBuild[i] && this.logicBuild[i].type === QueryComponentType.ENTITY) {
-          associatedMember = this.logicBuild[i].value.entity;
-          i = -1;
-        }
-        i--;
-      }
-      return associatedMember;
-    },
-
-    updateRefinementsAssociatedMembers() {
-      for (const item of this.logicBuild) {
-        if (item.type === QueryComponentType.REFINEMENT && item.value) {
-          const associatedMember = this.getRefinementAssociatedmember(item.position);
-          item.value.associatedMember = associatedMember;
-        }
-      }
+    processEntityType(child: any, position: number) {
+      return generateNewComponent(QueryComponentType.ENTITY_TYPE, position, child, this.builderType, { minus: true, plus: true });
     },
 
     hasChildren(data: any): data is { iri: string; children: any[] } {
@@ -223,14 +187,10 @@ export default defineComponent({
     },
 
     addItemWrapper(data: { selectedType: Enums.QueryComponentType; position: number; value: any }): void {
-      console.log(data);
-      if (data.selectedType === QueryComponentType.ENTITY_TYPE) {
-        const typeOptions = this.filterOptions.types.filter(
-          (type: EntityReferenceNode) =>
-            type["@id"] === IM.VALUE_SET || type["@id"] === IM.CONCEPT_SET || type["@id"] === IM.CONCEPT_SET_GROUP || type["@id"] === IM.CONCEPT
-        );
+      if (data.selectedType === QueryComponentType.PROPERTY) {
+        const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === RDF.PROPERTY);
         const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
-        data.value = { filterOptions: options, entity: undefined, type: QueryComponentType.ENTITY_TYPE, label: "Entity type" };
+        data.value = { filterOptions: options, entity: undefined, type: QueryComponentType.PROPERTY, label: "Property" };
       }
       if (data.selectedType === QueryComponentType.LOGIC) {
         data.value = { options: this.value.options, iri: "", children: undefined };

@@ -24,7 +24,7 @@
             <div class="json-header-container">
               <span class="json-header">JSON viewer</span>
             </div>
-            <VueJsonPretty v-if="isObjectHasKeys(queryUpdated)" class="json" :path="'res'" :data="queryUpdated" />
+            <VueJsonPretty v-if="isObjectHasKeys(queryUpdated)" class="json" :data="queryUpdated" />
           </div>
           <Button
             class="p-button-rounded p-button-info p-button-outlined json-toggle"
