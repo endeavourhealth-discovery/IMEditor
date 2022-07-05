@@ -110,7 +110,7 @@ router.beforeEach(async (to, from) => {
     store.commit("updateAuthReturnUrl", currentUrl);
   }
   const iri = to.params.selectedIri as string;
-  if (iri && Config.Values.XML_SCHEMA_DATATYPES.includes(iri)) {
+  if (iri && Config.XmlSchemaDatatypes.includes(iri)) {
     return false;
   }
   if (to.name?.toString() == "Editor") {
