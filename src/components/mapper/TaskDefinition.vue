@@ -152,25 +152,15 @@ import { defineComponent } from "vue";
 import ConfirmDialog from "primevue/confirmdialog";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Models, Enums } from "im-library";
-import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
-import axios from "axios";
-import { Namespace, EntityReferenceNode, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 import DirectService from "@/services/DirectService";
-import Filters from "@/components/Filters.vue";
 
 const { IM, RDF, RDFS } = Vocabulary;
 const {
-  ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType, isOfTypes },
-  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject },
-  ContainerDimensionGetters: { getContainerElementOptimalHeight }
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject }
 } = Helpers;
-const {
-  Search: { SearchRequest }
-} = Models;
 const { SortBy } = Enums;
-import { FilterMatchMode, FilterOperator } from "primevue/api";
 
 export default defineComponent({
   name: "Mapper",
@@ -302,6 +292,7 @@ export default defineComponent({
         this.selectedFilters.usage,
         limit || 100
       );
+
       this.unmapped = this.buildTableEntityList(unmapped);
       this.searching = false;
     },
@@ -310,12 +301,7 @@ export default defineComponent({
       return entityList.map(entity => {
         return {
           iri: entity["@id"],
-          name: entity[RDFS.LABEL],
-          type: entity[RDF.TYPE],
-          usage: entity[IM.NAMESPACE + "usageTotal"],
-          scheme: entity[IM.SCHEME][0],
-          status: entity[IM.HAS_STATUS][0],
-          code: entity[IM.CODE]
+          name: entity[RDFS.LABEL]
         };
       });
     },
@@ -361,7 +347,7 @@ export default defineComponent({
       this.searching = true;
       if (this.searchTerm.length > 0) {
         this.searchResults = [];
-        const searchRequest = {} as SearchRequest;
+        const searchRequest = {} as Models.Search.SearchRequest;
         searchRequest.termFilter = this.searchTerm;
         searchRequest.sortBy = SortBy.Usage;
         searchRequest.page = 1;
