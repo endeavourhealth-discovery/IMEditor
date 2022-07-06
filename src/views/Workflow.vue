@@ -34,23 +34,7 @@ export default defineComponent({
   data() {
     return {
       showInfo: false,
-      selectedConceptIri: "",
-      items: [
-        {
-          label: "Select task",
-          to: "/task/view"
-        },
-        {
-          label: "Define task",
-          to: "/task/definition"
-        },
-
-        {
-          label: "Mappper",
-          to: "/task/mapper"
-        }
-      ],
-      stepsObject: {} as any
+      selectedConceptIri: ""
     };
   },
   methods: {

@@ -35,7 +35,6 @@ import { defineComponent } from "vue";
 import ConfirmDialog from "primevue/confirmdialog";
 import ExpansionTable from "@/components/workflow/ExpansionTable.vue";
 import ParentHeader from "./ParentHeader.vue";
-import { mapState } from "vuex";
 import { Vocabulary, Helpers } from "im-library";
 
 const { IM, RDF } = Vocabulary;
@@ -61,8 +60,12 @@ export default defineComponent({
   computed: {
     isTaskSelected(): boolean {
       return isObjectHasKeys(this.selected) && this.selected.type === "task";
-    },
-    ...mapState(["filterOptions", "refreshTree"])
+    }
+  },
+  watch: {
+    "$route.params.taskIri"() {
+      this.init();
+    }
   },
   data() {
     return {
@@ -70,15 +73,11 @@ export default defineComponent({
       selectedNode: {} as any,
       selected: {} as any,
       loading: true,
-      tasks: [] as any[],
-      predefinedListMap: new Map(),
-      selectedListOption: {} as { name: string; path: string },
-      selectedList: [] as any[]
+      tasks: [] as any[]
     };
   },
   async mounted() {
     this.loading = true;
-    this.predefinedListMap = new Map();
     await this.init();
     this.loading = false;
   },

@@ -141,7 +141,7 @@
       </template>
     </Card>
     <div class="button-bar">
-      <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
+      <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="goToTaskViewer" />
       <Button :loading="saveLoading" icon="pi pi-check" label="Save" class="save-button" @click="save" />
     </div>
   </div>
@@ -178,7 +178,6 @@ export default defineComponent({
     showDetails: (_payload: string) => true,
     updateSelected: (_payload: string) => true
   },
-
   computed: {
     ...mapState(["filterOptions"])
   },
@@ -195,6 +194,10 @@ export default defineComponent({
     },
     selected() {
       this.$emit("updateSelected", this.selected.iri);
+    },
+    "$route.params.taskIri"() {
+      this.taskIri = this.$route.params.taskIri as string;
+      this.init();
     }
   },
 
@@ -330,6 +333,10 @@ export default defineComponent({
         this.type = updateTask[RDF.TYPE][0];
         const children = await this.$entityService.getTaskActions(this.taskIri);
         this.contents = this.buildTableEntityList(children);
+      } else {
+        this.taskIriExists = false;
+        this.name = "";
+        this.type = undefined;
       }
     },
 
@@ -343,6 +350,10 @@ export default defineComponent({
 
     view(iri: string) {
       if (iri) DirectService.directTo(this.$env.VIEWER_URL, iri, this, "concept");
+    },
+
+    goToTaskViewer() {
+      this.$router.push({ name: "TaskViewer" });
     },
 
     showInfo(iri: string) {
