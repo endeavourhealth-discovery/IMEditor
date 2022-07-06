@@ -21,7 +21,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import TermsTable from "@/components/mapper/infobar/infoSideBar/TermsTable.vue";
+import TermsTable from "@/components/infobar/infoSideBar/TermsTable.vue";
 import { DefinitionConfig } from "im-library/dist/types/interfaces/Interfaces";
 import { Helpers } from "im-library";
 const {

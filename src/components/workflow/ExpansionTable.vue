@@ -137,7 +137,7 @@ export default defineComponent({
     },
 
     starMapping(iri: string) {
-      this.$router.push({ name: "EntityMapper", params: { taskIri: iri } });
+      this.$router.push({ name: "Mapper", params: { taskIri: iri } });
     },
 
     remove(data: any) {

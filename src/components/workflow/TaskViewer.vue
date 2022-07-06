@@ -33,27 +33,21 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import ConfirmDialog from "primevue/confirmdialog";
-import ExpansionTable from "@/components/mapper/ExpansionTable.vue";
+import ExpansionTable from "@/components/workflow/ExpansionTable.vue";
 import ParentHeader from "./ParentHeader.vue";
 import { mapState } from "vuex";
-import { Vocabulary, Helpers, Models, Enums } from "im-library";
-import VueJsonPretty from "vue-json-pretty";
-import "vue-json-pretty/lib/styles.css";
-import axios from "axios";
-import { Namespace, EntityReferenceNode, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { Vocabulary, Helpers } from "im-library";
 
-const { IM, RDF, RDFS } = Vocabulary;
+const { IM, RDF } = Vocabulary;
 const {
-  ConceptTypeMethods: { isValueSet, getColourFromType, getFAIconFromType, isOfTypes },
+  ConceptTypeMethods: { getColourFromType, getFAIconFromType },
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
 } = Helpers;
-const { SortBy } = Enums;
 
 export default defineComponent({
-  name: "Mapper",
+  name: "TaskViewer",
   components: {
     ConfirmDialog,
-    VueJsonPretty,
     ExpansionTable,
     ParentHeader
   },
@@ -70,23 +64,12 @@ export default defineComponent({
     },
     ...mapState(["filterOptions", "refreshTree"])
   },
-  watch: {
-    selected() {
-      console.log(this.selected);
-    }
-  },
   data() {
     return {
-      pageIndex: 0,
       root: [] as any[],
       selectedNode: {} as any,
       selected: {} as any,
-      contentHeight: "",
       loading: true,
-      searchResults: [] as any[],
-      request: {} as { cancel: any; msg: string },
-      draggedItem: {} as any,
-      tableSelectedList: [] as any[],
       tasks: [] as any[],
       predefinedListMap: new Map(),
       selectedListOption: {} as { name: string; path: string },
@@ -103,48 +86,9 @@ export default defineComponent({
     showDetails(selectedIri: string) {
       this.$emit("showDetails", selectedIri);
     },
-    async getPredefinedList(refresh: boolean, listName: string) {
-      this.loading = true;
-      if (!this.predefinedListMap.has(listName) || refresh) {
-        const list = (await this.$entityService.getPredefinedList(listName)).map((unmapped: any) => {
-          return { iri: unmapped["@id"], name: unmapped.name || unmapped[RDFS.LABEL] };
-        });
-        this.predefinedListMap.set(listName, list);
-      }
-
-      this.selectedList = this.predefinedListMap.get(listName);
-      this.loading = false;
-    },
 
     async init() {
       await this.getTasks();
-    },
-
-    isObjectHasKeys(object: any, keys?: string[]) {
-      return isObjectHasKeys(object, keys);
-    },
-
-    isArrayHasLength(array: any) {
-      return isArrayHasLength(array);
-    },
-
-    startTask() {
-      console.log("Start task");
-    },
-
-    async addSelectedToFolder() {
-      const tasks = (await this.$entityService.getEntityChildren(IM.MODULE_TASKS)) as any[];
-      this.tasks = tasks.map(task => {
-        return { iri: task["@id"], name: task.name, type: task.type };
-      });
-    },
-
-    tableSelect(tableSelected: any) {
-      this.tableSelectedList.push(tableSelected);
-    },
-
-    tableUnselect(tableUnselected: any) {
-      this.tableSelectedList = this.tableSelectedList.filter(selected => selected.iri !== tableUnselected.iri);
     },
 
     async getTasks() {
@@ -175,10 +119,6 @@ export default defineComponent({
       this.root = root;
     },
 
-    editFolder(node: any) {
-      node.type = "newFolder";
-    },
-
     getTableDataFromNodes(nodes: any) {
       if (!isArrayHasLength(nodes)) return [];
       return nodes.map((node: any) => {
@@ -189,41 +129,6 @@ export default defineComponent({
           children: this.getTableDataFromNodes(node.children)
         };
       });
-    },
-
-    startDrag(item: any) {
-      this.draggedItem = item;
-    },
-
-    async onDrop(node: any) {
-      this.loading = true;
-      const entity = { "@id": this.draggedItem.iri } as any;
-      entity[IM.IN_TASK] = node["@id"];
-      await this.addActionToTask(this.draggedItem.iri, node["@id"]);
-      await this.getTasks();
-      this.selectedNode = {};
-      this.loading = false;
-    },
-
-    async addActionToTask(entityIri: string, taskIri: string) {
-      await this.$entityService.addTaskAction(entityIri, taskIri);
-    },
-
-    async addActionsToTasks(data: any[]) {
-      for (const action of this.tableSelectedList) {
-        for (const task of data) {
-          await this.addActionToTask(action.iri, task.iri);
-        }
-      }
-      await this.getTasks();
-      this.loading = false;
-    },
-
-    async deleteTaskAction(removedNode: any) {
-      this.loading = true;
-      await this.$entityService.removeTaskAction(this.selected.key, removedNode.iri);
-      await this.getTasks();
-      this.loading = false;
     },
 
     createTask() {

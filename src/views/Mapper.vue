@@ -8,11 +8,7 @@
 
     <div :class="showInfo ? 'main-container' : ''">
       <div :class="showInfo ? 'main-view' : ''">
-        <router-view v-slot="{ Component }">
-          <keep-alive>
-            <component :is="Component" @showDetails="showSelectedDetails" @hideDetails="hideDetails" @updateSelected="updateSelected" />
-          </keep-alive>
-        </router-view>
+        <EntityMapper @showDetails="showDetails" @updateSelected="updateSelected" />
       </div>
 
       <div v-if="showInfo" class="details-view">
@@ -24,38 +20,19 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import InfoSideBar from "@/components/mapper/infobar/InfoSideBar.vue";
-import { Vocabulary, Helpers, Models, Enums } from "im-library";
-const {
-  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
-} = Helpers;
-const { IM, RDF, RDFS } = Vocabulary;
+import InfoSideBar from "@/components/infobar/InfoSideBar.vue";
+import EntityMapper from "@/components/mapper/EntityMapper.vue";
 
 export default defineComponent({
-  name: "MapperWizard",
+  name: "Mapper",
   components: {
-    InfoSideBar
+    InfoSideBar,
+    EntityMapper
   },
   data() {
     return {
       showInfo: false,
-      selectedConceptIri: "",
-      items: [
-        {
-          label: "Select task",
-          to: "/task/view"
-        },
-        {
-          label: "Define task",
-          to: "/task/definition"
-        },
-
-        {
-          label: "Mappper",
-          to: "/task/mapper"
-        }
-      ],
-      stepsObject: {} as any
+      selectedConceptIri: ""
     };
   },
   methods: {
@@ -63,8 +40,7 @@ export default defineComponent({
       this.selectedConceptIri = selectedIri;
     },
 
-    showSelectedDetails(selectedIri: string) {
-      console.log(selectedIri);
+    showDetails(selectedIri: string) {
       this.selectedConceptIri = selectedIri;
       this.showInfo = true;
     },

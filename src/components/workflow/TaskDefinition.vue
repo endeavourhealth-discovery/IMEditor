@@ -59,6 +59,7 @@
               responsiveLayout="scroll"
               :loading="searching"
               selectionMode="multiple"
+              @row-dblclick="addSelectedTask($event.data)"
             >
               <template #empty> No results found. </template>
               <template #loading> Loading results. </template>
@@ -162,7 +163,7 @@ const {
 const { SortBy } = Enums;
 
 export default defineComponent({
-  name: "Mapper",
+  name: "TaskDefinition",
   components: {
     ConfirmDialog
   },
@@ -245,12 +246,17 @@ export default defineComponent({
       const x = this.$refs.summary_overlay as any;
       x.show(event, event.target);
     },
+
+    addSelectedTask(selected: any) {
+      const found = this.contents.find(action => action.iri === selected.iri);
+      if (!found) {
+        this.contents.push(selected);
+      }
+    },
+
     addSelectedTasks() {
       for (const selectedResult of this.selectedResults) {
-        const found = this.contents.find(action => action.iri === selectedResult.iri);
-        if (!found) {
-          this.contents.push(selectedResult);
-        }
+        this.addSelectedTask(selectedResult);
       }
     },
 
@@ -300,7 +306,8 @@ export default defineComponent({
       return entityList.map(entity => {
         return {
           iri: entity["@id"],
-          name: entity[RDFS.LABEL]
+          name: entity[RDFS.LABEL],
+          usage: entity["http://endhealth.info/im#usageTotal"]
         };
       });
     },

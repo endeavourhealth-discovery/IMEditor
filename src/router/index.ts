@@ -6,13 +6,10 @@ import SummaryEditor from "@/components/edit/SummaryEditor.vue";
 import ParentsEditor from "@/components/edit/ParentsEditor.vue";
 import MemberEditor from "@/components/edit/MemberEditor.vue";
 import { AccessDenied, SnomedLicense, Services, PageNotFound, EntityNotFound, Helpers, Config } from "im-library";
-import MapperWizard from "../views/MapperWizard.vue";
-import TaskDefinition from "../components/mapper/TaskDefinition.vue";
-import TaskSelection from "../components/mapper/TaskSelection.vue";
-import TaskViewer from "../components/mapper/TaskViewer.vue";
-import EntityMatcher from "../components/mapper/EntityMatcher.vue";
-import EntityMapper from "../components/mapper/EntityMapper.vue";
-import MappingConfirmation from "../components/mapper/MappingConfirmation.vue";
+import Workflow from "../views/Workflow.vue";
+import TaskDefinition from "../components/workflow/TaskDefinition.vue";
+import TaskViewer from "../components/workflow/TaskViewer.vue";
+import Mapper from "../views/Mapper.vue";
 const { Env } = Services;
 
 import store from "@/store/index";
@@ -51,30 +48,34 @@ const routes: Array<RouteRecordRaw> = [
     }
   },
   {
-    path: "/task",
-    name: "MapperWizard",
-    component: MapperWizard,
+    path: "/workflow",
+    name: "Workflow",
+    component: Workflow,
     meta: {
       requiresAuth: true,
       requiresLicense: true
     },
     children: [
       {
-        path: "definition",
+        path: "task",
         name: "TaskDefinition",
         component: TaskDefinition
       },
       {
-        path: "view",
+        path: "tasks",
         name: "TaskViewer",
         component: TaskViewer
-      },
-      {
-        path: "mapper",
-        name: "EntityMapper",
-        component: EntityMapper
       }
     ]
+  },
+  {
+    path: "/mapper",
+    name: "Mapper",
+    component: Mapper,
+    meta: {
+      requiresAuth: true,
+      requiresLicense: true
+    }
   },
   {
     path: "/snomedLicense",
