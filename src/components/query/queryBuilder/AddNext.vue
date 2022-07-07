@@ -56,7 +56,7 @@ export default defineComponent({
     generateOptions(value: QueryNextComponentSummary) {
       switch (value.previousComponentType) {
         case QueryComponentType.LOGIC:
-          this.options = [QueryComponentType.MATCH, QueryComponentType.ENTITY_TYPE, QueryComponentType.PROPERTY];
+          this.options = [QueryComponentType.MATCH, QueryComponentType.ENTITY_TYPE, QueryComponentType.PROPERTY_GROUP];
           break;
         default:
           console.error("Unhandled component type within query builder AddNext generateOptions switch");

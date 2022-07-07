@@ -63,12 +63,20 @@ export default defineComponent({
     function createBuild() {
       loading.value = true;
       queryBuild.value = [];
-      if (!isObjectHasKeys(props.updatedQuery, ["select"])) {
+      if (!isObjectHasKeys(props.updatedQuery, [IM.SELECT])) {
         createDefaultBuild();
         loading.value = false;
         return;
       }
-      queryBuild.value.push(generateNewComponent(QueryComponentType.LOGIC, 0, props.updatedQuery.select, BuilderType.QUERY, { minus: false, plus: true }));
+      queryBuild.value.push(
+        generateNewComponent(
+          QueryComponentType.LOGIC,
+          0,
+          { iri: IM.SELECT, children: props.updatedQuery[IM.SELECT], builderType: BuilderType.QUERY, options: logicOptions },
+          BuilderType.QUERY,
+          { minus: false, plus: false }
+        )
+      );
       loading.value = false;
     }
 
@@ -79,9 +87,9 @@ export default defineComponent({
         generateNewComponent(
           QueryComponentType.LOGIC,
           0,
-          { iri: "", children: undefined, builderType: BuilderType.QUERY, options: logicOptions },
+          { iri: IM.SELECT, children: undefined, builderType: BuilderType.QUERY, options: logicOptions },
           BuilderType.QUERY,
-          { minus: false, plus: true }
+          { minus: false, plus: false }
         )
       ];
     }
@@ -107,6 +115,9 @@ export default defineComponent({
     }
 
     function addItemWrapper(data: { selectedType: Enums.QueryComponentType; position: number; value: any }): void {
+      if (data.selectedType === QueryComponentType.LOGIC) {
+        data.value = { options: logicOptions, iri: "", children: undefined };
+      }
       addItem(data, queryBuild.value, BuilderType.QUERY, { minus: true, plus: true });
     }
 
@@ -119,4 +130,35 @@ export default defineComponent({
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+#query-builder-container {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-start;
+}
+
+#query-build {
+  flex: 1 1 auto;
+  width: 100%;
+  overflow: auto;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-start;
+  align-items: center;
+  border: 1px solid #dee2e6;
+  border-radius: 3px;
+  padding: 1rem;
+  gap: 1rem;
+}
+
+.invalid {
+  border-color: #e24c4c !important;
+}
+
+.validate-error {
+  color: #e24c4c;
+  font-size: 0.8rem;
+}
+</style>

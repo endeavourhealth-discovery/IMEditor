@@ -238,7 +238,7 @@ export default defineComponent({
       return { searchRequest: searchRequest, controller: this.controller };
     },
 
-    setFilters(searchRequest: Models.Search.SearchRequest) {
+    setFilters(searchRequest: SearchRequest) {
       let options = {} as { status: EntityReferenceNode[]; schemes: Namespace[]; types: EntityReferenceNode[] };
       options = this.filterOptions;
       searchRequest.schemeFilter = options.schemes.map((scheme: Namespace) => scheme.iri);

@@ -34,10 +34,11 @@
 import { defineComponent, PropType } from "vue";
 import AddDeleteButtons from "@/components/query/queryBuilder/AddDeleteButtons.vue";
 import AddNext from "@/components/query/queryBuilder/AddNext.vue";
-import Property from "@/components/query/queryBuilder/Property.vue";
+import PropertyGroup from "@/components/query/queryBuilder/PropertyGroup.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums } from "im-library";
 import { EntityReferenceNode, TTIriRef, QueryComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
+import { BuilderType } from "im-library/dist/types/enums/Enums";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   QueryBuilderMethods: { genNextOptions, generateNewComponent, updateItem, addItem, updatePositions }
@@ -51,13 +52,13 @@ export default defineComponent({
     id: { type: String, required: true },
     position: { type: Number, required: true },
     value: {
-      type: Object as PropType<{ iri: string; children: PropType<Array<any>> | undefined; options: { iri: string; name: string }[] }>,
+      type: Object as PropType<{ iri: string; children: any[]; options: { iri: string; name: string }[]; builderType: BuilderType }>,
       required: true
     },
     showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
-  components: { AddDeleteButtons, AddNext, Property },
+  components: { AddDeleteButtons, AddNext, PropertyGroup },
   emits: {
     addNextOptionsClicked: (_payload: any) => true,
     deleteClicked: (_payload: QueryComponentDetails) => true,
@@ -91,7 +92,7 @@ export default defineComponent({
       selected: {} as { iri: string; name: string },
       logicBuild: [] as any[],
       loading: true,
-      addDefaultOptions: [QueryComponentType.PROPERTY, QueryComponentType.MATCH, QueryComponentType.ENTITY_TYPE]
+      addDefaultOptions: [QueryComponentType.PROPERTY_GROUP, QueryComponentType.MATCH, QueryComponentType.ENTITY_TYPE]
     };
   },
   methods: {
@@ -134,24 +135,16 @@ export default defineComponent({
       throw new Error("invalid child while processing logic children");
     },
 
-    processProperty(iri: TTIriRef, position: number) {
-      const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === RDF.PROPERTY);
-      const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
-      return generateNewComponent(
-        QueryComponentType.PROPERTY,
-        position,
-        { filterOptions: options, entity: iri, type: QueryComponentType.PROPERTY, label: "Property" },
-        this.builderType,
-        { minus: true, plus: true }
-      );
+    processProperty(child: any, position: number) {
+      return generateNewComponent(QueryComponentType.PROPERTY_GROUP, position, child[IM.PROPERTY], this.builderType, { minus: true, plus: true });
     },
 
     processMatch(child: any, position: number) {
-      return generateNewComponent(QueryComponentType.MATCH, position, child, this.builderType, { minus: true, plus: true });
+      return generateNewComponent(QueryComponentType.MATCH, position, child[IM.MATCH], this.builderType, { minus: true, plus: true });
     },
 
     processEntityType(child: any, position: number) {
-      return generateNewComponent(QueryComponentType.ENTITY_TYPE, position, child, this.builderType, { minus: true, plus: true });
+      return generateNewComponent(QueryComponentType.ENTITY_TYPE, position, child[IM.ENTITY_TYPE], this.builderType, { minus: true, plus: true });
     },
 
     hasChildren(data: any): data is { iri: string; children: any[] } {
@@ -162,7 +155,7 @@ export default defineComponent({
     onConfirm(): void {
       this.$emit("updateClicked", {
         id: this.id,
-        value: { iri: this.selected.iri, children: this.logicBuild, options: this.value.options },
+        value: { iri: this.selected.iri, children: this.createChildrenAsJson(), options: this.value.options },
         position: this.position,
         type: QueryComponentType.LOGIC,
         json: this.createLogicJson(),
@@ -173,10 +166,20 @@ export default defineComponent({
 
     createLogicJson() {
       let json = {} as any;
-      if (this.selected.iri) json[this.selected.iri] = [];
+      if (this.selected.iri) json[this.selected.iri] = {};
       if (this.logicBuild.length) {
         for (const item of this.logicBuild) {
-          if (item.type !== QueryComponentType.ADD_NEXT) json[this.selected.iri].push(item.json);
+          if (item.type !== QueryComponentType.ADD_NEXT) json[this.selected.iri] = item.json;
+        }
+      }
+      return json;
+    },
+
+    createChildrenAsJson() {
+      let json = {};
+      if (this.logicBuild.length) {
+        for (const item of this.logicBuild) {
+          if (item.type !== QueryComponentType.ADD_NEXT && this.selected.iri === IM.SELECT) json = item.json;
         }
       }
       return json;

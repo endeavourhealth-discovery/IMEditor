@@ -1,58 +1,62 @@
 <template>
-  <div class="entity-search-item-container" :id="id">
-    <div class="label-container">
-      <span class="float-text">{{ label }}</span>
-      <InputText
-        ref="miniSearchInput"
-        type="text"
-        v-model="searchTerm"
-        @input="search"
-        @keyup.enter="search"
-        @focus="showOverlay"
-        @change="showOverlay"
-        placeholder="Search"
-        class="p-inputtext search-input"
-        autoWidth="true"
-        v-tooltip="{ value: selectedResult.name, class: 'entity-tooltip' }"
+  <div v-if="loading" class="flex flex-row justify-content-center">
+    <div class="p-text-center">
+      <ProgressSpinner />
+    </div>
+  </div>
+  <div v-else class="property-button-container">
+    <span class="float-text">Property</span>
+    <div v-if="propertyBuild && propertyBuild.length" class="property-children-container">
+      <template v-for="child of propertyBuild" :key="child.id">
+        <component
+          :is="child.type"
+          :value="child.value"
+          :id="child.id"
+          :position="child.position"
+          :builderType="child.builderType"
+          :showButtons="child.showButtons"
+          @deleteClicked="deleteItem"
+          @addClicked="addItemWrapper"
+          @updateClicked="updateItemWrapper"
+          @addNextOptionsClicked="addItemWrapper"
+        >
+        </component>
+      </template>
+    </div>
+    <div class="property-item-container" :id="id">
+      <AddDeleteButtons
+        :show="showButtons"
+        :position="position"
+        :options="getButtonOptions()"
+        @deleteClicked="deleteClicked"
+        @addNextClicked="addNextClicked"
       />
     </div>
-    <AddDeleteButtons :show="showButtons" :position="position" :options="getButtonOptions()" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
   </div>
-  <OverlayPanel class="search-op" ref="miniSearchOP" :showCloseIcon="true" :dismissable="true">
-    <SearchMiniOverlay :searchTerm="searchTerm" :searchResults="searchResults" :loading="loading" @searchResultSelected="updateSelectedResult" />
-  </OverlayPanel>
 </template>
 
 <script lang="ts">
 import { defineComponent, PropType } from "@vue/runtime-core";
-import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/SearchMiniOverlay.vue";
 import { mapState } from "vuex";
-import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
-import axios from "axios";
 import AddDeleteButtons from "@/components/query/queryBuilder/AddDeleteButtons.vue";
-import { Namespace, TTIriRef, EntityReferenceNode, QueryComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
-import { Helpers, Models, Enums } from "im-library";
+import AddNext from "@/components/query/queryBuilder/AddNext.vue";
+import Entity from "@/components/query/queryBuilder/Entity.vue";
+import { Vocabulary, Helpers, Enums } from "im-library";
+import { EntityReferenceNode, QueryNextComponentSummary, QueryComponentDetails, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 const {
-  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject },
-  TypeGuards: { isTTIriRef }
+  QueryBuilderMethods: { generateNewComponent, updateItem, addItem, addNextOptions, scrollIntoView, updatePositions },
+  DataTypeCheckers: { isObjectHasKeys, isArrayHasLength }
 } = Helpers;
-const { QueryComponentType, BuilderType, SortBy } = Enums;
+const { IM, RDFS, RDF, SHACL } = Vocabulary;
+const { QueryComponentType } = Enums;
 
 export default defineComponent({
   name: "Property",
   props: {
     id: { type: String, required: true },
     position: { type: Number, required: true },
-    value: {
-      type: Object as PropType<{
-        filterOptions: { status: EntityReferenceNode[]; schemes: Namespace[]; types: EntityReferenceNode[] };
-        entity: TTIriRef | undefined;
-        type: Enums.QueryComponentType;
-        label: string;
-      }>,
-      required: true
-    },
-    showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, required: true },
+    value: { type: Object as PropType<any>, required: false },
+    showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
@@ -61,172 +65,165 @@ export default defineComponent({
     deleteClicked: (_payload: QueryComponentDetails) => true,
     addClicked: (_payload: any) => true
   },
-  components: { SearchMiniOverlay, AddDeleteButtons },
-  computed: mapState(["filterOptions", "selectedFilters"]),
+  components: { AddDeleteButtons, AddNext, Entity },
   watch: {
-    value: {
-      async handler() {
-        if (!this.value.entity) await this.init();
-      }
+    propertyBuild: {
+      handler() {
+        if (!this.loading) this.onConfirm();
+      },
+      deep: true
     }
   },
+  computed: mapState(["filterOptions", "selectedFilters"]),
   async mounted() {
-    await this.init();
+    await this.createBuild();
   },
   data() {
     return {
-      loading: false,
-      debounce: 0,
-      controller: {} as AbortController,
-      selectedResult: {} as TTIriRef,
-      searchTerm: "",
-      searchResults: [] as Models.Search.ConceptSummary[],
-      label: ""
+      propertyBuild: [] as QueryComponentDetails[],
+      loading: true
     };
   },
   methods: {
-    async init() {
-      if (this.value && this.value.entity && isObjectHasKeys(this.value.entity, ["name", "@id"])) {
-        this.updateSelectedResult(this.value.entity);
-        await this.search();
-      } else {
-        this.selectedResult = {} as TTIriRef;
-        this.searchTerm = "";
-      }
-      this.value?.label ? (this.label = this.value.label) : (this.label = "Entity");
+    async createBuild() {
+      this.loading = true;
+      this.propertyBuild = [];
+      if (this.hasData(this.value)) this.processChildren();
+      else this.createDefaultBuild();
+      this.loading = false;
     },
-    // debounceForSearch(): void {
-    //   clearTimeout(this.debounce);
-    //   this.debounce = window.setTimeout(() => {
-    //     this.search();
-    //   }, 600);
-    // },
 
-    // checkKey(event: any) {
-    //   if (event.code === "Enter") {
-    //     this.search();
-    //   }
-    // },
-
-    async search(): Promise<void> {
-      if (this.searchTerm.length > 0) {
-        this.searchResults = [];
-        this.loading = true;
-        const searchRequest = {} as SearchRequest;
-        searchRequest.termFilter = this.searchTerm;
-        searchRequest.sortBy = SortBy.Usage;
-        searchRequest.page = 1;
-        searchRequest.size = 100;
-        this.setFilters(searchRequest);
-        // searchRequest.schemeFilter = this.filterOptions.schemes.map((scheme: Namespace) => scheme.iri);
-
-        // searchRequest.statusFilter = [];
-        // this.filterOptions.status.forEach((status: EntityReferenceNode) => {
-        //   searchRequest.statusFilter.push(status["@id"]);
-        // });
-        // searchRequest.typeFilter = [];
-        // searchRequest.typeFilter.push(IM.CONCEPT);
-        if (!isObject(this.controller)) {
-          this.controller.abort();
+    processChildren() {
+      if (this.hasData(this.value)) {
+        let position = 0;
+        for (const item of this.value) {
+          if (isObjectHasKeys(this.value, ["@id"])) {
+            this.propertyBuild.push(this.processIri(item, position));
+            position++;
+          } else if (isObjectHasKeys(this.value, [IM.SELECT])) {
+            this.propertyBuild.push(this.processSelect(item, position));
+          } else if (isObjectHasKeys(this.value, [IM.MATCH])) {
+            this.propertyBuild.push(this.processMatch(item, position));
+          } else {
+            console.log("unknown key found processing property object");
+          }
         }
-        this.controller = new AbortController();
-        await this.fetchSearchResults(searchRequest, this.controller);
-        this.loading = false;
       }
     },
 
-    setFilters(searchRequest: Models.Search.SearchRequest) {
-      let options = {} as { status: EntityReferenceNode[]; schemes: Namespace[]; types: EntityReferenceNode[] };
-      if (this.value && isObjectHasKeys(this.value.filterOptions)) {
-        options = this.value.filterOptions;
-      } else {
-        options = this.filterOptions;
-      }
-      searchRequest.schemeFilter = options.schemes.map((scheme: Namespace) => scheme.iri);
-
-      searchRequest.statusFilter = [];
-      for (const status of options.status) {
-        searchRequest.statusFilter.push(status["@id"]);
-      }
-
-      searchRequest.typeFilter = [];
-      for (const type of options.types) {
-        searchRequest.typeFilter.push(type["@id"]);
-      }
+    processIri(item: any, position: number): QueryComponentDetails {
+      const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === SHACL.PROPERTY);
+      const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
+      return generateNewComponent(
+        QueryComponentType.ENTITY,
+        position,
+        { filterOptions: options, entity: item.entity, type: QueryComponentType.ENTITY, label: "Entity" },
+        this.builderType,
+        { minus: true, plus: true }
+      );
     },
 
-    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, controller: AbortController) {
-      const result = await this.$entityService.advancedSearch(searchRequest, controller);
-      if (result && isArrayHasLength(result)) {
-        this.searchResults = result;
-      } else {
-        this.searchResults = [];
+    processSelect(item: any, position: number): QueryComponentDetails {
+      return generateNewComponent(QueryComponentType.LOGIC, position, item, this.builderType, { minus: true, plus: true });
+    },
+
+    processMatch(item: any, position: number): QueryComponentDetails {
+      return generateNewComponent(QueryComponentType.MATCH, position, item, this.builderType, { minus: true, plus: true });
+    },
+
+    createDefaultBuild() {
+      this.propertyBuild = [];
+      const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === SHACL.PROPERTY);
+      const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
+      const entity = generateNewComponent(
+        QueryComponentType.ENTITY,
+        0,
+        { filterOptions: options, entity: undefined, type: QueryComponentType.ENTITY, label: "Entity" },
+        this.builderType,
+        {
+          minus: true,
+          plus: true
+        }
+      );
+      if (entity) this.propertyBuild.push(entity);
+    },
+
+    hasData(data: any): data is any[] {
+      if (data && (data as any[]).length) return true;
+      return false;
+    },
+
+    deleteItem(data: QueryComponentDetails): void {
+      const index = this.propertyBuild.findIndex(item => item.position === data.position);
+      this.propertyBuild.splice(index, 1);
+      const length = this.propertyBuild.length;
+      const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === SHACL.PROPERTY);
+      const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
+      if (length === 0) {
+        this.createDefaultBuild();
+        return;
       }
-    },
-
-    hideOverlay(): void {
-      const x = this.$refs.miniSearchOP as any;
-      if (x) x.hide();
-    },
-
-    showOverlay(event: any): void {
-      const x = this.$refs.miniSearchOP as any;
-      if (x) x.show(event, event.target);
-    },
-
-    updateSelectedResult(data: Models.Search.ConceptSummary | TTIriRef) {
-      if (!isObjectHasKeys(data)) {
-        this.selectedResult = {} as TTIriRef;
-        this.searchTerm = "";
-      } else if (isTTIriRef(data)) {
-        this.selectedResult = data;
-        this.searchTerm = data.name;
-      } else {
-        this.selectedResult = { "@id": data.iri, name: data.name };
-        this.searchTerm = data.name;
+      if (this.propertyBuild[0].type !== QueryComponentType.ENTITY) {
+        const entity = generateNewComponent(
+          QueryComponentType.ENTITY,
+          0,
+          { filterOptions: options, entity: undefined, type: QueryComponentType.ENTITY, label: "Entity" },
+          this.builderType,
+          { minus: false, plus: false }
+        );
+        if (entity) this.propertyBuild.unshift(entity);
       }
-      this.$emit("updateClicked", this.createEntity());
-      this.hideOverlay();
+      updatePositions(this.propertyBuild);
     },
 
-    editClicked(event: any) {
-      this.showOverlay(event);
+    updateItemWrapper(data: QueryComponentDetails) {
+      updateItem(data, this.propertyBuild);
     },
 
-    createEntity(): QueryComponentDetails {
-      if (this.value)
-        return {
-          value: { entity: this.selectedResult, filterOptions: this.value.filterOptions, type: this.value.type, label: this.value.label },
-          id: this.id,
-          position: this.position,
-          type: this.value.type,
-          json: this.selectedResult,
-          builderType: this.builderType,
-          showButtons: this.showButtons
-        };
-      else {
-        return {
-          value: { entity: this.selectedResult, filterOptions: this.filterOptions, type: QueryComponentType.ENTITY_TYPE, label: "Entity type" },
-          id: this.id,
-          position: this.position,
-          type: QueryComponentType.ENTITY_TYPE,
-          json: {},
-          builderType: this.builderType,
-          showButtons: this.showButtons
-        };
-      }
+    async addNextOptionsWrapper(data: QueryNextComponentSummary): Promise<void> {
+      const nextOptionsComponent = addNextOptions(data, this.propertyBuild, this.builderType);
+      await this.$nextTick();
+      scrollIntoView(nextOptionsComponent);
+    },
+
+    addItemWrapper(data: { selectedType: Enums.QueryComponentType; position: number; value: any }): void {
+      addItem(data, this.propertyBuild, this.builderType, { minus: false, plus: false });
+    },
+
+    onConfirm() {
+      this.$emit("updateClicked", {
+        id: this.id,
+        value: this.createAsJson(),
+        position: this.position,
+        type: QueryComponentType.PROPERTY,
+        builderType: this.builderType,
+        json: this.createAsJson(),
+        showButtons: this.showButtons
+      });
     },
 
     deleteClicked(): void {
       this.$emit("deleteClicked", {
         id: this.id,
-        value: this.selectedResult,
+        value: this.propertyBuild,
         position: this.position,
-        type: QueryComponentType.ENTITY_TYPE,
+        type: QueryComponentType.PROPERTY,
         builderType: this.builderType,
-        json: this.selectedResult,
+        json: this.createAsJson(),
         showButtons: this.showButtons
       });
+    },
+
+    createAsJson() {
+      let json = {} as any;
+      if (this.propertyBuild.length) {
+        for (const item of this.propertyBuild) {
+          if (item.type === QueryComponentType.ENTITY && item.json !== {}) json["@id"] = item.json;
+          if (item.type === QueryComponentType.LOGIC) json[IM.SELECT] = item.json;
+          if (item.type === QueryComponentType.MATCH) json[IM.MATCH] = item.json;
+        }
+      }
+      return json;
     },
 
     addNextClicked(item: any): void {
@@ -237,25 +234,41 @@ export default defineComponent({
     },
 
     getButtonOptions() {
-      return [QueryComponentType.MATCH, QueryComponentType.PROPERTY, QueryComponentType.LOGIC];
+      return [QueryComponentType.PROPERTY];
     }
   }
 });
 </script>
 
 <style scoped>
-.entity-search-item-container {
+.property-button-container {
   flex: 1 1 auto;
   display: flex;
   flex-flow: row nowrap;
   justify-content: flex-start;
   align-items: center;
+  position: relative;
+  padding: 1rem;
+  border: 1px solid #47b8e0;
+  border-radius: 3px;
   gap: 1rem;
-  width: 100%;
+}
+
+.property-item-container {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.property-children-container {
+  flex: 1 1 auto;
+  display: flex;
+  flex-flow: row nowrap;
 }
 
 .label-container {
-  flex: 1 1 auto;
+  margin: 0 1rem 0 0;
   padding: 1rem;
   border: 1px solid #ffc952;
   border-radius: 3px;
@@ -277,12 +290,5 @@ export default defineComponent({
   top: 0;
   font-size: 0.75rem;
   color: #6c757d;
-}
-
-.search-input {
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 </style>

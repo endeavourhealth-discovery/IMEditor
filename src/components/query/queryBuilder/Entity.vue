@@ -30,8 +30,8 @@ import { mapState } from "vuex";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import axios from "axios";
 import AddDeleteButtons from "@/components/query/queryBuilder/AddDeleteButtons.vue";
-import { Namespace, TTIriRef, EntityReferenceNode, QueryComponentDetails, SearchRequest, ConceptSummary } from "im-library/dist/types/interfaces/Interfaces";
-import { Helpers, Models, Enums } from "im-library";
+import { Namespace, TTIriRef, EntityReferenceNode, QueryComponentDetails, ConceptSummary, SearchRequest } from "im-library/dist/types/interfaces/Interfaces";
+import { Helpers, Enums } from "im-library";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject },
   TypeGuards: { isTTIriRef }
@@ -128,6 +128,7 @@ export default defineComponent({
         // searchRequest.typeFilter.push(IM.CONCEPT);
         if (!isObject(this.controller)) {
           this.controller.abort();
+          console.log("aborted");
         }
         this.controller = new AbortController();
         await this.fetchSearchResults(searchRequest, this.controller);
@@ -196,20 +197,20 @@ export default defineComponent({
     createEntity(): QueryComponentDetails {
       if (this.value)
         return {
-          value: { entity: this.selectedResult, filterOptions: this.value.filterOptions, type: this.value.type, label: this.value.label },
+          value: { entity: this.selectedResult["@id"], filterOptions: this.value.filterOptions, type: this.value.type, label: this.value.label },
           id: this.id,
           position: this.position,
           type: this.value.type,
-          json: this.selectedResult,
+          json: this.selectedResult["@id"],
           builderType: this.builderType,
           showButtons: this.showButtons
         };
       else {
         return {
-          value: { entity: this.selectedResult, filterOptions: this.filterOptions, type: QueryComponentType.ENTITY_TYPE, label: "Entity type" },
+          value: { entity: this.selectedResult["@id"], filterOptions: this.filterOptions, type: QueryComponentType.ENTITY, label: "Entity" },
           id: this.id,
           position: this.position,
-          type: QueryComponentType.ENTITY_TYPE,
+          type: QueryComponentType.ENTITY,
           json: {},
           builderType: this.builderType,
           showButtons: this.showButtons
@@ -222,7 +223,7 @@ export default defineComponent({
         id: this.id,
         value: this.selectedResult,
         position: this.position,
-        type: QueryComponentType.ENTITY_TYPE,
+        type: QueryComponentType.ENTITY,
         builderType: this.builderType,
         json: this.selectedResult,
         showButtons: this.showButtons
