@@ -1,42 +1,81 @@
 import { createStore } from "vuex";
-import { HistoryItem, Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
-import { Config, Models, Services } from "im-library";
+import axios from "axios";
+import { HistoryItem, Namespace, EntityReferenceNode, RecentActivityItem, FilterDefaultsConfig } from "im-library/dist/types/interfaces/Interfaces";
+import { Config, Models, Services, Vocabulary } from "im-library";
 const { CustomAlert } = Models;
 import AuthService from "@/services/AuthService";
-const { LoggerService } = Services;
+const { LoggerService, EntityService } = Services;
+const { IM } = Vocabulary;
+
+const entityService = new EntityService(axios);
 
 export default createStore({
   // update stateType.ts when adding new state!
   state: {
+    arrayObjectNameListboxWithLabelStartExpanded: [],
     history: [] as HistoryItem[],
+    recentLocalActivity: JSON.parse(localStorage.getItem("recentLocalActivity") || "[]") as RecentActivityItem[],
     currentUser: {} as Models.User,
+    filterDefaults: {} as FilterDefaultsConfig,
     isLoggedIn: false as boolean,
     snomedLicenseAccepted: localStorage.getItem("snomedLicenseAccepted") as string,
     editorIri: localStorage.getItem("editorSelectedIri") as string,
     snomedReturnUrl: "",
     authReturnUrl: "",
     editorSavedEntity: localStorage.getItem("editorUpdatedEntity") as any,
-    blockedIris: [] as string[],
+    tagSeverityMatches: [
+      { "@id": IM.ACTIVE, severity: "success" },
+      { "@id": IM.DRAFT, severity: "warning" },
+      { "@id": IM.INACTIVE, severity: "danger" }
+    ],
+    textDefinitionStartExpanded: ["Definition"],
     filterOptions: {
       status: [] as EntityReferenceNode[],
       schemes: [] as Namespace[],
-      types: [] as EntityReferenceNode[]
+      types: [] as EntityReferenceNode[],
+      sortFields: [] as { label: string; value: any }[],
+      sortDirections: [] as { label: string; value: any }[]
     },
     selectedFilters: {
       status: [] as EntityReferenceNode[],
       schemes: [] as Namespace[],
-      types: [] as EntityReferenceNode[]
+      types: [] as EntityReferenceNode[],
+      sortField: "",
+      sortDirection: ""
     },
     quickFiltersStatus: new Map<string, boolean>(),
     creatorInvalidEntity: false,
     creatorValidity: [] as { key: string; valid: boolean }[],
     editorInvalidEntity: false,
     editorValidity: [] as { key: string; valid: boolean }[],
-    refreshTree: false as boolean
+    refreshTree: false as boolean,
+    blockedIris: [] as string[]
   },
   mutations: {
-    updateBlockedIris(state, blockedIris) {
-      state.blockedIris = blockedIris;
+    updateRecentLocalActivity(state, recentActivityItem: RecentActivityItem) {
+      let activity: RecentActivityItem[] = JSON.parse(localStorage.getItem("recentLocalActivity") || "[]");
+      activity.forEach(activityItem => {
+        activityItem.dateTime = new Date(activityItem.dateTime);
+      });
+      const foundIndex = activity.findIndex(activityItem => activityItem.iri === recentActivityItem.iri && activityItem.app === recentActivityItem.app);
+      if (foundIndex !== -1) {
+        activity[foundIndex].dateTime = recentActivityItem.dateTime;
+        activity.sort((a, b) => {
+          if (a.dateTime.getTime() > b.dateTime.getTime()) {
+            return 1;
+          } else if (b.dateTime.getTime() > a.dateTime.getTime()) {
+            return -1;
+          } else {
+            return 0;
+          }
+        });
+      } else {
+        while (activity.length > 4) activity.shift();
+        activity.push(recentActivityItem);
+      }
+
+      localStorage.setItem("recentLocalActivity", JSON.stringify(activity));
+      state.recentLocalActivity = activity;
     },
     updateHistory(state, historyItem) {
       state.history = state.history.filter(function (el) {
@@ -55,9 +94,6 @@ export default createStore({
       });
       state.filterOptions = filters;
     },
-    updateSelectedFilters(state, filters) {
-      state.selectedFilters = filters;
-    },
     updateQuickFiltersStatus(state, status) {
       state.quickFiltersStatus.set(status.key, status.value);
     },
@@ -66,6 +102,9 @@ export default createStore({
     },
     updateIsLoggedIn(state, status) {
       state.isLoggedIn = status;
+    },
+    updateSelectedFilters(state, filters) {
+      state.selectedFilters = filters;
     },
     updateSnomedLicenseAccepted(state, status: string) {
       state.snomedLicenseAccepted = status;
@@ -85,6 +124,9 @@ export default createStore({
       state.editorSavedEntity = entity;
       localStorage.setItem("editorSavedEntity", entity);
     },
+    updateFilterDefaults(state, defaults) {
+      state.filterDefaults = defaults;
+    },
     updateRefreshTree(state) {
       state.refreshTree = !state.refreshTree;
     },
@@ -99,6 +141,9 @@ export default createStore({
     },
     updateEditorValidity(state, data) {
       state.editorValidity = data;
+    },
+    updateBlockedIris(state, data) {
+      state.blockedIris = data;
     }
   },
   actions: {
@@ -119,6 +164,26 @@ export default createStore({
       });
       return result;
     },
+    async fetchFilterSettings({ commit, state }) {
+      const filterDefaults = await entityService.getFilterOptions();
+      commit("updateFilterOptions", {
+        status: filterDefaults.status,
+        schemes: filterDefaults.schemes,
+        types: filterDefaults.types,
+        sortFields: filterDefaults.sortFields,
+        sortDirections: filterDefaults.sortDirections
+      });
+
+      const selectedStatus = state.filterOptions.status.filter((item: EntityReferenceNode) => Config.FilterDefaults.statusOptions.includes(item["@id"]));
+      const selectedSchemes = state.filterOptions.schemes.filter((item: Namespace) => Config.FilterDefaults.schemeOptions.includes(item.iri));
+      const selectedTypes = state.filterOptions.types.filter((item: EntityReferenceNode) => Config.FilterDefaults.typeOptions.includes(item["@id"]));
+      commit("updateSelectedFilters", {
+        status: selectedStatus,
+        schemes: selectedSchemes,
+        types: selectedTypes
+      });
+    },
+
     async authenticateCurrentUser({ commit, dispatch }) {
       const result = { authenticated: false };
       await AuthService.getCurrentAuthenticatedUser().then(res => {

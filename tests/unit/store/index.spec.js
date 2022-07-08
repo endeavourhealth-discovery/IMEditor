@@ -19,15 +19,19 @@ describe("state", () => {
 
   it("should start with the correct values", () => {
     expect(Object.keys(store.state)).toStrictEqual([
+      "arrayObjectNameListboxWithLabelStartExpanded",
       "history",
+      "recentLocalActivity",
       "currentUser",
+      "filterDefaults",
       "isLoggedIn",
       "snomedLicenseAccepted",
       "editorIri",
       "snomedReturnUrl",
       "authReturnUrl",
       "editorSavedEntity",
-      "blockedIris",
+      "tagSeverityMatches",
+      "textDefinitionStartExpanded",
       "filterOptions",
       "selectedFilters",
       "quickFiltersStatus",
@@ -35,7 +39,8 @@ describe("state", () => {
       "creatorValidity",
       "editorInvalidEntity",
       "editorValidity",
-      "refreshTree"
+      "refreshTree",
+      "blockedIris"
     ]);
     expect(store.state.history).toEqual([]);
     expect(store.state.currentUser).toEqual({});
@@ -43,13 +48,14 @@ describe("state", () => {
     expect(store.state.snomedLicenseAccepted).toBeNull();
     expect(store.state.editorIri).toBeNull();
     expect(store.state.editorSavedEntity).toBeNull();
-    expect(store.state.blockedIris).toStrictEqual([]);
     expect(store.state.selectedFilters).toEqual({
       status: [],
       schemes: [],
-      types: []
+      types: [],
+      sortDirection: "",
+      sortField: ""
     });
-    expect(store.state.filterOptions).toStrictEqual({ status: [], schemes: [], types: [] });
+    expect(store.state.filterOptions).toStrictEqual({ status: [], schemes: [], types: [], sortDirections: [], sortFields: [] });
     expect(store.state.quickFiltersStatus).toEqual(new Map());
   });
 });
@@ -90,12 +96,6 @@ describe("mutations", () => {
     const testIri = "testIri";
     store.commit("updateEditorIri", testIri);
     expect(store.state.editorIri).toBe("testIri");
-  });
-
-  it("can update blockedIris", () => {
-    const testIris = ["iri1", "iri2", "iri3"];
-    store.commit("updateBlockedIris", testIris);
-    expect(store.state.blockedIris).toStrictEqual(testIris);
   });
 
   it("can updateSelectedFilters", () => {

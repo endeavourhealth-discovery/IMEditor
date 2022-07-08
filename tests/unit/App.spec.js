@@ -27,6 +27,5 @@ describe("App.vue", () => {
     await flushPromises();
     expect(mockStore.dispatch).toHaveBeenCalledTimes(2);
     expect(mockStore.dispatch).toHaveBeenCalledWith("authenticateCurrentUser");
-    expect(mockStore.dispatch).toHaveBeenCalledWith("fetchBlockedIris");
   });
 });
