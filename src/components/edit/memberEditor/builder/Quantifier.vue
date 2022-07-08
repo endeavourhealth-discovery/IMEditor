@@ -41,7 +41,7 @@ import QuantifierTree from "@/components/edit/memberEditor/builder/quantifier/Qu
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import { mapState } from "vuex";
 import { Vocabulary, Helpers, Enums, Models } from "im-library";
-import { TTIriRef, ComponentDetails, Namespace, EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
+import { TTIriRef, ComponentDetails, Namespace, EntityReferenceNode, SearchRequest, ConceptSummary } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject },
   TypeGuards: { isTTIriRef },
@@ -49,9 +49,6 @@ const {
 } = Helpers;
 const { IM, RDFS } = Vocabulary;
 const { ComponentType, SortBy } = Enums;
-const {
-  Search: { SearchRequest }
-} = Models;
 
 export default defineComponent({
   name: "Quantifier",
@@ -95,7 +92,7 @@ export default defineComponent({
       controller: {} as AbortController,
       isAs: [] as string[],
       searchTerm: "",
-      searchResults: [] as Models.Search.ConceptSummary[]
+      searchResults: [] as ConceptSummary[]
     };
   },
   methods: {
@@ -142,7 +139,7 @@ export default defineComponent({
       if (x) x.hide();
     },
 
-    updateSelectedResult(data: Models.Search.ConceptSummary | TTIriRef) {
+    updateSelectedResult(data: ConceptSummary | TTIriRef) {
       if (!isObjectHasKeys(data)) {
         this.selectedResult = {} as TTIriRef;
         this.searchTerm = "";
@@ -209,7 +206,7 @@ export default defineComponent({
       }
     },
 
-    setFilters(searchRequest: Models.Search.SearchRequest) {
+    setFilters(searchRequest: SearchRequest) {
       const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === IM.CONCEPT || type["@id"] === IM.CONCEPT_SET);
       const filteredFilterOptions = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
 

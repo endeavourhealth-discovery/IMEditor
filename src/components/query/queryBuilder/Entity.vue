@@ -29,14 +29,14 @@ import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/Sea
 import { mapState } from "vuex";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import axios from "axios";
-import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
-import { Namespace, TTIriRef, EntityReferenceNode, ComponentDetails, SearchRequest, ConceptSummary } from "im-library/dist/types/interfaces/Interfaces";
-import { Helpers, Models, Enums } from "im-library";
+import AddDeleteButtons from "@/components/query/queryBuilder/AddDeleteButtons.vue";
+import { Namespace, TTIriRef, EntityReferenceNode, QueryComponentDetails, ConceptSummary, SearchRequest } from "im-library/dist/types/interfaces/Interfaces";
+import { Helpers, Enums } from "im-library";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject },
   TypeGuards: { isTTIriRef }
 } = Helpers;
-const { ComponentType, BuilderType, SortBy } = Enums;
+const { QueryComponentType, BuilderType, SortBy } = Enums;
 
 export default defineComponent({
   name: "Entity",
@@ -47,7 +47,7 @@ export default defineComponent({
       type: Object as PropType<{
         filterOptions: { status: EntityReferenceNode[]; schemes: Namespace[]; types: EntityReferenceNode[] };
         entity: TTIriRef | undefined;
-        type: Enums.ComponentType;
+        type: Enums.QueryComponentType;
         label: string;
       }>,
       required: true
@@ -56,9 +56,9 @@ export default defineComponent({
     builderType: { type: String as PropType<Enums.BuilderType>, required: true }
   },
   emits: {
-    updateClicked: (_payload: ComponentDetails) => true,
+    updateClicked: (_payload: QueryComponentDetails) => true,
     addNextOptionsClicked: (_payload: any) => true,
-    deleteClicked: (_payload: ComponentDetails) => true,
+    deleteClicked: (_payload: QueryComponentDetails) => true,
     addClicked: (_payload: any) => true
   },
   components: { SearchMiniOverlay, AddDeleteButtons },
@@ -128,6 +128,7 @@ export default defineComponent({
         // searchRequest.typeFilter.push(IM.CONCEPT);
         if (!isObject(this.controller)) {
           this.controller.abort();
+          console.log("aborted");
         }
         this.controller = new AbortController();
         await this.fetchSearchResults(searchRequest, this.controller);
@@ -193,23 +194,23 @@ export default defineComponent({
       this.showOverlay(event);
     },
 
-    createEntity(): ComponentDetails {
+    createEntity(): QueryComponentDetails {
       if (this.value)
         return {
-          value: { entity: this.selectedResult, filterOptions: this.value.filterOptions, type: this.value.type, label: this.value.label },
+          value: { entity: this.selectedResult["@id"], filterOptions: this.value.filterOptions, type: this.value.type, label: this.value.label },
           id: this.id,
           position: this.position,
           type: this.value.type,
-          json: this.selectedResult,
+          json: this.selectedResult["@id"],
           builderType: this.builderType,
           showButtons: this.showButtons
         };
       else {
         return {
-          value: { entity: this.selectedResult, filterOptions: this.filterOptions, type: ComponentType.ENTITY, label: "Entity" },
+          value: { entity: this.selectedResult["@id"], filterOptions: this.filterOptions, type: QueryComponentType.ENTITY, label: "Entity" },
           id: this.id,
           position: this.position,
-          type: ComponentType.ENTITY,
+          type: QueryComponentType.ENTITY,
           json: {},
           builderType: this.builderType,
           showButtons: this.showButtons
@@ -222,7 +223,7 @@ export default defineComponent({
         id: this.id,
         value: this.selectedResult,
         position: this.position,
-        type: ComponentType.ENTITY,
+        type: QueryComponentType.ENTITY,
         builderType: this.builderType,
         json: this.selectedResult,
         showButtons: this.showButtons
@@ -237,8 +238,7 @@ export default defineComponent({
     },
 
     getButtonOptions() {
-      if (this.builderType === BuilderType.PARENT) return [ComponentType.ENTITY];
-      else return [ComponentType.ENTITY, ComponentType.LOGIC, ComponentType.REFINEMENT];
+      return [QueryComponentType.MATCH, QueryComponentType.PROPERTY, QueryComponentType.LOGIC];
     }
   }
 });

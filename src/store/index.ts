@@ -1,10 +1,14 @@
 import { createStore } from "vuex";
-import AuthService from "@/services/AuthService";
-import vm from "@/main";
+import axios from "axios";
 import { HistoryItem, Namespace, EntityReferenceNode, RecentActivityItem, FilterDefaultsConfig } from "im-library/dist/types/interfaces/Interfaces";
-import { Config, Models, Vocabulary } from "im-library";
-const { IM, RDF, RDFS } = Vocabulary;
-const { User, CustomAlert } = Models;
+import { Config, Models, Services, Vocabulary } from "im-library";
+const { CustomAlert } = Models;
+import AuthService from "@/services/AuthService";
+const { LoggerService, EntityService } = Services;
+const { IM } = Vocabulary;
+
+const entityService = new EntityService(axios);
+
 export default createStore({
   // update stateType.ts when adding new state!
   state: {
@@ -44,7 +48,8 @@ export default createStore({
     creatorValidity: [] as { key: string; valid: boolean }[],
     editorInvalidEntity: false,
     editorValidity: [] as { key: string; valid: boolean }[],
-    refreshTree: false as boolean
+    refreshTree: false as boolean,
+    blockedIris: [] as string[]
   },
   mutations: {
     updateRecentLocalActivity(state, recentActivityItem: RecentActivityItem) {
@@ -136,9 +141,16 @@ export default createStore({
     },
     updateEditorValidity(state, data) {
       state.editorValidity = data;
+    },
+    updateBlockedIris(state, data) {
+      state.blockedIris = data;
     }
   },
   actions: {
+    fetchBlockedIris({ commit }) {
+      const blockedIris = Config.XmlSchemaDatatypes;
+      commit("updateBlockedIris", blockedIris);
+    },
     async logoutCurrentUser({ commit }) {
       let result = new CustomAlert(500, "Logout (store) failed");
       await AuthService.signOut().then(res => {
@@ -153,7 +165,7 @@ export default createStore({
       return result;
     },
     async fetchFilterSettings({ commit, state }) {
-      const filterDefaults = await vm.$entityService.getFilterOptions();
+      const filterDefaults = await entityService.getFilterOptions();
       commit("updateFilterOptions", {
         status: filterDefaults.status,
         schemes: filterDefaults.schemes,
@@ -183,9 +195,9 @@ export default createStore({
         } else {
           dispatch("logoutCurrentUser").then(resLogout => {
             if (resLogout.status === 200) {
-              vm.$loggerService.info(undefined, "Force logout successful");
+              LoggerService.info(undefined, "Force logout successful");
             } else {
-              vm.$loggerService.error(undefined, "Force logout failed");
+              LoggerService.error(undefined, "Force logout failed");
             }
           });
         }

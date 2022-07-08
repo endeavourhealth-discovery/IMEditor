@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import Editor from "../views/Editor.vue";
 import Creator from "../views/Creator.vue";
+import Query from "@/views/Query.vue";
 import TypeSelector from "@/components/creator/TypeSelector.vue";
 import SummaryEditor from "@/components/edit/SummaryEditor.vue";
 import ParentsEditor from "@/components/edit/ParentsEditor.vue";
@@ -42,6 +43,15 @@ const routes: Array<RouteRecordRaw> = [
     path: "/editor/:selectedIri?",
     name: "Editor",
     component: Editor,
+    meta: {
+      requiresAuth: true,
+      requiresLicense: true
+    }
+  },
+  {
+    path: "/query",
+    name: "Query",
+    component: Query,
     meta: {
       requiresAuth: true,
       requiresLicense: true
