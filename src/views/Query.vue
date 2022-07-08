@@ -42,8 +42,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, onMounted, ref, reactive, computed, watch, provide, inject } from "vue";
+<script setup lang="ts">
+import { onMounted, ref, reactive, computed, watch, provide, inject } from "vue";
 import type { Ref } from "vue";
 import VueJsonPretty from "vue-json-pretty";
 import QueryBuilder from "@/components/query/QueryBuilder.vue";
@@ -60,180 +60,162 @@ const {
 const { QueryService, EntityService, Env, ConfigService, SetService } = Services;
 const { IM } = Vocabulary;
 
-export default defineComponent({
-  name: "Query",
-  components: { VueJsonPretty, QueryBuilder },
-  setup() {
-    const configService = new ConfigService(axios);
-    const queryService = new QueryService(axios);
-    const entityService = new EntityService(axios);
-    const setService = new SetService(axios);
-    const router = useRouter();
-    const route = useRoute();
+const configService = new ConfigService(axios);
+const queryService = new QueryService(axios);
+const entityService = new EntityService(axios);
+const setService = new SetService(axios);
+const router = useRouter();
+const route = useRoute();
 
-    provide(injectionKeys.$store, store);
-    provide(injectionKeys.$router, router);
-    provide(injectionKeys.$swal, Swal);
-    provide(injectionKeys.$queryService, queryService);
-    provide(injectionKeys.$env, Env);
-    provide(injectionKeys.$entityService, entityService);
-    provide(injectionKeys.$setService, setService);
-    provide(injectionKeys.$configService, configService);
-    provide(injectionKeys.$route, route);
+provide(injectionKeys.$store, store);
+provide(injectionKeys.$router, router);
+provide(injectionKeys.$swal, Swal);
+provide(injectionKeys.$queryService, queryService);
+provide(injectionKeys.$env, Env);
+provide(injectionKeys.$entityService, entityService);
+provide(injectionKeys.$setService, setService);
+provide(injectionKeys.$configService, configService);
+provide(injectionKeys.$route, route);
 
-    const userRoles = inject("userRoles");
+const userRoles = inject("userRoles");
 
-    let loading = ref(true);
-    onMounted(() => {
-      loading.value = false;
+let loading = ref(true);
+onMounted(() => {
+  loading.value = false;
+});
+
+let queryOriginal: any = ref({});
+
+let queryUpdated: any = ref({});
+watch(
+  () => _.cloneDeep(queryUpdated.value),
+  () => {
+    toggleConfirmLeaveDialog();
+  }
+);
+
+let showJson: Ref<boolean> = ref(true);
+
+const filterOptions = computed(() => store.state.filterOptions);
+
+async function getFilterOptions(): Promise<void> {
+  if (!(isObjectHasKeys(filterOptions.value) && isArrayHasLength(filterOptions.value.schemes))) {
+    const schemeOptions = await entityService.getNamespaces();
+    const typeOptions = await entityService.getEntityChildren(IM.MODELLING_ENTITY_TYPE);
+    const statusOptions = await entityService.getEntityChildren(IM.STATUS);
+    store.commit("updateFilterOptions", {
+      status: statusOptions,
+      schemes: schemeOptions,
+      types: typeOptions
     });
+  }
+}
+onMounted(async () => {
+  await getFilterOptions();
+});
 
-    let queryOriginal: any = ref({});
+function toggleConfirmLeaveDialog() {
+  if (checkForChanges()) {
+    window.addEventListener("beforeunload", beforeWindowUnload);
+  } else {
+    window.removeEventListener("beforeunload", beforeWindowUnload);
+  }
+}
 
-    let queryUpdated: any = ref({});
-    watch(
-      () => _.cloneDeep(queryUpdated.value),
-      () => {
-        toggleConfirmLeaveDialog();
+function beforeWindowUnload(e: any) {
+  if (checkForChanges()) {
+    e.preventDefault();
+    e.returnValue = "";
+  }
+}
+
+function updateQuery(data: any) {
+  if (isArrayHasLength(data)) {
+    data.forEach((item: any) => {
+      if (isObjectHasKeys(item)) {
+        for (const [key, value] of Object.entries(item)) {
+          queryUpdated.value[key] = value;
+        }
       }
-    );
-
-    let showJson: Ref<boolean> = ref(true);
-
-    const filterOptions = computed(() => store.state.filterOptions);
-
-    async function getFilterOptions(): Promise<void> {
-      if (!(isObjectHasKeys(filterOptions.value) && isArrayHasLength(filterOptions.value.schemes))) {
-        const schemeOptions = await entityService.getNamespaces();
-        const typeOptions = await entityService.getEntityChildren(IM.MODELLING_ENTITY_TYPE);
-        const statusOptions = await entityService.getEntityChildren(IM.STATUS);
-        store.commit("updateFilterOptions", {
-          status: statusOptions,
-          schemes: schemeOptions,
-          types: typeOptions
-        });
-      }
-    }
-    onMounted(async () => {
-      await getFilterOptions();
     });
+  }
+}
 
-    function toggleConfirmLeaveDialog() {
-      if (checkForChanges()) {
-        window.addEventListener("beforeunload", beforeWindowUnload);
-      } else {
-        window.removeEventListener("beforeunload", beforeWindowUnload);
+function checkForChanges(): boolean {
+  return !(JSON.stringify(queryOriginal.value) === JSON.stringify(queryUpdated.value));
+}
+
+async function submit(): Promise<void> {
+  if (isValidQuery(queryUpdated.value)) {
+    Swal.fire({
+      icon: "info",
+      title: "Confirm create",
+      text: "Are you sure you want to create this entity?",
+      showCancelButton: true,
+      confirmButtonText: "Create",
+      reverseButtons: true,
+      confirmButtonColor: "#689F38",
+      cancelButtonColor: "#607D8B",
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => !Swal.isLoading(),
+      preConfirm: async () => {
+        const res = await queryService.createQuery(queryUpdated);
+        if (res) return res;
+        else Swal.showValidationMessage("Error creating entity from server.");
       }
-    }
-
-    function beforeWindowUnload(e: any) {
-      if (checkForChanges()) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
-    }
-
-    function updateQuery(data: any) {
-      if (isArrayHasLength(data)) {
-        data.forEach((item: any) => {
-          if (isObjectHasKeys(item)) {
-            for (const [key, value] of Object.entries(item)) {
-              queryUpdated.value[key] = value;
-            }
-          }
-        });
-      }
-    }
-
-    function checkForChanges(): boolean {
-      return !(JSON.stringify(queryOriginal.value) === JSON.stringify(queryUpdated.value));
-    }
-
-    async function submit(): Promise<void> {
-      if (isValidQuery(queryUpdated.value)) {
+    }).then((result: any) => {
+      if (result.isConfirmed) {
         Swal.fire({
-          icon: "info",
-          title: "Confirm create",
-          text: "Are you sure you want to create this entity?",
+          title: "Success",
+          text: "Query has been created.",
+          icon: "success",
           showCancelButton: true,
-          confirmButtonText: "Create",
           reverseButtons: true,
-          confirmButtonColor: "#689F38",
-          cancelButtonColor: "#607D8B",
-          showLoaderOnConfirm: true,
-          allowOutsideClick: () => !Swal.isLoading(),
-          preConfirm: async () => {
-            const res = await queryService.createQuery(queryUpdated);
-            if (res) return res;
-            else Swal.showValidationMessage("Error creating entity from server.");
-          }
+          confirmButtonText: "Open in Viewer",
+          confirmButtonColor: "#2196F3",
+          cancelButtonColor: "#607D8B"
         }).then((result: any) => {
           if (result.isConfirmed) {
-            Swal.fire({
-              title: "Success",
-              text: "Query has been created.",
-              icon: "success",
-              showCancelButton: true,
-              reverseButtons: true,
-              confirmButtonText: "Open in Viewer",
-              confirmButtonColor: "#2196F3",
-              cancelButtonColor: "#607D8B"
-            }).then((result: any) => {
-              if (result.isConfirmed) {
-                window.location.href = Env.QUERY_URL;
-              } else {
-                window.location.href = Env.DIRECTORY_URL;
-              }
-            });
+            window.location.href = Env.QUERY_URL;
+          } else {
+            window.location.href = Env.DIRECTORY_URL;
           }
         });
-      } else {
-        console.log("invalid entity");
-        Swal.fire({
-          icon: "warning",
-          title: "Warning",
-          text: "Invalid values found. Please review your entries.",
-          confirmButtonText: "Close",
-          confirmButtonColor: "#689F38"
-        });
       }
-    }
-
-    function isValidQuery(query: any): boolean {
-      return true;
-    }
-
-    function resetQuery(): void {
-      Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: "This action will reset all progress. Are you sure you want to proceed?",
-        showCancelButton: true,
-        confirmButtonText: "Reset",
-        reverseButtons: true,
-        confirmButtonColor: "#FBC02D",
-        cancelButtonColor: "#607D8B",
-        customClass: { confirmButton: "swal-reset-button" }
-      }).then((result: any) => {
-        if (result.isConfirmed) {
-          queryUpdated.value = { ...queryOriginal.value };
-        }
-      });
-    }
-
-    return {
-      queryOriginal,
-      queryUpdated,
-      loading,
-      isObjectHasKeys,
-      resetQuery,
-      updateQuery,
-      showJson,
-      submit,
-      userRoles
-    };
+    });
+  } else {
+    console.log("invalid entity");
+    Swal.fire({
+      icon: "warning",
+      title: "Warning",
+      text: "Invalid values found. Please review your entries.",
+      confirmButtonText: "Close",
+      confirmButtonColor: "#689F38"
+    });
   }
-});
+}
+
+function isValidQuery(query: any): boolean {
+  return true;
+}
+
+function resetQuery(): void {
+  Swal.fire({
+    icon: "warning",
+    title: "Warning",
+    text: "This action will reset all progress. Are you sure you want to proceed?",
+    showCancelButton: true,
+    confirmButtonText: "Reset",
+    reverseButtons: true,
+    confirmButtonColor: "#FBC02D",
+    cancelButtonColor: "#607D8B",
+    customClass: { confirmButton: "swal-reset-button" }
+  }).then((result: any) => {
+    if (result.isConfirmed) {
+      queryUpdated.value = { ...queryOriginal.value };
+    }
+  });
+}
 </script>
 
 <style scoped>
