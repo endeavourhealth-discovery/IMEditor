@@ -1,39 +1,16 @@
 import store from "@/store/index";
 import { flushPromises } from "@vue/test-utils";
 import AuthService from "@/services/AuthService";
-import { Vocabulary, Models } from "im-library";
-import { expect } from "vitest";
+import { Vocabulary, Models, Services } from "im-library";
+import { expect, vi } from "vitest";
 const { IM } = Vocabulary;
-const {
-  User,
-  Search: { SearchRequest },
-  CustomAlert
-} = Models;
-
-vi.mock("@/main", () => {
-  return {
-    default: {
-      $configService: {
-        getXmlSchemaDataTypes: vi.fn(),
-        getFilterDefaults: vi.fn()
-      },
-      $entityService: {
-        advancedSearch: vi.fn()
-      },
-      $loggerService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), success: vi.fn(), debug: vi.fn() }
-    }
-  };
-});
-
-import vm from "@/main";
+const { User, CustomAlert } = Models;
+const { LoggerService } = Services;
 
 describe("state", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     window.sessionStorage.clear();
-    vm.$configService.getXmlSchemaDataTypes = vi
-      .fn()
-      .mockResolvedValue(["http://www.w3.org/2001/XMLSchema#string", "http://www.w3.org/2001/XMLSchema#boolean"]);
   });
 
   afterAll(() => {
@@ -158,14 +135,57 @@ describe("mutations", () => {
 describe("actions", () => {
   it("can fetchBlockedIris", async () => {
     store.dispatch("fetchBlockedIris");
-    await flushPromises();
-    expect(vm.$configService.getXmlSchemaDataTypes).toHaveBeenCalledTimes(1);
-    expect(store.state.blockedIris).toStrictEqual(["http://www.w3.org/2001/XMLSchema#string", "http://www.w3.org/2001/XMLSchema#boolean"]);
+    expect(store.state.blockedIris).toStrictEqual([
+      "http://www.w3.org/2001/XMLSchema#string",
+      "http://www.w3.org/2001/XMLSchema#boolean",
+      "http://www.w3.org/2001/XMLSchema#float",
+      "http://www.w3.org/2001/XMLSchema#double",
+      "http://www.w3.org/2001/XMLSchema#decimal",
+      "http://www.w3.org/2001/XMLSchema#dateTime",
+      "http://www.w3.org/2001/XMLSchema#duration",
+      "http://www.w3.org/2001/XMLSchema#hexBinary",
+      "http://www.w3.org/2001/XMLSchema#base64Binary",
+      "http://www.w3.org/2001/XMLSchema#anyURI",
+      "http://www.w3.org/2001/XMLSchema#ID",
+      "http://www.w3.org/2001/XMLSchema#IDREF",
+      "http://www.w3.org/2001/XMLSchema#ENTITY",
+      "http://www.w3.org/2001/XMLSchema#NOTATION",
+      "http://www.w3.org/2001/XMLSchema#normalizedString",
+      "http://www.w3.org/2001/XMLSchema#token",
+      "http://www.w3.org/2001/XMLSchema#language",
+      "http://www.w3.org/2001/XMLSchema#IDREFS",
+      "http://www.w3.org/2001/XMLSchema#ENTITIES",
+      "http://www.w3.org/2001/XMLSchema#NMTOKEN",
+      "http://www.w3.org/2001/XMLSchema#NMTOKENS",
+      "http://www.w3.org/2001/XMLSchema#Name",
+      "http://www.w3.org/2001/XMLSchema#QName",
+      "http://www.w3.org/2001/XMLSchema#NCName",
+      "http://www.w3.org/2001/XMLSchema#integer",
+      "http://www.w3.org/2001/XMLSchema#nonNegativeInteger",
+      "http://www.w3.org/2001/XMLSchema#positiveInteger",
+      "http://www.w3.org/2001/XMLSchema#nonPositiveInteger",
+      "http://www.w3.org/2001/XMLSchema#negativeInteger",
+      "http://www.w3.org/2001/XMLSchema#byte",
+      "http://www.w3.org/2001/XMLSchema#int",
+      "http://www.w3.org/2001/XMLSchema#long",
+      "http://www.w3.org/2001/XMLSchema#short",
+      "http://www.w3.org/2001/XMLSchema#unsignedByte",
+      "http://www.w3.org/2001/XMLSchema#unsignedInt",
+      "http://www.w3.org/2001/XMLSchema#unsignedLong",
+      "http://www.w3.org/2001/XMLSchema#unsignedShort",
+      "http://www.w3.org/2001/XMLSchema#date",
+      "http://www.w3.org/2001/XMLSchema#time",
+      "http://www.w3.org/2001/XMLSchema#gYearMonth",
+      "http://www.w3.org/2001/XMLSchema#gYear",
+      "http://www.w3.org/2001/XMLSchema#gMonthDay",
+      "http://www.w3.org/2001/XMLSchema#gDay",
+      "http://www.w3.org/2001/XMLSchema#gMonth"
+    ]);
   });
 
   it("can logoutCurrentUser ___ 200", async () => {
     AuthService.signOut = vi.fn().mockResolvedValue(new CustomAlert(200, "logout successful"));
-    vm.$loggerService.error = vi.fn();
+    LoggerService.error = vi.fn();
     let result = false;
     await store.dispatch("logoutCurrentUser").then(res => (result = res));
     await flushPromises();
@@ -178,7 +198,7 @@ describe("actions", () => {
 
   it("can logoutCurrentUser ___ 400", async () => {
     AuthService.signOut = vi.fn().mockResolvedValue(new CustomAlert(400, "logout failed 400"));
-    vm.$loggerService.error = vi.fn();
+    LoggerService.error = vi.fn();
     let result = false;
     await store.dispatch("logoutCurrentUser").then(res => (result = res));
     await flushPromises();
@@ -219,7 +239,7 @@ describe("actions", () => {
   it("can authenticateCurrentUser___ 403 ___ logout 200", async () => {
     AuthService.getCurrentAuthenticatedUser = vi.fn().mockResolvedValue(new CustomAlert(403, "user authenticated"));
     AuthService.signOut = vi.fn().mockResolvedValue(new CustomAlert(200, "logout successful"));
-    vm.$loggerService.info = vi.fn();
+    LoggerService.info = vi.fn();
     let result = { authenticated: false };
     await store.dispatch("authenticateCurrentUser").then(res => (result = res));
     await flushPromises();
@@ -230,14 +250,14 @@ describe("actions", () => {
     expect(store.state.isLoggedIn).toBe(false);
     expect(store.state.currentUser).toBe(null);
     expect(result.authenticated).toBe(false);
-    expect(vm.$loggerService.info).toBeCalledTimes(1);
-    expect(vm.$loggerService.info).toBeCalledWith(undefined, "Force logout successful");
+    expect(LoggerService.info).toBeCalledTimes(1);
+    expect(LoggerService.info).toBeCalledWith(undefined, "Force logout successful");
   });
 
-  it("can authenticateCurrentUser___ 403 ___ logout 200", async () => {
+  it("can authenticateCurrentUser___ 403 ___ logout 400", async () => {
     AuthService.getCurrentAuthenticatedUser = vi.fn().mockResolvedValue(new CustomAlert(403, "user authenticated"));
     AuthService.signOut = vi.fn().mockResolvedValue(new CustomAlert(400, "logout failed"));
-    vm.$loggerService.error = vi.fn();
+    LoggerService.error = vi.fn();
     let result = { authenticated: false };
     await store.dispatch("authenticateCurrentUser").then(res => (result = res));
     await flushPromises();
@@ -248,7 +268,7 @@ describe("actions", () => {
     expect(store.state.isLoggedIn).toBe(false);
     expect(store.state.currentUser).toBe(null);
     expect(result.authenticated).toBe(false);
-    expect(vm.$loggerService.error).toBeCalledTimes(1);
-    expect(vm.$loggerService.error).toBeCalledWith(undefined, "Force logout failed");
+    expect(LoggerService.error).toBeCalledTimes(1);
+    expect(LoggerService.error).toBeCalledWith(undefined, "Force logout failed");
   });
 });
