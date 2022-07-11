@@ -1,11 +1,11 @@
 import { ConfigService, EntityService, Env, LoggerService, QueryService, SetService } from "im-library/dist/types/services/Services";
-import type { InjectionKey } from "vue";
+import type { InjectionKey, Ref } from "vue";
 import { Store } from "vuex";
 import Swal from "sweetalert2";
 import State from "@/store/stateType";
 import { RouteLocationNormalizedLoaded, Router } from "vue-router";
 
-const userRoles = Symbol("userRoles") as InjectionKey<string[]>;
+const userRoles = Symbol("userRoles") as InjectionKey<Ref<readonly string[]>>;
 const $entityService = Symbol("$entityService") as InjectionKey<EntityService>;
 const $store = Symbol("$store") as InjectionKey<Store<State>>;
 const $env = Symbol("$env") as InjectionKey<typeof Env>;
