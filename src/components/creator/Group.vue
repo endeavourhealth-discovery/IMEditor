@@ -13,7 +13,7 @@ const { EditorMode } = Enums;
 const props = defineProps({
   data: { type: Object as PropType<PropertyGroup>, required: true },
   updatedConcept: { type: Object as PropType<any>, required: true },
-  mode: { type: Object as PropType<Enums.EditorMode>, required: true }
+  mode: { type: String as PropType<Enums.EditorMode>, required: true }
 });
 </script>
 

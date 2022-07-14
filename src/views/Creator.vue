@@ -15,12 +15,12 @@
       <div v-else class="content-buttons-container">
         <div class="content-json-container">
           <div class="steps-content">
-            <Steps :model="stepsItems" :readonly="false" />
+            <Steps :model="stepsItems" :readonly="false" @click="stepsClicked" />
             <router-view v-slot="{ Component }">
               <keep-alive>
                 <component
                   :is="Component"
-                  :data="groups.length ? groups[currentStep] : undefined"
+                  :data="groups.length ? groups[currentStep - 1] : undefined"
                   :updatedConcept="conceptUpdated"
                   @concept-updated="updateConcept"
                   :mode="EditorMode.CREATE"
@@ -42,10 +42,10 @@
           />
         </div>
         <div class="button-bar" id="creator-button-bar">
-          <Button :disabled="currentStep > 0" icon="pi pi-angle-left" label="Back" @click="stepsBack" />
+          <Button :disabled="currentStep === 0" icon="pi pi-angle-left" label="Back" @click="stepsBack" />
           <Button icon="pi pi-refresh" label="Reset" class="p-button-warning" @click="refreshCreator" />
           <Button icon="pi pi-check" label="Create" class="p-button-success save-button" @click="submit" />
-          <Button :disabled="currentStep < stepsItems.length - 1" icon="pi pi-angle-right" label="Next" @click="stepsForward" />
+          <Button :disabled="currentStep >= stepsItems.length - 1" icon="pi pi-angle-right" label="Next" @click="stepsForward" />
         </div>
       </div>
     </div>
@@ -100,8 +100,6 @@ const hasType = computed<boolean>(() => {
   return isObjectHasKeys(conceptUpdated.value, [RDF.TYPE]);
 });
 
-const filterOptions = computed(() => store.state.filterOptions);
-
 onMounted(async () => {
   loading.value = true;
   if (props.type) {
@@ -146,6 +144,10 @@ async function getShape(type: string): Promise<void> {
   if (shapeIri) shape.value = await entityService.getShape(shapeIri["@id"]);
 }
 
+function stepsClicked(event: any) {
+  currentStep.value = event.target.innerHTML - 1;
+}
+
 function processShape(shape: FormGenerator) {
   console.log(shape);
   targetShape.value = shape.targetShape;
@@ -165,15 +167,14 @@ function setSteps() {
   stepsItems.value = [];
   stepsItems.value.push({ label: "Type", to: "/creator/type" });
   const creatorRoute = router.options.routes.find(r => r.name === "Creator");
-  groups.value.forEach(group => {
-    const label = getNameFromLabel(group.label);
-    if (creatorRoute) {
+  if (creatorRoute) {
+    groups.value.forEach(group => {
+      const label = getNameFromLabel(group.label);
       creatorRoute.children?.push({ path: label, name: label, component: Group });
-      router.addRoute(creatorRoute);
-    }
-    console.log(router);
-    stepsItems.value.push({ label: getNameFromLabel(group.label), to: "/creator/" + label });
-  });
+      stepsItems.value.push({ label: getNameFromLabel(group.label), to: "/creator/" + label });
+    });
+    router.addRoute(creatorRoute);
+  }
 }
 
 function getNameFromLabel(label: string) {
