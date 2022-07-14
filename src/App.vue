@@ -12,7 +12,7 @@
 import { computed, onMounted, provide, ref, Ref, readonly } from "vue";
 import ProgressSpinner from "primevue/progressspinner";
 import AuthService from "@/services/AuthService";
-import * as injectionKeys from "@/injectionKeys/injectionKeys";
+import injectionKeys from "@/injectionKeys/injectionKeys";
 import store from "@/store/index";
 
 let loading = ref(false);

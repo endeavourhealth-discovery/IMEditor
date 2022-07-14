@@ -1,55 +1,63 @@
 <template>
-  <div class="type-buttons-container">
-    <Button v-for="type of typeOptions" :key="type['@id']" class="custom-button" @click="typeSelected(type)">
-      <span>{{ type.name }}</span>
-    </Button>
+  <div class="type-selector">
+    <span class="text">Select entity type:</span>
+    <div class="type-buttons-container">
+      <button v-for="type in typeOptions" class="custom-button" @click="typeSelected(type)">
+        <span>{{ type.name }}</span>
+      </button>
+    </div>
   </div>
 </template>
-
-<script lang="ts">
-import { defineComponent } from "@vue/runtime-core";
-import { mapState } from "vuex";
-import { Vocabulary } from "im-library";
-import { EntityReferenceNode } from "im-library/dist/types/interfaces/Interfaces";
+<script setup lang="ts">
+import { defineProps, defineEmits, computed, ref, Ref, onMounted } from "vue";
+import store from "@/store";
+import { Config, Vocabulary } from "im-library";
+import { EntityReferenceNode, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 const { IM, RDF } = Vocabulary;
 
-export default defineComponent({
-  name: "TypeSelector",
-  props: { updatedConcept: { type: Object as any, required: true }, mode: { type: String, required: true } },
-  emits: { "concept-updated": (payload: any) => true },
-  computed: { ...mapState(["filterOptions"]) },
-  mounted() {
-    this.setOptions();
-  },
-  data() {
-    return {
-      typeOptions: [] as any[]
-    };
-  },
-  methods: {
-    setOptions() {
-      this.typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === IM.CONCEPT || type["@id"] === IM.CONCEPT_SET);
-    },
+const emit = defineEmits({ "concept-updated": (payload: string) => true });
 
-    typeSelected(data: any) {
-      const selected = {} as any;
-      selected[RDF.TYPE] = [{ "@id": data["@id"] }];
-      this.$emit("concept-updated", selected);
-    }
-  }
+const filterOptions = computed(() => store.state.filterOptions);
+
+let typeOptions: Ref<any[]> = ref([]);
+
+onMounted(() => {
+  setOptions();
 });
+
+function setOptions() {
+  typeOptions.value = filterOptions.value.types.filter((type: EntityReferenceNode) => type["@id"] === IM.CONCEPT || type["@id"] === IM.CONCEPT_SET);
+}
+
+function typeSelected(data: TTIriRef) {
+  const result = {} as any;
+  result[RDF.TYPE] = data["@id"];
+  emit("concept-updated", result);
+}
 </script>
 
 <style scoped>
-.type-buttons-container {
+.type-selector {
   width: 100%;
-  flex: 1 1 auto;
-  overflow: auto;
+  height: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-items: center;
+}
+.type-buttons-container {
+  width: 80%;
+  flex: 0 1 auto;
   display: flex;
   flex-flow: row wrap;
   justify-content: center;
   align-items: center;
   gap: 1rem;
+}
+
+.text {
+  font-size: large;
+  padding: 0 0 1rem 0;
 }
 
 .custom-button {

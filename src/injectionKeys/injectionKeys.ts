@@ -17,4 +17,4 @@ const $setService = Symbol("$setSetvice") as InjectionKey<SetService>;
 const $router = Symbol("$router") as InjectionKey<Router>;
 const $route = Symbol("$route") as InjectionKey<RouteLocationNormalizedLoaded>;
 
-export { userRoles, $entityService, $store, $configService, $env, $loggerService, $queryService, $swal, $router, $setService, $route };
+export default { userRoles, $entityService, $store, $configService, $env, $loggerService, $queryService, $swal, $router, $setService, $route };

@@ -9,16 +9,22 @@
     </TopBar>
     <ConfirmDialog />
     <div id="creator-main-container">
-      <div class="loading-container" v-if="loading">
+      <div v-if="loading" class="loading-container">
         <ProgressSpinner />
       </div>
       <div v-else class="content-buttons-container">
-        <div class="steps-json-container">
+        <div class="content-json-container">
           <div class="steps-content">
-            <Steps :model="stepsItems" />
+            <Steps :model="stepsItems" :readonly="false" />
             <router-view v-slot="{ Component }">
               <keep-alive>
-                <component :is="Component" :updatedConcept="conceptUpdated" @concept-updated="updateConcept" mode="create" />
+                <component
+                  :is="Component"
+                  :data="groups.length ? groups[currentStep] : undefined"
+                  :updatedConcept="conceptUpdated"
+                  @concept-updated="updateConcept"
+                  :mode="EditorMode.CREATE"
+                />
               </keep-alive>
             </router-view>
           </div>
@@ -36,10 +42,10 @@
           />
         </div>
         <div class="button-bar" id="creator-button-bar">
-          <Button v-if="currentStep > 0" icon="pi pi-angle-left" label="Back" @click="stepsBack" />
+          <Button :disabled="currentStep > 0" icon="pi pi-angle-left" label="Back" @click="stepsBack" />
           <Button icon="pi pi-refresh" label="Reset" class="p-button-warning" @click="refreshCreator" />
           <Button icon="pi pi-check" label="Create" class="p-button-success save-button" @click="submit" />
-          <Button v-if="currentStep < stepsItems.length - 1" icon="pi pi-angle-right" label="Next" @click="stepsForward" />
+          <Button :disabled="currentStep < stepsItems.length - 1" icon="pi pi-angle-right" label="Next" @click="stepsForward" />
         </div>
       </div>
     </div>
@@ -47,9 +53,18 @@
 </template>
 
 <script lang="ts">
-import { onUnmounted, onBeforeUnmount, onMounted, computed, ref, Ref, watch, inject, defineComponent } from "vue";
-import { Helpers, Vocabulary, Services } from "im-library";
+export default defineComponent({
+  // beforeRouteLeave() {
+  //   this.confirmLeavePage();
+  // }
+});
+</script>
+
+<script setup lang="ts">
+import { onUnmounted, onBeforeUnmount, onMounted, computed, ref, Ref, watch, inject, defineComponent, PropType } from "vue";
+import { Enums, Helpers, Vocabulary, Services } from "im-library";
 import TypeSelector from "@/components/creator/TypeSelector.vue";
+import Group from "@/components/creator/Group.vue";
 import VueJsonPretty from "vue-json-pretty";
 import _ from "lodash";
 import store from "@/store";
@@ -57,6 +72,8 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import { useConfirm } from "primevue/useconfirm";
 import { useRouter } from "vue-router";
+import injectionKeys from "@/injectionKeys/injectionKeys";
+import { FormGenerator, PropertyGroup, PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength },
   ConceptTypeMethods: { isValueSet },
@@ -65,284 +82,267 @@ const {
 } = Helpers;
 const { IM, RDF, RDFS } = Vocabulary;
 const { EntityService, Env } = Services;
+const { EditorMode } = Enums;
 
-export default defineComponent({
-  name: "Creator",
-  beforeRouteLeave() {
-    this.confirmLeavePage();
-  },
-  components: {
-    TypeSelector,
-    VueJsonPretty
-  },
-  setup() {
-    const userRoles = inject("userRoles");
+const userRoles = inject(injectionKeys.userRoles);
 
-    onBeforeUnmount(() => {
-      confirmLeavePage();
-    });
+const props = defineProps({ type: { type: Object as PropType<TTIriRef>, required: false } });
 
-    onUnmounted(() => {
+onBeforeUnmount(() => {
+  confirmLeavePage();
+});
+
+onUnmounted(() => {
+  window.removeEventListener("beforeunload", beforeWindowUnload);
+});
+
+const hasType = computed<boolean>(() => {
+  return isObjectHasKeys(conceptUpdated.value, [RDF.TYPE]);
+});
+
+const filterOptions = computed(() => store.state.filterOptions);
+
+onMounted(async () => {
+  loading.value = true;
+  if (props.type) {
+    await getShape(props.type["@id"]);
+    if (shape.value) processShape(shape.value);
+  } else {
+    router.push({ name: "TypeSelector" });
+  }
+  loading.value = false;
+});
+
+let conceptOriginal: Ref<any> = ref({});
+let conceptUpdated: Ref<any> = ref({});
+let loading: Ref<boolean> = ref(true);
+let stepsItems: Ref<{ label: string; to: string }[]> = ref([{ label: "Type", to: "/creator/type" }]);
+let currentStep: Ref<number> = ref(0);
+let showJson: Ref<boolean> = ref(false);
+let creatorInvalidEntity: Ref<boolean> = ref(false);
+let creatorValidity: Ref<{ key: string; valid: boolean }[]> = ref([]);
+let config: Ref<any> = ref({});
+let shape: Ref<FormGenerator | undefined> = ref();
+let targetShape: Ref<TTIriRef | undefined> = ref();
+let groups: Ref<PropertyGroup[]> = ref([]);
+
+config.value = { "@id": { component: "String-1-1" } };
+
+watch(
+  (): void => _.cloneDeep(conceptUpdated.value),
+  (newValue: any) => {
+    if (checkForChanges()) {
+      window.addEventListener("beforeunload", beforeWindowUnload);
+    } else {
       window.removeEventListener("beforeunload", beforeWindowUnload);
-    });
-
-    const toggleConfirmLeaveDialog = computed<void>(() => {
-      if (checkForChanges()) {
-        window.addEventListener("beforeunload", beforeWindowUnload);
-      } else {
-        window.removeEventListener("beforeunload", beforeWindowUnload);
-      }
-    });
-
-    const hasType = computed<boolean>(() => {
-      return isObjectHasKeys(conceptUpdated.value, [RDF.TYPE]);
-    });
-
-    const filterOptions = computed(() => store.state.filterOptions);
-    const creatorInvalidEntity = computed(() => store.state.creatorInvalidEntity);
-
-    onMounted(async () => {
-      loading.value = true;
-      await getFilterOptions();
-      setStepsFromType(hasType ? conceptUpdated.value[RDF.TYPE] : []);
-      loading.value = false;
-    });
-
-    let conceptOriginal: Ref<any> = ref({});
-    let conceptUpdated: Ref<any> = ref({});
-    let loading: Ref<boolean> = ref(true);
-    let stepsItems: Ref<{ label: string; to: string }[]> = ref([]);
-    let currentStep: Ref<number> = ref(0);
-    let showJson: Ref<boolean> = ref(false);
-
-    watch(
-      (): void => _.cloneDeep(conceptUpdated.value),
-      (newValue: any) => {
-        if (hasType) {
-          setStepsFromType(newValue[RDF.TYPE]);
-        }
-      }
-    );
-
-    const entityService = new EntityService(axios);
-
-    async function getFilterOptions(): Promise<void> {
-      if (!(isObjectHasKeys(filterOptions) && isArrayHasLength(filterOptions.value.schemes))) {
-        const schemeOptions = await entityService.getNamespaces();
-        const typeOptions = await entityService.getEntityChildren(IM.MODELLING_ENTITY_TYPE);
-        const statusOptions = await entityService.getEntityChildren(IM.STATUS);
-        store.commit("updateFilterOptions", {
-          status: statusOptions,
-          schemes: schemeOptions,
-          types: typeOptions
-        });
-      }
     }
+  }
+);
 
-    const confirm = useConfirm();
+const entityService = new EntityService(axios);
 
-    function confirmLeavePage() {
-      if (checkForChanges()) {
-        confirm.require({
-          message: "All unsaved changes will be lost. Are you sure you want to proceed?",
-          header: "Confirmation",
-          icon: "pi pi-exclamation-triangle",
-          accept: () => {
-            return true;
-          },
-          reject: () => {
-            return false;
-          }
-        });
-      } else {
+async function getShape(type: string): Promise<void> {
+  const shapeIri = await entityService.getShapeFromType(type);
+  if (shapeIri) shape.value = await entityService.getShape(shapeIri["@id"]);
+}
+
+function processShape(shape: FormGenerator) {
+  console.log(shape);
+  targetShape.value = shape.targetShape;
+  groups.value = shape.group;
+  setSteps();
+}
+
+async function updateType(typeIri: string) {
+  loading.value = true;
+  await getShape(typeIri);
+  if (shape.value) processShape(shape.value);
+  loading.value = false;
+  stepsForward();
+}
+
+function setSteps() {
+  stepsItems.value = [];
+  stepsItems.value.push({ label: "Type", to: "/creator/type" });
+  const creatorRoute = router.options.routes.find(r => r.name === "Creator");
+  groups.value.forEach(group => {
+    const label = getNameFromLabel(group.label);
+    if (creatorRoute) {
+      creatorRoute.children?.push({ path: label, name: label, component: Group });
+      router.addRoute(creatorRoute);
+    }
+    console.log(router);
+    stepsItems.value.push({ label: getNameFromLabel(group.label), to: "/creator/" + label });
+  });
+}
+
+function getNameFromLabel(label: string) {
+  return label.split("-")[1].trim();
+}
+
+const confirm = useConfirm();
+
+function confirmLeavePage() {
+  if (checkForChanges()) {
+    confirm.require({
+      message: "All unsaved changes will be lost. Are you sure you want to proceed?",
+      header: "Confirmation",
+      icon: "pi pi-exclamation-triangle",
+      accept: () => {
         return true;
+      },
+      reject: () => {
+        return false;
       }
-    }
+    });
+  } else {
+    return true;
+  }
+}
 
-    function beforeWindowUnload(e: any) {
-      if (checkForChanges()) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
-    }
+function beforeWindowUnload(e: any) {
+  if (checkForChanges()) {
+    e.preventDefault();
+    e.returnValue = "";
+  }
+}
 
-    const router = useRouter();
+const router = useRouter();
 
-    function updateConcept(data: any) {
-      if (isArrayHasLength(data)) {
-        data.forEach((item: any) => {
-          if (isObjectHasKeys(item)) {
-            for (const [key, value] of Object.entries(item)) {
-              conceptUpdated.value[key] = value;
-            }
-          }
-        });
-      } else if (isObjectHasKeys(data)) {
-        for (const [key, value] of Object.entries(data)) {
+function updateConcept(data: any) {
+  if (isArrayHasLength(data)) {
+    data.forEach((item: any) => {
+      if (isObjectHasKeys(item)) {
+        for (const [key, value] of Object.entries(item)) {
           conceptUpdated.value[key] = value;
         }
       }
-
-      if (creatorInvalidEntity.value) {
-        isValidEntity(conceptUpdated.value);
-      }
+    });
+  } else if (isObjectHasKeys(data)) {
+    if (isObjectHasKeys(data, [RDF.TYPE])) {
+      updateType(data[RDF.TYPE]);
     }
-
-    function checkForChanges() {
-      if (JSON.stringify(conceptUpdated.value) === JSON.stringify(conceptOriginal.value)) {
-        return false;
-      } else {
-        return true;
-      }
+    for (const [key, value] of Object.entries(data)) {
+      conceptUpdated.value[key] = value;
     }
+  }
 
-    async function submit(): Promise<void> {
-      if (await isValidEntity(conceptUpdated.value)) {
-        console.log("submit");
-        await Swal.fire({
-          icon: "info",
-          title: "Confirm create",
-          text: "Are you sure you want to create this entity?",
+  if (creatorInvalidEntity.value) {
+    isValidEntity(conceptUpdated.value);
+  }
+}
+
+function checkForChanges() {
+  if (JSON.stringify(conceptUpdated.value) === JSON.stringify(conceptOriginal.value)) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
+async function submit(): Promise<void> {
+  if (await isValidEntity(conceptUpdated.value)) {
+    console.log("submit");
+    await Swal.fire({
+      icon: "info",
+      title: "Confirm create",
+      text: "Are you sure you want to create this entity?",
+      showCancelButton: true,
+      confirmButtonText: "Create",
+      reverseButtons: true,
+      confirmButtonColor: "#689F38",
+      cancelButtonColor: "#607D8B",
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => !Swal.isLoading(),
+      preConfirm: async () => {
+        const res = await entityService.createEntity(conceptUpdated.value);
+        if (res) return res;
+        else Swal.showValidationMessage("Error creating entity from server.");
+      }
+    }).then((result: any) => {
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: "Success",
+          text: "Entity" + conceptUpdated.value["@id"] + " has been created.",
+          icon: "success",
           showCancelButton: true,
-          confirmButtonText: "Create",
           reverseButtons: true,
-          confirmButtonColor: "#689F38",
-          cancelButtonColor: "#607D8B",
-          showLoaderOnConfirm: true,
-          allowOutsideClick: () => !Swal.isLoading(),
-          preConfirm: async () => {
-            const res = await entityService.createEntity(conceptUpdated.value);
-            if (res) return res;
-            else Swal.showValidationMessage("Error creating entity from server.");
-          }
+          confirmButtonText: "Open in Viewer",
+          confirmButtonColor: "#2196F3",
+          cancelButtonColor: "#607D8B"
         }).then((result: any) => {
           if (result.isConfirmed) {
-            Swal.fire({
-              title: "Success",
-              text: "Entity" + conceptUpdated.value["@id"] + " has been created.",
-              icon: "success",
-              showCancelButton: true,
-              reverseButtons: true,
-              confirmButtonText: "Open in Viewer",
-              confirmButtonColor: "#2196F3",
-              cancelButtonColor: "#607D8B"
-            }).then((result: any) => {
-              if (result.isConfirmed) {
-                window.location.href = Env.VIEWER_URL + "concept?selectedIri=" + iriToUrl(conceptUpdated.value["@id"]);
-              } else {
-                router.push({ name: "Editor", params: { selectedIri: conceptUpdated.value["@id"] } });
-              }
-            });
+            window.location.href = Env.VIEWER_URL + "concept?selectedIri=" + iriToUrl(conceptUpdated.value["@id"]);
+          } else {
+            router.push({ name: "Editor", params: { selectedIri: conceptUpdated.value["@id"] } });
           }
         });
-      } else {
-        console.log("invalid entity");
-        Swal.fire({
-          icon: "warning",
-          title: "Warning",
-          text: "Invalid values found. Please review your entries.",
-          confirmButtonText: "Close",
-          confirmButtonColor: "#689F38"
-        });
       }
-    }
-
-    async function isValidEntity(entity: any): Promise<boolean> {
-      if (!isObjectHasKeys(entity)) {
-        store.commit("updateCreatorValidity", []);
-        store.commit("updateCreatorInvalidEntity", true);
-        return false;
-      }
-      const creatorValidity = [] as { key: string; valid: boolean }[];
-      creatorValidity.push({ key: "iri", valid: hasValidIri(entity) });
-      if (hasValidIri(entity)) creatorValidity.push({ key: "iriExists", valid: !(await entityService.iriExists(entity["@id"])) });
-      creatorValidity.push({ key: "name", valid: hasValidName(entity) });
-      creatorValidity.push({ key: "types", valid: hasValidTypes(entity) });
-      creatorValidity.push({ key: "status", valid: hasValidStatus(entity) });
-      creatorValidity.push({ key: "parents", valid: hasValidParents(entity) });
-      store.commit("updateCreatorValidity", creatorValidity);
-      const valid = creatorValidity.every(item => item.valid === true);
-      store.commit("updateCreatorInvalidEntity", !valid);
-      return valid;
-    }
-
-    function refreshCreator() {
-      Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: "This action will reset all progress. Are you sure you want to proceed?",
-        showCancelButton: true,
-        confirmButtonText: "Reset",
-        reverseButtons: true,
-        confirmButtonColor: "#FBC02D",
-        cancelButtonColor: "#607D8B",
-        customClass: { confirmButton: "swal-reset-button" }
-      }).then((result: any) => {
-        if (result.isConfirmed) {
-          conceptUpdated.value = { ...conceptOriginal.value };
-        }
-      });
-    }
-
-    function setStepsFromType(types: any[]) {
-      if (isValueSet(types)) {
-        if (stepsItems.value.findIndex(item => item.label === "Members") === -1) {
-          stepsItems.value.push({
-            label: "Members",
-            to: "/creator/members"
-          });
-        }
-      } else {
-        stepsItems.value = [
-          {
-            label: "Type",
-            to: "/creator/type"
-          },
-          {
-            label: "Summary",
-            to: "/creator/summary"
-          },
-          { label: "Parents", to: "/creator/parents" }
-        ];
-      }
-      if (types && types.length && currentStep.value === 0) {
-        currentStep.value++;
-        router.push(stepsItems.value[1].to);
-      }
-    }
-
-    function stepsBack() {
-      currentStep.value--;
-      if (currentStep.value >= 0) router.push(stepsItems.value[currentStep.value].to);
-    }
-
-    function stepsForward() {
-      currentStep.value++;
-      if (currentStep.value < stepsItems.value.length) router.push(stepsItems.value[currentStep.value].to);
-    }
-
-    function handleClick(data: any) {
-      console.log("click");
-      console.log(data);
-    }
-
-    return {
-      confirmLeavePage,
-      loading,
-      stepsItems,
-      conceptUpdated,
-      conceptOriginal,
-      showJson,
-      handleClick,
-      currentStep,
-      updateConcept,
-      stepsBack,
-      stepsForward,
-      refreshCreator,
-      submit
-    };
+    });
+  } else {
+    console.log("invalid entity");
+    Swal.fire({
+      icon: "warning",
+      title: "Warning",
+      text: "Invalid values found. Please review your entries.",
+      confirmButtonText: "Close",
+      confirmButtonColor: "#689F38"
+    });
   }
-});
+}
+
+async function isValidEntity(entity: any): Promise<boolean> {
+  if (!isObjectHasKeys(entity)) {
+    creatorValidity.value = [];
+    creatorInvalidEntity.value = true;
+    return false;
+  }
+  creatorValidity.value = [];
+  for (const [key, value] of Object.entries(entity)) {
+    const property = {} as any;
+    property[key] = await isValidProperty(value);
+    creatorValidity.value.push(property);
+  }
+  const valid = creatorValidity.value.every(item => item.valid === true);
+  creatorInvalidEntity.value = !valid;
+  return valid;
+}
+
+function refreshCreator() {
+  Swal.fire({
+    icon: "warning",
+    title: "Warning",
+    text: "This action will reset all progress. Are you sure you want to proceed?",
+    showCancelButton: true,
+    confirmButtonText: "Reset",
+    reverseButtons: true,
+    confirmButtonColor: "#FBC02D",
+    cancelButtonColor: "#607D8B",
+    customClass: { confirmButton: "swal-reset-button" }
+  }).then((result: any) => {
+    if (result.isConfirmed) {
+      conceptUpdated.value = { ...conceptOriginal.value };
+      currentStep.value = 0;
+    }
+  });
+}
+
+function stepsBack() {
+  currentStep.value--;
+  if (currentStep.value >= 0) router.push(stepsItems.value[currentStep.value].to);
+}
+
+function stepsForward() {
+  currentStep.value++;
+  if (currentStep.value < stepsItems.value.length) router.push(stepsItems.value[currentStep.value].to);
+}
+
+function handleClick(data: any) {
+  console.log("click");
+  console.log(data);
+}
+
+defineExpose({ confirmLeavePage });
 </script>
 
 <style scoped>
@@ -367,7 +367,7 @@ export default defineComponent({
   overflow: auto;
 }
 
-.steps-json-container {
+.content-json-container {
   flex: 1 1 auto;
   width: 100%;
   display: flex;

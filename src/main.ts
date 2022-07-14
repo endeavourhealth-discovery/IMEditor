@@ -77,7 +77,7 @@ import AutoComplete from "primevue/autocomplete";
 import Sidebar from "primevue/sidebar";
 import Steps from "primevue/steps";
 import Chips from "primevue/chips";
-import InputNumber from 'primevue/inputnumber';
+import InputNumber from "primevue/inputnumber";
 
 import { Amplify, Auth } from "aws-amplify";
 import awsconfig from "./aws-exports";
@@ -180,7 +180,7 @@ const vm = app.mount("#app");
 
 export default vm;
 
-axios.interceptors.request.use(async request => {
+axios.interceptors.request.use(async (request: any) => {
   if (store.state.isLoggedIn && Env.API && request.url?.startsWith(Env.API)) {
     request.headers.Authorization = "Bearer " + (await Auth.currentSession()).getIdToken().getJwtToken();
   }
