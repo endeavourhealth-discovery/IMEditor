@@ -144,17 +144,18 @@ router.beforeEach(async (to, from) => {
 
   if (to.name === "Editor" && isObjectHasKeys(to.params, ["selectedIri"])) {
     const iri = to.params.selectedIri as string;
-    console.log("here");
-    console.log(iri);
     try {
       new URL(iri);
       if (!(await entityService.iriExists(iri))) {
-        console.log("here2");
         router.push({ name: "EntityNotFound" });
       }
     } catch (_error) {
       router.push({ name: "EntityNotFound" });
     }
+  }
+
+  if (to.name === "PageNotFound" && to.path.startsWith("/creator/")) {
+    router.push({ name: "Creator" });
   }
 
   return true;

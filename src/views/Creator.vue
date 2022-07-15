@@ -18,13 +18,7 @@
             <Steps :model="stepsItems" :readonly="false" @click="stepsClicked" />
             <router-view v-slot="{ Component }">
               <keep-alive>
-                <component
-                  :is="Component"
-                  :data="groups.length ? groups[currentStep - 1] : undefined"
-                  :updatedConcept="conceptUpdated"
-                  @concept-updated="updateConcept"
-                  :mode="EditorMode.CREATE"
-                />
+                <component :is="Component" :data="groups.length ? groups[currentStep - 1] : undefined" :mode="EditorMode.CREATE" />
               </keep-alive>
             </router-view>
           </div>
@@ -33,7 +27,7 @@
             <div class="json-header-container">
               <span class="json-header">JSON viewer</span>
             </div>
-            <VueJsonPretty class="json" :path="'res'" :data="conceptUpdated" @click="handleClick" />
+            <VueJsonPretty class="json" :path="'res'" :data="editorEntity" @click="handleClick" />
           </div>
           <Button
             class="p-button-rounded p-button-info p-button-outlined json-toggle"
@@ -61,7 +55,7 @@ export default defineComponent({
 </script>
 
 <script setup lang="ts">
-import { onUnmounted, onBeforeUnmount, onMounted, computed, ref, Ref, watch, inject, defineComponent, PropType } from "vue";
+import { onUnmounted, onBeforeUnmount, onMounted, computed, ref, Ref, watch, inject, defineComponent, PropType, provide } from "vue";
 import { Enums, Helpers, Vocabulary, Services } from "im-library";
 import TypeSelector from "@/components/creator/TypeSelector.vue";
 import Group from "@/components/creator/Group.vue";
@@ -97,7 +91,7 @@ onUnmounted(() => {
 });
 
 const hasType = computed<boolean>(() => {
-  return isObjectHasKeys(conceptUpdated.value, [RDF.TYPE]);
+  return isObjectHasKeys(editorEntity.value, [RDF.TYPE]);
 });
 
 onMounted(async () => {
@@ -111,23 +105,32 @@ onMounted(async () => {
   loading.value = false;
 });
 
-let conceptOriginal: Ref<any> = ref({});
-let conceptUpdated: Ref<any> = ref({});
+let editorEntityOriginal: Ref<any> = ref({});
+let editorEntity: Ref<any> = ref({});
 let loading: Ref<boolean> = ref(true);
 let stepsItems: Ref<{ label: string; to: string }[]> = ref([{ label: "Type", to: "/creator/type" }]);
 let currentStep: Ref<number> = ref(0);
 let showJson: Ref<boolean> = ref(false);
 let creatorInvalidEntity: Ref<boolean> = ref(false);
 let creatorValidity: Ref<{ key: string; valid: boolean }[]> = ref([]);
-let config: Ref<any> = ref({});
 let shape: Ref<FormGenerator | undefined> = ref();
 let targetShape: Ref<TTIriRef | undefined> = ref();
 let groups: Ref<PropertyGroup[]> = ref([]);
 
-config.value = { "@id": { component: "String-1-1" } };
+provide(injectionKeys.editorValidity, { validity: creatorValidity, updateValidity, removeValidity });
+provide(injectionKeys.invalidEditorEntity, creatorInvalidEntity);
+
+provide(injectionKeys.editorEntity, { editorEntity, updateEntity });
 
 watch(
-  (): void => _.cloneDeep(conceptUpdated.value),
+  () => _.cloneDeep(creatorValidity.value),
+  (newValue: { key: string; valid: boolean }[]) => {
+    creatorInvalidEntity.value = newValue.every(item => item.valid);
+  }
+);
+
+watch(
+  () => _.cloneDeep(editorEntity.value),
   (newValue: any) => {
     if (checkForChanges()) {
       window.addEventListener("beforeunload", beforeWindowUnload);
@@ -142,6 +145,17 @@ const entityService = new EntityService(axios);
 async function getShape(type: string): Promise<void> {
   const shapeIri = await entityService.getShapeFromType(type);
   if (shapeIri) shape.value = await entityService.getShape(shapeIri["@id"]);
+}
+
+function updateValidity(data: { key: string; valid: boolean }) {
+  const index = creatorValidity.value.findIndex(item => item.key === data.key);
+  if (index) creatorValidity.value[index] = data;
+  else creatorValidity.value.push(data);
+}
+
+function removeValidity(data: { key: string; valid: boolean }) {
+  const index = creatorValidity.value.findIndex(item => (item.key = data.key));
+  if (index) creatorValidity.value.splice(index, 1);
 }
 
 function stepsClicked(event: any) {
@@ -210,12 +224,12 @@ function beforeWindowUnload(e: any) {
 
 const router = useRouter();
 
-function updateConcept(data: any) {
+function updateEntity(data: any) {
   if (isArrayHasLength(data)) {
     data.forEach((item: any) => {
       if (isObjectHasKeys(item)) {
         for (const [key, value] of Object.entries(item)) {
-          conceptUpdated.value[key] = value;
+          editorEntity.value[key] = value;
         }
       }
     });
@@ -224,17 +238,17 @@ function updateConcept(data: any) {
       updateType(data[RDF.TYPE]);
     }
     for (const [key, value] of Object.entries(data)) {
-      conceptUpdated.value[key] = value;
+      editorEntity.value[key] = value;
     }
   }
 
   if (creatorInvalidEntity.value) {
-    isValidEntity(conceptUpdated.value);
+    isValidEntity(editorEntity.value);
   }
 }
 
 function checkForChanges() {
-  if (JSON.stringify(conceptUpdated.value) === JSON.stringify(conceptOriginal.value)) {
+  if (JSON.stringify(editorEntity.value) === JSON.stringify(editorEntityOriginal.value)) {
     return false;
   } else {
     return true;
@@ -242,7 +256,7 @@ function checkForChanges() {
 }
 
 async function submit(): Promise<void> {
-  if (await isValidEntity(conceptUpdated.value)) {
+  if (await isValidEntity(editorEntity.value)) {
     console.log("submit");
     await Swal.fire({
       icon: "info",
@@ -256,7 +270,7 @@ async function submit(): Promise<void> {
       showLoaderOnConfirm: true,
       allowOutsideClick: () => !Swal.isLoading(),
       preConfirm: async () => {
-        const res = await entityService.createEntity(conceptUpdated.value);
+        const res = await entityService.createEntity(editorEntity.value);
         if (res) return res;
         else Swal.showValidationMessage("Error creating entity from server.");
       }
@@ -264,7 +278,7 @@ async function submit(): Promise<void> {
       if (result.isConfirmed) {
         Swal.fire({
           title: "Success",
-          text: "Entity" + conceptUpdated.value["@id"] + " has been created.",
+          text: "Entity" + editorEntity.value["@id"] + " has been created.",
           icon: "success",
           showCancelButton: true,
           reverseButtons: true,
@@ -273,9 +287,9 @@ async function submit(): Promise<void> {
           cancelButtonColor: "#607D8B"
         }).then((result: any) => {
           if (result.isConfirmed) {
-            window.location.href = Env.VIEWER_URL + "concept?selectedIri=" + iriToUrl(conceptUpdated.value["@id"]);
+            window.location.href = Env.VIEWER_URL + "concept?selectedIri=" + iriToUrl(editorEntity.value["@id"]);
           } else {
-            router.push({ name: "Editor", params: { selectedIri: conceptUpdated.value["@id"] } });
+            router.push({ name: "Editor", params: { selectedIri: editorEntity.value["@id"] } });
           }
         });
       }
@@ -322,7 +336,7 @@ function refreshCreator() {
     customClass: { confirmButton: "swal-reset-button" }
   }).then((result: any) => {
     if (result.isConfirmed) {
-      conceptUpdated.value = { ...conceptOriginal.value };
+      editorEntity.value = { ...editorEntityOriginal.value };
       currentStep.value = 0;
     }
   });

@@ -16,5 +16,27 @@ const $configService = Symbol("$configService") as InjectionKey<ConfigService>;
 const $setService = Symbol("$setSetvice") as InjectionKey<SetService>;
 const $router = Symbol("$router") as InjectionKey<Router>;
 const $route = Symbol("$route") as InjectionKey<RouteLocationNormalizedLoaded>;
+const editorValidity = Symbol("editorValidity") as InjectionKey<{
+  validity: Ref<{ key: string; valid: boolean }[]>;
+  updateValidity: Function;
+  removeValidity: Function;
+}>;
+const invalidEditorEntity = Symbol("invalidEditorEntity") as InjectionKey<Ref<boolean>>;
+const editorEntity = Symbol("editorEntity") as InjectionKey<{ editorEntity: Ref<any>; updateEntity: Function }>;
 
-export default { userRoles, $entityService, $store, $configService, $env, $loggerService, $queryService, $swal, $router, $setService, $route };
+export default {
+  userRoles,
+  $entityService,
+  $store,
+  $configService,
+  $env,
+  $loggerService,
+  $queryService,
+  $swal,
+  $router,
+  $setService,
+  $route,
+  editorValidity,
+  invalidEditorEntity,
+  editorEntity
+};

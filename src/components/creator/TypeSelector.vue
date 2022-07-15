@@ -9,11 +9,14 @@
   </div>
 </template>
 <script setup lang="ts">
-import { defineProps, defineEmits, computed, ref, Ref, onMounted } from "vue";
+import { defineProps, defineEmits, computed, ref, Ref, onMounted, inject } from "vue";
 import store from "@/store";
 import { Config, Vocabulary } from "im-library";
 import { EntityReferenceNode, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import injectionKeys from "@/injectionKeys/injectionKeys";
 const { IM, RDF } = Vocabulary;
+
+const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
 
 const emit = defineEmits({ "concept-updated": (payload: string) => true });
 
@@ -32,7 +35,7 @@ function setOptions() {
 function typeSelected(data: TTIriRef) {
   const result = {} as any;
   result[RDF.TYPE] = data["@id"];
-  emit("concept-updated", result);
+  if (entityUpdate) entityUpdate(result);
 }
 </script>
 

@@ -1,7 +1,7 @@
 <template>
-  <div class="string-single-select-container">
+  <div class="string-single-display-container">
     <span class="p-float-label">
-      <InputText class="p-inputtext-lg input-text" :class="invalid && 'invalid'" v-model="userInput" type="text" />
+      <InputText :disabled="!userRoles?.includes('IMAdmin')" class="p-inputtext-lg input-text" :class="invalid && 'invalid'" v-model="userInput" type="text" />
       <label>{{ data.name }}</label>
     </span>
   </div>
@@ -28,6 +28,7 @@ const props = defineProps({
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
+const userRoles = inject(injectionKeys.userRoles)?.value;
 
 const queryService = new QueryService(axios);
 
@@ -48,13 +49,8 @@ function updateEntity(data: any) {
 }
 
 async function updateValidity(dataKey: string) {
-  if (isObjectHasKeys(props.data, ["validation"])) invalid.value = !(await queryService.checkValidation(userInput, props.data.validation["@id"]));
-  else invalid.value = !defaultValidation(userInput.value);
+  invalid.value = await queryService.checkValidation(props.data.validation["@id"]);
   if (validityUpdate) validityUpdate({ key: dataKey, valid: !invalid.value });
-}
-
-function defaultValidation(string: string) {
-  return string.length < 50;
 }
 </script>
 

@@ -1,7 +1,7 @@
 <template>
-  <div class="string-single-select-container">
+  <div class="html-single-select-container">
     <span class="p-float-label">
-      <InputText class="p-inputtext-lg input-text" :class="invalid && 'invalid'" v-model="userInput" type="text" />
+      <Textarea class="p-inputtext-lg input-html" :class="invalid && 'invalid'" v-model="userInput" rows="4" />
       <label>{{ data.name }}</label>
     </span>
   </div>
@@ -48,19 +48,17 @@ function updateEntity(data: any) {
 }
 
 async function updateValidity(dataKey: string) {
-  if (isObjectHasKeys(props.data, ["validation"])) invalid.value = !(await queryService.checkValidation(userInput, props.data.validation["@id"]));
-  else invalid.value = !defaultValidation(userInput.value);
+  invalid.value = await queryService.checkValidation(userInput.value, props.data.validation["@id"]);
   if (validityUpdate) validityUpdate({ key: dataKey, valid: !invalid.value });
-}
-
-function defaultValidation(string: string) {
-  return string.length < 50;
 }
 </script>
 
 <style scoped>
-.input-text {
+.html-single-select-container {
   width: 20rem;
+}
+.input-html {
+  width: 100%;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
