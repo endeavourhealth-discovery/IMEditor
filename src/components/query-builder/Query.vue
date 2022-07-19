@@ -54,8 +54,8 @@ import { defineComponent } from "@vue/runtime-core";
 import TreeItem from "./TreeItem.vue";
 
 const treeData = {
-  name: "Select",
-  children: [{ name: "property", children: [{ name: "label" }, { name: "id" }] }, { name: "match", children: [{ name: "entityType", children: [{name: "Concept"}] }] }]
+  name: "select",
+  type: "select"
 };
 
 export default defineComponent({
