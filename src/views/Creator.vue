@@ -94,21 +94,10 @@ const hasType = computed<boolean>(() => {
   return isObjectHasKeys(editorEntity.value, [RDF.TYPE]);
 });
 
-onMounted(async () => {
-  loading.value = true;
-  if (props.type) {
-    await getShape(props.type["@id"]);
-    if (shape.value) processShape(shape.value);
-  } else {
-    router.push({ name: "TypeSelector" });
-  }
-  loading.value = false;
-});
-
 let editorEntityOriginal: Ref<any> = ref({});
 let editorEntity: Ref<any> = ref({});
 let loading: Ref<boolean> = ref(true);
-let stepsItems: Ref<{ label: string; to: string }[]> = ref([{ label: "Type", to: "/creator/type" }]);
+let stepsItems: Ref<{ label: string; to: string }[]> = ref([]);
 let currentStep: Ref<number> = ref(0);
 let showJson: Ref<boolean> = ref(false);
 let creatorInvalidEntity: Ref<boolean> = ref(false);
@@ -121,6 +110,17 @@ provide(injectionKeys.editorValidity, { validity: creatorValidity, updateValidit
 provide(injectionKeys.invalidEditorEntity, creatorInvalidEntity);
 
 provide(injectionKeys.editorEntity, { editorEntity, updateEntity });
+
+onMounted(async () => {
+  loading.value = true;
+  if (props.type) {
+    await getShape(props.type["@id"]);
+    if (shape.value) processShape(shape.value);
+  } else {
+    router.push({ name: "TypeSelector" });
+  }
+  loading.value = false;
+});
 
 watch(
   () => _.cloneDeep(creatorValidity.value),
@@ -163,16 +163,17 @@ function stepsClicked(event: any) {
 }
 
 function processShape(shape: FormGenerator) {
-  console.log(shape);
   targetShape.value = shape.targetShape;
   groups.value = shape.group;
   setSteps();
 }
 
 async function updateType(typeIri: string) {
+  console.log(typeIri);
   loading.value = true;
   await getShape(typeIri);
   if (shape.value) processShape(shape.value);
+  editorEntity.value[RDF.TYPE] = typeIri;
   loading.value = false;
   stepsForward();
 }
@@ -184,7 +185,9 @@ function setSteps() {
   if (creatorRoute) {
     groups.value.forEach(group => {
       const label = getNameFromLabel(group.label);
-      creatorRoute.children?.push({ path: label, name: label, component: Group });
+      if (creatorRoute.children?.findIndex(route => route.name === label) === -1) {
+        creatorRoute.children?.push({ path: label, name: label, component: Group });
+      }
       stepsItems.value.push({ label: getNameFromLabel(group.label), to: "/creator/" + label });
     });
     router.addRoute(creatorRoute);
@@ -192,7 +195,7 @@ function setSteps() {
 }
 
 function getNameFromLabel(label: string) {
-  return label.split("-")[1].trim();
+  return label.split(":")[1].trim();
 }
 
 const confirm = useConfirm();
@@ -235,10 +238,12 @@ function updateEntity(data: any) {
     });
   } else if (isObjectHasKeys(data)) {
     if (isObjectHasKeys(data, [RDF.TYPE])) {
-      updateType(data[RDF.TYPE]);
-    }
-    for (const [key, value] of Object.entries(data)) {
-      editorEntity.value[key] = value;
+      if (!isObjectHasKeys(editorEntity.value, [RDF.TYPE])) updateType(data[RDF.TYPE]);
+      else if (editorEntity.value[RDF.TYPE] !== data[RDF.TYPE]) updateType(data[RDF.TYPE]);
+    } else {
+      for (const [key, value] of Object.entries(data)) {
+        editorEntity.value[key] = value;
+      }
     }
   }
 

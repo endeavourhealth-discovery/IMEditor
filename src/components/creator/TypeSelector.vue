@@ -9,7 +9,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { defineProps, defineEmits, computed, ref, Ref, onMounted, inject } from "vue";
+import { computed, ref, Ref, onMounted, inject } from "vue";
 import store from "@/store";
 import { Config, Vocabulary } from "im-library";
 import { EntityReferenceNode, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";

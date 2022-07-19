@@ -35,7 +35,16 @@ let key = props.data.path["@id"];
 
 let invalid = ref(false);
 
-let userInput = ref(props.value);
+let userInput = ref("");
+onMounted(() => {
+  if (props.value) userInput.value = props.value;
+});
+watch(
+  () => props.value,
+  newValue => {
+    if (newValue) userInput.value = newValue;
+  }
+);
 watch(userInput, async newValue => {
   updateEntity(newValue);
   await updateValidity(newValue);

@@ -35,21 +35,29 @@ let key = props.data.path["@id"];
 
 let invalid = ref(false);
 
-let userInput = ref(props.value);
+let userInput = ref("");
+onMounted(() => {
+  if (props.value) userInput.value = props.value;
+});
 watch(userInput, async newValue => {
-  updateEntity(newValue);
-  await updateValidity(newValue);
+  updateEntity();
+  await updateValidity();
 });
 
-function updateEntity(data: any) {
+function updateEntity() {
   const result = {} as any;
-  result[key] = data;
+  result[key] = userInput.value;
   if (entityUpdate) entityUpdate(result);
 }
 
-async function updateValidity(dataKey: string) {
-  invalid.value = await queryService.checkValidation(userInput.value, props.data.validation["@id"]);
-  if (validityUpdate) validityUpdate({ key: dataKey, valid: !invalid.value });
+async function updateValidity() {
+  if (isObjectHasKeys(props.data, ["validation"])) invalid.value = await queryService.checkValidation(userInput.value, props.data.validation["@id"]);
+  else invalid.value = !defaultValidation(userInput.value);
+  if (validityUpdate) validityUpdate({ key: key, valid: !invalid.value });
+}
+
+function defaultValidation(userInput: string) {
+  return userInput.length < 500;
 }
 </script>
 

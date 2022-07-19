@@ -1,7 +1,7 @@
 <template>
   <div class="string-single-display-container">
     <span class="p-float-label">
-      <InputText :disabled="!userRoles?.includes('IMAdmin')" class="p-inputtext-lg input-text" :class="invalid && 'invalid'" v-model="userInput" type="text" />
+      <InputText disabled class="p-inputtext-lg input-text" :class="invalid && 'invalid'" v-model="userInput" type="text" />
       <label>{{ data.name }}</label>
     </span>
   </div>
@@ -23,12 +23,11 @@ const { QueryService } = Services;
 const props = defineProps({
   data: { type: Object as PropType<PropertyShape>, required: true },
   mode: { type: String, required: true },
-  value: { type: String, default: "" }
+  value: { type: String, required: false }
 });
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
-const userRoles = inject(injectionKeys.userRoles)?.value;
 
 const queryService = new QueryService(axios);
 
@@ -36,21 +35,48 @@ let key = props.data.path["@id"];
 
 let invalid = ref(false);
 
-let userInput = ref(props.value);
+let userInput = ref("");
+watch([() => props.value, () => props.data], async ([newPropsValue, newDataValue]) => {
+  if (props.value && newPropsValue) userInput.value = props.value;
+  else userInput.value = await processPropertyValue(newDataValue);
+});
 watch(userInput, async newValue => {
-  updateEntity(newValue);
-  await updateValidity(newValue);
+  if (newValue) {
+    updateEntity();
+    await updateValidity();
+  }
+});
+onMounted(async () => {
+  if (props.value) userInput.value = props.value;
+  else {
+    const result = await processPropertyValue(props.data);
+    if (result) userInput.value = result;
+  }
 });
 
-function updateEntity(data: any) {
+async function processPropertyValue(property: PropertyShape): Promise<string> {
+  if (isObjectHasKeys(property, ["isIri"])) {
+    return property.isIri["@id"];
+  }
+  if (isObjectHasKeys(property, ["function"])) {
+    return await queryService.runFunction(property.function["@id"]);
+  }
+  throw new Error("Property must have isIri or function key");
+}
+
+function updateEntity() {
   const result = {} as any;
-  result[key] = data;
+  result[key] = userInput.value;
   if (entityUpdate) entityUpdate(result);
 }
 
-async function updateValidity(dataKey: string) {
-  invalid.value = await queryService.checkValidation(props.data.validation["@id"]);
-  if (validityUpdate) validityUpdate({ key: dataKey, valid: !invalid.value });
+async function updateValidity() {
+  if (isObjectHasKeys(props.data, ["validation"])) {
+    invalid.value = !(await queryService.checkValidation(userInput, props.data.validation["@id"]));
+    if (validityUpdate) validityUpdate({ key: key, valid: !invalid.value });
+  } else {
+    if (validityUpdate) validityUpdate({ key: key, valid: true });
+  }
 }
 </script>
 
