@@ -54,6 +54,7 @@ import { defineComponent } from "@vue/runtime-core";
 import TreeItem from "./TreeItem.vue";
 
 const treeData = {
+  key: 0,
   name: "select",
   type: "select"
 };

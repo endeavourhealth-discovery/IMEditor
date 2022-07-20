@@ -2,15 +2,15 @@
   <li>
     <div v-if="model.type === 'text'">
       <InputText v-model="model.name" @keydown="onEnterKeyDown" />
-      <span v-if="parent" @click="removeChild(parent)">[x]</span>
+      <span v-if="parent" @click="removeChild()">[x]</span>
     </div>
     <div v-else-if="model.type === 'dropdown'">
       <Dropdown v-model="model.name" :options="getOptions()" placeholder="Add" @change="onSelect" />
-      <span v-if="parent" @click="removeChild(parent)">[x]</span>
+      <span v-if="parent" @click="removeChild()">[x]</span>
     </div>
     <div v-else :class="{ bold: isFolder }" @click="toggle" @dblclick="changeType">
       {{ model.name }}
-      <span v-if="parent" @click="removeChild(parent)">[x]</span>
+      <span v-if="parent" @click="removeChild()">[x]</span>
       <!-- <span v-if="isFolder">[{{ isOpen ? "-" : "+" }}]</span> -->
     </div>
     <ul v-show="isOpen" v-if="isFolder">
@@ -18,7 +18,7 @@
         A component can recursively render itself using its
         "name" option (inferred from filename if using SFC)
       -->
-      <TreeItem class="item" v-for="child in model.children" v-bind:key="child" :model="child" :parent="model"> </TreeItem>
+      <TreeItem class="item" v-for="child in model.children" v-bind:key="child.key" :model="child" :parent="model"> </TreeItem>
       <li class="add" @click="addChild">+</li>
     </ul>
   </li>
@@ -64,10 +64,11 @@ export default defineComponent({
           return this.selectOptions;
       }
     },
-    removeChild(parent: TreeItem) {
-      parent.children = parent.children?.filter((child: TreeItem) => {
-        return child.name !== this.model.name;
-      });
+    removeChild() {
+      if (this.parent)
+        this.parent.children = this.parent.children?.filter((child: TreeItem) => {
+          return child.key !== this.model.key;
+        });
     },
 
     toggle() {
@@ -93,7 +94,8 @@ export default defineComponent({
     },
 
     addChild() {
-      const item = {} as TreeItem;
+      const length = this.model.children?.at(-1)?.key || 0;
+      const item = { key: length + 1, name: this.model.name } as TreeItem;
       switch (this.model.type) {
         case "property":
         case "entityType":
@@ -106,8 +108,7 @@ export default defineComponent({
           item.type = "text";
           break;
       }
-      item.name = this.model.name;
-      this.model.children.push(item);
+      this.model.children?.push(item);
     }
   }
 });
