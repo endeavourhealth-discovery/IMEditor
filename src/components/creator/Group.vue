@@ -84,8 +84,10 @@ function processEntityValue(property: PropertyShape) {
 
 .property-container {
   width: 100%;
+  max-height: 100%;
   display: flex;
   flex-flow: row;
   justify-content: center;
+  overflow: auto;
 }
 </style>

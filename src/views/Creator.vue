@@ -169,7 +169,6 @@ function processShape(shape: FormGenerator) {
 }
 
 async function updateType(typeIri: string) {
-  console.log(typeIri);
   loading.value = true;
   await getShape(typeIri);
   if (shape.value) processShape(shape.value);
@@ -195,7 +194,8 @@ function setSteps() {
 }
 
 function getNameFromLabel(label: string) {
-  return label.split(":")[1].trim();
+  if (!label) return "";
+  return label.split("-")[1].trim();
 }
 
 const confirm = useConfirm();

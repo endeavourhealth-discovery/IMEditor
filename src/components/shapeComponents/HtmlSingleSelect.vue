@@ -63,7 +63,7 @@ function defaultValidation(userInput: string) {
 
 <style scoped>
 .html-single-select-container {
-  width: 20rem;
+  width: 25rem;
 }
 .input-html {
   width: 100%;

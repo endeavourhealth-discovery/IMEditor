@@ -1,15 +1,15 @@
 <template>
-  <div class="terminology-concept-search-select-container">
+  <div class="entity-single-dropdown-container">
     <span class="p-float-label">
-      <Dropdown class="type-dropdown" :class="invalid && 'invalid'" v-model="selectedEntity" :options="dropdownOptions" optionLabel="name" />
-      <label>{{ data.label }}</label>
+      <Dropdown class="entity-single-dropdown" :class="invalid && 'invalid'" v-model="selectedEntity" :options="dropdownOptions" optionLabel="name" />
+      <label>{{ data.name }}</label>
     </span>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, Ref, watch, computed, onMounted, inject, PropType } from "vue";
-import { Helpers, Services } from "im-library";
+import { Helpers, Services, Vocabulary } from "im-library";
 import store from "@/store";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";
@@ -21,6 +21,7 @@ const {
   Sorters: { byName }
 } = Helpers;
 const { EntityService, QueryService } = Services;
+const { IM } = Vocabulary;
 
 const props = defineProps({
   data: { type: Object as PropType<PropertyShape>, required: true },
@@ -55,13 +56,13 @@ watch(selectedEntity, async newValue => {
 let invalid = ref(false);
 
 async function getDropdownOptions() {
-  if (isObjectHasKeys(props.data, ["search"]))
-    dropdownOptions.value = (await entityService.getEntityChildren(props.data.search["@id"]))
+  if (isObjectHasKeys(props.data, ["argument"]))
+    dropdownOptions.value = (await entityService.getEntityChildren(props.data.argument[0].valueData))
       .map(result => {
         return { "@id": result["@id"], name: result.name };
       })
       .sort(byName);
-  else throw new Error("propertyshape is missing 'search' parameter to fetch dropdown options");
+  else throw new Error("propertyshape is missing 'argument' parameter to fetch dropdown options");
 }
 
 function updateEntity() {
@@ -81,8 +82,8 @@ async function updateValidity() {
 </script>
 
 <style scoped>
-.activity-status-container {
-  width: 100%;
+.entity-single-dropdown {
+  width: 25rem;
 }
 .invalid {
   border-color: #e24c4c;

@@ -1,6 +1,6 @@
 <template>
   <div class="string-single-select-container">
-    <span class="p-float-label">
+    <span class="p-float-label" v-tooltip.top="{ value: userInput ? userInput : data.name, class: 'string-single-select-tooltip' }">
       <InputText class="p-inputtext-lg input-text" :class="invalid && 'invalid'" v-model="userInput" type="text" />
       <label>{{ data.name }}</label>
     </span>
@@ -69,7 +69,7 @@ function defaultValidation(string: string) {
 
 <style scoped>
 .input-text {
-  width: 20rem;
+  width: 25rem;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
@@ -83,5 +83,13 @@ function defaultValidation(string: string) {
   color: #e24c4c;
   font-size: 0.8rem;
   padding: 0 0 0.25rem 0;
+}
+</style>
+
+<style>
+.string-single-select-tooltip .p-tooltip-text {
+  width: fit-content;
+  word-wrap: break-word;
+  word-break: normal;
 }
 </style>

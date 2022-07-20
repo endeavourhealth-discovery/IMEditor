@@ -1,24 +1,51 @@
 <template>
-  <div class="terminology-concept-search-select-container">
-    <span class="p-float-label">
-      <Dropdown class="type-dropdown" :class="invalid && 'invalid'" v-model="graph" :options="typeOptions" optionLabel="name" />
-      <label>{{ data.label }}</label>
-    </span>
+  <div class="entity-multi-search-container">
+    <h3>{{ data.name }}:</h3>
+    <div v-if="loading" class="loading-container">
+      <ProgressSpinner />
+    </div>
+    <div v-else class="children-container" :class="invalid && 'invalid'">
+      <small v-if="invalid" class="validate-error">Failed validation</small>
+      <template v-for="item of build" :key="item.id">
+        <component
+          :is="item.type"
+          :value="item.value"
+          :id="item.id"
+          :position="item.position"
+          :showButtons="item.showButtons"
+          :builderType="item.builderType"
+          @deleteClicked="deleteItem"
+          @addClicked="addItemWrapper"
+          @updateClicked="updateItemWrapper"
+          @addNextOptionsClicked="addItemWrapper"
+        />
+      </template>
+    </div>
   </div>
 </template>
 
+<script lang="ts">
+import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
+export default defineComponent({
+  components: { Entity }
+});
+</script>
+
 <script setup lang="ts">
-import { ref, Ref, watch, computed, onMounted, inject, PropType } from "vue";
-import { Helpers, Services } from "im-library";
+import { ref, Ref, watch, computed, onMounted, inject, PropType, defineComponent } from "vue";
+import { Enums, Helpers, Services, Vocabulary } from "im-library";
 import store from "@/store";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";
-import { PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { ComponentDetails, EntityReferenceNode, Namespace, PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 import axios from "axios";
 const {
-  DataTypeCheckers: { isObjectHasKeys, isArrayHasLength }
+  DataTypeCheckers: { isObjectHasKeys, isArrayHasLength },
+  EditorBuilderJsonMethods: { generateNewComponent, updatePositions, addItem, updateItem }
 } = Helpers;
 const { QueryService } = Services;
+const { BuilderType, ComponentType } = Enums;
+const { IM } = Vocabulary;
 
 const props = defineProps({
   data: { type: Object as PropType<PropertyShape>, required: true },
@@ -31,53 +58,155 @@ const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
 
 const queryService = new QueryService(axios);
 
-const typeOptions = computed(() =>
-  store.state.filterOptions.types.map(item => {
-    return { "@id": item["@id"], name: item.name };
-  })
-);
-
 let key = props.data.path["@id"];
 
-let selectedConcepts: Ref<TTIriRef[]> = ref([]);
+let loading = ref(true);
+
+let filters: Ref<{ status: EntityReferenceNode[]; schemes: Namespace[]; types: EntityReferenceNode[] } | undefined> = ref();
+
+let build: Ref<ComponentDetails[]> = ref([]);
 onMounted(() => {
-  if (props.value && isArrayHasLength(props.value)) selectedConcepts.value = props.value;
+  setFilters();
+  createBuild();
 });
-watch(selectedConcepts, async newValue => {
-  if (isArrayHasLength(newValue)) {
-    updateEntity(newValue);
-    await updateValidity(newValue);
+watch(
+  () => _.cloneDeep(build.value),
+  async () => {
+    if (entityUpdate) updateEntity();
+    if (validityUpdate) await updateValidity();
   }
-});
+);
+
+function setFilters() {
+  const typeOptions = store.state.filterOptions.types.filter(type => type["@id"] === IM.CONCEPT);
+  filters.value = { status: store.state.filterOptions.status, schemes: store.state.filterOptions.schemes, types: typeOptions };
+}
+
+function createBuild() {
+  loading.value = true;
+  build.value = [];
+  if (!props.value || !isArrayHasLength(props.value)) {
+    createDefaultBuild();
+    loading.value = false;
+    return;
+  }
+  let position = 0;
+  props.value.forEach(item => {
+    build.value.push(processChild(item, position));
+    position++;
+  });
+  for (const item in props.value) {
+    build.value.push(processChild(item, position));
+    position++;
+  }
+  if (!isArrayHasLength(build.value)) {
+    createDefaultBuild();
+  }
+  loading.value = false;
+}
+
+function createDefaultBuild() {
+  build.value = [
+    generateNewComponent(
+      ComponentType.ENTITY,
+      0,
+      { filterOptions: filters.value, entity: undefined, type: ComponentType.ENTITY, label: "Entity" },
+      BuilderType.PARENT,
+      {
+        minus: true,
+        plus: true
+      }
+    )
+  ];
+}
+
+function processChild(child: any, position: number) {
+  return generateNewComponent(
+    ComponentType.ENTITY,
+    position,
+    { filterOptions: filters, entity: child, type: ComponentType.ENTITY, label: "Entity" },
+    BuilderType.PARENT,
+    {
+      minus: true,
+      plus: true
+    }
+  );
+}
+
+function generateBuildAsJson() {
+  return build.value.map(item => item.json);
+}
 
 let invalid = ref(false);
 
-let graph = ref(props.dataValue);
-watch(graph, newValue => {
-  updateEntity(newValue);
-});
-
-function setInvalidInputs(validities: { key: string; valid: boolean }[]): void {
-  const found = validities.find((item: { key: string; valid: boolean }) => item.key === key);
-  if (found) invalid.value = found.valid;
-  else invalid.value = false;
-}
-
-function updateEntity(data: any) {
+function updateEntity() {
+  const value = generateBuildAsJson();
   const result = {} as any;
-  result[key] = data;
+  result[key] = value;
   if (entityUpdate) entityUpdate(result);
 }
 
-async function updateValidity(dataKey: string, valid: boolean) {
-  invalid.value = await queryService.checkValidation();
-  if (validityUpdate) updateValidity({ key: dataKey, vaild: valid });
+async function updateValidity() {
+  if (isObjectHasKeys(props.data, ["validation"])) {
+    invalid.value = !(await queryService.checkValidation(generateBuildAsJson(), props.data.validation["@id"]));
+    if (validityUpdate) validityUpdate({ key: key, valid: !invalid.value });
+  } else {
+    if (validityUpdate) validityUpdate({ key: key, valid: defaultValidation() });
+  }
+}
+
+function defaultValidation() {
+  return generateBuildAsJson().every(item => {
+    return { "@id": item["@id"], name: item.name };
+  });
+}
+
+function addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
+  if (data.selectedType === ComponentType.ENTITY) {
+    data.value = { filterOptions: filters, entity: undefined, type: ComponentType.ENTITY, label: "Entity" };
+  }
+  addItem(data, build.value, BuilderType.PARENT, { minus: true, plus: true });
+}
+
+function deleteItem(data: ComponentDetails): void {
+  const index = build.value.findIndex(item => item.position === data.position);
+  build.value.splice(index, 1);
+  if (build.value.length === 0) {
+    createDefaultBuild();
+    return;
+  }
+  updatePositions(build.value);
+}
+
+function updateItemWrapper(data: ComponentDetails) {
+  updateItem(data, build.value);
 }
 </script>
 
 <style scoped>
-.activity-status-container {
+.entity-multi-search-container {
   width: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+}
+.loading-container {
+  flex: 1 1 auto;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  flex-flow: column;
+}
+.children-container {
+  padding: 1rem;
+  border: 1px solid #dee2e6;
+  border-radius: 3px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-start;
+  gap: 1rem;
+  overflow: auto;
 }
 .invalid {
   border-color: #e24c4c;
