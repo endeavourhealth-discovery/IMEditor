@@ -26,13 +26,19 @@
             <div class="json-header-container">
               <span class="json-header">JSON viewer</span>
             </div>
+            <VueJsonPretty v-if="isObjectHasKeys(queryDisplay)" class="json" :data="queryDisplay" />
+          </div>
+          <div v-if="showJson" class="json-container">
+            <div class="json-header-container">
+              <span class="json-header">JSON viewer</span>
+            </div>
             <VueJsonPretty v-if="isObjectHasKeys(treeData)" class="json" :data="treeData" />
           </div>
-          <Button
+          <!-- <Button
             class="p-button-rounded p-button-info p-button-outlined json-toggle"
             :label="showJson ? 'hide JSON' : 'show JSON'"
             @click="showJson = !showJson"
-          />
+          /> -->
         </div>
         <div class="button-bar" id="query-button-bar">
           <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
@@ -52,12 +58,7 @@ const {
 } = Helpers;
 import { defineComponent } from "@vue/runtime-core";
 import TreeItem from "./TreeItem.vue";
-
-const treeData = {
-  key: 0,
-  name: "select",
-  type: "select"
-};
+import { buildQueryFromTreeItem } from "./QueryBuilder";
 
 export default defineComponent({
   components: {
@@ -68,8 +69,27 @@ export default defineComponent({
     return {
       showJson: true,
       loading: false,
-      treeData
+      treeData: {
+        key: 0,
+        name: "select",
+        type: "select",
+        value: {
+          name: "select"
+        }
+      },
+      queryDisplay: {}
     };
+  },
+  watch: {
+    treeData: {
+      handler(newValue, oldValue) {
+        this.queryDisplay = buildQueryFromTreeItem(newValue);
+        console.log(this.queryDisplay);
+        console.log(JSON.stringify(this.queryDisplay));
+      },
+      deep: true,
+      immediate: true
+    }
   },
   methods: {
     isObjectHasKeys(data: any) {

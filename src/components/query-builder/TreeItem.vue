@@ -1,11 +1,20 @@
 <template>
   <li>
     <div v-if="model.type === 'text'">
-      <InputText v-model="model.name" @keydown="onEnterKeyDown" />
+      <InputText v-model="model.value" @keydown="onEnterKeyDown" />
       <span v-if="parent" @click="removeChild()">[x]</span>
     </div>
     <div v-else-if="model.type === 'dropdown'">
-      <Dropdown v-model="model.name" :options="getOptions()" placeholder="Add" @change="onSelect" />
+      <Dropdown
+        v-model="model.value"
+        :options="getOptions()"
+        optionLabel="name"
+        :editable="true"
+        :filter="true"
+        placeholder="Select"
+        @keydown="onEnterKeyDown"
+        @change="onSelect"
+      />
       <span v-if="parent" @click="removeChild()">[x]</span>
     </div>
     <div v-else :class="{ bold: isFolder }" @click="toggle" @dblclick="changeType">
@@ -27,6 +36,11 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 import TreeItem from "./TreeItem";
+import { Helpers, Services, Interfaces } from "im-library";
+import axios from "axios";
+const {
+  DataTypeCheckers: { isObjectHasKeys, isArrayHasLength }
+} = Helpers;
 
 export default defineComponent({
   name: "TreeItem", // necessary for self-reference
@@ -37,16 +51,20 @@ export default defineComponent({
   data() {
     return {
       isOpen: false,
-      selectOptions: ["property", "match", "logic"],
-      propertyOptions: ["id", "label"],
-      matchOptions: ["property", "entityType"],
-      entityTypeOptions: ["datamodel", "concept"]
+      clauseOptions: [{ name: "select" }, { name: "property" }, { name: "match" }, { name: "logic" }] as Interfaces.TTIriRef[],
+      propertyOptions: [] as Interfaces.TTIriRef[],
+      matchOptions: [{ name: "property" }, { name: "entityType" }, { name: "entityId" }],
+      entityTypeOptions: [] as Interfaces.TTIriRef[]
     };
   },
   computed: {
     isFolder(): boolean {
-      return this.model.children && this.model.children.length;
+      return isArrayHasLength(this.model.children);
     }
+  },
+  async mounted() {
+    await this.getClasses();
+    await this.getProperties();
   },
   methods: {
     getOptions() {
@@ -58,14 +76,14 @@ export default defineComponent({
         case "entityType":
           return this.entityTypeOptions;
         case "select":
-          return this.selectOptions;
+          return this.clauseOptions;
 
         default:
-          return this.selectOptions;
+          return this.clauseOptions;
       }
     },
     removeChild() {
-      if (this.parent)
+      if (this.parent && isObjectHasKeys(this.parent) && isArrayHasLength(this.parent.children))
         this.parent.children = this.parent.children?.filter((child: TreeItem) => {
           return child.key !== this.model.key;
         });
@@ -90,7 +108,18 @@ export default defineComponent({
     },
 
     onSelect() {
-      this.model.type = this.model.name;
+      const name = this.model.value.name || this.model.value;
+      this.model.name = name;
+      this.model.type = name;
+    },
+
+    async getProperties() {
+      this.propertyOptions = await axios.get(Services.Env.API + "api/entity/public/properties");
+      this.propertyOptions = this.clauseOptions.concat(this.propertyOptions);
+    },
+
+    async getClasses() {
+      this.entityTypeOptions = await axios.get(Services.Env.API + "api/entity/public/classes");
     },
 
     addChild() {
