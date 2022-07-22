@@ -55,7 +55,7 @@ export default defineComponent({
 </script>
 
 <script setup lang="ts">
-import { onUnmounted, onBeforeUnmount, onMounted, computed, ref, Ref, watch, inject, defineComponent, PropType, provide } from "vue";
+import { onUnmounted, onBeforeUnmount, onMounted, computed, ref, Ref, Reactive, watch, inject, defineComponent, PropType, provide } from "vue";
 import { Enums, Helpers, Vocabulary, Services } from "im-library";
 import TypeSelector from "@/components/creator/TypeSelector.vue";
 import Group from "@/components/creator/Group.vue";
@@ -68,6 +68,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { useRouter } from "vue-router";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import { FormGenerator, PropertyGroup, PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { any } from "cypress/types/bluebird";
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength },
   ConceptTypeMethods: { isValueSet },
@@ -81,6 +82,9 @@ const { EditorMode } = Enums;
 const userRoles = inject(injectionKeys.userRoles);
 
 const props = defineProps({ type: { type: Object as PropType<TTIriRef>, required: false } });
+
+const router = useRouter();
+const confirm = useConfirm();
 
 onBeforeUnmount(() => {
   confirmLeavePage();
@@ -105,11 +109,13 @@ let creatorValidity: Ref<{ key: string; valid: boolean }[]> = ref([]);
 let shape: Ref<FormGenerator | undefined> = ref();
 let targetShape: Ref<TTIriRef | undefined> = ref();
 let groups: Ref<PropertyGroup[]> = ref([]);
+let valueVariableMap: Ref<Map<string, any>> = ref(new Map<string, any>());
 
 provide(injectionKeys.editorValidity, { validity: creatorValidity, updateValidity, removeValidity });
 provide(injectionKeys.invalidEditorEntity, creatorInvalidEntity);
 
 provide(injectionKeys.editorEntity, { editorEntity, updateEntity });
+provide(injectionKeys.valueVariableMap, valueVariableMap);
 
 onMounted(async () => {
   loading.value = true;
@@ -140,11 +146,28 @@ watch(
   }
 );
 
+watch([() => _.cloneDeep(editorEntity.value), () => _.cloneDeep(groups.value)], ([newEntity, newGroups]) => {
+  setValueVariableMap(newEntity, newGroups);
+});
+
 const entityService = new EntityService(axios);
 
 async function getShape(type: string): Promise<void> {
   const shapeIri = await entityService.getShapeFromType(type);
   if (shapeIri) shape.value = await entityService.getShape(shapeIri["@id"]);
+}
+
+function setValueVariableMap(entity: any, groups: PropertyGroup[]) {
+  if (entity && groups.length) {
+    groups.forEach(group => {
+      group.property.forEach(property => {
+        if (property.valueVariable) {
+          const value = entity[property.path["@id"]];
+          valueVariableMap.value.set(property.valueVariable, value);
+        }
+      });
+    });
+  }
 }
 
 function updateValidity(data: { key: string; valid: boolean }) {
@@ -198,8 +221,6 @@ function getNameFromLabel(label: string) {
   return label.split("-")[1].trim();
 }
 
-const confirm = useConfirm();
-
 function confirmLeavePage() {
   if (checkForChanges()) {
     confirm.require({
@@ -224,8 +245,6 @@ function beforeWindowUnload(e: any) {
     e.returnValue = "";
   }
 }
-
-const router = useRouter();
 
 function updateEntity(data: any) {
   if (isArrayHasLength(data)) {

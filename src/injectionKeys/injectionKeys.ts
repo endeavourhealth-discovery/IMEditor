@@ -23,6 +23,7 @@ const editorValidity = Symbol("editorValidity") as InjectionKey<{
 }>;
 const invalidEditorEntity = Symbol("invalidEditorEntity") as InjectionKey<Ref<boolean>>;
 const editorEntity = Symbol("editorEntity") as InjectionKey<{ editorEntity: Ref<any>; updateEntity: Function }>;
+const valueVariableMap = Symbol("valueVariableMap") as InjectionKey<Ref<Map<string, any>>>;
 
 export default {
   userRoles,
@@ -38,5 +39,6 @@ export default {
   $route,
   editorValidity,
   invalidEditorEntity,
-  editorEntity
+  editorEntity,
+  valueVariableMap
 };

@@ -17,11 +17,13 @@ import axios from "axios";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";
 import { PropertyShape } from "im-library/dist/types/interfaces/Interfaces";
-import { Helpers, Services } from "im-library";
+import { Helpers, Services, Vocabulary } from "im-library";
+import { Argument } from "im-library/dist/types/models/modules/AutoGen";
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
 const { QueryService } = Services;
+const { IM, SHACL } = Vocabulary;
 
 const props = defineProps({
   data: { type: Object as PropType<PropertyShape>, required: true },
@@ -31,6 +33,7 @@ const props = defineProps({
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
+const valueVariableMap = inject(injectionKeys.valueVariableMap);
 
 const queryService = new QueryService(axios);
 
@@ -41,7 +44,7 @@ let invalid = ref(false);
 
 let userInput = ref("");
 watch([() => props.value, () => props.data], async ([newPropsValue, newDataValue]) => {
-  if (props.value && newPropsValue) userInput.value = props.value;
+  if (newPropsValue && newDataValue) userInput.value = newPropsValue;
   else userInput.value = await processPropertyValue(newDataValue);
 });
 watch(userInput, async newValue => {
@@ -60,18 +63,57 @@ onMounted(async () => {
   }
 });
 
+watch(
+  () => _.cloneDeep(valueVariableMap?.value),
+  async (newValue, oldValue) => {
+    if (!userInput.value && newValue && oldValue && !compareMaps(newValue, oldValue)) {
+      loading.value = true;
+      if (newValue?.size) userInput.value = await processPropertyValue(props.data);
+      loading.value = false;
+    }
+  }
+);
+
+function compareMaps(map1: Map<string, any>, map2: Map<string, any>) {
+  let testValue;
+  if (map1.size !== map2.size) return false;
+  for (let [key, value] of map1) {
+    testValue = map2.get(key);
+    if (testValue !== value || (testValue === undefined && !map2.has(key))) return false;
+  }
+  return true;
+}
+
 async function processPropertyValue(property: PropertyShape): Promise<string> {
   if (isObjectHasKeys(property, ["isIri"])) {
     return property.isIri["@id"];
   }
   if (isObjectHasKeys(property, ["function", "argument"])) {
-    return await queryService.runFunction(property.function["@id"], property.argument[0]);
+    const args = processArguments(property);
+    const result = await queryService.runFunction(property.function["@id"], args);
+    if (result) return result;
+    else return "";
   }
   if (isObjectHasKeys(property, ["function"])) {
     const result = await queryService.runFunction(property.function["@id"]);
     if (result && isObjectHasKeys(result, ["iri"])) return result.iri["@id"];
   }
   throw new Error("Property must have isIri or function key");
+}
+
+function processArguments(property: PropertyShape) {
+  const result = new Map<string, any>();
+  property.argument.forEach(arg => {
+    let key = "";
+    let value: any;
+    if (arg.parameter === "this") key = property.path["@id"];
+    else key = arg.parameter;
+    if (arg.valueIri) value = arg.valueIri;
+    else if (arg.valueVariable) value = valueVariableMap?.value.get(arg.valueVariable);
+    else if (arg.valueText) value = arg.valueText;
+    result.set(key, value);
+  });
+  return result;
 }
 
 function updateEntity() {
