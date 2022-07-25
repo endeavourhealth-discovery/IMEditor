@@ -44,7 +44,8 @@ const routes: Array<RouteRecordRaw> = [
     meta: {
       requiresAuth: true,
       requiresLicense: true
-    }
+    },
+    children: []
   },
   {
     path: "/query",
@@ -152,6 +153,7 @@ router.beforeEach(async (to, from) => {
     } catch (_error) {
       router.push({ name: "EntityNotFound" });
     }
+    router.push({ name: "Editor" });
   }
 
   if (to.name === "PageNotFound" && to.path.startsWith("/creator/")) {

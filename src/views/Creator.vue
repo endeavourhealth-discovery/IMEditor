@@ -47,18 +47,17 @@
 </template>
 
 <script lang="ts">
+import TypeSelector from "@/components/creator/TypeSelector.vue";
+import Group from "@/components/creator/Group.vue";
+
 export default defineComponent({
-  // beforeRouteLeave() {
-  //   this.confirmLeavePage();
-  // }
+  components: { Group, TypeSelector }
 });
 </script>
 
 <script setup lang="ts">
-import { onUnmounted, onBeforeUnmount, onMounted, computed, ref, Ref, Reactive, watch, inject, defineComponent, PropType, provide } from "vue";
+import { onUnmounted, onBeforeUnmount, onMounted, computed, ref, Ref, watch, inject, defineComponent, PropType, provide } from "vue";
 import { Enums, Helpers, Vocabulary, Services } from "im-library";
-import TypeSelector from "@/components/creator/TypeSelector.vue";
-import Group from "@/components/creator/Group.vue";
 import VueJsonPretty from "vue-json-pretty";
 import _ from "lodash";
 import store from "@/store";
@@ -77,7 +76,7 @@ const {
 } = Helpers;
 const { IM, RDF, RDFS } = Vocabulary;
 const { EntityService, Env } = Services;
-const { EditorMode } = Enums;
+const { ComponentType, EditorMode } = Enums;
 
 const userRoles = inject(injectionKeys.userRoles);
 
