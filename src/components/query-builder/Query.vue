@@ -17,7 +17,7 @@
           <div class="content">
             <div class="panel-content" id="query-builder-container">
               <ul>
-                <TreeItem class="item" :model="treeData"></TreeItem>
+                <TreeItem class="item" :model="treeData" @updateQuery="updateQuery"></TreeItem>
               </ul>
             </div>
           </div>
@@ -85,31 +85,26 @@ export default defineComponent({
       showJson: true,
       loading: false,
       displayResults: false,
-      // treeData: {
-      //   key: 0,
-      //   name: "select",
-      //   type: "select",
-      //   value: {
-      //     name: "select"
-      //   }
-      // },
-      treeData: treeData,
+      treeData: {
+        key: 0,
+        name: "select",
+        type: "select",
+        value: {
+          name: "select"
+        }
+      },
+      // treeData: treeData,
       queryResults: {},
       queryDisplay: {}
     };
   },
-  watch: {
-    treeData: {
-      handler(newValue, oldValue) {
-        this.queryDisplay = buildQueryFromTreeItem(newValue);
-        console.log(this.queryDisplay);
-        console.log(JSON.stringify(this.queryDisplay));
-      },
-      deep: true,
-      immediate: true
-    }
+  mounted() {
+    this.updateQuery();
   },
   methods: {
+    updateQuery() {
+      this.queryDisplay = buildQueryFromTreeItem(this.treeData);
+    },
     isObjectHasKeys(data: any) {
       return isObjectHasKeys(data);
     },

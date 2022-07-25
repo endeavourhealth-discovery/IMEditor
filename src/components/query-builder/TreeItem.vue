@@ -27,7 +27,7 @@
         A component can recursively render itself using its
         "name" option (inferred from filename if using SFC)
       -->
-      <TreeItem class="item" v-for="child in model.children" v-bind:key="child.key" :model="child" :parent="model"> </TreeItem>
+      <TreeItem class="item" v-for="child in model.children" v-bind:key="child.key" :model="child" :parent="model" @updateQuery="emitUpdateQuery"> </TreeItem>
       <li class="add" @click="addChild">+</li>
     </ul>
   </li>
@@ -48,6 +48,7 @@ export default defineComponent({
     model: { type: Object as PropType<TreeItem>, required: true },
     parent: { type: Object as PropType<TreeItem>, required: false }
   },
+  emits: ["updateQuery"],
   data() {
     return {
       isOpen: false,
@@ -87,6 +88,7 @@ export default defineComponent({
         this.parent.children = this.parent.children?.filter((child: TreeItem) => {
           return child.key !== this.model.key;
         });
+      this.emitUpdateQuery();
     },
 
     toggle() {
@@ -103,6 +105,10 @@ export default defineComponent({
       }
     },
 
+    emitUpdateQuery() {
+      this.$emit("updateQuery");
+    },
+
     onEnterKeyDown(event: any) {
       if (event.key === "Enter") this.onSelect();
     },
@@ -111,6 +117,7 @@ export default defineComponent({
       const name = this.model.value.name || this.model.value;
       this.model.name = name;
       this.model.type = name;
+      this.emitUpdateQuery();
     },
 
     async getProperties() {
@@ -138,6 +145,7 @@ export default defineComponent({
           break;
       }
       this.model.children?.push(item);
+      this.emitUpdateQuery();
     }
   }
 });
