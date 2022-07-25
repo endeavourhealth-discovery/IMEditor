@@ -28,21 +28,34 @@
             </div>
             <VueJsonPretty v-if="isObjectHasKeys(queryDisplay)" class="json" :data="queryDisplay" />
           </div>
-          <div v-if="showJson" class="json-container">
+          <!-- <div v-if="showJson" class="json-container">
             <div class="json-header-container">
               <span class="json-header">JSON viewer</span>
             </div>
             <VueJsonPretty v-if="isObjectHasKeys(treeData)" class="json" :data="treeData" />
-          </div>
+          </div> -->
           <!-- <Button
             class="p-button-rounded p-button-info p-button-outlined json-toggle"
             :label="showJson ? 'hide JSON' : 'show JSON'"
             @click="showJson = !showJson"
           /> -->
         </div>
+        <Dialog
+          header="Query results"
+          v-model:visible="displayResults"
+          :maximizable="true"
+          :breakpoints="{ '960px': '75vw', '640px': '100vw' }"
+          :style="{ width: '50vw' }"
+        >
+          <VueJsonPretty v-if="isObjectHasKeys(queryResults)" class="json" :data="queryResults" />
+          <template #footer>
+            <Button label="OK" @click="displayResults = false" />
+          </template>
+        </Dialog>
         <div class="button-bar" id="query-button-bar">
           <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
           <Button icon="pi pi-refresh" label="Reset" class="p-button-warning" @click="refresh" />
+          <Button icon="pi pi-play" label="Run" class="p-button-help" @click="runQuery" />
           <Button icon="pi pi-check" label="Save" class="save-button" @click="submit" />
         </div>
       </div>
@@ -52,13 +65,15 @@
 
 <script lang="ts">
 import VueJsonPretty from "vue-json-pretty";
-import { Helpers } from "im-library";
+import { Helpers, Services } from "im-library";
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength }
 } = Helpers;
 import { defineComponent } from "@vue/runtime-core";
 import TreeItem from "./TreeItem.vue";
 import { buildQueryFromTreeItem } from "./QueryBuilder";
+import treeData from "./TreeData";
+import axios from "axios";
 
 export default defineComponent({
   components: {
@@ -69,14 +84,17 @@ export default defineComponent({
     return {
       showJson: true,
       loading: false,
-      treeData: {
-        key: 0,
-        name: "select",
-        type: "select",
-        value: {
-          name: "select"
-        }
-      },
+      displayResults: false,
+      // treeData: {
+      //   key: 0,
+      //   name: "select",
+      //   type: "select",
+      //   value: {
+      //     name: "select"
+      //   }
+      // },
+      treeData: treeData,
+      queryResults: {},
       queryDisplay: {}
     };
   },
@@ -94,6 +112,10 @@ export default defineComponent({
   methods: {
     isObjectHasKeys(data: any) {
       return isObjectHasKeys(data);
+    },
+    async runQuery() {
+      this.queryResults = await axios.post(Services.Env.API + "api/query/public/queryIM", this.queryDisplay);
+      this.displayResults = true;
     },
     submit() {
       console.log("submit");

@@ -6,7 +6,7 @@ import TreeItem from "./TreeItem";
 
 export function buildQueryFromTreeItem(treeItem: TreeItem) {
   console.log(" ");
-  const query = { name: "A new query", description: "A new query built from the query-builder", query: {} };
+  const query = { name: "A new query", description: "A new query built with the query-builder", query: {} };
   recurseBuildQuery(query.query, treeItem, null);
   console.log(query);
   return query;
@@ -29,7 +29,7 @@ function recurseBuildQuery(query: any, treeItem: TreeItem, parent: TreeItem | nu
 function addClause(query: any, treeItem: TreeItem, parent: TreeItem): any {
   if (parent.name === "property" || parent.name === "match") {
     console.log("1");
-    addInnerNodeClause(query, treeItem, parent);
+    addPropertyMatchClause(query, treeItem, parent);
   } else if (!treeItem.children?.length) {
     console.log("2");
     addLeafNodeClause(query, treeItem, parent);
@@ -41,14 +41,15 @@ function addClause(query: any, treeItem: TreeItem, parent: TreeItem): any {
 
 function addLeafNodeClause(query: any, treeItem: TreeItem, parent: TreeItem) {
   // does not have child nodes
+  const value = !isObjectHasKeys(treeItem.value, ["@id"]) ? { "@id": treeItem.value } : treeItem.value;
   if (isArrayHasLength(query)) {
-    query[0][parent.name!] = treeItem.value;
+    query[0][parent.name!] = value;
   } else {
-    query[parent.name!] = treeItem.value;
+    query[parent.name!] = value;
   }
 }
 
-function addInnerNodeClause(query: any, treeItem: TreeItem, parent: TreeItem) {
+function addPropertyMatchClause(query: any, treeItem: TreeItem, parent: TreeItem) {
   // has child nodes
   if (!isArrayHasLength(query[parent.name!])) {
     query[parent.name!] = [];
