@@ -15,10 +15,13 @@ import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";
 import { PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 import axios from "axios";
+import { QueryRequest } from "im-library/dist/types/interfaces/modules/QueryRequest";
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength },
   TypeGuards: { isTTIriRef },
-  Sorters: { byName }
+  Sorters: { byName },
+  EditorMethods: { processArguments },
+  Transforms: { mapToObject }
 } = Helpers;
 const { EntityService, QueryService } = Services;
 const { IM } = Vocabulary;
@@ -37,7 +40,7 @@ const entityService = new EntityService(axios);
 
 const dropdownOptions: Ref<TTIriRef[]> = ref([]);
 onMounted(async () => {
-  await getDropdownOptions();
+  dropdownOptions.value = await getDropdownOptions();
 });
 
 let key = props.data.path["@id"];
@@ -56,13 +59,14 @@ watch(selectedEntity, async newValue => {
 let invalid = ref(false);
 
 async function getDropdownOptions() {
-  if (isObjectHasKeys(props.data, ["argument"]))
-    dropdownOptions.value = (await entityService.getEntityChildren(props.data.argument[0].valueData))
-      .map(result => {
-        return { "@id": result["@id"], name: result.name };
-      })
-      .sort(byName);
-  else throw new Error("propertyshape is missing 'argument' parameter to fetch dropdown options");
+  if (isObjectHasKeys(props.data, ["select", "argument"])) {
+    const args = processArguments(props.data);
+    const replacedArgs = mapToObject(args);
+    const query = { argument: replacedArgs, queryIri: props.data.select[0] } as QueryRequest;
+    const result = await queryService.entityQuery(query);
+    if (result) return result;
+    else return [];
+  } else throw new Error("propertyshape is missing 'argument' or 'select' parameter to fetch dropdown options");
 }
 
 function updateEntity() {
