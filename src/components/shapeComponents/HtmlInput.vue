@@ -1,5 +1,5 @@
 <template>
-  <div class="html-single-select-container">
+  <div class="html-input-container">
     <span class="p-float-label">
       <Textarea class="p-inputtext-lg input-html" :class="invalid && 'invalid'" v-model="userInput" rows="4" />
       <label>{{ data.name }}</label>
@@ -37,7 +37,7 @@ let invalid = ref(false);
 
 let userInput = ref("");
 onMounted(() => {
-  if (props.value) userInput.value = props.value;
+  if (props.value) userInput.value = htmlToText(props.value);
 });
 watch(userInput, async newValue => {
   updateEntity();
@@ -46,7 +46,7 @@ watch(userInput, async newValue => {
 
 function updateEntity() {
   const result = {} as any;
-  result[key] = userInput.value;
+  result[key] = textToHtml(userInput.value);
   if (entityUpdate) entityUpdate(result);
 }
 
@@ -59,17 +59,22 @@ async function updateValidity() {
 function defaultValidation(userInput: string) {
   return userInput.length < 500;
 }
+
+function textToHtml(text: string): string {
+  return text.replaceAll(/\n/g, "<p>");
+}
+
+function htmlToText(text: string): string {
+  return text.replaceAll(/<p>/g, "\n");
+}
 </script>
 
 <style scoped>
-.html-single-select-container {
+.html-input-container {
   width: 25rem;
 }
 .input-html {
   width: 100%;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
 }
 
 .invalid {

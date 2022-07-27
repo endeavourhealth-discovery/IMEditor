@@ -70,7 +70,9 @@ async function getDropdownOptions() {
         return { "@id": item.iri, name: item.name };
       });
     else return [];
-  } else throw new Error("propertyshape is missing 'argument' or 'select' parameter to fetch dropdown options");
+  } else if (isObjectHasKeys(props.data, ["function"])) {
+    return (await queryService.runFunction(props.data.function["@id"])).options.sort(byName);
+  } else throw new Error("propertyshape is missing 'select' or 'function' parameter to fetch dropdown options");
 }
 
 function updateEntity() {

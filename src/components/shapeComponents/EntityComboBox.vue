@@ -1,15 +1,16 @@
 <template>
-  <div class="terminology-concept-search-select-container">
+  <div class="entity-combobox-container">
     <span class="p-float-label">
       <MultiSelect
-        class="type-dropdown"
+        :disabled="props.data.path['@id'] === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' && mode === 'create'"
+        class="multi-select"
         :class="invalid && 'invalid'"
         v-model="selectedEntities"
         :options="dropdownOptions"
         optionLabel="name"
         display="chip"
       />
-      <label>{{ data.label }}</label>
+      <label>{{ data.name }}</label>
     </span>
   </div>
 </template>
@@ -20,11 +21,13 @@ import { Enums, Helpers, Services } from "im-library";
 import store from "@/store";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";
-import { PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { PropertyShape, TTIriRef, QueryRequest } from "im-library/dist/types/interfaces/Interfaces";
 import axios from "axios";
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength },
-  Sorters: { byName }
+  Sorters: { byName },
+  EditorMethods: { processArguments },
+  Transforms: { mapToObject }
 } = Helpers;
 const { EntityService, QueryService } = Services;
 
@@ -42,15 +45,17 @@ const entityService = new EntityService(axios);
 
 const dropdownOptions: Ref<TTIriRef[]> = ref([]);
 onMounted(async () => {
-  await getDropdownOptions();
+  dropdownOptions.value = await getDropdownOptions();
+  if (props.value && isArrayHasLength(props.value)) selectedEntities.value = props.value;
+  else if (isObjectHasKeys(props.data, ["isIri"])) {
+    const found = dropdownOptions.value.find(option => option["@id"] === props.data.isIri["@id"]);
+    if (found) selectedEntities.value = [found];
+  }
 });
 
 let key = props.data.path["@id"];
 
 let selectedEntities: Ref<TTIriRef[]> = ref([]);
-onMounted(() => {
-  if (props.value && isArrayHasLength(props.value)) selectedEntities.value = props.value;
-});
 watch(selectedEntities, async newValue => {
   if (isArrayHasLength(newValue)) {
     updateEntity();
@@ -60,14 +65,20 @@ watch(selectedEntities, async newValue => {
 
 let invalid = ref(false);
 
-async function getDropdownOptions() {
-  if (isObjectHasKeys(props.data, ["search"]))
-    dropdownOptions.value = (await entityService.getEntityChildren(props.data.search["@id"]))
-      .map(result => {
-        return { "@id": result["@id"], name: result.name };
-      })
-      .sort(byName);
-  else throw new Error("propertyshape is missing 'search' parameter to fetch dropdown options");
+async function getDropdownOptions(): Promise<TTIriRef[]> {
+  if (isObjectHasKeys(props.data, ["select", "argument"])) {
+    const args = processArguments(props.data);
+    const replacedArgs = mapToObject(args);
+    const query = { argument: replacedArgs, queryIri: props.data.select[0] } as QueryRequest;
+    const result = await queryService.entityQuery(query);
+    if (result)
+      return result.map((item: any) => {
+        return { "@id": item.iri, name: item.name };
+      });
+    else return [];
+  } else if (isObjectHasKeys(props.data, ["function"])) {
+    return (await queryService.runFunction(props.data.function["@id"])).options.sort(byName);
+  } else throw new Error("propertyshape is missing 'search' or 'function' parameter to fetch dropdown options");
 }
 
 function updateEntity() {
@@ -91,8 +102,9 @@ function defaultValidity() {
 </script>
 
 <style scoped>
-.activity-status-container {
-  width: 100%;
+.entity-combobox-container,
+.multi-select {
+  width: 25rem;
 }
 .invalid {
   border-color: #e24c4c;

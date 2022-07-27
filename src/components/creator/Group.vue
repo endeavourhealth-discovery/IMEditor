@@ -10,12 +10,12 @@
 import EntityMultiSearch from "@/components/shapeComponents/EntityMultiSearch.vue";
 import EntityComboBox from "../shapeComponents/EntityComboBox.vue";
 import EntityDropdown from "../shapeComponents/EntityDropdown.vue";
-import HtmlSingleSelect from "@/components/shapeComponents/HtmlSingleSelect.vue";
-import StringSingleSelect from "@/components/shapeComponents/StringSingleSelect.vue";
-import StringSingleDisplay from "@/components/shapeComponents/StringSingleDisplay.vue";
+import HtmlInput from "@/components/shapeComponents/HtmlInput.vue";
+import TextInput from "@/components/shapeComponents/TextInput.vue";
+import TextDisplay from "@/components/shapeComponents/TextDisplay.vue";
 
 export default defineComponent({
-  components: { EntityComboBox, EntityMultiSearch, EntityDropdown, HtmlSingleSelect, StringSingleDisplay, StringSingleSelect }
+  components: { EntityComboBox, EntityMultiSearch, EntityDropdown, HtmlInput, TextDisplay, TextInput }
 });
 </script>
 
@@ -50,20 +50,20 @@ let properties: Ref<PropertyShape[]> = ref([...props.data.property]);
 
 function processComponentType(type: TTIriRef): any {
   switch (type["@id"]) {
-    case IM.LABEL_COMPONENT:
-      return ComponentType.STRING_SINGLE_DISPLAY;
+    case IM.TEXT_DISPLAY_COMPONENT:
+      return ComponentType.TEXT_DISPLAY;
     case IM.TEXT_INPUT_COMPONENT:
-      return ComponentType.STRING_SINGLE_SELECT;
-    case IM.HTML_EDITOR_COMPONENT:
-      return ComponentType.HTML_SINGLE_SELECT;
+      return ComponentType.TEXT_INPUT;
+    case IM.HTML_INPUT_COMPONENT:
+      return ComponentType.HTML_INPUT;
     case IM.ENTITY_MULTI_SEARCH_COMPONENT:
       return ComponentType.ENTITY_MULTI_SEARCH;
     case IM.ENTITY_COMBOBOX_COMPONENT:
-      return ComponentType.ENTITY_DROPDOWN;
+      return ComponentType.ENTITY_COMBOBOX;
     case IM.ENTITY_DROPDOWN_COMPONENT:
       return ComponentType.ENTITY_DROPDOWN;
     default:
-      throw new Error("Invalid component type encountered in shape group");
+      throw new Error("Invalid component type encountered in shape group" + type["@id"]);
   }
 }
 
@@ -85,8 +85,7 @@ function processEntityValue(property: PropertyShape) {
   justify-content: flex-start;
   align-items: center;
   overflow: auto;
-  gap: 2rem;
-  padding: 4rem 0 0 0;
+  padding: 2rem 0 0 0;
 }
 
 .property-container {
@@ -96,5 +95,6 @@ function processEntityValue(property: PropertyShape) {
   flex-flow: row;
   justify-content: center;
   overflow: auto;
+  padding: 2rem 0 0 0;
 }
 </style>

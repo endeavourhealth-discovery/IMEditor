@@ -34,7 +34,7 @@ function setOptions() {
 
 function typeSelected(data: TTIriRef) {
   const result = {} as any;
-  result[RDF.TYPE] = data["@id"];
+  result[RDF.TYPE] = [data];
   if (entityUpdate) entityUpdate(result);
 }
 </script>

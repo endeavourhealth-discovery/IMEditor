@@ -190,11 +190,11 @@ function processShape(shape: FormGenerator) {
   setSteps();
 }
 
-async function updateType(typeIri: string) {
+async function updateType(types: TTIriRef[]) {
   loading.value = true;
-  await getShape(typeIri);
+  await getShape(types[0]["@id"]);
   if (shape.value) processShape(shape.value);
-  editorEntity.value[RDF.TYPE] = typeIri;
+  editorEntity.value[RDF.TYPE] = types;
   loading.value = false;
   stepsForward();
 }
@@ -264,7 +264,6 @@ function updateEntity(data: any) {
       }
     }
   }
-
   if (creatorInvalidEntity.value) {
     isValidEntity(editorEntity.value);
   }
