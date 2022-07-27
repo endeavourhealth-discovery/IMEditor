@@ -134,7 +134,14 @@ function processChild(child: any, position: number) {
 }
 
 function generateBuildAsJson() {
-  return build.value.map(item => item.json);
+  const jsonBuild = [] as any[];
+  build.value.forEach(item => {
+    if (isObjectHasKeys(item.json)) {
+      jsonBuild.push(item.json);
+    }
+  });
+  // return build.value.map(item => item.json);
+  return jsonBuild;
 }
 
 let invalid = ref(false);
@@ -156,7 +163,7 @@ async function updateValidity() {
 }
 
 function defaultValidation() {
-  return generateBuildAsJson().every(item => item["@id"] && item.name);
+  return generateBuildAsJson().every(item => isObjectHasKeys(item, ["@id", "name"]));
 }
 
 function addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
