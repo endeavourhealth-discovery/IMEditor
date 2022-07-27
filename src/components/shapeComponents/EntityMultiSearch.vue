@@ -49,7 +49,7 @@ const { IM } = Vocabulary;
 
 const props = defineProps({
   data: { type: Object as PropType<PropertyShape>, required: true },
-  mode: { type: String, required: true },
+  mode: { type: String as PropType<Enums.EditorMode>, required: true },
   value: { type: Array as PropType<TTIriRef[]>, required: false }
 });
 
@@ -149,16 +149,14 @@ function updateEntity() {
 async function updateValidity() {
   if (isObjectHasKeys(props.data, ["validation"])) {
     invalid.value = !(await queryService.checkValidation(generateBuildAsJson(), props.data.validation["@id"]));
-    if (validityUpdate) validityUpdate({ key: key, valid: !invalid.value });
   } else {
-    if (validityUpdate) validityUpdate({ key: key, valid: defaultValidation() });
+    invalid.value = !defaultValidation();
   }
+  if (validityUpdate) validityUpdate({ key: key, valid: !invalid.value });
 }
 
 function defaultValidation() {
-  return generateBuildAsJson().every(item => {
-    return { "@id": item["@id"], name: item.name };
-  });
+  return generateBuildAsJson().every(item => item["@id"] && item.name);
 }
 
 function addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {

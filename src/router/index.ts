@@ -159,6 +159,9 @@ router.beforeEach(async (to, from) => {
   if (to.name === "PageNotFound" && to.path.startsWith("/creator/")) {
     router.push({ name: "Creator" });
   }
+  if (to.name === "PageNotFound" && to.path.startsWith("/editor/")) {
+    router.push({ name: "Editor" });
+  }
 
   return true;
 });

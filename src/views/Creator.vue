@@ -171,7 +171,7 @@ function setValueVariableMap(entity: any, groups: PropertyGroup[]) {
 
 function updateValidity(data: { key: string; valid: boolean }) {
   const index = creatorValidity.value.findIndex(item => item.key === data.key);
-  if (index) creatorValidity.value[index] = data;
+  if (index != -1) creatorValidity.value[index] = data;
   else creatorValidity.value.push(data);
 }
 
@@ -330,20 +330,7 @@ async function submit(): Promise<void> {
 }
 
 async function isValidEntity(entity: any): Promise<boolean> {
-  if (!isObjectHasKeys(entity)) {
-    creatorValidity.value = [];
-    creatorInvalidEntity.value = true;
-    return false;
-  }
-  creatorValidity.value = [];
-  for (const [key, value] of Object.entries(entity)) {
-    const property = {} as any;
-    property[key] = await isValidProperty(value);
-    creatorValidity.value.push(property);
-  }
-  const valid = creatorValidity.value.every(item => item.valid === true);
-  creatorInvalidEntity.value = !valid;
-  return valid;
+  return !isObjectHasKeys(entity) && creatorValidity.value.every(validity => validity.valid);
 }
 
 function refreshCreator() {

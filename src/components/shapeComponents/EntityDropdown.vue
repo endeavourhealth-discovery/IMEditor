@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { ref, Ref, watch, computed, onMounted, inject, PropType } from "vue";
-import { Helpers, Services, Vocabulary } from "im-library";
+import { Enums, Helpers, Services, Vocabulary } from "im-library";
 import store from "@/store";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";
@@ -28,7 +28,7 @@ const { IM } = Vocabulary;
 
 const props = defineProps({
   data: { type: Object as PropType<PropertyShape>, required: true },
-  mode: { type: String, required: true },
+  mode: { type: String as PropType<Enums.EditorMode>, required: true },
   value: { type: Object as PropType<TTIriRef>, required: false }
 });
 
@@ -41,6 +41,7 @@ const entityService = new EntityService(axios);
 const dropdownOptions: Ref<TTIriRef[]> = ref([]);
 onMounted(async () => {
   dropdownOptions.value = await getDropdownOptions();
+  if (props.value) selectedEntity.value = props.value;
 });
 
 let key = props.data.path["@id"];
@@ -64,7 +65,10 @@ async function getDropdownOptions() {
     const replacedArgs = mapToObject(args);
     const query = { argument: replacedArgs, queryIri: props.data.select[0] } as QueryRequest;
     const result = await queryService.entityQuery(query);
-    if (result) return result;
+    if (result)
+      return result.map((item: any) => {
+        return { "@id": item.iri, name: item.name };
+      });
     else return [];
   } else throw new Error("propertyshape is missing 'argument' or 'select' parameter to fetch dropdown options");
 }
@@ -78,10 +82,14 @@ function updateEntity() {
 async function updateValidity() {
   if (isObjectHasKeys(props.data, ["validation"])) {
     invalid.value = !(await queryService.checkValidation(selectedEntity.value, props.data.validation["@id"]));
-    if (validityUpdate) validityUpdate({ key: key, valid: !invalid.value });
   } else {
-    if (validityUpdate) validityUpdate({ key: key });
+    invalid.value = !defaultValidation();
   }
+  if (validityUpdate) validityUpdate({ key: key, valid: !invalid.value });
+}
+
+function defaultValidation() {
+  return true;
 }
 </script>
 

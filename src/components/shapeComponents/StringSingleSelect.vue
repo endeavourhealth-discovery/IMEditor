@@ -14,15 +14,16 @@ import axios from "axios";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";
 import { PropertyShape } from "im-library/dist/types/interfaces/Interfaces";
-import { Helpers, Services } from "im-library";
+import { Enums, Helpers, Services } from "im-library";
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
 const { QueryService } = Services;
+const { EditorMode } = Enums;
 
 const props = defineProps({
   data: { type: Object as PropType<PropertyShape>, required: true },
-  mode: { type: String, required: true },
+  mode: { type: String as PropType<Enums.EditorMode>, required: true },
   value: { type: String, default: "" }
 });
 
@@ -59,11 +60,11 @@ function updateEntity(data: any) {
 async function updateValidity(dataKey: string) {
   if (isObjectHasKeys(props.data, ["validation"])) invalid.value = !(await queryService.checkValidation(userInput, props.data.validation["@id"]));
   else invalid.value = !defaultValidation(userInput.value);
-  if (validityUpdate) validityUpdate({ key: dataKey, valid: !invalid.value });
+  if (validityUpdate) validityUpdate({ key: key, valid: !invalid.value });
 }
 
 function defaultValidation(string: string) {
-  return string.length < 50;
+  return true;
 }
 </script>
 

@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 import { ref, Ref, watch, computed, onMounted, inject, PropType } from "vue";
-import { Helpers, Services } from "im-library";
+import { Enums, Helpers, Services } from "im-library";
 import store from "@/store";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";
@@ -30,7 +30,7 @@ const { EntityService, QueryService } = Services;
 
 const props = defineProps({
   data: { type: Object as PropType<PropertyShape>, required: true },
-  mode: { type: String, required: true },
+  mode: { type: String as PropType<Enums.EditorMode>, required: true },
   value: { type: Array as PropType<TTIriRef[]>, required: false }
 });
 
@@ -79,10 +79,14 @@ function updateEntity() {
 async function updateValidity() {
   if (isObjectHasKeys(props.data, ["validation"])) {
     invalid.value = !(await queryService.checkValidation(selectedEntities.value, props.data.validation["@id"]));
-    if (validityUpdate) validityUpdate({ key: key, valid: !invalid.value });
   } else {
-    if (validityUpdate) validityUpdate({ key: key });
+    invalid.value = !defaultValidity();
   }
+  if (validityUpdate) validityUpdate({ key: key, valid: !invalid.value });
+}
+
+function defaultValidity() {
+  return true;
 }
 </script>
 

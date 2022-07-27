@@ -8,14 +8,14 @@
 
 <script lang="ts">
 import EntityMultiSearch from "@/components/shapeComponents/EntityMultiSearch.vue";
-import EntityMultiDropdown from "../shapeComponents/EntityMultiDropdown.vue";
-import EntitySingleDropdown from "../shapeComponents/EntitySingleDropdown.vue";
+import EntityComboBox from "../shapeComponents/EntityComboBox.vue";
+import EntityDropdown from "../shapeComponents/EntityDropdown.vue";
 import HtmlSingleSelect from "@/components/shapeComponents/HtmlSingleSelect.vue";
 import StringSingleSelect from "@/components/shapeComponents/StringSingleSelect.vue";
 import StringSingleDisplay from "@/components/shapeComponents/StringSingleDisplay.vue";
 
 export default defineComponent({
-  components: { EntityMultiDropdown, EntityMultiSearch, EntitySingleDropdown, HtmlSingleSelect, StringSingleDisplay, StringSingleSelect }
+  components: { EntityComboBox, EntityMultiSearch, EntityDropdown, HtmlSingleSelect, StringSingleDisplay, StringSingleSelect }
 });
 </script>
 
@@ -58,10 +58,10 @@ function processComponentType(type: TTIriRef): any {
       return ComponentType.HTML_SINGLE_SELECT;
     case IM.ENTITY_MULTI_SEARCH_COMPONENT:
       return ComponentType.ENTITY_MULTI_SEARCH;
-    case IM.ENTITY_MULTI_DROPDOWN_COMPONENT:
-      return ComponentType.ENTITY_MULTI_DROPDOWN;
-    case IM.ENTITY_SINGLE_DROPDOWN_COMPONENT:
-      return ComponentType.ENTITY_SINGLE_DROPDOWN;
+    case IM.ENTITY_COMBOBOX_COMPONENT:
+      return ComponentType.ENTITY_DROPDOWN;
+    case IM.ENTITY_DROPDOWN_COMPONENT:
+      return ComponentType.ENTITY_DROPDOWN;
     default:
       throw new Error("Invalid component type encountered in shape group");
   }

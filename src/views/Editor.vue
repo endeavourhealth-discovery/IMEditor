@@ -15,11 +15,11 @@
       </div>
       <div v-else class="content-buttons-container">
         <div class="content-json-container">
-          <div class="steps-content">
+          <div v-if="groups.length" class="steps-content">
             <Steps :model="stepsItems" :readonly="false" @click="stepsClicked" />
             <router-view v-slot="{ Component }">
               <keep-alive>
-                <component :is="Component" :data="groups.length ? groups[currentStep] : undefined" :mode="EditorMode.EDIT" />
+                <component :is="Component" :data="groups[currentStep]" :mode="EditorMode.EDIT" />
               </keep-alive>
             </router-view>
           </div>
@@ -95,7 +95,7 @@ onUnmounted(() => {
 });
 
 const hasType = computed<boolean>(() => {
-  return isObjectHasKeys(editorEntity.value, [RDF.TYPE]);
+  return isObjectHasKeys(editorEntity.value, [RDF.TYPE]) && isArrayHasLength(editorEntity.value[RDF.TYPE]);
 });
 
 let editorEntityOriginal: Ref<any> = ref({});
@@ -158,22 +158,34 @@ const editorSavedEntity = computed(() => store.state.editorSavedEntity).value;
 
 async function fetchEntity(): Promise<void> {
   if (editorIri) {
+    if (isObjectHasKeys(editorSavedEntity, [IM.ID]) && editorSavedEntity[IM.ID] === editorIri) {
+      editorEntity.value = editorSavedEntity;
+      return;
+    }
     const fullEntity = await entityService.getFullEntity(editorIri);
     if (isObjectHasKeys(fullEntity)) {
-      editorEntityOriginal.value = fullEntity;
+      const processedEntity = processEntity(fullEntity);
+      editorEntityOriginal.value = processedEntity;
+      editorEntity.value = { ...editorEntityOriginal.value };
       entityName.value = editorEntityOriginal.value[RDFS.LABEL];
-      if (isObjectHasKeys(editorSavedEntity, ["@id"]) && editorSavedEntity["@id"] === editorIri) {
-        editorEntity.value = editorSavedEntity;
-      } else {
-        editorEntity.value = JSON.parse(JSON.stringify(fullEntity));
-      }
     }
   }
 }
 
+function processEntity(entity: any) {
+  const result = { ...entity } as any;
+  if (isObjectHasKeys(result, ["@id"])) {
+    result[IM.ID] = result["@id"];
+    delete result["@id"];
+  }
+  if (isObjectHasKeys(result, [IM.IM_1_ID])) delete result[IM.IM_1_ID];
+  if (isObjectHasKeys(result, [IM.IM_1_SCHEME])) delete result[IM.IM_1_SCHEME];
+  return result;
+}
+
 async function getShape(type: string): Promise<void> {
   let localType;
-  if (hasType) localType = editorEntity.value[RDF.TYPE][0]["@id"];
+  if (hasType.value) localType = editorEntity.value[RDF.TYPE][0]["@id"];
   else localType = type;
   const shapeIri = await entityService.getShapeFromType(localType);
   if (shapeIri) shape.value = await entityService.getShape(shapeIri["@id"]);
@@ -218,8 +230,22 @@ async function updateType(typeIri: string) {
   await getShape(typeIri);
   if (shape.value) processShape(shape.value);
   editorEntity.value[RDF.TYPE] = typeIri;
-  removeEroneousKeys();
+  // removeEroneousKeys();
   loading.value = false;
+}
+
+function removeEroneousKeys() {
+  const shapeKeys = [] as string[];
+  groups.value.forEach(group => {
+    group.property.forEach(property => {
+      shapeKeys.push(property.path["@id"]);
+    });
+  });
+  for (const [key, value] of Object.entries(editorEntity.value)) {
+    if (!shapeKeys.includes(key)) {
+      delete editorEntity.value[key];
+    }
+  }
 }
 
 function setSteps() {
@@ -352,20 +378,7 @@ async function submit(): Promise<void> {
 }
 
 async function isValidEntity(entity: any): Promise<boolean> {
-  if (!isObjectHasKeys(entity)) {
-    editorValidity.value = [];
-    editorInvalidEntity.value = true;
-    return false;
-  }
-  editorValidity.value = [];
-  for (const [key, value] of Object.entries(entity)) {
-    const property = {} as any;
-    property[key] = await isValidProperty(value);
-    editorValidity.value.push(property);
-  }
-  const valid = editorValidity.value.every(item => item.valid === true);
-  editorInvalidEntity.value = !valid;
-  return valid;
+  return !isObjectHasKeys(entity) && editorValidity.value.every(validity => validity.valid);
 }
 
 function refreshEditor() {

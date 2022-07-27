@@ -17,17 +17,18 @@ import axios from "axios";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";
 import { PropertyShape } from "im-library/dist/types/interfaces/Interfaces";
-import { Helpers, Services, Vocabulary } from "im-library";
+import { Enums, Helpers, Services, Vocabulary } from "im-library";
 import { Argument } from "im-library/dist/types/models/modules/AutoGen";
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
 const { QueryService } = Services;
 const { IM, SHACL } = Vocabulary;
+const { EditorMode } = Enums;
 
 const props = defineProps({
   data: { type: Object as PropType<PropertyShape>, required: true },
-  mode: { type: String, required: true },
+  mode: { type: String as PropType<Enums.EditorMode>, required: true },
   value: { type: String, required: false }
 });
 
@@ -85,6 +86,7 @@ function compareMaps(map1: Map<string, any>, map2: Map<string, any>) {
 }
 
 async function processPropertyValue(property: PropertyShape): Promise<string> {
+  if (props.mode === EditorMode.EDIT) return "";
   if (isObjectHasKeys(property, ["isIri"])) {
     return property.isIri["@id"];
   }
@@ -125,10 +127,14 @@ function updateEntity() {
 async function updateValidity() {
   if (isObjectHasKeys(props.data, ["validation"])) {
     invalid.value = !(await queryService.checkValidation(userInput, props.data.validation["@id"]));
-    if (validityUpdate) validityUpdate({ key: key, valid: !invalid.value });
   } else {
-    if (validityUpdate) validityUpdate({ key: key, valid: true });
+    invalid.value = !defaultValidation();
   }
+  if (validityUpdate) validityUpdate({ key: key, valid: !invalid.value });
+}
+
+function defaultValidation() {
+  return true;
 }
 </script>
 
