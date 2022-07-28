@@ -28,12 +28,12 @@
             </div>
             <VueJsonPretty v-if="isObjectHasKeys(queryDisplay)" class="json" :data="queryDisplay" />
           </div>
-          <!-- <div v-if="showJson" class="json-container">
+          <div v-if="showJson" class="json-container">
             <div class="json-header-container">
               <span class="json-header">JSON viewer</span>
             </div>
             <VueJsonPretty v-if="isObjectHasKeys(treeData)" class="json" :data="treeData" />
-          </div> -->
+          </div>
           <!-- <Button
             class="p-button-rounded p-button-info p-button-outlined json-toggle"
             :label="showJson ? 'hide JSON' : 'show JSON'"
@@ -85,15 +85,15 @@ export default defineComponent({
       showJson: true,
       loading: false,
       displayResults: false,
-      treeData: {
-        key: 0,
-        name: "select",
-        type: "select",
-        value: {
-          name: "select"
-        }
-      },
-      // treeData: treeData,
+      // treeData: {
+      //   key: 0,
+      //   name: "select",
+      //   type: "select",
+      //   value: {
+      //     name: "select"
+      //   }
+      // },
+      treeData: treeData,
       queryResults: {},
       queryDisplay: {}
     };

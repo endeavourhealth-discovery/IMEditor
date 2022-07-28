@@ -22,24 +22,6 @@ const treeData = {
             name: "label",
             "@id": "http://www.w3.org/2000/01/rdf-schema#label"
           }
-        },
-        {
-          key: 2,
-          name: "comment",
-          type: "comment",
-          value: {
-            name: "comment",
-            "@id": "http://www.w3.org/2000/01/rdf-schema#comment"
-          }
-        },
-        {
-          key: 3,
-          name: "type",
-          type: "type",
-          value: {
-            name: "type",
-            "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-          }
         }
       ]
     },
@@ -53,17 +35,39 @@ const treeData = {
       children: [
         {
           key: 1,
-          name: "entityId",
-          type: "entityId",
+          name: "property",
+          type: "property",
           value: {
-            name: "entityId"
+            name: "property"
           },
           children: [
             {
               key: 1,
-              name: "im:Encounter",
-              type: "im:Encounter",
-              value: "im:Encounter"
+              name: "status",
+              type: "status",
+              value: {
+                name: "status",
+                "@id": "http://endhealth.info/im#status",
+                status: {
+                  "@id": "isConcept"
+                }
+              },
+              children: [
+                {
+                  key: 1,
+                  name: "isConcept",
+                  type: "isConcept",
+                  value: "isConcept",
+                  children: [
+                    {
+                      key: 1,
+                      name: "im:Unassigned",
+                      type: "im:Unassigned",
+                      value: "im:Unassigned"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }

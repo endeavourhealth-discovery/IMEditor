@@ -1,8 +1,8 @@
 <template>
-  <li>
+  <ul>
     <div v-if="model.type === 'text'">
       <InputText v-model="model.value" @keydown="onEnterKeyDown" />
-      <span v-if="parent" @click="removeChild()">[x]</span>
+      <span v-if="parent" @click="removeChild()"><i class="pi pi-times-circle"></i></span>
     </div>
     <div v-else-if="model.type === 'dropdown'">
       <Dropdown
@@ -15,22 +15,20 @@
         @keydown="onEnterKeyDown"
         @change="onSelect"
       />
-      <span v-if="parent" @click="removeChild()">[x]</span>
+      <span v-if="parent" @click="removeChild()"><i class="pi pi-times-circle"></i></span>
     </div>
-    <div v-else :class="{ bold: isFolder }" @click="toggle" @dblclick="changeType">
+    <div v-else @click="toggle" @dblclick="changeType">
+      <i v-if="isFolder" :class="isOpen ? 'pi pi-folder-open' : 'pi pi-folder'"></i>
       {{ model.name }}
-      <span v-if="parent" @click="removeChild()">[x]</span>
-      <!-- <span v-if="isFolder">[{{ isOpen ? "-" : "+" }}]</span> -->
+      <span v-if="parent" @click="removeChild()"><i class="pi pi-times-circle"></i> </span>
     </div>
     <ul v-show="isOpen" v-if="isFolder">
-      <!--
-        A component can recursively render itself using its
-        "name" option (inferred from filename if using SFC)
-      -->
       <TreeItem class="item" v-for="child in model.children" v-bind:key="child.key" :model="child" :parent="model" @updateQuery="emitUpdateQuery"> </TreeItem>
-      <li class="add" @click="addChild">+</li>
+      <ul class="add" @click="addChild">
+        <i class="pi pi-plus-circle"></i>
+      </ul>
     </ul>
-  </li>
+  </ul>
 </template>
 
 <script lang="ts">
@@ -150,3 +148,13 @@ export default defineComponent({
   }
 });
 </script>
+
+<style scoped>
+ul {
+  margin-left: -2rem;
+}
+
+ul > ul {
+  margin-left: -2rem;
+}
+</style>
