@@ -69,8 +69,8 @@ async function getDropdownOptions(): Promise<TTIriRef[]> {
   if (isObjectHasKeys(props.data, ["select", "argument"])) {
     const args = processArguments(props.data);
     const replacedArgs = mapToObject(args);
-    const query = { argument: replacedArgs, queryIri: props.data.select[0] } as QueryRequest;
-    const result = await queryService.entityQuery(query);
+    const queryRequest = { argument: replacedArgs, queryIri: props.data.select[0] } as QueryRequest;
+    const result = await queryService.entityQuery(queryRequest);
     if (result)
       return result.map((item: any) => {
         return { "@id": item.iri, name: item.name };

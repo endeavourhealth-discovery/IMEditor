@@ -25,9 +25,9 @@
 </template>
 
 <script lang="ts">
-import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
+import EntitySearch from "@/components/shapeComponents/EntitySearch.vue";
 export default defineComponent({
-  components: { Entity }
+  components: { EntitySearch }
 });
 </script>
 
@@ -108,9 +108,9 @@ function createBuild() {
 function createDefaultBuild() {
   build.value = [
     generateNewComponent(
-      ComponentType.ENTITY,
+      ComponentType.ENTITY_SEARCH,
       0,
-      { filterOptions: filters.value, entity: undefined, type: ComponentType.ENTITY, label: "Entity" },
+      { filterOptions: filters.value, entity: undefined, type: ComponentType.ENTITY_SEARCH, label: "Entity" },
       BuilderType.PARENT,
       {
         minus: true,
@@ -122,9 +122,9 @@ function createDefaultBuild() {
 
 function processChild(child: any, position: number) {
   return generateNewComponent(
-    ComponentType.ENTITY,
+    ComponentType.ENTITY_SEARCH,
     position,
-    { filterOptions: filters, entity: child, type: ComponentType.ENTITY, label: "Entity" },
+    { filterOptions: filters, entity: child, type: ComponentType.ENTITY_SEARCH, label: "Entity" },
     BuilderType.PARENT,
     {
       minus: true,
@@ -167,8 +167,8 @@ function defaultValidation() {
 }
 
 function addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
-  if (data.selectedType === ComponentType.ENTITY) {
-    data.value = { filterOptions: filters, entity: undefined, type: ComponentType.ENTITY, label: "Entity" };
+  if (data.selectedType === ComponentType.ENTITY_SEARCH) {
+    data.value = { filterOptions: filters, entity: undefined, type: ComponentType.ENTITY_SEARCH, label: "Entity" };
   }
   addItem(data, build.value, BuilderType.PARENT, { minus: true, plus: true });
 }
