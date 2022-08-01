@@ -1,10 +1,10 @@
 <template>
   <ul>
-    <div v-if="model.type === 'text'">
+    <div v-if="isText">
       <InputText v-model="model.value" @keydown="onEnterKeyDown" />
       <span v-if="parent" @click="removeChild()"><i class="pi pi-times-circle"></i></span>
     </div>
-    <div v-else-if="model.type === 'dropdown'">
+    <div v-else-if="isDropdown">
       <Dropdown
         v-model="model.value"
         :options="getOptions()"
@@ -33,7 +33,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import TreeItem from "./TreeItem";
+import { ComponentType, ITreeItem, setComponentType, setType, setValueType, TreeItemType, TreeItemValueType } from "./TreeItem";
 import { Helpers, Services, Interfaces } from "im-library";
 import axios from "axios";
 const {
@@ -43,8 +43,8 @@ const {
 export default defineComponent({
   name: "TreeItem", // necessary for self-reference
   props: {
-    model: { type: Object as PropType<TreeItem>, required: true },
-    parent: { type: Object as PropType<TreeItem>, required: false }
+    model: { type: Object as PropType<ITreeItem>, required: true },
+    parent: { type: Object as PropType<ITreeItem>, required: false }
   },
   emits: ["updateQuery"],
   data() {
@@ -59,6 +59,12 @@ export default defineComponent({
   computed: {
     isFolder(): boolean {
       return isArrayHasLength(this.model.children);
+    },
+    isText() {
+      return this.model.componentType === ComponentType.TEXT;
+    },
+    isDropdown() {
+      return this.model.componentType === ComponentType.DROPDOWN;
     }
   },
   async mounted() {
@@ -72,6 +78,7 @@ export default defineComponent({
           return this.propertyOptions;
         case "match":
           return this.matchOptions;
+        case "isConcept":
         case "entityType":
           return this.entityTypeOptions;
         case "select":
@@ -83,7 +90,7 @@ export default defineComponent({
     },
     removeChild() {
       if (this.parent && isObjectHasKeys(this.parent) && isArrayHasLength(this.parent.children))
-        this.parent.children = this.parent.children?.filter((child: TreeItem) => {
+        this.parent.children = this.parent.children?.filter((child: ITreeItem) => {
           return child.key !== this.model.key;
         });
       this.emitUpdateQuery();
@@ -114,7 +121,9 @@ export default defineComponent({
     onSelect() {
       const name = this.model.value.name || this.model.value;
       this.model.name = name;
-      this.model.type = name;
+      setType(this.model);
+      setValueType(this.model);
+      this.model.componentType = ComponentType.DISPLAY;
       this.emitUpdateQuery();
     },
 
@@ -129,19 +138,8 @@ export default defineComponent({
 
     addChild() {
       const length = this.model.children?.at(-1)?.key || 0;
-      const item = { key: length + 1, name: this.model.name } as TreeItem;
-      switch (this.model.type) {
-        case "property":
-        case "entityType":
-        case "match":
-        case "select":
-          item.type = "dropdown";
-          break;
-
-        default:
-          item.type = "text";
-          break;
-      }
+      const item = { key: length + 1, name: this.model.name } as ITreeItem;
+      setComponentType(item);
       this.model.children?.push(item);
       this.emitUpdateQuery();
     }

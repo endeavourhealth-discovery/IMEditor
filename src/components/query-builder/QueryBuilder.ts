@@ -2,9 +2,9 @@ import { Helpers } from "im-library";
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength }
 } = Helpers;
-import TreeItem from "./TreeItem";
+import { ITreeItem } from "./TreeItem";
 
-export function buildQueryFromTreeItem(treeItem: TreeItem) {
+export function buildQueryFromTreeItem(treeItem: ITreeItem) {
   console.log(" ");
   const query = { name: "A new query", description: "A new query built with the query-builder", query: {} };
   recurseBuildQuery(query.query, treeItem, null);
@@ -12,7 +12,7 @@ export function buildQueryFromTreeItem(treeItem: TreeItem) {
   return query;
 }
 
-function recurseBuildQuery(query: any, treeItem: TreeItem, parent: TreeItem | null) {
+function recurseBuildQuery(query: any, treeItem: ITreeItem, parent: ITreeItem | null) {
   console.log(" ");
   console.log(query, treeItem, parent);
   if (isObjectHasKeys(parent, ["name"])) {
@@ -26,7 +26,7 @@ function recurseBuildQuery(query: any, treeItem: TreeItem, parent: TreeItem | nu
   }
 }
 
-function addClause(query: any, treeItem: TreeItem, parent: TreeItem): any {
+function addClause(query: any, treeItem: ITreeItem, parent: ITreeItem): any {
   if (parent.name === "property" || parent.name === "match") {
     console.log("1");
     addPropertyMatchClause(query, treeItem, parent);
@@ -39,7 +39,7 @@ function addClause(query: any, treeItem: TreeItem, parent: TreeItem): any {
   }
 }
 
-function addLeafNodeClause(query: any, treeItem: TreeItem, parent: TreeItem) {
+function addLeafNodeClause(query: any, treeItem: ITreeItem, parent: ITreeItem) {
   // does not have child nodes
   const value = !isObjectHasKeys(treeItem.value, ["@id"]) ? { "@id": treeItem.value } : treeItem.value;
   if (isArrayHasLength(query)) {
@@ -49,18 +49,10 @@ function addLeafNodeClause(query: any, treeItem: TreeItem, parent: TreeItem) {
   }
 }
 
-function addPropertyMatchClause(query: any, treeItem: TreeItem, parent: TreeItem) {
+function addPropertyMatchClause(query: any, treeItem: ITreeItem, parent: ITreeItem) {
   // has child nodes
   if (!isArrayHasLength(query[parent.name!])) {
     query[parent.name!] = [];
   }
   query[parent.name!].push(treeItem.value);
-}
-
-function isProperty(treeItem: TreeItem) {
-  if (!isObjectHasKeys(treeItem.value)) {
-    return false;
-  }
-  const keys = Object.keys(treeItem.value);
-  return keys.length === 1 && keys.includes("name") && isArrayHasLength(treeItem.children);
 }

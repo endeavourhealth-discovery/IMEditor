@@ -74,6 +74,7 @@ import TreeItem from "./TreeItem.vue";
 import { buildQueryFromTreeItem } from "./QueryBuilder";
 import treeData from "./TreeData";
 import axios from "axios";
+import { ComponentType, ITreeItem, TreeItemType, TreeItemValueType } from "./TreeItem";
 
 export default defineComponent({
   components: {
@@ -88,12 +89,11 @@ export default defineComponent({
       // treeData: {
       //   key: 0,
       //   name: "select",
-      //   type: "select",
-      //   value: {
-      //     name: "select"
-      //   }
+      //   type: TreeItemType.PROPERTY,
+      //   valueType: TreeItemValueType.OBJECT,
+      //   componentType: ComponentType.DROPDOWN
       // },
-      treeData: treeData,
+      treeData: treeData.treeData as ITreeItem,
       queryResults: {},
       queryDisplay: {}
     };
