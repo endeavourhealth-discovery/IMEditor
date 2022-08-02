@@ -1,14 +1,12 @@
 import { Helpers } from "im-library";
 const {
-  DataTypeCheckers: { isObjectHasKeys, isArrayHasLength }
+  DataTypeCheckers: { isObjectHasKeys, isArrayHasLength, isObject }
 } = Helpers;
-import { ITreeItem } from "./TreeItem";
+import { ITreeItem, TreeItemType, TreeItemValueType } from "./TreeItem";
 
 export function buildQueryFromTreeItem(treeItem: ITreeItem) {
-  console.log(" ");
   const query = { name: "A new query", description: "A new query built with the query-builder", query: {} };
   recurseBuildQuery(query.query, treeItem, null);
-  console.log(query);
   return query;
 }
 
@@ -20,39 +18,48 @@ function recurseBuildQuery(query: any, treeItem: ITreeItem, parent: ITreeItem | 
   }
   if (isArrayHasLength(treeItem.children)) {
     treeItem.children?.forEach(child => {
-      if (parent !== null && parent.name) recurseBuildQuery(query[parent.name], child, treeItem);
+      if (parent !== null && query[parent.name]) recurseBuildQuery(query[parent.name], child, treeItem);
       else recurseBuildQuery(query, child, treeItem);
     });
   }
 }
 
 function addClause(query: any, treeItem: ITreeItem, parent: ITreeItem): any {
-  if (parent.name === "property" || parent.name === "match") {
+  if (parent.type === TreeItemType.PROPERTY) {
     console.log("1");
-    addPropertyMatchClause(query, treeItem, parent);
-  } else if (!treeItem.children?.length) {
+    addProperty(query, treeItem, parent);
+  } else if (treeItem.type === TreeItemType.PROPERTY_VALUE_PAIR) {
     console.log("2");
-    addLeafNodeClause(query, treeItem, parent);
-  } else if (!isObjectHasKeys(query[parent.name!])) {
-    console.log("3");
-    query[parent.name!] = {};
-  }
-}
-
-function addLeafNodeClause(query: any, treeItem: ITreeItem, parent: ITreeItem) {
-  // does not have child nodes
-  const value = !isObjectHasKeys(treeItem.value, ["@id"]) ? { "@id": treeItem.value } : treeItem.value;
-  if (isArrayHasLength(query)) {
-    query[0][parent.name!] = value;
+    addPropertyValue(query, treeItem, parent);
   } else {
-    query[parent.name!] = value;
+    console.log("3");
   }
 }
 
-function addPropertyMatchClause(query: any, treeItem: ITreeItem, parent: ITreeItem) {
-  // has child nodes
-  if (!isArrayHasLength(query[parent.name!])) {
-    query[parent.name!] = [];
+function addPropertyValue(query: any, treeItem: ITreeItem, parent: ITreeItem) {
+  if (treeItem.name === "isConcept") addIsConcept(query, treeItem, parent);
+}
+
+function addIsConcept(query: any, treeItem: ITreeItem, parent: ITreeItem) {
+  const isConcept = [] as any;
+  treeItem.children?.forEach(child => isConcept.push(child.value));
+  delete query[0]["property"][0][parent.name];
+  query[0]["property"][0]["isConcept"] = isConcept;
+}
+
+function addProperty(query: any, treeItem: ITreeItem, parent: ITreeItem) {
+  const value = treeItem.type === TreeItemType.PROPERTY ? {} : treeItem.value;
+  if (isArrayHasLength(query)) {
+    query[0][parent.name!] = [value];
+  } else if (parent.valueType === TreeItemValueType.ARRAY) {
+    if (!isArrayHasLength(query[parent.name])) {
+      query[parent.name] = [];
+    }
+    query[parent.name].push(value);
+  } else if (parent.valueType === TreeItemValueType.OBJECT) {
+    if (!isObjectHasKeys(query[parent.name])) {
+      query[parent.name] = {};
+    }
+    if (query[parent.name][value.name]) query[parent.name][value.name] = value;
   }
-  query[parent.name!].push(treeItem.value);
 }
