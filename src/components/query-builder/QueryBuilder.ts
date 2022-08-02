@@ -41,16 +41,22 @@ function addPropertyValue(query: any, treeItem: ITreeItem, parent: ITreeItem) {
 }
 
 function addIsConcept(query: any, treeItem: ITreeItem, parent: ITreeItem) {
+  console.log(parent.name);
   const isConcept = [] as any;
   treeItem.children?.forEach(child => isConcept.push(child.value));
-  delete query[0]["property"][0][parent.name];
-  query[0]["property"][0]["isConcept"] = isConcept;
+  const index = (query[0]["property"] as ITreeItem[]).findIndex(treeItem => treeItem.name === parent.name);
+  if (index !== -1) {
+    query[0]["property"][index]["isConcept"] = isConcept;
+  }
 }
 
 function addProperty(query: any, treeItem: ITreeItem, parent: ITreeItem) {
   const value = treeItem.type === TreeItemType.PROPERTY ? {} : treeItem.value;
   if (isArrayHasLength(query)) {
-    query[0][parent.name!] = [value];
+    if (!isArrayHasLength(query[0][parent.name])) {
+      query[0][parent.name] = [];
+    }
+    query[0][parent.name].push(value);
   } else if (parent.valueType === TreeItemValueType.ARRAY) {
     if (!isArrayHasLength(query[parent.name])) {
       query[parent.name] = [];

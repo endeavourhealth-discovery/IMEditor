@@ -67,14 +67,14 @@
 import VueJsonPretty from "vue-json-pretty";
 import { Helpers, Services } from "im-library";
 const {
-  DataTypeCheckers: { isObjectHasKeys, isArrayHasLength }
+  DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
 import { defineComponent } from "@vue/runtime-core";
 import TreeItem from "./TreeItem.vue";
 import { buildQueryFromTreeItem } from "./QueryBuilder";
 import treeData from "./TreeData";
 import axios from "axios";
-import { ComponentType, ITreeItem, TreeItemType, TreeItemValueType } from "./TreeItem";
+import { ITreeItem } from "./TreeItem";
 
 export default defineComponent({
   components: {
@@ -93,7 +93,7 @@ export default defineComponent({
         valueType: "OBJECT",
         componentType: "DISPLAY"
       } as ITreeItem,
-      // treeData: treeData.treeData as ITreeItem,
+      // treeData: treeData as ITreeItem,
       queryResults: {},
       queryDisplay: {}
     };

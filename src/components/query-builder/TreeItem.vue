@@ -20,10 +20,10 @@
         <i v-if="isFolder" :class="isOpen ? 'pi pi-folder-open' : 'pi pi-folder'"></i>
         {{ model.name }}
         <span class="hover-action-content">
-          <span class="hover-action" v-if="parent" @click="removeChild()"><i class="pi pi-times-circle"></i> </span>
           <span class="hover-action" @click="addChild">
             <i class="pi pi-plus-circle"></i>
           </span>
+          <span class="hover-action" v-if="parent" @click="removeChild()"><i class="pi pi-times-circle"></i> </span>
         </span>
       </div>
     </div>
