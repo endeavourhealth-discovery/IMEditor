@@ -18,7 +18,7 @@ function recurseBuildQuery(query: any, treeItem: ITreeItem, parent: ITreeItem | 
   }
   if (isArrayHasLength(treeItem.children)) {
     treeItem.children?.forEach(child => {
-      if (parent !== null && query[parent.name]) recurseBuildQuery(query[parent.name], child, treeItem);
+      if (parent !== null && isObjectHasKeys(parent, ["name"]) && query[parent.name]) recurseBuildQuery(query[parent.name], child, treeItem);
       else recurseBuildQuery(query, child, treeItem);
     });
   }
@@ -60,6 +60,7 @@ function addProperty(query: any, treeItem: ITreeItem, parent: ITreeItem) {
     if (!isObjectHasKeys(query[parent.name])) {
       query[parent.name] = {};
     }
-    if (query[parent.name][value.name]) query[parent.name][value.name] = value;
+    if (isObjectHasKeys(parent, ["name"]) && isObjectHasKeys(query, [parent.name]) && isObjectHasKeys(value, ["name"]) && query[parent.name][value.name])
+      query[parent.name][value.name] = value;
   }
 }

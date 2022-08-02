@@ -2,7 +2,6 @@
   <ul>
     <div v-if="isText">
       <InputText v-model="model.value" @keydown="onEnterKeyDown" />
-      <span v-if="parent" @click="removeChild()"><i class="pi pi-times-circle"></i></span>
     </div>
     <div v-else-if="isDropdown">
       <Dropdown
@@ -15,18 +14,21 @@
         @keydown="onEnterKeyDown"
         @change="onSelect"
       />
-      <span v-if="parent" @click="removeChild()"><i class="pi pi-times-circle"></i></span>
     </div>
-    <div v-else @click="toggle" @dblclick="changeType">
-      <i v-if="isFolder" :class="isOpen ? 'pi pi-folder-open' : 'pi pi-folder'"></i>
-      {{ model.name }}
-      <span v-if="parent" @click="removeChild()"><i class="pi pi-times-circle"></i> </span>
+    <div v-else @click="toggle">
+      <div class="tree-item">
+        <i v-if="isFolder" :class="isOpen ? 'pi pi-folder-open' : 'pi pi-folder'"></i>
+        {{ model.name }}
+        <span class="hover-action-content">
+          <span class="hover-action" v-if="parent" @click="removeChild()"><i class="pi pi-times-circle"></i> </span>
+          <span class="hover-action" @click="addChild">
+            <i class="pi pi-plus-circle"></i>
+          </span>
+        </span>
+      </div>
     </div>
     <ul v-show="isOpen" v-if="isFolder">
       <TreeItem class="item" v-for="child in model.children" v-bind:key="child.key" :model="child" :parent="model" @updateQuery="emitUpdateQuery"> </TreeItem>
-      <ul class="add" @click="addChild">
-        <i class="pi pi-plus-circle"></i>
-      </ul>
     </ul>
   </ul>
 </template>
@@ -49,7 +51,7 @@ export default defineComponent({
   emits: ["updateQuery"],
   data() {
     return {
-      isOpen: false,
+      isOpen: true,
       clauseOptions: [{ name: "select" }, { name: "property" }, { name: "match" }, { name: "logic" }] as Interfaces.TTIriRef[],
       propertyOptions: [] as Interfaces.TTIriRef[],
       matchOptions: [{ name: "property" }, { name: "entityType" }, { name: "entityId" }],
@@ -102,14 +104,6 @@ export default defineComponent({
       }
     },
 
-    changeType() {
-      if (!this.isFolder) {
-        this.model.children = [];
-        this.addChild();
-        this.isOpen = true;
-      }
-    },
-
     emitUpdateQuery() {
       this.$emit("updateQuery");
     },
@@ -137,11 +131,15 @@ export default defineComponent({
     },
 
     addChild() {
+      if (!this.isFolder) {
+        this.model.children = [];
+      }
       const length = this.model.children?.at(-1)?.key || 0;
       const item = { key: length + 1, name: this.model.name } as ITreeItem;
       setComponentType(item);
       this.model.children?.push(item);
       this.emitUpdateQuery();
+      this.toggle();
     }
   }
 });
@@ -154,5 +152,22 @@ ul {
 
 ul > ul {
   margin-left: -2rem;
+}
+
+.hover-action-content {
+  display: none;
+  z-index: 1;
+}
+
+.hover-action {
+  padding: 0.2rem;
+}
+
+.hover-action:hover {
+  color: brown;
+}
+
+.tree-item:hover .hover-action-content {
+  display: inline;
 }
 </style>
