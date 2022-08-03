@@ -1,5 +1,5 @@
 <template>
-  <div class="entity-search-item-container" :id="id">
+  <div class="entity-search-item-container">
     <div class="label-container">
       <span class="float-text">{{ label }}</span>
       <InputText
@@ -16,232 +16,180 @@
         v-tooltip="{ value: selectedResult.name, class: 'entity-tooltip' }"
       />
     </div>
-    <AddDeleteButtons :show="showButtons" :position="position" :options="getButtonOptions()" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
   </div>
   <OverlayPanel class="search-op" ref="miniSearchOP" :showCloseIcon="true" :dismissable="true">
     <SearchMiniOverlay :searchTerm="searchTerm" :searchResults="searchResults" :loading="loading" @searchResultSelected="updateSelectedResult" />
   </OverlayPanel>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from "@vue/runtime-core";
+<script setup lang="ts">
+import { computed, PropType, watch, onMounted, ref, Ref, inject } from "vue";
 import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/SearchMiniOverlay.vue";
-import { mapState } from "vuex";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import axios from "axios";
-import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
-import { Namespace, TTIriRef, EntityReferenceNode, ComponentDetails, SearchRequest, ConceptSummary } from "im-library/dist/types/interfaces/Interfaces";
-import { Helpers, Models, Enums } from "im-library";
+import _ from "lodash";
+import {
+  Namespace,
+  TTIriRef,
+  EntityReferenceNode,
+  SearchRequest,
+  ConceptSummary,
+  PropertyShape,
+  QueryRequest
+} from "im-library/dist/types/interfaces/Interfaces";
+import { Helpers, Models, Enums, Services } from "im-library";
+import store from "@/store";
+import injectionKeys from "@/injectionKeys/injectionKeys";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject },
-  TypeGuards: { isTTIriRef }
+  TypeGuards: { isTTIriRef },
+  EditorMethods: { processArguments },
+  Transforms: { mapToObject }
 } = Helpers;
 const { ComponentType, BuilderType, SortBy } = Enums;
+const { EntityService, QueryService } = Services;
 
-export default defineComponent({
-  name: "Entity",
-  props: {
-    id: { type: String, required: true },
-    position: { type: Number, required: true },
-    value: {
-      type: Object as PropType<{
-        filterOptions: { status: EntityReferenceNode[]; schemes: Namespace[]; types: EntityReferenceNode[] };
-        entity: TTIriRef | undefined;
-        type: Enums.ComponentType;
-        label: string;
-      }>,
-      required: true
-    },
-    showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, required: true },
-    builderType: { type: String as PropType<Enums.BuilderType>, required: true }
-  },
-  emits: {
-    updateClicked: (_payload: ComponentDetails) => true,
-    addNextOptionsClicked: (_payload: any) => true,
-    deleteClicked: (_payload: ComponentDetails) => true,
-    addClicked: (_payload: any) => true
-  },
-  components: { SearchMiniOverlay, AddDeleteButtons },
-  computed: mapState(["filterOptions", "selectedFilters"]),
-  watch: {
-    value: {
-      async handler() {
-        if (!this.value.entity) await this.init();
-      }
-    }
-  },
-  async mounted() {
-    await this.init();
-  },
-  data() {
-    return {
-      loading: false,
-      debounce: 0,
-      controller: {} as AbortController,
-      selectedResult: {} as TTIriRef,
-      searchTerm: "",
-      searchResults: [] as ConceptSummary[],
-      label: ""
-    };
-  },
-  methods: {
-    async init() {
-      if (this.value && this.value.entity && isObjectHasKeys(this.value.entity, ["name", "@id"])) {
-        this.updateSelectedResult(this.value.entity);
-        await this.search();
-      } else {
-        this.selectedResult = {} as TTIriRef;
-        this.searchTerm = "";
-      }
-      this.value?.label ? (this.label = this.value.label) : (this.label = "Entity");
-    },
-    // debounceForSearch(): void {
-    //   clearTimeout(this.debounce);
-    //   this.debounce = window.setTimeout(() => {
-    //     this.search();
-    //   }, 600);
-    // },
-
-    // checkKey(event: any) {
-    //   if (event.code === "Enter") {
-    //     this.search();
-    //   }
-    // },
-
-    async search(): Promise<void> {
-      if (this.searchTerm.length > 0) {
-        this.searchResults = [];
-        this.loading = true;
-        const searchRequest = {} as SearchRequest;
-        searchRequest.termFilter = this.searchTerm;
-        searchRequest.sortBy = SortBy.Usage;
-        searchRequest.page = 1;
-        searchRequest.size = 100;
-        this.setFilters(searchRequest);
-        // searchRequest.schemeFilter = this.filterOptions.schemes.map((scheme: Namespace) => scheme.iri);
-
-        // searchRequest.statusFilter = [];
-        // this.filterOptions.status.forEach((status: EntityReferenceNode) => {
-        //   searchRequest.statusFilter.push(status["@id"]);
-        // });
-        // searchRequest.typeFilter = [];
-        // searchRequest.typeFilter.push(IM.CONCEPT);
-        if (!isObject(this.controller)) {
-          this.controller.abort();
-        }
-        this.controller = new AbortController();
-        await this.fetchSearchResults(searchRequest, this.controller);
-        this.loading = false;
-      }
-    },
-
-    setFilters(searchRequest: SearchRequest) {
-      let options = {} as { status: EntityReferenceNode[]; schemes: Namespace[]; types: EntityReferenceNode[] };
-      if (this.value && isObjectHasKeys(this.value.filterOptions)) {
-        options = this.value.filterOptions;
-      } else {
-        options = this.filterOptions;
-      }
-      searchRequest.schemeFilter = options.schemes.map((scheme: Namespace) => scheme.iri);
-
-      searchRequest.statusFilter = [];
-      for (const status of options.status) {
-        searchRequest.statusFilter.push(status["@id"]);
-      }
-
-      searchRequest.typeFilter = [];
-      for (const type of options.types) {
-        searchRequest.typeFilter.push(type["@id"]);
-      }
-    },
-
-    async fetchSearchResults(searchRequest: SearchRequest, controller: AbortController) {
-      const result = await this.$entityService.advancedSearch(searchRequest, controller);
-      if (result && isArrayHasLength(result)) {
-        this.searchResults = result;
-      } else {
-        this.searchResults = [];
-      }
-    },
-
-    hideOverlay(): void {
-      const x = this.$refs.miniSearchOP as any;
-      if (x) x.hide();
-    },
-
-    showOverlay(event: any): void {
-      const x = this.$refs.miniSearchOP as any;
-      if (x) x.show(event, event.target);
-    },
-
-    updateSelectedResult(data: ConceptSummary | TTIriRef) {
-      if (!isObjectHasKeys(data)) {
-        this.selectedResult = {} as TTIriRef;
-        this.searchTerm = "";
-      } else if (isTTIriRef(data)) {
-        this.selectedResult = data;
-        this.searchTerm = data.name;
-      } else {
-        this.selectedResult = { "@id": data.iri, name: data.name };
-        this.searchTerm = data.name;
-      }
-      this.$emit("updateClicked", this.createEntity());
-      this.hideOverlay();
-    },
-
-    editClicked(event: any) {
-      this.showOverlay(event);
-    },
-
-    createEntity(): ComponentDetails {
-      if (this.value)
-        return {
-          value: { entity: this.selectedResult, filterOptions: this.value.filterOptions, type: this.value.type, label: this.value.label },
-          id: this.id,
-          position: this.position,
-          type: this.value.type,
-          json: this.selectedResult,
-          builderType: this.builderType,
-          showButtons: this.showButtons
-        };
-      else {
-        return {
-          value: { entity: this.selectedResult, filterOptions: this.filterOptions, type: ComponentType.ENTITY, label: "Entity" },
-          id: this.id,
-          position: this.position,
-          type: ComponentType.ENTITY,
-          json: {},
-          builderType: this.builderType,
-          showButtons: this.showButtons
-        };
-      }
-    },
-
-    deleteClicked(): void {
-      this.$emit("deleteClicked", {
-        id: this.id,
-        value: this.selectedResult,
-        position: this.position,
-        type: ComponentType.ENTITY,
-        builderType: this.builderType,
-        json: this.selectedResult,
-        showButtons: this.showButtons
-      });
-    },
-
-    addNextClicked(item: any): void {
-      this.$emit("addNextOptionsClicked", {
-        position: this.position + 1,
-        selectedType: item
-      });
-    },
-
-    getButtonOptions() {
-      if (this.builderType === BuilderType.PARENT) return [ComponentType.ENTITY];
-      else return [ComponentType.ENTITY, ComponentType.LOGIC, ComponentType.REFINEMENT];
-    }
-  }
+const props = defineProps({
+  value: { type: Object as PropType<TTIriRef>, required: false },
+  shape: { type: Object as PropType<PropertyShape>, required: true },
+  mode: { type: String as PropType<Enums.EditorMode>, required: true }
 });
+
+const emit = defineEmits({
+  updateClicked: (_payload: TTIriRef) => true
+});
+
+const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
+const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
+
+const entityService = new EntityService(axios);
+const queryService = new QueryService(axios);
+
+watch(
+  () => _.cloneDeep(props.value),
+  async () => {
+    await init();
+  }
+);
+
+onMounted(async () => {
+  await init();
+});
+
+let loading = ref(false);
+let controller: Ref<AbortController> = ref({} as AbortController);
+let selectedResult: Ref<TTIriRef> = ref({} as TTIriRef);
+let searchTerm = ref("");
+let searchResults: Ref<ConceptSummary[]> = ref([]);
+let label = ref("");
+let key = ref("");
+let invalid = ref(false);
+
+const miniSearchOP = ref();
+
+async function init() {
+  if (isObjectHasKeys(props.shape, ["path"])) key.value = props.shape.path["@id"];
+  if (props.value && isObjectHasKeys(props.value, ["name", "@id"])) {
+    updateSelectedResult(props.value);
+    await search();
+  } else {
+    selectedResult.value = {} as TTIriRef;
+    searchTerm.value = "";
+  }
+  label.value = props.shape.name;
+}
+
+//function debounceForSearch(): void {
+//   clearTimeout(this.debounce);
+//   debounce.value = window.setTimeout(() => {
+//     search();
+//   }, 600);
+// }
+
+//function checkKey(event: any) {
+//   if (event.code === "Enter") {
+//     search();
+//   }
+// }
+
+async function search(): Promise<void> {
+  if (searchTerm.value.length > 0) {
+    loading.value = true;
+    let query = {} as QueryRequest;
+    if (isObjectHasKeys(props.shape, ["select", "argument"])) {
+      const args = processArguments(props.shape);
+      const replacedArgs = mapToObject(args);
+      replacedArgs.valueText = searchTerm.value;
+      (query.argument = replacedArgs), (query.queryIri = props.shape.select[0]);
+    }
+    if (isObjectHasKeys(props.shape, ["select"])) {
+      query.argument = { valueText: searchTerm.value };
+      query.queryIri = props.shape.select[0];
+    }
+    if (!isObjectHasKeys(query, ["queryIri"])) throw new Error("No queryIri found for entity search");
+
+    if (!isObject(controller.value)) controller.value.abort();
+    controller.value = new AbortController();
+    if (controller.value) {
+      const result = await queryService.entityQuery(query, controller.value);
+      if (result)
+        searchResults.value = result.map((item: any) => {
+          return { "@id": item.iri, name: item.name };
+        });
+      else searchResults.value = [];
+    }
+    loading.value = false;
+  }
+}
+
+function hideOverlay(): void {
+  const x = miniSearchOP.value as any;
+  if (x) x.hide();
+}
+
+function showOverlay(event: any): void {
+  const x = miniSearchOP.value as any;
+  if (x) x.show(event, event.target);
+}
+
+async function updateSelectedResult(data: ConceptSummary | TTIriRef) {
+  if (!isObjectHasKeys(data)) {
+    selectedResult.value = {} as TTIriRef;
+    searchTerm.value = "";
+  } else if (isTTIriRef(data)) {
+    selectedResult.value = data;
+    searchTerm.value = data.name;
+  } else {
+    selectedResult.value = { "@id": data.iri, name: data.name };
+    searchTerm.value = data.name;
+  }
+  if (key.value) {
+    updateEntity();
+    await updateValidity();
+  } else {
+    emit("updateClicked", selectedResult.value);
+  }
+  hideOverlay();
+}
+
+function updateEntity() {
+  const result = {} as any;
+  result[key.value] = selectedResult.value;
+  if (entityUpdate) entityUpdate(result);
+}
+
+async function updateValidity() {
+  if (isObjectHasKeys(props.shape, ["validation"])) {
+    invalid.value = !(await queryService.checkValidation(selectedResult.value, props.shape.validation["@id"]));
+  } else {
+    invalid.value = !defaultValidity();
+  }
+  if (validityUpdate) validityUpdate({ key: key, valid: !invalid.value });
+}
+
+function defaultValidity() {
+  return isTTIriRef(selectedResult.value);
+}
 </script>
 
 <style scoped>
