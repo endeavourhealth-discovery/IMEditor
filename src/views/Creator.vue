@@ -18,7 +18,7 @@
             <Steps :model="stepsItems" :readonly="false" @click="stepsClicked" />
             <router-view v-slot="{ Component }">
               <keep-alive>
-                <component :is="Component" :data="groups.length ? groups[currentStep - 1] : undefined" :mode="EditorMode.CREATE" />
+                <component :is="Component" :shape="groups.length ? groups[currentStep - 1] : undefined" :mode="EditorMode.CREATE" />
               </keep-alive>
             </router-view>
           </div>
@@ -48,10 +48,11 @@
 
 <script lang="ts">
 import TypeSelector from "@/components/creator/TypeSelector.vue";
-import Group from "@/components/creator/Group.vue";
+import StepsGroup from "@/components/creator/StepsGroup.vue";
+import ArrayBuilder from "@/components/shapeComponents/ArrayBuilder.vue";
 
 export default defineComponent({
-  components: { Group, TypeSelector }
+  components: { ArrayBuilder, StepsGroup, TypeSelector }
 });
 </script>
 
@@ -67,7 +68,6 @@ import { useConfirm } from "primevue/useconfirm";
 import { useRouter } from "vue-router";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import { FormGenerator, PropertyGroup, PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
-import { any } from "cypress/types/bluebird";
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength },
   ConceptTypeMethods: { isValueSet },
@@ -159,12 +159,17 @@ async function getShape(type: string): Promise<void> {
 function setValueVariableMap(entity: any, groups: PropertyGroup[]) {
   if (entity && groups.length) {
     groups.forEach(group => {
-      group.property.forEach(property => {
-        if (property.valueVariable) {
-          const value = entity[property.path["@id"]];
-          valueVariableMap.value.set(property.valueVariable, value);
-        }
-      });
+      if (isObjectHasKeys(group, ["property"])) {
+        group.property.forEach(property => {
+          if (property.valueVariable) {
+            const value = entity[property.path["@id"]];
+            valueVariableMap.value.set(property.valueVariable, value);
+          }
+        });
+      }
+      if (isObjectHasKeys(group, ["subGroup"])) {
+        setValueVariableMap(entity, group.subGroup);
+      }
     });
   }
 }
@@ -205,19 +210,30 @@ function setSteps() {
   const creatorRoute = router.options.routes.find(r => r.name === "Creator");
   if (creatorRoute) {
     groups.value.forEach(group => {
-      const label = getNameFromLabel(group.label);
-      if (creatorRoute.children?.findIndex(route => route.name === label) === -1) {
-        creatorRoute.children?.push({ path: label, name: label, component: Group });
+      const component = processComponentType(group.componentType);
+      if (creatorRoute.children?.findIndex(route => route.name === group.name) === -1) {
+        creatorRoute.children?.push({ path: group.name, name: group.name, component: component });
       }
-      stepsItems.value.push({ label: getNameFromLabel(group.label), to: "/creator/" + label });
+      stepsItems.value.push({ label: group.name, to: "/creator/" + group.name });
     });
     router.addRoute(creatorRoute);
   }
 }
 
-function getNameFromLabel(label: string) {
-  if (!label) return "";
-  return label.split("-")[1].trim();
+// function getNameFromLabel(label: string) {
+//   if (!label) return "";
+//   return label.split("-")[1].trim();
+// }
+
+function processComponentType(type: TTIriRef) {
+  switch (type["@id"]) {
+    case IM.STEPS_GROUP_COMPONENT:
+      return StepsGroup;
+    case IM.ARRAY_BUILDER_COMPONENT:
+      return ArrayBuilder;
+    default:
+      throw new Error("Invalid component type encountered in shape group" + type["@id"]);
+  }
 }
 
 function confirmLeavePage() {

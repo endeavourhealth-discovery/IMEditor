@@ -19,7 +19,7 @@
             <Steps :model="stepsItems" :readonly="false" @click="stepsClicked" />
             <router-view v-slot="{ Component }">
               <keep-alive>
-                <component :is="Component" :data="groups[currentStep]" :mode="EditorMode.EDIT" />
+                <component :is="Component" :shape="groups[currentStep]" :mode="EditorMode.EDIT" />
               </keep-alive>
             </router-view>
           </div>
@@ -50,10 +50,10 @@
 
 <script lang="ts">
 import TypeSelector from "@/components/creator/TypeSelector.vue";
-import Group from "@/components/creator/Group.vue";
+import StepsGroup from "@/components/creator/StepsGroup.vue";
 
 export default defineComponent({
-  components: { Group, TypeSelector }
+  components: { StepsGroup, TypeSelector }
 });
 </script>
 
@@ -255,7 +255,7 @@ function setSteps() {
     groups.value.forEach(group => {
       const label = getNameFromLabel(group.label);
       if (editorRoute.children?.findIndex(route => route.name === label) === -1) {
-        editorRoute.children?.push({ path: label, name: label, component: Group });
+        editorRoute.children?.push({ path: label, name: label, component: group.componentType });
       }
       stepsItems.value.push({ label: getNameFromLabel(group.label), to: "/editor/" + label });
     });
