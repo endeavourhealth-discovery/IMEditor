@@ -1,12 +1,9 @@
 <template>
   <ul>
-    <div v-if="isText">
-      <InputText v-model="model.value" @keydown="onEnterKeyDown" />
-    </div>
-    <div v-else-if="isDropdown">
+    <div v-if="isDropdown">
       <Dropdown
         v-model="model.value"
-        :options="getOptions()"
+        :options="getOptionsFromMap()"
         optionLabel="name"
         :editable="true"
         :filter="true"
@@ -14,6 +11,12 @@
         @keydown="onEnterKeyDown"
         @change="onSelect"
       />
+    </div>
+    <div v-else-if="isAutocomplete">
+      <InputText v-model="model.value" @keydown="onEnterKeyDown" />
+    </div>
+    <div v-else-if="isText">
+      <InputText v-model="model.value" @keydown="onEnterKeyDown" />
     </div>
     <div v-else @click="toggle">
       <div class="tree-item">
@@ -52,10 +55,10 @@ export default defineComponent({
   data() {
     return {
       isOpen: true,
-      clauseOptions: [{ name: "select" }, { name: "property" }, { name: "match" }, { name: "logic" }] as Interfaces.TTIriRef[],
-      propertyOptions: [] as Interfaces.TTIriRef[],
-      matchOptions: [{ name: "property" }, { name: "entityType" }, { name: "entityId" }],
-      entityTypeOptions: [] as Interfaces.TTIriRef[]
+      clauseOptions: [{ name: "select" }, { name: "property" }, { name: "match" }, { name: "logic" }, { name: "isConcept" }] as Interfaces.TTIriRef[],
+      matchOptions: [{ name: "property" }, { name: "entityType" }, { name: "entityId" }] as Interfaces.TTIriRef[],
+      optionNamePaths: { scheme: "namespaces", status: "statuses", entityType: "classes", property: "properties" } as any,
+      mappedOptions: new Map<string, Interfaces.TTIriRef[]>()
     };
   },
   computed: {
@@ -67,28 +70,31 @@ export default defineComponent({
     },
     isDropdown() {
       return this.model.componentType === ComponentType.DROPDOWN;
+    },
+    isAutocomplete() {
+      return this.model.componentType === ComponentType.AUTOCOMPLETE;
     }
   },
   async mounted() {
-    await this.getClasses();
-    await this.getProperties();
+    await this.initOptions();
   },
   methods: {
-    getOptions() {
-      switch (this.model.name) {
-        case "property":
-          return this.propertyOptions;
-        case "match":
-          return this.matchOptions;
-        case "isConcept":
-        case "entityType":
-          return this.entityTypeOptions;
-        case "select":
-          return this.clauseOptions;
-
-        default:
-          return this.clauseOptions;
+    async initOptions() {
+      this.mappedOptions.set("select", this.clauseOptions);
+      this.mappedOptions.set("match", this.matchOptions);
+      Object.keys(this.optionNamePaths).forEach(async key => {
+        let options = await this.getOptions(this.optionNamePaths[key]);
+        if (key === "property") {
+          options = this.clauseOptions.concat(options);
+        }
+        this.mappedOptions.set(key, options);
+      });
+    },
+    getOptionsFromMap() {
+      if (!this.mappedOptions.has(this.model.name)) {
+        return this.clauseOptions;
       }
+      return this.mappedOptions.get(this.model.name);
     },
     removeChild() {
       if (this.parent && isObjectHasKeys(this.parent) && isArrayHasLength(this.parent.children))
@@ -121,13 +127,8 @@ export default defineComponent({
       this.emitUpdateQuery();
     },
 
-    async getProperties() {
-      this.propertyOptions = await axios.get(Services.Env.API + "api/entity/public/properties");
-      this.propertyOptions = this.clauseOptions.concat(this.propertyOptions);
-    },
-
-    async getClasses() {
-      this.entityTypeOptions = await axios.get(Services.Env.API + "api/entity/public/classes");
+    async getOptions(name: string): Promise<Interfaces.TTIriRef[]> {
+      return await axios.get(Services.Env.API + "api/entity/public/" + name);
     },
 
     addChild() {

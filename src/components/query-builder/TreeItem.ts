@@ -21,6 +21,7 @@ export enum TreeItemValueType {
 
 export enum ComponentType {
   DROPDOWN = "DROPDOWN",
+  AUTOCOMPLETE = "AUTOCOMPLETE",
   TEXT = "TEXT",
   DISPLAY = "DISPLAY"
 }
@@ -34,7 +35,7 @@ export function setComponentType(item: ITreeItem) {
       break;
 
     case "isConcept":
-      item.componentType = ComponentType.DROPDOWN;
+      item.componentType = ComponentType.AUTOCOMPLETE;
       break;
 
     default:
