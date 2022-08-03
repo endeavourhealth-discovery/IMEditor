@@ -1,6 +1,6 @@
 <template>
-  <div class="entity-multi-search-container">
-    <h3>{{ data.name }}:</h3>
+  <div class="array-builder-container">
+    <h3>{{ shape.name }}:</h3>
     <div v-if="loading" class="loading-container">
       <ProgressSpinner />
     </div>
@@ -13,7 +13,8 @@
           :id="item.id"
           :position="item.position"
           :showButtons="item.showButtons"
-          :builderType="item.builderType"
+          :shape="item.shape"
+          :mode="mode"
           @deleteClicked="deleteItem"
           @addClicked="addItemWrapper"
           @updateClicked="updateItemWrapper"
@@ -25,9 +26,10 @@
 </template>
 
 <script lang="ts">
-import EntitySearch from "@/components/shapeComponents/EntitySearch.vue";
+import BuilderChildWrapper from "./BuilderChildWrapper.vue";
+
 export default defineComponent({
-  components: { EntitySearch }
+  components: { BuilderChildWrapper }
 });
 </script>
 
@@ -37,18 +39,20 @@ import { Enums, Helpers, Services, Vocabulary } from "im-library";
 import store from "@/store";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";
-import { ComponentDetails, EntityReferenceNode, Namespace, PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { ComponentDetails, EntityReferenceNode, Namespace, PropertyGroup, PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 import axios from "axios";
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength },
-  EditorBuilderJsonMethods: { generateNewComponent, updatePositions, addItem, updateItem }
+  EditorBuilderJsonMethods: { generateNewComponent, updatePositions, addItem, updateItem },
+  TypeGuards: { isPropertyShape, isPropertyGroup },
+  EditorMethods: { processComponentType }
 } = Helpers;
 const { QueryService } = Services;
 const { BuilderType, ComponentType } = Enums;
 const { IM } = Vocabulary;
 
 const props = defineProps({
-  data: { type: Object as PropType<PropertyShape>, required: true },
+  shape: { type: Object as PropType<PropertyShape | PropertyGroup>, required: true },
   mode: { type: String as PropType<Enums.EditorMode>, required: true },
   value: { type: Array as PropType<TTIriRef[]>, required: false }
 });
@@ -58,7 +62,7 @@ const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
 
 const queryService = new QueryService(axios);
 
-let key = props.data.path["@id"];
+let key = props.shape.path["@id"];
 
 let loading = ref(true);
 
@@ -69,6 +73,12 @@ onMounted(() => {
   setFilters();
   createBuild();
 });
+watch(
+  () => _.cloneDeep(props.shape),
+  () => {
+    createBuild();
+  }
+);
 watch(
   () => _.cloneDeep(build.value),
   async () => {
@@ -106,30 +116,33 @@ function createBuild() {
 }
 
 function createDefaultBuild() {
-  build.value = [
-    generateNewComponent(
-      ComponentType.ENTITY_SEARCH,
-      0,
-      { filterOptions: filters.value, entity: undefined, type: ComponentType.ENTITY_SEARCH, label: "Entity" },
-      BuilderType.PARENT,
-      {
-        minus: true,
-        plus: true
-      }
-    )
-  ];
+  build.value = [];
+  if (isPropertyGroup(props.shape))
+    props.shape.property.forEach(property => {
+      build.value.push(
+        generateNewComponent(
+          ComponentType.BUILDER_CHILD_WRAPPER,
+          property.order - 1,
+          { filterOptions: filters.value, entity: undefined, type: processComponentType(property.componentType), label: property.name },
+          property,
+          { minus: true, plus: true },
+          props.mode
+        )
+      );
+    });
 }
 
 function processChild(child: any, position: number) {
   return generateNewComponent(
-    ComponentType.ENTITY_SEARCH,
+    ComponentType.BUILDER_CHILD_WRAPPER,
     position,
-    { filterOptions: filters, entity: child, type: ComponentType.ENTITY_SEARCH, label: "Entity" },
-    BuilderType.PARENT,
+    { filterOptions: filters, entity: child, type: processComponentType(child.componentType), label: child.label },
+    props.shape,
     {
       minus: true,
       plus: true
-    }
+    },
+    props.mode
   );
 }
 
@@ -154,8 +167,8 @@ function updateEntity() {
 }
 
 async function updateValidity() {
-  if (isObjectHasKeys(props.data, ["validation"])) {
-    invalid.value = !(await queryService.checkValidation(generateBuildAsJson(), props.data.validation["@id"]));
+  if (isPropertyShape(props.shape) && isObjectHasKeys(props.shape, ["validation"])) {
+    invalid.value = !(await queryService.checkValidation(generateBuildAsJson(), props.shape.validation["@id"]));
   } else {
     invalid.value = !defaultValidation();
   }
@@ -166,11 +179,15 @@ function defaultValidation() {
   return generateBuildAsJson().every(item => isObjectHasKeys(item, ["@id", "name"]));
 }
 
-function addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
-  if (data.selectedType === ComponentType.ENTITY_SEARCH) {
-    data.value = { filterOptions: filters, entity: undefined, type: ComponentType.ENTITY_SEARCH, label: "Entity" };
+function addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any; shape: PropertyShape | PropertyGroup }): void {
+  let shape;
+  if (isPropertyGroup(props.shape)) {
+    shape = props.shape.property.find(p => p.componentType["@id"] === IM.ENTITY_SEARCH_COMPONENT);
   }
-  addItem(data, build.value, BuilderType.PARENT, { minus: true, plus: true });
+  if (data.selectedType !== ComponentType.BUILDER_CHILD_WRAPPER) {
+    data.selectedType = ComponentType.BUILDER_CHILD_WRAPPER;
+  }
+  if (shape) addItem(data, build.value, { minus: true, plus: true }, shape, props.mode);
 }
 
 function deleteItem(data: ComponentDetails): void {
@@ -189,7 +206,7 @@ function updateItemWrapper(data: ComponentDetails) {
 </script>
 
 <style scoped>
-.entity-multi-search-container {
+.array-builder-container {
   width: 100%;
   display: flex;
   flex-flow: column nowrap;
