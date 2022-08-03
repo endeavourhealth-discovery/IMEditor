@@ -98,7 +98,7 @@ export default defineComponent({
       queryDisplay: {},
       clauseOptions: [{ name: "select" }, { name: "property" }, { name: "match" }, { name: "logic" }, { name: "isConcept" }] as Interfaces.TTIriRef[],
       matchOptions: [{ name: "property" }, { name: "entityType" }, { name: "entityId" }] as Interfaces.TTIriRef[],
-      optionNamePaths: { scheme: "namespaces", status: "statuses", entityType: "classes", property: "properties" } as any,
+      optionNamePaths: { status: "statuses", entityType: "classes", property: "properties" } as any,
       optionsMap: new Map<string, Interfaces.TTIriRef[]>()
     };
   },
@@ -110,6 +110,11 @@ export default defineComponent({
     async initOptions() {
       this.optionsMap.set("select", this.clauseOptions);
       this.optionsMap.set("match", this.matchOptions);
+      const schemes = (await this.$entityService.getNamespaces()).map(scheme => {
+        return { "@id": scheme.iri, name: scheme.name };
+      }) as Interfaces.TTIriRef[];
+      this.optionsMap.set("scheme", schemes);
+
       Object.keys(this.optionNamePaths).forEach(async key => {
         let options = await this.getOptions(this.optionNamePaths[key]);
         if (key === "property") {
