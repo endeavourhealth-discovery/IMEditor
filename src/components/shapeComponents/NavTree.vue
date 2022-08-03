@@ -93,14 +93,14 @@ let selectedNode: Ref<any> = ref({});
 let root: Ref<TreeNode[]> = ref([]);
 let loading = ref(true);
 let expandedKeys: Ref<any> = ref({});
-let hoveredResult: Ref<ConceptSummary> = ref({});
+let hoveredResult: Ref<ConceptSummary> = ref({} as ConceptSummary);
 let overlayLocation: Ref<any> = ref({});
 const pageSize: number = 20;
 
 const navTreeOP = ref();
 
 watch(treeIri, async () => {
-  await findPathToNode(treeIri);
+  await findPathToNode(treeIri.value);
 });
 
 onMounted(() => {
