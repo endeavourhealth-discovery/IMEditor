@@ -2,7 +2,7 @@
   <div class="entity-single-dropdown-container">
     <span class="p-float-label">
       <Dropdown class="entity-single-dropdown" :class="invalid && 'invalid'" v-model="selectedEntity" :options="dropdownOptions" optionLabel="name" />
-      <label>{{ data.name }}</label>
+      <label>{{ shape.name }}</label>
     </span>
   </div>
 </template>
@@ -13,9 +13,8 @@ import { Enums, Helpers, Services, Vocabulary } from "im-library";
 import store from "@/store";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";
-import { PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { PropertyShape, TTIriRef, QueryRequest } from "im-library/dist/types/interfaces/Interfaces";
 import axios from "axios";
-import { QueryRequest } from "im-library/dist/types/interfaces/modules/QueryRequest";
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength },
   TypeGuards: { isTTIriRef },
@@ -27,7 +26,7 @@ const { EntityService, QueryService } = Services;
 const { IM } = Vocabulary;
 
 const props = defineProps({
-  data: { type: Object as PropType<PropertyShape>, required: true },
+  shape: { type: Object as PropType<PropertyShape>, required: true },
   mode: { type: String as PropType<Enums.EditorMode>, required: true },
   value: { type: Object as PropType<TTIriRef>, required: false }
 });
@@ -44,7 +43,7 @@ onMounted(async () => {
   if (props.value) selectedEntity.value = props.value;
 });
 
-let key = props.data.path["@id"];
+let key = props.shape.path["@id"];
 
 let selectedEntity: Ref<TTIriRef | undefined> = ref();
 onMounted(() => {
@@ -60,18 +59,18 @@ watch(selectedEntity, async newValue => {
 let invalid = ref(false);
 
 async function getDropdownOptions() {
-  if (isObjectHasKeys(props.data, ["select", "argument"])) {
-    const args = processArguments(props.data);
+  if (isObjectHasKeys(props.shape, ["select", "argument"])) {
+    const args = processArguments(props.shape);
     const replacedArgs = mapToObject(args);
-    const query = { argument: replacedArgs, queryIri: props.data.select[0] } as QueryRequest;
+    const query = { argument: replacedArgs, queryIri: props.shape.select[0] } as QueryRequest;
     const result = await queryService.entityQuery(query);
     if (result)
       return result.map((item: any) => {
         return { "@id": item.iri, name: item.name };
       });
     else return [];
-  } else if (isObjectHasKeys(props.data, ["function"])) {
-    return (await queryService.runFunction(props.data.function["@id"])).options.sort(byName);
+  } else if (isObjectHasKeys(props.shape, ["function"])) {
+    return (await queryService.runFunction(props.shape.function["@id"])).options.sort(byName);
   } else throw new Error("propertyshape is missing 'select' or 'function' parameter to fetch dropdown options");
 }
 
@@ -82,8 +81,8 @@ function updateEntity() {
 }
 
 async function updateValidity() {
-  if (isObjectHasKeys(props.data, ["validation"])) {
-    invalid.value = !(await queryService.checkValidation(selectedEntity.value, props.data.validation["@id"]));
+  if (isObjectHasKeys(props.shape, ["validation"])) {
+    invalid.value = !(await queryService.checkValidation(selectedEntity.value, props.shape.validation["@id"]));
   } else {
     invalid.value = !defaultValidation();
   }

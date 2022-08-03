@@ -2,7 +2,7 @@
   <div class="html-input-container">
     <span class="p-float-label">
       <Textarea class="p-inputtext-lg input-html" :class="invalid && 'invalid'" v-model="userInput" rows="4" />
-      <label>{{ data.name }}</label>
+      <label>{{ shape.name }}</label>
     </span>
   </div>
 </template>
@@ -21,7 +21,7 @@ const {
 const { QueryService } = Services;
 
 const props = defineProps({
-  data: { type: Object as PropType<PropertyShape>, required: true },
+  shape: { type: Object as PropType<PropertyShape>, required: true },
   mode: { type: String as PropType<Enums.EditorMode>, required: true },
   value: { type: String, default: "" }
 });
@@ -31,7 +31,7 @@ const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
 
 const queryService = new QueryService(axios);
 
-let key = props.data.path["@id"];
+let key = props.shape.path["@id"];
 
 let invalid = ref(false);
 
@@ -51,7 +51,7 @@ function updateEntity() {
 }
 
 async function updateValidity() {
-  if (isObjectHasKeys(props.data, ["validation"])) invalid.value = await queryService.checkValidation(userInput.value, props.data.validation["@id"]);
+  if (isObjectHasKeys(props.shape, ["validation"])) invalid.value = await queryService.checkValidation(userInput.value, props.shape.validation["@id"]);
   else invalid.value = !defaultValidation(userInput.value);
   if (validityUpdate) validityUpdate({ key: key, valid: !invalid.value });
 }

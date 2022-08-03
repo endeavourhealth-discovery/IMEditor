@@ -2,7 +2,7 @@
   <div class="entity-combobox-container">
     <span class="p-float-label">
       <MultiSelect
-        :disabled="props.data.path['@id'] === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' && mode === 'create'"
+        :disabled="props.shape.path['@id'] === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' && mode === 'create'"
         class="multi-select"
         :class="invalid && 'invalid'"
         v-model="selectedEntities"
@@ -10,7 +10,7 @@
         optionLabel="name"
         display="chip"
       />
-      <label>{{ data.name }}</label>
+      <label>{{ shape.name }}</label>
     </span>
   </div>
 </template>
@@ -32,7 +32,7 @@ const {
 const { EntityService, QueryService } = Services;
 
 const props = defineProps({
-  data: { type: Object as PropType<PropertyShape>, required: true },
+  shape: { type: Object as PropType<PropertyShape>, required: true },
   mode: { type: String as PropType<Enums.EditorMode>, required: true },
   value: { type: Array as PropType<TTIriRef[]>, required: false }
 });
@@ -47,13 +47,13 @@ const dropdownOptions: Ref<TTIriRef[]> = ref([]);
 onMounted(async () => {
   dropdownOptions.value = await getDropdownOptions();
   if (props.value && isArrayHasLength(props.value)) selectedEntities.value = props.value;
-  else if (isObjectHasKeys(props.data, ["isIri"])) {
-    const found = dropdownOptions.value.find(option => option["@id"] === props.data.isIri["@id"]);
+  else if (isObjectHasKeys(props.shape, ["isIri"])) {
+    const found = dropdownOptions.value.find(option => option["@id"] === props.shape.isIri["@id"]);
     if (found) selectedEntities.value = [found];
   }
 });
 
-let key = props.data.path["@id"];
+let key = props.shape.path["@id"];
 
 let selectedEntities: Ref<TTIriRef[]> = ref([]);
 watch(selectedEntities, async newValue => {
@@ -66,18 +66,18 @@ watch(selectedEntities, async newValue => {
 let invalid = ref(false);
 
 async function getDropdownOptions(): Promise<TTIriRef[]> {
-  if (isObjectHasKeys(props.data, ["select", "argument"])) {
-    const args = processArguments(props.data);
+  if (isObjectHasKeys(props.shape, ["select", "argument"])) {
+    const args = processArguments(props.shape);
     const replacedArgs = mapToObject(args);
-    const queryRequest = { argument: replacedArgs, queryIri: props.data.select[0] } as QueryRequest;
+    const queryRequest = { argument: replacedArgs, queryIri: props.shape.select[0] } as QueryRequest;
     const result = await queryService.entityQuery(queryRequest);
     if (result)
       return result.map((item: any) => {
         return { "@id": item.iri, name: item.name };
       });
     else return [];
-  } else if (isObjectHasKeys(props.data, ["function"])) {
-    return (await queryService.runFunction(props.data.function["@id"])).options.sort(byName);
+  } else if (isObjectHasKeys(props.shape, ["function"])) {
+    return (await queryService.runFunction(props.shape.function["@id"])).options.sort(byName);
   } else throw new Error("propertyshape is missing 'search' or 'function' parameter to fetch dropdown options");
 }
 
@@ -88,8 +88,8 @@ function updateEntity() {
 }
 
 async function updateValidity() {
-  if (isObjectHasKeys(props.data, ["validation"])) {
-    invalid.value = !(await queryService.checkValidation(selectedEntities.value, props.data.validation["@id"]));
+  if (isObjectHasKeys(props.shape, ["validation"])) {
+    invalid.value = !(await queryService.checkValidation(selectedEntities.value, props.shape.validation["@id"]));
   } else {
     invalid.value = !defaultValidity();
   }

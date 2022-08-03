@@ -1,9 +1,9 @@
 <template>
   <div class="string-single-display-container">
     <div class="input-loading-container">
-      <span class="p-float-label" v-tooltip.top="{ value: userInput ? userInput : data.name, class: 'string-single-display-tooltip' }">
+      <span class="p-float-label" v-tooltip.top="{ value: userInput ? userInput : shape.name, class: 'string-single-display-tooltip' }">
         <InputText disabled class="p-inputtext-lg input-text" :class="invalid && 'invalid'" v-model="userInput" type="text" />
-        <label>{{ data.name }}</label>
+        <label>{{ shape.name }}</label>
       </span>
       <ProgressSpinner v-if="loading" class="loading-icon" stroke-width="8" />
     </div>
@@ -27,7 +27,7 @@ const { IM, SHACL } = Vocabulary;
 const { EditorMode } = Enums;
 
 const props = defineProps({
-  data: { type: Object as PropType<PropertyShape>, required: true },
+  shape: { type: Object as PropType<PropertyShape>, required: true },
   mode: { type: String as PropType<Enums.EditorMode>, required: true },
   value: { type: String, required: false }
 });
@@ -38,15 +38,15 @@ const valueVariableMap = inject(injectionKeys.valueVariableMap);
 
 const queryService = new QueryService(axios);
 
-let key = props.data.path["@id"];
+let key = props.shape.path["@id"];
 let loading = ref(false);
 
 let invalid = ref(false);
 
 let userInput = ref("");
-watch([() => props.value, () => props.data], async ([newPropsValue, newDataValue]) => {
-  if (newPropsValue && newDataValue) userInput.value = newPropsValue;
-  else userInput.value = await processPropertyValue(newDataValue);
+watch([() => props.value, () => props.shape], async ([newPropsValue, newShapeValue]) => {
+  if (newPropsValue && newShapeValue) userInput.value = newPropsValue;
+  else userInput.value = await processPropertyValue(newShapeValue);
 });
 watch(userInput, async newValue => {
   if (newValue) {
@@ -58,7 +58,7 @@ onMounted(async () => {
   if (props.value) userInput.value = props.value;
   else {
     loading.value = true;
-    const result = await processPropertyValue(props.data);
+    const result = await processPropertyValue(props.shape);
     if (result) userInput.value = result;
     loading.value = false;
   }
@@ -69,7 +69,7 @@ watch(
   async (newValue, oldValue) => {
     if (!userInput.value && newValue && oldValue && !compareMaps(newValue, oldValue)) {
       loading.value = true;
-      if (newValue?.size) userInput.value = await processPropertyValue(props.data);
+      if (newValue?.size) userInput.value = await processPropertyValue(props.shape);
       loading.value = false;
     }
   }
@@ -125,8 +125,8 @@ function updateEntity() {
 }
 
 async function updateValidity() {
-  if (isObjectHasKeys(props.data, ["validation"])) {
-    invalid.value = !(await queryService.checkValidation(userInput, props.data.validation["@id"]));
+  if (isObjectHasKeys(props.shape, ["validation"])) {
+    invalid.value = !(await queryService.checkValidation(userInput, props.shape.validation["@id"]));
   } else {
     invalid.value = !defaultValidation();
   }
