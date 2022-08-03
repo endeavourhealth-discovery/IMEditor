@@ -11,8 +11,8 @@ export function buildQueryFromTreeItem(treeItem: ITreeItem) {
 }
 
 function recurseBuildQuery(query: any, treeItem: ITreeItem, parent: ITreeItem | null) {
-  // console.log(" ");
-  // console.log(query, treeItem, parent);
+  console.log(" ");
+  console.log(query, treeItem, parent);
   if (isObjectHasKeys(parent, ["name"])) {
     addClause(query, treeItem, parent!);
   }
@@ -26,13 +26,11 @@ function recurseBuildQuery(query: any, treeItem: ITreeItem, parent: ITreeItem | 
 
 function addClause(query: any, treeItem: ITreeItem, parent: ITreeItem): any {
   if (parent.type === TreeItemType.PROPERTY) {
-    // console.log("1");
+    console.log("1");
     addProperty(query, treeItem, parent);
   } else if (treeItem.type === TreeItemType.PROPERTY_VALUE_PAIR) {
-    // console.log("2");
+    console.log("2");
     addPropertyValue(query, treeItem, parent);
-  } else {
-    // console.log("3");
   }
 }
 
@@ -52,10 +50,17 @@ function addIsConcept(query: any, treeItem: ITreeItem, parent: ITreeItem) {
 function addProperty(query: any, treeItem: ITreeItem, parent: ITreeItem) {
   const value = treeItem.type === TreeItemType.PROPERTY ? {} : treeItem.value;
   if (isArrayHasLength(query)) {
-    if (!isArrayHasLength(query[0][parent.name])) {
-      query[0][parent.name] = [];
+    if (parent.valueType === TreeItemValueType.ARRAY) {
+      if (!isArrayHasLength(query[0][parent.name])) {
+        query[0][parent.name] = [];
+      }
+      query[0][parent.name].push(value);
+    } else if (parent.valueType === TreeItemValueType.OBJECT) {
+      if (!isObjectHasKeys(query[parent.name])) {
+        query[0][parent.name] = {};
+      }
+      if (isObjectHasKeys(parent, ["name"])) query[0][parent.name] = value;
     }
-    query[0][parent.name].push(value);
   } else if (parent.valueType === TreeItemValueType.ARRAY) {
     if (!isArrayHasLength(query[parent.name])) {
       query[parent.name] = [];

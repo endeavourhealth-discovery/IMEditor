@@ -28,12 +28,12 @@
             </div>
             <VueJsonPretty v-if="isObjectHasKeys(queryDisplay)" class="json" :data="queryDisplay" />
           </div>
-          <!-- <div v-if="showJson" class="json-container">
+          <div v-if="showJson" class="json-container">
             <div class="json-header-container">
               <span class="json-header">JSON viewer</span>
             </div>
             <VueJsonPretty v-if="isObjectHasKeys(treeData)" class="json" :data="treeData" />
-          </div> -->
+          </div>
           <!-- <Button
             class="p-button-rounded p-button-info p-button-outlined json-toggle"
             :label="showJson ? 'hide JSON' : 'show JSON'"
@@ -72,7 +72,7 @@ const {
 import { defineComponent } from "@vue/runtime-core";
 import TreeItem from "./TreeItem.vue";
 import { buildQueryFromTreeItem } from "./QueryBuilder";
-import treeData from "./TreeData";
+import { testQueryObject, entityId } from "./TreeData";
 import axios from "axios";
 import { ITreeItem } from "./TreeItem";
 
@@ -86,14 +86,14 @@ export default defineComponent({
       showJson: true,
       loading: false,
       displayResults: false,
-      treeData: {
-        key: 0,
-        name: "select",
-        type: "PROPERTY",
-        valueType: "OBJECT",
-        componentType: "DISPLAY"
-      } as ITreeItem,
-      // treeData: treeData as ITreeItem,
+      // treeData: {
+      //   key: 0,
+      //   name: "select",
+      //   type: "PROPERTY",
+      //   valueType: "OBJECT",
+      //   componentType: "DISPLAY"
+      // } as ITreeItem,
+      treeData: entityId as ITreeItem,
       queryResults: {},
       queryDisplay: {},
       clauseOptions: [{ name: "select" }, { name: "property" }, { name: "match" }, { name: "logic" }, { name: "isConcept" }] as Interfaces.TTIriRef[],
@@ -117,9 +117,7 @@ export default defineComponent({
 
       Object.keys(this.optionNamePaths).forEach(async key => {
         let options = await this.getOptions(this.optionNamePaths[key]);
-        if (key === "property") {
-          options = this.clauseOptions.concat(options);
-        }
+        options = this.clauseOptions.concat(options);
         this.optionsMap.set(key, options);
       });
     },

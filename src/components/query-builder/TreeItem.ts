@@ -34,12 +34,16 @@ export function setComponentType(item: ITreeItem, isConceptHasOptions: boolean) 
       item.componentType = ComponentType.DROPDOWN;
       break;
 
+    case "entityId":
+      item.componentType = ComponentType.AUTOCOMPLETE;
+      break;
+
     case "isConcept":
       item.componentType = isConceptHasOptions ? ComponentType.DROPDOWN : ComponentType.AUTOCOMPLETE;
       break;
 
     default:
-      item.componentType = ComponentType.TEXT;
+      item.componentType = ComponentType.DROPDOWN;
       break;
   }
 }
@@ -48,6 +52,7 @@ export function setType(item: ITreeItem) {
   switch (item.name) {
     case "select":
     case "property":
+    case "entityId":
     case "match":
       item.type = TreeItemType.PROPERTY;
       break;
@@ -65,6 +70,7 @@ export function setType(item: ITreeItem) {
 export function setValueType(item: ITreeItem) {
   switch (item.name) {
     case "select":
+    case "entityId":
       item.valueType = TreeItemValueType.OBJECT;
       break;
 
