@@ -26,7 +26,7 @@ export enum ComponentType {
   DISPLAY = "DISPLAY"
 }
 
-export function setComponentType(item: ITreeItem) {
+export function setComponentType(item: ITreeItem, isConceptHasOptions: boolean) {
   switch (item.name) {
     case "select":
     case "property":
@@ -35,7 +35,7 @@ export function setComponentType(item: ITreeItem) {
       break;
 
     case "isConcept":
-      item.componentType = ComponentType.AUTOCOMPLETE;
+      item.componentType = isConceptHasOptions ? ComponentType.DROPDOWN : ComponentType.AUTOCOMPLETE;
       break;
 
     default:

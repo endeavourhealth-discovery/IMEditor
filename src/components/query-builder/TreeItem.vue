@@ -31,7 +31,16 @@
       </div>
     </div>
     <ul v-show="isOpen" v-if="isFolder">
-      <TreeItem class="item" v-for="child in model.children" v-bind:key="child.key" :model="child" :parent="model" @updateQuery="emitUpdateQuery"> </TreeItem>
+      <TreeItem
+        class="item"
+        v-for="child in model.children"
+        v-bind:key="child.key"
+        :model="child"
+        :parent="model"
+        :optionsMap="optionsMap"
+        @updateQuery="emitUpdateQuery"
+      >
+      </TreeItem>
     </ul>
   </ul>
 </template>
@@ -49,52 +58,39 @@ export default defineComponent({
   name: "TreeItem", // necessary for self-reference
   props: {
     model: { type: Object as PropType<ITreeItem>, required: true },
-    parent: { type: Object as PropType<ITreeItem>, required: false }
+    parent: { type: Object as PropType<ITreeItem>, required: false },
+    optionsMap: { type: Object as PropType<Map<string, Interfaces.TTIriRef[]>>, required: true }
   },
   emits: ["updateQuery"],
   data() {
     return {
-      isOpen: true,
-      clauseOptions: [{ name: "select" }, { name: "property" }, { name: "match" }, { name: "logic" }, { name: "isConcept" }] as Interfaces.TTIriRef[],
-      matchOptions: [{ name: "property" }, { name: "entityType" }, { name: "entityId" }] as Interfaces.TTIriRef[],
-      optionNamePaths: { scheme: "namespaces", status: "statuses", entityType: "classes", property: "properties" } as any,
-      mappedOptions: new Map<string, Interfaces.TTIriRef[]>()
+      isOpen: true
     };
   },
   computed: {
     isFolder(): boolean {
       return isArrayHasLength(this.model.children);
     },
-    isText() {
+    isText(): boolean {
       return this.model.componentType === ComponentType.TEXT;
     },
-    isDropdown() {
+    isDropdown(): boolean {
       return this.model.componentType === ComponentType.DROPDOWN;
     },
-    isAutocomplete() {
+    isAutocomplete(): boolean {
       return this.model.componentType === ComponentType.AUTOCOMPLETE;
     }
   },
-  async mounted() {
-    await this.initOptions();
-  },
   methods: {
-    async initOptions() {
-      this.mappedOptions.set("select", this.clauseOptions);
-      this.mappedOptions.set("match", this.matchOptions);
-      Object.keys(this.optionNamePaths).forEach(async key => {
-        let options = await this.getOptions(this.optionNamePaths[key]);
-        if (key === "property") {
-          options = this.clauseOptions.concat(options);
-        }
-        this.mappedOptions.set(key, options);
-      });
-    },
     getOptionsFromMap() {
-      if (!this.mappedOptions.has(this.model.name)) {
-        return this.clauseOptions;
+      if (this.model.name === "isConcept" && this.optionsMap.has(this.parent!.value)) {
+        return this.optionsMap.get(this.parent!.value);
       }
-      return this.mappedOptions.get(this.model.name);
+      if (!this.optionsMap.has(this.model.name)) {
+        return this.optionsMap.get("select");
+      }
+
+      return this.optionsMap.get(this.model.name);
     },
     removeChild() {
       if (this.parent && isObjectHasKeys(this.parent) && isArrayHasLength(this.parent.children))
@@ -120,15 +116,14 @@ export default defineComponent({
 
     onSelect() {
       const name = this.model.value.name || this.model.value;
+      if (name === "isConcept") {
+        this.model.value = this.parent?.name;
+      }
       this.model.name = name;
       setType(this.model);
       setValueType(this.model);
       this.model.componentType = ComponentType.DISPLAY;
       this.emitUpdateQuery();
-    },
-
-    async getOptions(name: string): Promise<Interfaces.TTIriRef[]> {
-      return await axios.get(Services.Env.API + "api/entity/public/" + name);
     },
 
     addChild() {
@@ -137,7 +132,8 @@ export default defineComponent({
       }
       const length = this.model.children?.at(-1)?.key || 0;
       const item = { key: length + 1, name: this.model.name } as ITreeItem;
-      setComponentType(item);
+      const hasOptions = isObjectHasKeys(this.parent) ? this.optionsMap.has(this.parent!.value?.name) : false;
+      setComponentType(item, hasOptions);
       this.model.children?.push(item);
       this.emitUpdateQuery();
       this.toggle();

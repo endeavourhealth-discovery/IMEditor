@@ -17,7 +17,7 @@
           <div class="content">
             <div class="panel-content" id="query-builder-container">
               <ul>
-                <TreeItem class="item" :model="treeData" @updateQuery="updateQuery"></TreeItem>
+                <TreeItem class="item" :model="treeData" @updateQuery="updateQuery" :optionsMap="optionsMap"></TreeItem>
               </ul>
             </div>
           </div>
@@ -65,7 +65,7 @@
 
 <script lang="ts">
 import VueJsonPretty from "vue-json-pretty";
-import { Helpers, Services } from "im-library";
+import { Helpers, Services, Interfaces } from "im-library";
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
@@ -95,13 +95,34 @@ export default defineComponent({
       } as ITreeItem,
       // treeData: treeData as ITreeItem,
       queryResults: {},
-      queryDisplay: {}
+      queryDisplay: {},
+      clauseOptions: [{ name: "select" }, { name: "property" }, { name: "match" }, { name: "logic" }, { name: "isConcept" }] as Interfaces.TTIriRef[],
+      matchOptions: [{ name: "property" }, { name: "entityType" }, { name: "entityId" }] as Interfaces.TTIriRef[],
+      optionNamePaths: { scheme: "namespaces", status: "statuses", entityType: "classes", property: "properties" } as any,
+      optionsMap: new Map<string, Interfaces.TTIriRef[]>()
     };
   },
-  mounted() {
+  async mounted() {
+    await this.initOptions();
     this.updateQuery();
   },
   methods: {
+    async initOptions() {
+      this.optionsMap.set("select", this.clauseOptions);
+      this.optionsMap.set("match", this.matchOptions);
+      Object.keys(this.optionNamePaths).forEach(async key => {
+        let options = await this.getOptions(this.optionNamePaths[key]);
+        if (key === "property") {
+          options = this.clauseOptions.concat(options);
+        }
+        this.optionsMap.set(key, options);
+      });
+    },
+
+    async getOptions(name: string): Promise<Interfaces.TTIriRef[]> {
+      return await axios.get(Services.Env.API + "api/entity/public/" + name);
+    },
+
     updateQuery() {
       this.queryDisplay = buildQueryFromTreeItem(this.treeData);
     },
