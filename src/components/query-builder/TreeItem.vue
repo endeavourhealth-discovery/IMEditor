@@ -13,7 +13,14 @@
       />
     </div>
     <div v-else-if="isAutocomplete">
-      <InputText v-model="model.value" @keydown="onEnterKeyDown" />
+      <AutoComplete
+        v-model="model.value"
+        :suggestions="suggestions"
+        @complete="searchByTerm($event)"
+        field="name"
+        @keydown="onEnterKeyDown"
+        @item-select="onSelect"
+      />
     </div>
     <div v-else-if="isText">
       <InputText v-model="model.value" @keydown="onEnterKeyDown" />
@@ -46,12 +53,13 @@
 </template>
 
 <script lang="ts">
+import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import { defineComponent, PropType } from "vue";
 import { ComponentType, ITreeItem, setComponentType, setType, setValueType, TreeItemType, TreeItemValueType } from "./TreeItem";
-import { Helpers, Services, Interfaces } from "im-library";
+import { Helpers, Services, Interfaces, Enums } from "im-library";
 import axios from "axios";
 const {
-  DataTypeCheckers: { isObjectHasKeys, isArrayHasLength }
+  DataTypeCheckers: { isObjectHasKeys, isArrayHasLength, isObject }
 } = Helpers;
 
 export default defineComponent({
@@ -64,7 +72,9 @@ export default defineComponent({
   emits: ["updateQuery"],
   data() {
     return {
-      isOpen: true
+      isOpen: true,
+      controller: {} as AbortController,
+      suggestions: [] as Interfaces.TTIriRef[]
     };
   },
   computed: {
@@ -124,6 +134,29 @@ export default defineComponent({
       setValueType(this.model);
       this.model.componentType = ComponentType.DISPLAY;
       this.emitUpdateQuery();
+    },
+
+    async searchByTerm(event: any) {
+      if (event.query && event.query.length > 1) {
+        const searchRequest = {
+          termFilter: event.query,
+          sortBy: Enums.SortBy.Usage,
+          page: 1,
+          size: 100,
+          schemeFilter: [],
+          statusFilter: [],
+          typeFilter: []
+        } as unknown as Interfaces.SearchRequest;
+
+        if (!isObject(this.controller)) {
+          this.controller.abort();
+        }
+        this.controller = new AbortController();
+        const searchResults = await this.$entityService.advancedSearch(searchRequest, this.controller);
+        this.suggestions = searchResults.map(result => {
+          return { "@id": result.iri, name: result.name };
+        });
+      }
     },
 
     addChild() {
