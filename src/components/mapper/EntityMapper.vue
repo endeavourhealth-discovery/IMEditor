@@ -144,7 +144,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { mapState } from "vuex";
-import { Vocabulary, Helpers, Models, Enums, Config } from "im-library";
+import { Vocabulary, Helpers, Models, Enums, Config, Interfaces } from "im-library";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
@@ -190,7 +190,7 @@ export default defineComponent({
       mappings: [] as any[],
       loading: false,
       saveLoading: false,
-      hoveredResult: {} as Models.Search.ConceptSummary,
+      hoveredResult: {} as Interfaces.ConceptSummary,
       overlayLocation: {} as any,
       controller: {} as AbortController,
       hoveredItem: {} as any,
@@ -213,9 +213,9 @@ export default defineComponent({
       mappingsMap[this.taskIri] = mappingIris;
       try {
         await this.$entityService.saveMapping(mappingsMap);
-        this.$toast.add(this.$loggerService.success("Mappings were saved"));
+        this.$toast.add(this.$loggerService.success("Mappings were saved") as any);
       } catch (error) {
-        this.$toast.add(this.$loggerService.error("Mappings were not saved"));
+        this.$toast.add(this.$loggerService.error("Mappings were not saved") as any);
       }
       this.saveLoading = false;
     },
@@ -252,7 +252,7 @@ export default defineComponent({
       }
     },
 
-    showOverlay(event: any, data: Models.Search.ConceptSummary): void {
+    showOverlay(event: any, data: Interfaces.ConceptSummary): void {
       this.hoveredItem = data;
       const x = this.$refs.summary_overlay as any;
       x.show(event, event.target);
@@ -291,7 +291,7 @@ export default defineComponent({
 
     async prepareSearchRequest(term: string) {
       this.searchResults = [];
-      const searchRequest = {} as Models.Search.SearchRequest;
+      const searchRequest = {} as Interfaces.SearchRequest;
       searchRequest.termFilter = term;
       searchRequest.sortBy = SortBy.Usage;
       searchRequest.page = 1;
@@ -309,7 +309,7 @@ export default defineComponent({
       this.searching = true;
       if (this.searchTerm.length > 0) {
         this.searchResults = [];
-        const searchRequest = {} as Models.Search.SearchRequest;
+        const searchRequest = {} as Interfaces.SearchRequest;
         searchRequest.termFilter = this.searchTerm;
         searchRequest.sortBy = SortBy.Usage;
         searchRequest.page = 1;
@@ -326,13 +326,13 @@ export default defineComponent({
       this.searching = false;
     },
 
-    setFilters(searchRequest: Models.Search.SearchRequest) {
+    setFilters(searchRequest: Interfaces.SearchRequest) {
       searchRequest.schemeFilter = this.selectedFilters.scheme;
       searchRequest.statusFilter = this.selectedFilters.status;
       searchRequest.typeFilter = this.selectedFilters.type;
     },
 
-    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, controller: AbortController) {
+    async fetchSearchResults(searchRequest: Interfaces.SearchRequest, controller: AbortController) {
       const result = await this.$entityService.advancedSearch(searchRequest, controller);
       if (result && isArrayHasLength(result)) {
         this.searchResults = result.map(item => {

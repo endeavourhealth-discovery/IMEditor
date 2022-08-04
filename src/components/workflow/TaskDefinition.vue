@@ -151,7 +151,7 @@
 import { defineComponent } from "vue";
 import ConfirmDialog from "primevue/confirmdialog";
 import { mapState } from "vuex";
-import { Vocabulary, Helpers, Models, Enums } from "im-library";
+import { Vocabulary, Helpers, Models, Enums, Interfaces } from "im-library";
 import "vue-json-pretty/lib/styles.css";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import DirectService from "@/services/DirectService";
@@ -244,7 +244,7 @@ export default defineComponent({
       x.hide();
     },
 
-    showOverlay(event: any, data: Models.Search.ConceptSummary): void {
+    showOverlay(event: any, data: Interfaces.ConceptSummary): void {
       this.hoveredItem = data;
       const x = this.$refs.summary_overlay as any;
       x.show(event, event.target);
@@ -364,7 +364,7 @@ export default defineComponent({
       this.searching = true;
       if (this.searchTerm.length > 0) {
         this.searchResults = [];
-        const searchRequest = {} as Models.Search.SearchRequest;
+        const searchRequest = {} as Interfaces.SearchRequest;
         searchRequest.termFilter = this.searchTerm;
         searchRequest.sortBy = SortBy.Usage;
         searchRequest.page = 1;
@@ -381,13 +381,13 @@ export default defineComponent({
       this.searching = false;
     },
 
-    setFilters(searchRequest: Models.Search.SearchRequest) {
+    setFilters(searchRequest: Interfaces.SearchRequest) {
       searchRequest.schemeFilter = this.selectedFilters.scheme;
       searchRequest.statusFilter = this.selectedFilters.status;
       searchRequest.typeFilter = this.selectedFilters.type;
     },
 
-    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, controller: AbortController) {
+    async fetchSearchResults(searchRequest: Interfaces.SearchRequest, controller: AbortController) {
       const result = await this.$entityService.advancedSearch(searchRequest, controller);
       if (result && isArrayHasLength(result)) {
         this.searchResults = result.map(item => {
