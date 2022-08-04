@@ -7,9 +7,10 @@
 
 <script lang="ts">
 import EntitySearch from "./EntitySearch.vue";
+import EntityAutoComplete from "./EntityAutoComplete.vue";
 
 export default defineComponent({
-  components: { EntitySearch }
+  components: { EntitySearch, EntityAutoComplete }
 });
 </script>
 
@@ -50,7 +51,8 @@ function createEntity(data?: any): ComponentDetails {
       type: ComponentType.BUILDER_CHILD_WRAPPER,
       json: data,
       showButtons: props.showButtons,
-      shape: props.shape
+      shape: props.shape,
+      mode: props.mode
     };
   else {
     return {
@@ -60,7 +62,8 @@ function createEntity(data?: any): ComponentDetails {
       type: ComponentType.BUILDER_CHILD_WRAPPER,
       json: {},
       showButtons: props.showButtons,
-      shape: props.shape
+      shape: props.shape,
+      mode: props.mode
     };
   }
 }

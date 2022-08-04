@@ -166,7 +166,7 @@ async function updateSelectedResult(data: ConceptSummary | TTIriRef) {
     selectedResult.value = { "@id": data.iri, name: data.name };
     searchTerm.value = data.name;
   }
-  if (key.value) {
+  if (!props.shape.builderChild && key.value) {
     updateEntity();
     await updateValidity();
   } else {

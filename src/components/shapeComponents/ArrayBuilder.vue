@@ -120,14 +120,7 @@ function createDefaultBuild() {
   if (isPropertyGroup(props.shape))
     props.shape.property.forEach(property => {
       build.value.push(
-        generateNewComponent(
-          ComponentType.BUILDER_CHILD_WRAPPER,
-          property.order - 1,
-          { filterOptions: filters.value, entity: undefined, type: processComponentType(property.componentType), label: property.name },
-          property,
-          { minus: true, plus: true },
-          props.mode
-        )
+        generateNewComponent(ComponentType.BUILDER_CHILD_WRAPPER, property.order - 1, undefined, property, { minus: true, plus: true }, props.mode)
       );
     });
 }
@@ -136,7 +129,7 @@ function processChild(child: any, position: number) {
   return generateNewComponent(
     ComponentType.BUILDER_CHILD_WRAPPER,
     position,
-    { filterOptions: filters, entity: child, type: processComponentType(child.componentType), label: child.label },
+    child,
     props.shape,
     {
       minus: true,

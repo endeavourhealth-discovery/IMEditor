@@ -161,7 +161,12 @@ function setValueVariableMap(entity: any, groups: PropertyGroup[]) {
     groups.forEach(group => {
       if (isObjectHasKeys(group, ["property"])) {
         group.property.forEach(property => {
-          if (property.valueVariable) {
+          if (property.builderChild && property.valueVariable) {
+            let value = undefined as any;
+            const found = entity[group.path["@id"]];
+            if (found) value = entity[group.path["@id"]][property.order - 1];
+            valueVariableMap.value.set(property.valueVariable + property.order, value);
+          } else if (property.valueVariable) {
             const value = entity[property.path["@id"]];
             valueVariableMap.value.set(property.valueVariable, value);
           }
