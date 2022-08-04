@@ -30,6 +30,7 @@ export function setComponentType(item: ITreeItem, isConceptHasOptions: boolean) 
   switch (item.name) {
     case "select":
     case "property":
+    case "entityType":
     case "match":
       item.componentType = ComponentType.DROPDOWN;
       break;
@@ -53,6 +54,7 @@ export function setType(item: ITreeItem) {
     case "select":
     case "property":
     case "entityId":
+    case "entityType":
     case "match":
       item.type = TreeItemType.PROPERTY;
       break;
@@ -71,11 +73,13 @@ export function setValueType(item: ITreeItem) {
   switch (item.name) {
     case "select":
     case "entityId":
+    case "entityType":
       item.valueType = TreeItemValueType.OBJECT;
       break;
 
     case "match":
     case "property":
+
     case "isConcept":
       item.valueType = TreeItemValueType.ARRAY;
       break;

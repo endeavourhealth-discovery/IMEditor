@@ -65,7 +65,7 @@ function addProperty(query: any, treeItem: ITreeItem, parent: ITreeItem) {
     if (!isArrayHasLength(query[parent.name])) {
       query[parent.name] = [];
     }
-    query[parent.name].push(value);
+    if (!isArrayHasLength(query[parent.name])) query[parent.name].push(value);
   } else if (parent.valueType === TreeItemValueType.OBJECT) {
     if (!isObjectHasKeys(query[parent.name])) {
       query[parent.name] = {};
