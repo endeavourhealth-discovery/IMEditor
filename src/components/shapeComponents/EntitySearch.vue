@@ -119,16 +119,19 @@ async function search(): Promise<void> {
     if (isObjectHasKeys(props.shape, ["select", "argument"])) {
       const args = processArguments(props.shape);
       const replacedArgs = mapToObject(args);
-      replacedArgs.valueText = searchTerm.value;
-      (query.argument = replacedArgs), (query.queryIri = props.shape.select[0]);
+      query.argument = replacedArgs;
+      query.textSearch = searchTerm.value;
+      query.queryIri = props.shape.select[0];
     }
     if (isObjectHasKeys(props.shape, ["select"])) {
-      query.argument = { valueText: searchTerm.value };
+      query.textSearch = searchTerm.value;
       query.queryIri = props.shape.select[0];
     }
     if (!isObjectHasKeys(query, ["queryIri"])) throw new Error("No queryIri found for entity search");
 
-    if (!isObject(controller.value)) controller.value.abort();
+    if (!isObject(controller.value)) {
+      controller.value.abort();
+    }
     controller.value = new AbortController();
     if (controller.value) {
       const result = await queryService.entityQuery(query, controller.value);
