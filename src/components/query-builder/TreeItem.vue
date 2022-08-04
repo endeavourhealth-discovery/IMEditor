@@ -1,4 +1,7 @@
 <template>
+  <OverlayPanel v-if="hoveredItem.iri" ref="summary_overlay" id="summary_overlay_panel" style="width: 50vw" :breakpoints="{ '960px': '75vw' }">
+    <OverlaySummary :hoveredResult="hoveredItem" />
+  </OverlayPanel>
   <ul>
     <div v-if="isDropdown">
       <Dropdown
@@ -10,7 +13,13 @@
         placeholder="Select"
         @keydown="onEnterKeyDown"
         @change="onSelect"
-      />
+      >
+        <template #option="slotProps">
+          <div class="hover-name" @mouseenter="showOverlay($event, slotProps.option)" @mouseleave="hideOverlay()">
+            {{ slotProps.option.name }}
+          </div>
+        </template>
+      </Dropdown>
     </div>
     <div v-else-if="isAutocomplete">
       <AutoComplete
@@ -20,7 +29,13 @@
         field="name"
         @keydown="onEnterKeyDown"
         @item-select="onSelect"
-      />
+      >
+        <template #item="slotProps">
+          <div class="hover-name" @mouseenter="showOverlay($event, slotProps.item)" @mouseleave="hideOverlay()">
+            {{ slotProps.item.name }}
+          </div>
+        </template>
+      </AutoComplete>
     </div>
     <div v-else-if="isText">
       <InputText v-model="model.value" @keydown="onEnterKeyDown" />
@@ -74,7 +89,8 @@ export default defineComponent({
     return {
       isOpen: true,
       controller: {} as AbortController,
-      suggestions: [] as Interfaces.TTIriRef[]
+      suggestions: [] as Interfaces.TTIriRef[],
+      hoveredItem: {} as any
     };
   },
   computed: {
@@ -92,6 +108,9 @@ export default defineComponent({
     }
   },
   methods: {
+    isObjectHasKeys(object: any, keys?: []) {
+      return isObjectHasKeys(object, keys);
+    },
     getOptionsFromMap() {
       if (this.model.name === "isConcept" && this.optionsMap.has(this.parent!.value)) {
         return this.optionsMap.get(this.parent!.value);
@@ -170,6 +189,17 @@ export default defineComponent({
       this.model.children?.push(item);
       this.emitUpdateQuery();
       this.toggle();
+    },
+
+    showOverlay(event: any, data: Interfaces.TTIriRef): void {
+      this.hoveredItem = { iri: data["@id"], name: data.name };
+      const x = this.$refs.summary_overlay as any;
+      if (x) x.show(event, event.target);
+    },
+
+    hideOverlay(): void {
+      const x = this.$refs.summary_overlay as any;
+      if (x) x.hide();
     }
   }
 });
