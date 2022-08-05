@@ -11,8 +11,8 @@ export function buildQueryFromTreeItem(treeItem: ITreeItem) {
 }
 
 function recurseBuildQuery(query: any, treeItem: ITreeItem, parent: ITreeItem | null) {
-  console.log(" ");
-  console.log(query, treeItem, parent);
+  // console.log(" ");
+  // console.log(query, treeItem, parent);
   if (isObjectHasKeys(parent, ["name"])) {
     addClause(query, treeItem, parent!);
   }
@@ -26,10 +26,10 @@ function recurseBuildQuery(query: any, treeItem: ITreeItem, parent: ITreeItem | 
 
 function addClause(query: any, treeItem: ITreeItem, parent: ITreeItem): any {
   if (parent.type === TreeItemType.PROPERTY) {
-    console.log("1");
+    // console.log("1");
     addProperty(query, treeItem, parent);
   } else if (treeItem.type === TreeItemType.PROPERTY_VALUE_PAIR) {
-    console.log("2");
+    // console.log("2");
     addPropertyValue(query, treeItem, parent);
   }
 }
@@ -37,10 +37,17 @@ function addClause(query: any, treeItem: ITreeItem, parent: ITreeItem): any {
 function addPropertyValue(query: any, treeItem: ITreeItem, parent: ITreeItem) {
   if (treeItem.name === "isConcept") addIsConcept(query, treeItem, parent);
   if (treeItem.name === "inverseOf") addInverseOf(query, treeItem, parent);
+  if (treeItem.name === "includeSubtypes") addIncludeSubtypes(query, treeItem, parent);
+}
+
+function addIncludeSubtypes(query: any, treeItem: ITreeItem, parent: ITreeItem) {
+  const index = findIndex(query, treeItem, parent);
+  if (index !== -1) {
+    query[0]["property"][index][treeItem.name] = treeItem.value.value;
+  }
 }
 
 function addInverseOf(query: any, treeItem: ITreeItem, parent: ITreeItem) {
-  query[0]["property"];
   const index = findIndex(query, treeItem, parent);
   if (index !== -1) {
     query[0]["property"][index][treeItem.name] = treeItem.value.value;
@@ -49,7 +56,13 @@ function addInverseOf(query: any, treeItem: ITreeItem, parent: ITreeItem) {
 
 function addIsConcept(query: any, treeItem: ITreeItem, parent: ITreeItem) {
   const isConcept = [] as any;
-  treeItem.children?.forEach(child => isConcept.push(child.value));
+  treeItem.children?.forEach(child => {
+    let value = child.value;
+    if (isArrayHasLength(child.children) && child.children?.some(grandchild => grandchild.name === "includeSubtypes")) {
+      value["includeSubtypes"] = true;
+    }
+    isConcept.push(child.value);
+  });
   const index = findIndex(query, treeItem, parent);
   if (index !== -1) {
     query[0]["property"][index]["isConcept"] = isConcept;

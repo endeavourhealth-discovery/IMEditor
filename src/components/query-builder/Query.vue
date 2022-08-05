@@ -86,14 +86,14 @@ export default defineComponent({
       showJson: true,
       loading: false,
       displayResults: false,
-      // treeData: {
-      //   key: 0,
-      //   name: "select",
-      //   type: "PROPERTY",
-      //   valueType: "OBJECT",
-      //   componentType: "DISPLAY"
-      // } as ITreeItem,
-      treeData: Example.inverseOf as ITreeItem,
+      treeData: {
+        key: 0,
+        name: "select",
+        type: "PROPERTY",
+        valueType: "OBJECT",
+        componentType: "DISPLAY"
+      } as ITreeItem,
+      // treeData: Example.isConcept.treeItem as ITreeItem,
       queryResults: {},
       queryDisplay: {},
       clauseOptions: [
@@ -102,7 +102,8 @@ export default defineComponent({
         { name: "match" },
         { name: "logic" },
         { name: "isConcept" },
-        { name: "inverseOf", value: true }
+        { name: "inverseOf", value: true },
+        { name: "includeSubtypes", value: true }
       ] as Interfaces.TTIriRef[],
       matchOptions: [{ name: "property" }, { name: "entityType" }, { name: "entityId" }, { name: "notExist", value: true }] as Interfaces.TTIriRef[],
       optionNamePaths: { status: "statuses", entityType: "classes", property: "properties" } as any,
@@ -135,6 +136,14 @@ export default defineComponent({
 
     updateQuery() {
       this.queryDisplay = buildQueryFromTreeItem(this.treeData);
+      console.log("Tests");
+      Object.keys(Example).forEach(test => {
+        const query = JSON.stringify((Example as any)[test].query);
+        const treeItem = JSON.stringify(buildQueryFromTreeItem((Example as any)[test].treeItem));
+        // console.log(query);
+        // console.log(treeItem);
+        console.log(query === treeItem);
+      });
     },
     isObjectHasKeys(data: any) {
       return isObjectHasKeys(data);
