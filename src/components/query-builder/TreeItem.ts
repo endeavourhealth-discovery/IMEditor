@@ -63,6 +63,7 @@ export function setType(item: ITreeItem) {
       break;
 
     case "isConcept":
+    case "inverseOf":
       item.type = TreeItemType.PROPERTY_VALUE_PAIR;
       break;
 
@@ -77,12 +78,13 @@ export function setValueType(item: ITreeItem) {
     case "select":
     case "entityId":
     case "entityType":
+    case "notExist":
+    case "inverseOf":
       item.valueType = TreeItemValueType.OBJECT;
       break;
 
     case "match":
     case "property":
-
     case "isConcept":
       item.valueType = TreeItemValueType.ARRAY;
       break;

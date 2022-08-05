@@ -93,10 +93,17 @@ export default defineComponent({
       //   valueType: "OBJECT",
       //   componentType: "DISPLAY"
       // } as ITreeItem,
-      treeData: Example.notExist as ITreeItem,
+      treeData: Example.inverseOf as ITreeItem,
       queryResults: {},
       queryDisplay: {},
-      clauseOptions: [{ name: "select" }, { name: "property" }, { name: "match" }, { name: "logic" }, { name: "isConcept" }] as Interfaces.TTIriRef[],
+      clauseOptions: [
+        { name: "select" },
+        { name: "property" },
+        { name: "match" },
+        { name: "logic" },
+        { name: "isConcept" },
+        { name: "inverseOf", value: true }
+      ] as Interfaces.TTIriRef[],
       matchOptions: [{ name: "property" }, { name: "entityType" }, { name: "entityId" }, { name: "notExist", value: true }] as Interfaces.TTIriRef[],
       optionNamePaths: { status: "statuses", entityType: "classes", property: "properties" } as any,
       optionsMap: new Map<string, Interfaces.TTIriRef[]>()

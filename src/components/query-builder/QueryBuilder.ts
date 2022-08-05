@@ -36,12 +36,21 @@ function addClause(query: any, treeItem: ITreeItem, parent: ITreeItem): any {
 
 function addPropertyValue(query: any, treeItem: ITreeItem, parent: ITreeItem) {
   if (treeItem.name === "isConcept") addIsConcept(query, treeItem, parent);
+  if (treeItem.name === "inverseOf") addInverseOf(query, treeItem, parent);
+}
+
+function addInverseOf(query: any, treeItem: ITreeItem, parent: ITreeItem) {
+  query[0]["property"];
+  const index = findIndex(query, treeItem, parent);
+  if (index !== -1) {
+    query[0]["property"][index][treeItem.name] = treeItem.value.value;
+  }
 }
 
 function addIsConcept(query: any, treeItem: ITreeItem, parent: ITreeItem) {
   const isConcept = [] as any;
   treeItem.children?.forEach(child => isConcept.push(child.value));
-  const index = (query[0]["property"] as ITreeItem[]).findIndex(treeItem => treeItem.name === parent.name);
+  const index = findIndex(query, treeItem, parent);
   if (index !== -1) {
     query[0]["property"][index]["isConcept"] = isConcept;
   }
@@ -77,4 +86,9 @@ function addProperty(query: any, treeItem: ITreeItem, parent: ITreeItem) {
     if (isObjectHasKeys(parent, ["name"]) && isObjectHasKeys(query, [parent.name]) && isObjectHasKeys(value, ["name"]) && query[parent.name][value.name])
       query[parent.name][value.name] = value;
   }
+}
+
+function findIndex(query: any, treeItem: ITreeItem, parent: ITreeItem) {
+  const index = (query[0]["property"] as ITreeItem[]).findIndex(treeItem => treeItem.name === parent.name);
+  return index;
 }
