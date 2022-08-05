@@ -56,7 +56,7 @@
           </p>
           <p v-if="hoveredResult.entityType">
             <strong>Type: </strong>
-            <span>{{ getConceptTypes(hoveredResult.entityType) }}</span>
+            <span>{{ getNamesAsStringFromTypes(hoveredResult.entityType) }}</span>
           </p>
         </div>
       </div>
@@ -287,13 +287,13 @@ async function loadMoreChildren(node: any) {
 
 async function showOverlay(event: any, node?: any): Promise<void> {
   if (node.data === "loadMore") {
-    const x: any = navTreeOP;
+    const x: any = navTreeOP.value;
     overlayLocation.value = event;
     x.show(overlayLocation.value);
     hoveredResult.value.iri = "load";
     hoveredResult.value.name = node.parentNode.label;
   } else if (node.data) {
-    const x: any = navTreeOP;
+    const x: any = navTreeOP.value;
     overlayLocation.value = event;
     x.show(overlayLocation.value);
     hoveredResult.value = await entityService.getEntitySummary(node.data);
@@ -301,13 +301,9 @@ async function showOverlay(event: any, node?: any): Promise<void> {
 }
 
 function hideOverlay(event: any): void {
-  const x: any = navTreeOP;
+  const x: any = navTreeOP.value;
   x.hide(event);
   overlayLocation.value = {};
-}
-
-function getConceptTypes(types: TTIriRef[]): string {
-  return getNamesAsStringFromTypes(types);
 }
 </script>
 

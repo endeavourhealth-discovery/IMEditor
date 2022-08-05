@@ -17,19 +17,57 @@
           placeholder="Search"
           :disabled="invalidAssociatedProperty"
           class="search-input"
-        />
+        >
+          <template #item="slotProps">
+            <div class="autocomplete-option" @mouseenter="showOptionsOverlay($event, slotProps.item)" @mouseleave="hideOptionsOverlay($event)">
+              <span>{{ slotProps.item.name }}</span>
+            </div>
+          </template>
+        </AutoComplete>
         <Button icon="fa-solid fa-sitemap" @click="showTreeDialog($event)" />
       </div>
       <small v-if="invalidAssociatedProperty" class="validate-error">Missing property for refinement. Please select a property first.</small>
     </div>
   </div>
+  <OverlayPanel class="options-op" ref="optionsOP" :showCloseIcon="true" :dismissable="true" stype="width: 50vw" :breakpoints="{ '960px': '75vw' }">
+    <div v-if="hoveredResult.name" class="flex flex-row justify-contents-start result-overlay" style="width: 100%; gap: 1rem">
+      <div class="left-side" style="width: 50%">
+        <p>
+          <strong>Name: </strong>
+          <span>{{ hoveredResult.name }}</span>
+        </p>
+        <p>
+          <strong>Iri: </strong>
+          <span style="word-break: break-all">{{ hoveredResult.iri }}</span>
+        </p>
+        <p v-if="hoveredResult.code">
+          <strong>Code: </strong>
+          <span>{{ hoveredResult.code }}</span>
+        </p>
+      </div>
+      <div class="right-side" style="width: 50%">
+        <p v-if="hoveredResult.status">
+          <strong>Status: </strong>
+          <span>{{ hoveredResult.status.name }}</span>
+        </p>
+        <p v-if="hoveredResult.scheme">
+          <strong>Scheme: </strong>
+          <span>{{ hoveredResult.scheme.name }}</span>
+        </p>
+        <p v-if="hoveredResult.entityType">
+          <strong>Type: </strong>
+          <span>{{ getNamesAsStringFromTypes(hoveredResult.entityType) }}</span>
+        </p>
+      </div>
+    </div>
+  </OverlayPanel>
   <!-- <OverlayPanel class="tree-op" ref="treeOP" :showCloseIcon="true" :dismissable="true">
     <QuantifierTree :isAs="isAs" :quantifier="selectedResult" @treeNodeSelected="updateSelectedResult" />
   </OverlayPanel> -->
 </template>
 
 <script setup lang="ts">
-import { PropType, watch, ref, Ref, onMounted, inject } from "vue";
+import { PropType, watch, ref, Ref, onMounted, inject, onBeforeUnmount } from "vue";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import axios from "axios";
 import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/SearchMiniOverlay.vue";
@@ -52,7 +90,8 @@ const {
   TypeGuards: { isTTIriRef },
   Sorters: { byName },
   EditorMethods: { processArguments },
-  Transforms: { mapToObject }
+  Transforms: { mapToObject },
+  ConceptTypeMethods: { getNamesAsStringFromTypes }
 } = Helpers;
 const { IM, RDFS } = Vocabulary;
 const { ComponentType, SortBy } = Enums;
@@ -91,9 +130,9 @@ const entityService = new EntityService(axios);
 
 const miniSearchOP = ref();
 const treeOP = ref();
+const optionsOP = ref();
 
 onMounted(async () => {
-  console.log(props.shape);
   await init();
 });
 
@@ -101,10 +140,18 @@ let loading = ref(false);
 let selectedResult: Ref<ConceptSummary | undefined> = ref();
 let invalidAssociatedProperty = ref(false);
 let invalid = ref(false);
-let associatedProperty: Ref<TTIriRef> = ref({} as TTIriRef);
+let associatedProperty = ref("");
 let controller: Ref<AbortController> = ref({} as AbortController);
 let autocompleteOptions: Ref<ConceptSummary[]> = ref([]);
 let key = ref("");
+let hoveredResult: Ref<ConceptSummary> = ref({} as ConceptSummary);
+let optionsOverlayLocation: Ref<any> = ref({});
+
+onBeforeUnmount(() => {
+  if (isObjectHasKeys(optionsOverlayLocation.value)) {
+    hideOptionsOverlay(optionsOverlayLocation.value);
+  }
+});
 
 watch(selectedResult, (newValue, oldValue) => {
   if (newValue && _.isEqual(newValue, oldValue)) {
@@ -128,7 +175,7 @@ function getAssociatedProperty() {
   if (isObjectHasKeys(props.shape, ["argument"])) {
     if (isArrayHasLength(props.shape.argument) && isObjectHasKeys(props.shape.argument[0], ["valueVariable"])) {
       invalidAssociatedProperty.value = false;
-      if (props.shape.builderChild && props.shape.argument[0].valueVariable === "propertyIri") {
+      if (props.shape.builderChild) {
         if (
           valueVariableMap &&
           (valueVariableMap.value.has(props.shape.argument[0].valueVariable + props.shape.order) ||
@@ -156,10 +203,10 @@ function getAssociatedProperty() {
 }
 
 async function getAutocompleteOptions() {
-  if (associatedProperty.value && associatedProperty.value["@id"]) {
+  if (associatedProperty.value) {
     let query = {} as QueryRequest;
     if (isObjectHasKeys(props.shape, ["select", "argument"])) {
-      const args = processArguments(props.shape);
+      const args = processArguments(props.shape, valueVariableMap?.value);
       const replacedArgs = mapToObject(args);
       query.argument = replacedArgs;
       query.queryIri = props.shape.select[0];
@@ -231,6 +278,21 @@ function showTreeDialog(event: any): void {
 function hideTreeOverlay(): void {
   const x = treeOP as any;
   if (x) x.hide();
+}
+
+function showOptionsOverlay(event: any, data?: any) {
+  if (data) {
+    const x: any = optionsOP.value;
+    optionsOverlayLocation.value = event;
+    x.show(optionsOverlayLocation.value);
+    hoveredResult.value = data;
+  }
+}
+
+function hideOptionsOverlay(event: any): void {
+  const x: any = optionsOP.value;
+  x.hide(event);
+  optionsOverlayLocation.value = {};
 }
 </script>
 
