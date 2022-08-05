@@ -15,16 +15,21 @@
         autoWidth="true"
         v-tooltip="{ value: selectedResult.name, class: 'entity-tooltip' }"
       />
+      <Button :disabled="!selectedResult['@id']" icon="fa-solid fa-sitemap" @click="showTreeDialog($event)" />
     </div>
   </div>
   <OverlayPanel class="search-op" ref="miniSearchOP" :showCloseIcon="true" :dismissable="true">
     <SearchMiniOverlay :searchTerm="searchTerm" :searchResults="searchResults" :loading="loading" @searchResultSelected="updateSelectedResult" />
+  </OverlayPanel>
+  <OverlayPanel class="tree-op" ref="treeOP" :showCloseIcon="true" :dismissable="true">
+    <EntityMiniTree :selectedEntity="selectedResult" @treeNodeSelected="updateSelectedResult" />
   </OverlayPanel>
 </template>
 
 <script setup lang="ts">
 import { computed, PropType, watch, onMounted, ref, Ref, inject } from "vue";
 import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/SearchMiniOverlay.vue";
+import EntityMiniTree from "@/components/shapeComponents/EntityMiniTree.vue";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import axios from "axios";
 import _ from "lodash";
@@ -86,6 +91,7 @@ let key = ref("");
 let invalid = ref(false);
 
 const miniSearchOP = ref();
+const treeOP = ref();
 
 async function init() {
   if (isObjectHasKeys(props.shape, ["path"])) key.value = props.shape.path["@id"];
@@ -192,6 +198,16 @@ async function updateValidity() {
 
 function defaultValidity() {
   return isTTIriRef(selectedResult.value);
+}
+
+function showTreeDialog(event: any): void {
+  const x = treeOP.value as any;
+  if (x) x.show(event, event.target);
+}
+
+function hideTreeOverlay(): void {
+  const x = treeOP.value as any;
+  if (x) x.hide();
 }
 </script>
 
