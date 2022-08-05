@@ -59,7 +59,11 @@ function addProperty(query: any, treeItem: ITreeItem, parent: ITreeItem) {
       if (!isObjectHasKeys(query[parent.name])) {
         query[0][parent.name] = {};
       }
-      if (isObjectHasKeys(parent, ["name"])) query[0][parent.name] = value;
+      if (parent.name === "notExist") {
+        query[0][parent.name] = parent.value.value;
+      } else if (isObjectHasKeys(parent, ["name"])) {
+        query[0][parent.name] = value;
+      }
     }
   } else if (parent.valueType === TreeItemValueType.ARRAY) {
     if (!isArrayHasLength(query[parent.name])) {

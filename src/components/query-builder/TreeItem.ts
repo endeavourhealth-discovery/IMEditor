@@ -16,7 +16,8 @@ export enum TreeItemType {
 
 export enum TreeItemValueType {
   ARRAY = "ARRAY",
-  OBJECT = "OBJECT"
+  OBJECT = "OBJECT",
+  LITERAL = "LITERAL"
 }
 
 export enum ComponentType {
@@ -31,6 +32,7 @@ export function setComponentType(item: ITreeItem, isConceptHasOptions: boolean) 
     case "select":
     case "property":
     case "entityType":
+    case "notExist":
     case "match":
       item.componentType = ComponentType.DROPDOWN;
       break;
@@ -55,6 +57,7 @@ export function setType(item: ITreeItem) {
     case "property":
     case "entityId":
     case "entityType":
+    case "notExist":
     case "match":
       item.type = TreeItemType.PROPERTY;
       break;

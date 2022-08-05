@@ -72,7 +72,7 @@ const {
 import { defineComponent } from "@vue/runtime-core";
 import TreeItem from "./TreeItem.vue";
 import { buildQueryFromTreeItem } from "./QueryBuilder";
-import { testQueryObject, entityId, entityType } from "./TreeData";
+import * as Example from "./TreeData";
 import axios from "axios";
 import { ITreeItem } from "./TreeItem";
 
@@ -86,18 +86,18 @@ export default defineComponent({
       showJson: true,
       loading: false,
       displayResults: false,
-      treeData: {
-        key: 0,
-        name: "select",
-        type: "PROPERTY",
-        valueType: "OBJECT",
-        componentType: "DISPLAY"
-      } as ITreeItem,
-      // treeData: entityId as ITreeItem,
+      // treeData: {
+      //   key: 0,
+      //   name: "select",
+      //   type: "PROPERTY",
+      //   valueType: "OBJECT",
+      //   componentType: "DISPLAY"
+      // } as ITreeItem,
+      treeData: Example.notExist as ITreeItem,
       queryResults: {},
       queryDisplay: {},
       clauseOptions: [{ name: "select" }, { name: "property" }, { name: "match" }, { name: "logic" }, { name: "isConcept" }] as Interfaces.TTIriRef[],
-      matchOptions: [{ name: "property" }, { name: "entityType" }, { name: "entityId" }] as Interfaces.TTIriRef[],
+      matchOptions: [{ name: "property" }, { name: "entityType" }, { name: "entityId" }, { name: "notExist", value: true }] as Interfaces.TTIriRef[],
       optionNamePaths: { status: "statuses", entityType: "classes", property: "properties" } as any,
       optionsMap: new Map<string, Interfaces.TTIriRef[]>()
     };

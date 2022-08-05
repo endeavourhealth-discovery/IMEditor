@@ -345,4 +345,85 @@ const entityId = {
     }
   ]
 };
-export { testQueryObject, entityId, entityType };
+
+const notExist = {
+  key: 0,
+  name: "select",
+  type: "PROPERTY",
+  valueType: "OBJECT",
+  componentType: "DISPLAY",
+  children: [
+    {
+      key: 1,
+      name: "property",
+      componentType: "DISPLAY",
+      value: {
+        name: "property"
+      },
+      type: "PROPERTY",
+      valueType: "ARRAY",
+      children: [
+        {
+          key: 1,
+          name: "label",
+          componentType: "DISPLAY",
+          value: {
+            name: "label",
+            "@id": "http://www.w3.org/2000/01/rdf-schema#label"
+          },
+          type: "VALUE",
+          valueType: "OBJECT"
+        }
+      ]
+    },
+    {
+      key: 2,
+      name: "match",
+      componentType: "DISPLAY",
+      value: {
+        name: "match"
+      },
+      type: "PROPERTY",
+      valueType: "ARRAY",
+      children: [
+        {
+          key: 1,
+          name: "notExist",
+          componentType: "DISPLAY",
+          value: {
+            name: "notExist",
+            value: true
+          },
+          type: "PROPERTY",
+          valueType: "OBJECT",
+          children: [
+            {
+              key: 1,
+              name: "property",
+              componentType: "DISPLAY",
+              value: {
+                name: "property"
+              },
+              type: "PROPERTY",
+              valueType: "ARRAY",
+              children: [
+                {
+                  key: 1,
+                  name: "has term code",
+                  componentType: "DISPLAY",
+                  value: {
+                    name: "has term code",
+                    "@id": "http://endhealth.info/im#hasTermCode"
+                  },
+                  type: "VALUE",
+                  valueType: "OBJECT"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+};
+export { testQueryObject, entityId, entityType, notExist };
