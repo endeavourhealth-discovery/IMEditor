@@ -5,9 +5,9 @@ const {
 import { ITreeItem, TreeItemType, TreeItemValueType } from "./TreeItem";
 
 export function buildQueryFromTreeItem(treeItem: ITreeItem) {
-  const query = { name: "A new query", description: "A new query built with the query-builder", query: {} };
-  recurseBuildQuery(query.query, treeItem, null);
-  return query;
+  const query = { name: "A new query", description: "A new query built with the query-builder" };
+  recurseBuildQuery(query, treeItem, null);
+  return { query: query };
 }
 
 function recurseBuildQuery(query: any, treeItem: ITreeItem, parent: ITreeItem | null) {

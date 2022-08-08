@@ -33,6 +33,8 @@ export function setComponentType(item: ITreeItem, isConceptHasOptions: boolean) 
     case "property":
     case "entityType":
     case "notExist":
+    case "and":
+    case "or":
     case "match":
       item.componentType = ComponentType.DROPDOWN;
       break;
@@ -59,6 +61,8 @@ export function setType(item: ITreeItem) {
     case "entityType":
     case "notExist":
     case "match":
+    case "and":
+    case "or":
       item.type = TreeItemType.PROPERTY;
       break;
 
@@ -88,6 +92,8 @@ export function setValueType(item: ITreeItem) {
     case "match":
     case "property":
     case "isConcept":
+    case "and":
+    case "or":
       item.valueType = TreeItemValueType.ARRAY;
       break;
 

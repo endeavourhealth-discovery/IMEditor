@@ -136,10 +136,11 @@ const isConcept = {
       }
     ]
   },
+
   query: {
-    name: "A new query",
-    description: "A new query built with the query-builder",
     query: {
+      name: "A new query",
+      description: "A new query built with the query-builder",
       select: {
         property: [
           {
@@ -309,10 +310,11 @@ const entityType = {
       }
     ]
   },
+
   query: {
-    name: "A new query",
-    description: "A new query built with the query-builder",
     query: {
+      name: "A new query",
+      description: "A new query built with the query-builder",
       select: {
         property: [
           {
@@ -424,10 +426,11 @@ const entityId = {
       }
     ]
   },
+
   query: {
-    name: "A new query",
-    description: "A new query built with the query-builder",
     query: {
+      name: "A new query",
+      description: "A new query built with the query-builder",
       select: {
         property: [
           {
@@ -529,10 +532,11 @@ const notExist = {
       }
     ]
   },
+
   query: {
-    name: "A new query",
-    description: "A new query built with the query-builder",
     query: {
+      name: "A new query",
+      description: "A new query built with the query-builder",
       select: {
         property: [
           {
@@ -650,10 +654,11 @@ const inverseOf = {
       }
     ]
   },
+
   query: {
-    name: "A new query",
-    description: "A new query built with the query-builder",
     query: {
+      name: "A new query",
+      description: "A new query built with the query-builder",
       select: {
         property: [
           {
@@ -790,10 +795,11 @@ const includeSubtypes = {
       }
     ]
   },
+
   query: {
-    name: "A new query",
-    description: "A new query built with the query-builder",
     query: {
+      name: "A new query",
+      description: "A new query built with the query-builder",
       select: {
         property: [
           {
@@ -822,4 +828,226 @@ const includeSubtypes = {
     }
   }
 };
-export { isConcept, entityId, entityType, notExist, inverseOf, includeSubtypes };
+
+const andMatch = {
+  treeItem: {
+    key: 0,
+    name: "select",
+    type: "PROPERTY",
+    valueType: "OBJECT",
+    componentType: "DISPLAY",
+    children: [
+      {
+        key: 1,
+        name: "property",
+        componentType: "DISPLAY",
+        value: {
+          name: "property"
+        },
+        type: "PROPERTY",
+        valueType: "ARRAY",
+        children: [
+          {
+            key: 1,
+            name: "label",
+            componentType: "DISPLAY",
+            value: {
+              name: "label",
+              "@id": "http://www.w3.org/2000/01/rdf-schema#label"
+            },
+            type: "VALUE",
+            valueType: "OBJECT"
+          }
+        ]
+      },
+      {
+        key: 2,
+        name: "match",
+        componentType: "DISPLAY",
+        value: {
+          name: "match"
+        },
+        type: "PROPERTY",
+        valueType: "ARRAY",
+        children: [
+          {
+            key: 1,
+            name: "and",
+            componentType: "DISPLAY",
+            value: {
+              name: "and"
+            },
+            type: "PROPERTY",
+            valueType: "ARRAY",
+            children: [
+              {
+                key: 1,
+                name: "property",
+                componentType: "DISPLAY",
+                value: {
+                  name: "property"
+                },
+                type: "PROPERTY",
+                valueType: "ARRAY",
+                children: [
+                  {
+                    key: 1,
+                    name: "subClassOf",
+                    componentType: "DISPLAY",
+                    value: {
+                      name: "subClassOf",
+                      "@id": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+                      isConcept: [
+                        {
+                          "@id": "http://endhealth.info/im#Event",
+                          name: "Event"
+                        }
+                      ]
+                    },
+                    type: "VALUE",
+                    valueType: "OBJECT",
+                    children: [
+                      {
+                        key: 1,
+                        name: "isConcept",
+                        componentType: "DISPLAY",
+                        value: "subClassOf",
+                        type: "PROPERTY_VALUE_PAIR",
+                        valueType: "ARRAY",
+                        children: [
+                          {
+                            key: 1,
+                            name: "Event",
+                            componentType: "DISPLAY",
+                            value: {
+                              "@id": "http://endhealth.info/im#Event",
+                              name: "Event"
+                            },
+                            type: "VALUE",
+                            valueType: "OBJECT"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                key: 2,
+                name: "property",
+                componentType: "DISPLAY",
+                value: {
+                  name: "property"
+                },
+                type: "PROPERTY",
+                valueType: "ARRAY",
+                children: [
+                  {
+                    key: 1,
+                    name: "type",
+                    componentType: "DISPLAY",
+                    value: {
+                      name: "type",
+                      "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+                      isConcept: [
+                        {
+                          "@id": "http://www.w3.org/ns/shacl#NodeShape",
+                          name: "Node shape"
+                        }
+                      ]
+                    },
+                    type: "VALUE",
+                    valueType: "OBJECT",
+                    children: [
+                      {
+                        key: 1,
+                        name: "isConcept",
+                        componentType: "DISPLAY",
+                        value: "type",
+                        type: "PROPERTY_VALUE_PAIR",
+                        valueType: "ARRAY",
+                        children: [
+                          {
+                            key: 1,
+                            name: "Node shape",
+                            componentType: "DISPLAY",
+                            value: {
+                              "@id": "http://www.w3.org/ns/shacl#NodeShape",
+                              name: "Node shape"
+                            },
+                            type: "VALUE",
+                            valueType: "OBJECT"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  query: {
+    query: {
+      name: "A new query",
+      description: "A new query built with the query-builder",
+      select: {
+        property: [
+          {
+            name: "label",
+            "@id": "http://www.w3.org/2000/01/rdf-schema#label"
+          }
+        ],
+        match: [
+          {
+            and: [
+              {
+                property: [
+                  {
+                    name: "subClassOf",
+                    "@id": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+                    isConcept: [
+                      {
+                        "@id": "http://endhealth.info/im#Event",
+                        name: "Event"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                property: [
+                  {
+                    name: "subClassOf",
+                    "@id": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+                    isConcept: [
+                      {
+                        "@id": "http://endhealth.info/im#Event",
+                        name: "Event"
+                      }
+                    ]
+                  },
+                  {
+                    name: "type",
+                    "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+                    isConcept: [
+                      {
+                        "@id": "http://www.w3.org/ns/shacl#NodeShape",
+                        name: "Node shape"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+};
+export { isConcept, entityId, entityType, notExist, inverseOf, includeSubtypes, andMatch };

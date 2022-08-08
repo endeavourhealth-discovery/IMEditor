@@ -101,6 +101,8 @@ export default defineComponent({
         { name: "property" },
         { name: "match" },
         { name: "logic" },
+        { name: "or" },
+        { name: "and" },
         { name: "isConcept" },
         { name: "inverseOf", value: true },
         { name: "includeSubtypes", value: true }
@@ -117,10 +119,14 @@ export default defineComponent({
   methods: {
     async initOptions() {
       this.optionsMap.set("select", this.clauseOptions);
-      this.optionsMap.set("match", this.matchOptions);
-      const schemes = (await this.$entityService.getNamespaces()).map(scheme => {
+      this.optionsMap.set("or", this.clauseOptions);
+      this.optionsMap.set("and", this.clauseOptions);
+      const match = this.matchOptions.concat(this.clauseOptions);
+      this.optionsMap.set("match", match);
+      let schemes = (await this.$entityService.getNamespaces()).map(scheme => {
         return { "@id": scheme.iri, name: scheme.name };
       }) as Interfaces.TTIriRef[];
+      schemes = this.clauseOptions.concat(schemes);
       this.optionsMap.set("scheme", schemes);
 
       Object.keys(this.optionNamePaths).forEach(async key => {
