@@ -86,14 +86,14 @@ export default defineComponent({
       showJson: true,
       loading: false,
       displayResults: false,
-      treeData: {
-        key: 0,
-        name: "select",
-        type: "PROPERTY",
-        valueType: "OBJECT",
-        componentType: "DISPLAY"
-      } as ITreeItem,
-      // treeData: Example.isConcept.treeItem as ITreeItem,
+      // treeData: {
+      //   key: 0,
+      //   name: "select",
+      //   type: "PROPERTY",
+      //   valueType: "OBJECT",
+      //   componentType: "DISPLAY"
+      // } as ITreeItem,
+      treeData: Example.andMatch.treeItem as ITreeItem,
       queryResults: {},
       queryDisplay: {},
       clauseOptions: [
@@ -142,7 +142,7 @@ export default defineComponent({
 
     updateQuery() {
       this.queryDisplay = buildQueryFromTreeItem(this.treeData);
-      this.logTests();
+      // this.logTests();
     },
 
     logTests() {
