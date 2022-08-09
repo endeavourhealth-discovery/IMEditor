@@ -1,6 +1,7 @@
 import { TreeItemType, TreeItemValueType, ComponentType } from "./TreeItem";
 
 const isConcept = {
+  name: "isConcept",
   treeItem: {
     key: 0,
     name: "select",
@@ -180,6 +181,7 @@ const isConcept = {
 };
 
 const entityType = {
+  name: "entityType",
   treeItem: {
     key: 0,
     name: "select",
@@ -348,6 +350,7 @@ const entityType = {
 };
 
 const entityId = {
+  name: "entityId",
   treeItem: {
     key: 0,
     name: "select",
@@ -452,6 +455,7 @@ const entityId = {
 };
 
 const notExist = {
+  name: "notExist",
   treeItem: {
     key: 0,
     name: "select",
@@ -561,6 +565,7 @@ const notExist = {
 };
 
 const inverseOf = {
+  name: "inverseOf",
   treeItem: {
     key: 0,
     name: "select",
@@ -684,6 +689,7 @@ const inverseOf = {
 };
 
 const includeSubtypes = {
+  name: "includeSubtypes",
   treeItem: {
     key: 0,
     name: "select",
@@ -830,6 +836,7 @@ const includeSubtypes = {
 };
 
 const andMatch = {
+  name: "andMatch",
   treeItem: {
     key: 0,
     name: "select",

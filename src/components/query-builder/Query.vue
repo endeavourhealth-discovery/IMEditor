@@ -142,18 +142,24 @@ export default defineComponent({
 
     updateQuery() {
       this.queryDisplay = buildQueryFromTreeItem(this.treeData);
-      console.log("Tests");
+      this.logTests();
+    },
+
+    logTests() {
+      console.log("Tests failed:");
       Object.keys(Example).forEach(test => {
         const query = JSON.stringify((Example as any)[test].query);
         const treeItem = JSON.stringify(buildQueryFromTreeItem((Example as any)[test].treeItem));
         // console.log(query);
         // console.log(treeItem);
-        console.log(query === treeItem);
+        if (query !== treeItem) console.log((Example as any)[test].name);
       });
     },
+
     isObjectHasKeys(data: any) {
       return isObjectHasKeys(data);
     },
+
     async runQuery() {
       this.queryResults = await axios.post(Services.Env.API + "api/query/public/queryIM", this.queryDisplay);
       this.displayResults = true;
