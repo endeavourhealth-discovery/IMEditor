@@ -93,7 +93,7 @@ export default defineComponent({
       //   valueType: "OBJECT",
       //   componentType: "DISPLAY"
       // } as ITreeItem,
-      treeData: Example.andMatch.treeItem as ITreeItem,
+      treeData: Example.entityType.treeItem as ITreeItem,
       queryResults: {},
       queryDisplay: {},
       clauseOptions: [
@@ -150,8 +150,6 @@ export default defineComponent({
       Object.keys(Example).forEach(test => {
         const query = JSON.stringify((Example as any)[test].query);
         const treeItem = JSON.stringify(buildQueryFromTreeItem((Example as any)[test].treeItem));
-        // console.log(query);
-        // console.log(treeItem);
         if (query !== treeItem) console.log((Example as any)[test].name);
       });
     },

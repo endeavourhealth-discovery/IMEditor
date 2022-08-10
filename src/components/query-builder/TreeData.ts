@@ -147,6 +147,10 @@ const isConcept = {
           {
             name: "label",
             "@id": "http://www.w3.org/2000/01/rdf-schema#label"
+          },
+          {
+            name: "type",
+            "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
           }
         ],
         match: [
@@ -245,11 +249,11 @@ const entityType = {
             children: [
               {
                 key: 1,
-                name: "Class",
+                name: "Property",
                 componentType: "DISPLAY",
                 value: {
-                  name: "Class",
-                  "@id": "http://www.w3.org/2000/01/rdf-schema#Class"
+                  name: "Property",
+                  "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
                 },
                 type: "VALUE",
                 valueType: "OBJECT"
@@ -275,8 +279,8 @@ const entityType = {
                   "@id": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
                   isConcept: [
                     {
-                      "@id": "http://www.w3.org/2000/01/rdf-schema#Resource",
-                      name: "Resource"
+                      "@id": "http://endhealth.info/im#dataModelProperty",
+                      name: "data model property"
                     }
                   ]
                 },
@@ -293,11 +297,11 @@ const entityType = {
                     children: [
                       {
                         key: 1,
-                        name: "Resource",
+                        name: "data model property",
                         componentType: "DISPLAY",
                         value: {
-                          "@id": "http://www.w3.org/2000/01/rdf-schema#Resource",
-                          name: "Resource"
+                          "@id": "http://endhealth.info/im#dataModelProperty",
+                          name: "data model property"
                         },
                         type: "VALUE",
                         valueType: "OBJECT"
@@ -322,22 +326,28 @@ const entityType = {
           {
             name: "label",
             "@id": "http://www.w3.org/2000/01/rdf-schema#label"
+          },
+          {
+            name: "code",
+            "@id": "http://endhealth.info/im#code"
           }
         ],
         match: [
           {
             entityType: {
-              name: "Class",
-              "@id": "http://www.w3.org/2000/01/rdf-schema#Class"
-            },
+              name: "Property",
+              "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+            }
+          },
+          {
             property: [
               {
                 name: "subClassOf",
                 "@id": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
                 isConcept: [
                   {
-                    "@id": "http://www.w3.org/2000/01/rdf-schema#Resource",
-                    name: "Resource"
+                    "@id": "http://endhealth.info/im#dataModelProperty",
+                    name: "data model property"
                   }
                 ]
               }
@@ -375,17 +385,6 @@ const entityId = {
             value: {
               name: "label",
               "@id": "http://www.w3.org/2000/01/rdf-schema#label"
-            },
-            type: "VALUE",
-            valueType: "OBJECT"
-          },
-          {
-            key: 2,
-            name: "code",
-            componentType: "DISPLAY",
-            value: {
-              name: "code",
-              "@id": "http://endhealth.info/im#code"
             },
             type: "VALUE",
             valueType: "OBJECT"
@@ -746,14 +745,7 @@ const includeSubtypes = {
                 componentType: "DISPLAY",
                 value: {
                   name: "subClassOf",
-                  "@id": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
-                  isConcept: [
-                    {
-                      "@id": "http://endhealth.info/im#Event",
-                      name: "Event",
-                      includeSubtypes: true
-                    }
-                  ]
+                  "@id": "http://www.w3.org/2000/01/rdf-schema#subClassOf"
                 },
                 type: "VALUE",
                 valueType: "OBJECT",
@@ -903,13 +895,7 @@ const andMatch = {
                     componentType: "DISPLAY",
                     value: {
                       name: "subClassOf",
-                      "@id": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
-                      isConcept: [
-                        {
-                          "@id": "http://endhealth.info/im#Event",
-                          name: "Event"
-                        }
-                      ]
+                      "@id": "http://www.w3.org/2000/01/rdf-schema#subClassOf"
                     },
                     type: "VALUE",
                     valueType: "OBJECT",
@@ -955,13 +941,7 @@ const andMatch = {
                     componentType: "DISPLAY",
                     value: {
                       name: "type",
-                      "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-                      isConcept: [
-                        {
-                          "@id": "http://www.w3.org/ns/shacl#NodeShape",
-                          name: "Node shape"
-                        }
-                      ]
+                      "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
                     },
                     type: "VALUE",
                     valueType: "OBJECT",

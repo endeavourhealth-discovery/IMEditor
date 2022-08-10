@@ -49,13 +49,45 @@ function addClause(query: any, treeItem: ITreeItem, parent: ITreeItem): any {
       if (log) console.log("1.2");
       addValueToArray(query, treeItem, parent);
     }
+  } else if (treeItem.type === TreeItemType.PROPERTY_VALUE_PAIR) {
+    if (log) console.log("2");
+    addPropertyValuePair(query, treeItem, parent);
   }
+}
+
+function addPropertyValuePair(query: any, treeItem: ITreeItem, parent: ITreeItem) {
+  const index = query.findIndex((item: any) => item.name === parent.name);
+  if (index !== -1)
+    switch (treeItem.valueType) {
+      case TreeItemValueType.ARRAY:
+        if (log) console.log("2.1");
+        addArrayPairs(query[index], treeItem);
+        break;
+
+      case TreeItemValueType.OBJECT:
+        if (log) console.log("2.2");
+        query[index][treeItem.name] = treeItem.value.value;
+        break;
+
+      default:
+        break;
+    }
+}
+
+function addArrayPairs(query: any, treeItem: ITreeItem) {
+  const array = [] as any;
+  treeItem.children?.forEach(child => array.push(child.value));
+  query[treeItem.name] = array;
 }
 
 function addValueToObject(query: any, treeItem: ITreeItem, parent: ITreeItem) {
   if (treeItem.type === TreeItemType.VALUE) {
     if (log) console.log("1.1.1");
-    query[parent.name] = treeItem.value;
+    if (isArrayHasLength(query)) {
+      query.at(-1)[parent.name] = treeItem.value;
+    } else {
+      query[parent.name] = treeItem.value;
+    }
   } else if (isObjectHasKeys(query[parent.name])) {
     if (log) console.log("1.1.2");
     query[parent.name][treeItem.name] = {};
