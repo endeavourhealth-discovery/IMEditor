@@ -503,7 +503,7 @@ const notExist = {
               name: "notExist",
               value: true
             },
-            type: "PROPERTY",
+            type: "PROPERTY_VALUE_PAIR",
             valueType: "OBJECT",
             children: [
               {

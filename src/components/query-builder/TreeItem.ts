@@ -59,7 +59,6 @@ export function setType(item: ITreeItem) {
     case "property":
     case "entityId":
     case "entityType":
-    case "notExist":
     case "match":
     case "and":
     case "or":
@@ -68,6 +67,7 @@ export function setType(item: ITreeItem) {
 
     case "isConcept":
     case "includeSubtypes":
+    case "notExist":
     case "inverseOf":
       item.type = TreeItemType.PROPERTY_VALUE_PAIR;
       break;

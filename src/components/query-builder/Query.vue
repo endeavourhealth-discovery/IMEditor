@@ -93,7 +93,7 @@ export default defineComponent({
       //   valueType: "OBJECT",
       //   componentType: "DISPLAY"
       // } as ITreeItem,
-      treeData: Example.entityType.treeItem as ITreeItem,
+      treeData: Example.notExist.treeItem as ITreeItem,
       queryResults: {},
       queryDisplay: {},
       clauseOptions: [
