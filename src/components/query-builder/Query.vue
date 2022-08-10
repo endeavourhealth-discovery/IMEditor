@@ -142,7 +142,7 @@ export default defineComponent({
 
     updateQuery() {
       this.queryDisplay = buildQueryFromTreeItem(this.treeData);
-      // this.logTests();
+      this.logTests();
     },
 
     logTests() {

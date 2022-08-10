@@ -1029,16 +1029,6 @@ const andMatch = {
               {
                 property: [
                   {
-                    name: "subClassOf",
-                    "@id": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
-                    isConcept: [
-                      {
-                        "@id": "http://endhealth.info/im#Event",
-                        name: "Event"
-                      }
-                    ]
-                  },
-                  {
                     name: "type",
                     "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
                     isConcept: [
