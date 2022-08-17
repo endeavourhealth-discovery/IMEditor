@@ -229,6 +229,8 @@ function hideTreeOverlay(): void {
   border-radius: 3px;
   position: relative;
   min-width: 15rem;
+  display: flex;
+  flex-flow: row nowrap;
 }
 
 .label {

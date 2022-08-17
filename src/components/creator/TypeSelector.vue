@@ -2,34 +2,40 @@
   <div class="type-selector">
     <span class="text">Select entity type:</span>
     <div class="type-buttons-container">
-      <button v-for="type in typeOptions" class="custom-button" @click="typeSelected(type)">
-        <span>{{ type.name }}</span>
+      <button v-for="typee in typeOptions" class="custom-button" @click="typeSelected(typee)">
+        <span>{{ typee.name }}</span>
       </button>
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
 import { computed, ref, Ref, onMounted, inject } from "vue";
 import store from "@/store";
-import { Config, Vocabulary } from "im-library";
+import { Config, Vocabulary, Services } from "im-library";
 import { EntityReferenceNode, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 import injectionKeys from "@/injectionKeys/injectionKeys";
+import axios from "axios";
 const { IM, RDF } = Vocabulary;
+const { EntityService } = Services;
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
 
 const emit = defineEmits({ "concept-updated": (payload: string) => true });
 
+const entityService = new EntityService(axios);
+
 const filterOptions = computed(() => store.state.filterOptions);
 
 let typeOptions: Ref<any[]> = ref([]);
 
-onMounted(() => {
-  setOptions();
+onMounted(async () => {
+  await setOptions();
 });
 
-function setOptions() {
-  typeOptions.value = filterOptions.value.types.filter((type: EntityReferenceNode) => type["@id"] === IM.CONCEPT || type["@id"] === IM.CONCEPT_SET);
+async function setOptions() {
+  typeOptions.value = await entityService.getEntityChildren("http://endhealth.info/im#EntityTypes");
+  // typeOptions.value = filterOptions.value.types.filter((type: EntityReferenceNode) => type["@id"] === IM.CONCEPT || type["@id"] === IM.CONCEPT_SET);
 }
 
 function typeSelected(data: TTIriRef) {

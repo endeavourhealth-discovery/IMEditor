@@ -1,7 +1,7 @@
 <template>
   <div class="quantifier-item-container">
     <div class="label-container">
-      <span class="float-text">Quantifier</span>
+      <span class="float-text">{{ shape.name }}</span>
       <!-- <div v-if="loading" class="loading-container">
         <ProgressSpinner style="width:1.5rem;height:1.5rem;" strokeWidth="6" />
       </div> -->
@@ -24,7 +24,7 @@
             </div>
           </template>
         </AutoComplete>
-        <Button icon="fa-solid fa-sitemap" @click="showTreeDialog($event)" />
+        <Button :disabled="!selectedResult" icon="fa-solid fa-sitemap" @click="showTreeDialog($event)" />
       </div>
       <small v-if="invalidAssociatedProperty" class="validate-error">Missing property for refinement. Please select a property first.</small>
     </div>
