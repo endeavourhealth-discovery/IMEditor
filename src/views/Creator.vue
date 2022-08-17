@@ -9,12 +9,12 @@
     </TopBar>
     <ConfirmDialog />
     <div id="creator-main-container">
-      <div v-if="loading" class="loading-container">
-        <ProgressSpinner />
-      </div>
-      <div v-else class="content-buttons-container">
-        <div class="content-json-container">
-          <div class="steps-content">
+      <div class="content-buttons-container">
+        <div class="content-sidebar-container">
+          <div v-if="loading" class="loading-container">
+            <ProgressSpinner />
+          </div>
+          <div v-else class="steps-content">
             <Steps :model="stepsItems" :readonly="false" @click="stepsClicked" />
             <router-view v-slot="{ Component }">
               <keep-alive>
@@ -22,17 +22,14 @@
               </keep-alive>
             </router-view>
           </div>
-          <Divider v-if="showJson" layout="vertical" />
-          <div v-if="showJson" class="json-container">
-            <div class="json-header-container">
-              <span class="json-header">JSON viewer</span>
-            </div>
-            <VueJsonPretty class="json" :path="'res'" :data="editorEntity" @click="handleClick" />
+          <Divider v-if="showSidebar" layout="vertical" />
+          <div v-if="showSidebar" class="sidebar-container">
+            <SideBar :editorEntity="editorEntity" />
           </div>
           <Button
-            class="p-button-rounded p-button-info p-button-outlined json-toggle"
-            :label="showJson ? 'hide JSON' : 'show JSON'"
-            @click="showJson = !showJson"
+            class="p-button-rounded p-button-info p-button-outlined sidebar-toggle"
+            :label="showSidebar ? 'hide sidebar' : 'show sidebar'"
+            @click="showSidebar = !showSidebar"
           />
         </div>
         <div class="button-bar" id="creator-button-bar">
@@ -59,7 +56,7 @@ export default defineComponent({
 <script setup lang="ts">
 import { onUnmounted, onBeforeUnmount, onMounted, computed, ref, Ref, watch, inject, defineComponent, PropType, provide } from "vue";
 import { Enums, Helpers, Vocabulary, Services } from "im-library";
-import VueJsonPretty from "vue-json-pretty";
+import SideBar from "@/components/creator/SideBar.vue";
 import _ from "lodash";
 import store from "@/store";
 import axios from "axios";
@@ -102,7 +99,7 @@ let editorEntity: Ref<any> = ref({});
 let loading: Ref<boolean> = ref(true);
 let stepsItems: Ref<{ label: string; to: string }[]> = ref([]);
 let currentStep: Ref<number> = ref(0);
-let showJson: Ref<boolean> = ref(false);
+let showSidebar: Ref<boolean> = ref(false);
 let creatorInvalidEntity: Ref<boolean> = ref(false);
 let creatorValidity: Ref<{ key: string; valid: boolean }[]> = ref([]);
 let shape: Ref<FormGenerator | undefined> = ref();
@@ -382,11 +379,6 @@ function stepsForward() {
   if (currentStep.value < stepsItems.value.length) router.push(stepsItems.value[currentStep.value].to);
 }
 
-function handleClick(data: any) {
-  console.log("click");
-  console.log(data);
-}
-
 defineExpose({ confirmLeavePage });
 </script>
 
@@ -412,7 +404,7 @@ defineExpose({ confirmLeavePage });
   overflow: auto;
 }
 
-.content-json-container {
+.content-sidebar-container {
   flex: 1 1 auto;
   width: 100%;
   display: flex;
@@ -436,23 +428,16 @@ defineExpose({ confirmLeavePage });
   width: 90%;
 }
 
-.json-container {
+.sidebar-container {
   width: 50vw;
   height: 100%;
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-start;
+  padding-top: 3rem;
 }
 
-.json {
-  flex: 0 1 auto;
-  width: 100%;
-  overflow: auto;
-  border: 1px #dee2e6 solid;
-  border-radius: 3px;
-}
-
-.json-header-container {
+.sidebar-header-container {
   padding: 0.5rem;
   height: 3rem;
   flex: 0 0 auto;
@@ -462,23 +447,11 @@ defineExpose({ confirmLeavePage });
   align-items: center;
 }
 
-.json-header {
+.sidebar-header {
   font-size: 1.5rem;
 }
 
-.json:deep(.vjs-value__string) {
-  word-break: break-all;
-}
-
-.json:deep(.vjs-value) {
-  font-size: 1rem;
-}
-
-.json:deep(.vjs-key) {
-  font-size: 1rem;
-}
-
-.json-toggle {
+.sidebar-toggle {
   position: absolute;
   top: 5px;
   right: 5px;
