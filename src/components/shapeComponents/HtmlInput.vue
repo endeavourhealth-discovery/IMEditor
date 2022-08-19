@@ -1,7 +1,7 @@
 <template>
   <div class="html-input-container">
     <span class="p-float-label">
-      <Textarea class="p-inputtext-lg input-html" :class="invalid && 'invalid'" v-model="userInput" rows="4" />
+      <Textarea class="p-inputtext-lg input-html" :class="invalid && 'invalid'" v-model="userInput" rows="4" @drop.prevent />
       <label>{{ shape.name }}</label>
     </span>
   </div>

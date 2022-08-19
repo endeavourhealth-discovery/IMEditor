@@ -12,7 +12,14 @@
       :loading="loading"
     >
       <template #default="slotProps">
-        <div class="tree-row" @mouseover="showOverlay($event, slotProps.node)" @mouseleave="hideOverlay($event)">
+        <div
+          class="tree-row grabbable"
+          @mouseover="showOverlay($event, slotProps.node)"
+          @mouseleave="hideOverlay($event)"
+          draggable="true"
+          @dragstart="dragStart($event, slotProps.node)"
+        >
+          <i class="fa-solid fa-grip-vertical drag-icon grabbable"></i>
           <span v-if="!slotProps.node.loading">
             <div :style="'color:' + slotProps.node.color">
               <i :class="slotProps.node.typeIcon" class="fa-fw" aria-hidden="true"></i>
@@ -103,8 +110,8 @@ watch(treeIri, async () => {
   await findPathToNode(treeIri.value);
 });
 
-onMounted(() => {
-  init();
+onMounted(async () => {
+  await init();
 });
 
 onBeforeUnmount(() => {
@@ -169,10 +176,10 @@ function onNodeSelect(node: any): void {
     loadMore(node);
   } else {
     selectedNode.value = node;
-    router.push({
-      name: "Folder",
-      params: { selectedIri: node.data }
-    });
+    // router.push({
+    //   name: "Folder",
+    //   params: { selectedIri: node.data }
+    // });
     store.commit("updateSelectedConceptIri", node.data);
   }
 }
@@ -305,6 +312,13 @@ function hideOverlay(event: any): void {
   x.hide(event);
   overlayLocation.value = {};
 }
+
+function dragStart(event: any, data: any) {
+  event.dataTransfer.setData("text/plain", JSON.stringify(data));
+  event.dataTransfer.effectAllowed = "copy";
+  event.dataTransfer.dropEffect = "copy";
+  hideOverlay(overlayLocation.value);
+}
 </script>
 
 <style scoped>
@@ -379,5 +393,18 @@ function hideOverlay(event: any): void {
 #hierarchy-tree-bar-container::v-deep(.p-tree-toggler) {
   height: 1.25rem !important;
   margin: 0 0 0 0 !important;
+}
+
+.drag-icon {
+  cursor: move;
+  cursor: grab;
+  cursor: -moz-grab;
+  cursor: -webkit-grab;
+}
+
+.grabbable:active {
+  cursor: grabbing;
+  cursor: -moz-grabbing;
+  cursor: -webkit-grabbing;
 }
 </style>

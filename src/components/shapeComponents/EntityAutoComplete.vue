@@ -1,5 +1,5 @@
 <template>
-  <div class="quantifier-item-container">
+  <div class="autocomplete-container">
     <div class="label-container">
       <span class="float-text">{{ shape.name }}</span>
       <!-- <div v-if="loading" class="loading-container">
@@ -17,6 +17,7 @@
           placeholder="Search"
           :disabled="invalidAssociatedProperty"
           class="search-input"
+          @drop.prevent
         >
           <template #item="slotProps">
             <div class="autocomplete-option" @mouseenter="showOptionsOverlay($event, slotProps.item)" @mouseleave="hideOptionsOverlay($event)">
@@ -297,13 +298,12 @@ function hideOptionsOverlay(event: any): void {
 </script>
 
 <style scoped>
-.quantifier-item-container {
+.autocomplete-container {
   display: flex;
   flex-flow: row nowrap;
   justify-content: flex-start;
   align-items: center;
   gap: 1rem;
-  width: 50%;
 }
 
 .loading-container {
@@ -316,7 +316,7 @@ function hideOptionsOverlay(event: any): void {
 }
 
 .label-container {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   padding: 1rem;
   border: 1px solid #ffc952;
   border-radius: 3px;
@@ -341,7 +341,7 @@ function hideOptionsOverlay(event: any): void {
 }
 
 .search-input {
-  width: 100%;
+  width: 25rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

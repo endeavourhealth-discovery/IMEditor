@@ -14,6 +14,9 @@
         class="p-inputtext search-input"
         autoWidth="true"
         v-tooltip="{ value: selectedResult.name, class: 'entity-tooltip' }"
+        @dragenter.prevent
+        @dragover.prevent
+        @drop="dropReceived"
       />
       <Button :disabled="!selectedResult['@id']" icon="fa-solid fa-sitemap" @click="showTreeDialog($event)" />
     </div>
@@ -28,7 +31,7 @@
 
 <script setup lang="ts">
 import { computed, PropType, watch, onMounted, ref, Ref, inject } from "vue";
-import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/SearchMiniOverlay.vue";
+import SearchMiniOverlay from "@/components/shapeComponents/SearchMiniOverlay.vue";
 import EntityMiniTree from "@/components/shapeComponents/EntityMiniTree.vue";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import axios from "axios";
@@ -141,10 +144,7 @@ async function search(): Promise<void> {
     controller.value = new AbortController();
     if (controller.value) {
       const result = await queryService.entityQuery(query, controller.value);
-      if (result)
-        searchResults.value = result.map((item: any) => {
-          return { "@id": item.iri, name: item.name };
-        });
+      if (result) searchResults.value = result;
       else searchResults.value = [];
     }
     loading.value = false;
@@ -202,28 +202,36 @@ function defaultValidity() {
 
 function showTreeDialog(event: any): void {
   const x = treeOP.value as any;
-  if (x) x.show(event, event.target);
+  if (x) x.show(event);
 }
 
 function hideTreeOverlay(): void {
   const x = treeOP.value as any;
   if (x) x.hide();
 }
+
+function dropReceived(event: any) {
+  const data = event.dataTransfer.getData("text/plain");
+  if (data) {
+    const json = JSON.parse(data);
+    const iriRef = { "@id": json.data, name: json.label };
+    updateSelectedResult(iriRef);
+  }
+}
 </script>
 
 <style scoped>
 .entity-search-item-container {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   display: flex;
   flex-flow: row nowrap;
   justify-content: flex-start;
   align-items: center;
   gap: 1rem;
-  width: 100%;
 }
 
 .label-container {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   padding: 1rem;
   border: 1px solid #ffc952;
   border-radius: 3px;
@@ -250,7 +258,7 @@ function hideTreeOverlay(): void {
 }
 
 .search-input {
-  width: 100%;
+  width: 25rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

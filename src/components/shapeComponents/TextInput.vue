@@ -1,7 +1,7 @@
 <template>
   <div class="string-single-select-container">
     <span class="p-float-label" v-tooltip.top="{ value: userInput ? userInput : shape.name, class: 'string-single-select-tooltip' }">
-      <InputText class="p-inputtext-lg input-text" :class="invalid && 'invalid'" v-model="userInput" type="text" />
+      <InputText class="p-inputtext-lg input-text" :class="invalid && 'invalid'" v-model="userInput" type="text" @drop.prevent @dragover.prevent />
       <label>{{ shape.name }}</label>
     </span>
   </div>

@@ -99,6 +99,7 @@ async function processPropertyValue(property: PropertyShape): Promise<string> {
   if (isObjectHasKeys(property, ["function"])) {
     const result = await queryService.runFunction(property.function["@id"]);
     if (result && isObjectHasKeys(result, ["iri"])) return result.iri["@id"];
+    else throw new Error("Failed to run function " + property.function["@id"]);
   }
   throw new Error("Property must have isIri or function key");
 }
