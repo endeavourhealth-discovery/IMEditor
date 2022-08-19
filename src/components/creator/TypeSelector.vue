@@ -1,7 +1,10 @@
 <template>
   <div class="type-selector">
     <span class="text">Select entity type:</span>
-    <div class="type-buttons-container">
+    <div v-if="loading" class="loading-container">
+      <ProgressSpinner />
+    </div>
+    <div v-else class="type-buttons-container">
       <button v-for="typee in typeOptions" class="custom-button" @click="typeSelected(typee)">
         <span>{{ typee.name }}</span>
       </button>
@@ -13,7 +16,7 @@
 import { computed, ref, Ref, onMounted, inject } from "vue";
 import store from "@/store";
 import { Config, Vocabulary, Services } from "im-library";
-import { EntityReferenceNode, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { EntityReferenceNode, TTIriRef, ConceptSummary } from "im-library/dist/types/interfaces/Interfaces";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import axios from "axios";
 const { IM, RDF } = Vocabulary;
@@ -21,26 +24,25 @@ const { EntityService } = Services;
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
 
-const emit = defineEmits({ "concept-updated": (payload: string) => true });
-
 const entityService = new EntityService(axios);
 
-const filterOptions = computed(() => store.state.filterOptions);
-
-let typeOptions: Ref<any[]> = ref([]);
+let loading = ref(false);
+let typeOptions: Ref<EntityReferenceNode[]> = ref([]);
 
 onMounted(async () => {
   await setOptions();
 });
 
 async function setOptions() {
+  loading.value = true;
   typeOptions.value = await entityService.getEntityChildren("http://endhealth.info/im#EntityTypes");
+  loading.value = false;
   // typeOptions.value = filterOptions.value.types.filter((type: EntityReferenceNode) => type["@id"] === IM.CONCEPT || type["@id"] === IM.CONCEPT_SET);
 }
 
-function typeSelected(data: TTIriRef) {
+function typeSelected(data: EntityReferenceNode) {
   const result = {} as any;
-  result[RDF.TYPE] = [data];
+  result[RDF.TYPE] = [{ "@id": data["@id"], name: data.name }];
   if (entityUpdate) entityUpdate(result);
 }
 </script>
@@ -53,6 +55,15 @@ function typeSelected(data: TTIriRef) {
   flex-flow: column nowrap;
   justify-content: center;
   align-items: center;
+}
+
+.loading-container {
+  display: flex;
+  flex-flow: row;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
 }
 .type-buttons-container {
   width: 80%;
