@@ -1,11 +1,11 @@
 import { ConfigService, EntityService, Env, LoggerService, QueryService, SetService } from "im-library/dist/types/services/Services";
-import type { InjectionKey } from "vue";
+import type { InjectionKey, Ref } from "vue";
 import { Store } from "vuex";
 import Swal from "sweetalert2";
 import State from "@/store/stateType";
 import { RouteLocationNormalizedLoaded, Router } from "vue-router";
 
-const userRoles = Symbol("userRoles") as InjectionKey<string[]>;
+const userRoles = Symbol("userRoles") as InjectionKey<Ref<readonly string[]>>;
 const $entityService = Symbol("$entityService") as InjectionKey<EntityService>;
 const $store = Symbol("$store") as InjectionKey<Store<State>>;
 const $env = Symbol("$env") as InjectionKey<typeof Env>;
@@ -16,5 +16,29 @@ const $configService = Symbol("$configService") as InjectionKey<ConfigService>;
 const $setService = Symbol("$setSetvice") as InjectionKey<SetService>;
 const $router = Symbol("$router") as InjectionKey<Router>;
 const $route = Symbol("$route") as InjectionKey<RouteLocationNormalizedLoaded>;
+const editorValidity = Symbol("editorValidity") as InjectionKey<{
+  validity: Ref<{ key: string; valid: boolean }[]>;
+  updateValidity: Function;
+  removeValidity: Function;
+}>;
+const invalidEditorEntity = Symbol("invalidEditorEntity") as InjectionKey<Ref<boolean>>;
+const editorEntity = Symbol("editorEntity") as InjectionKey<{ editorEntity: Ref<any>; updateEntity: Function }>;
+const valueVariableMap = Symbol("valueVariableMap") as InjectionKey<Ref<Map<string, any>>>;
 
-export { userRoles, $entityService, $store, $configService, $env, $loggerService, $queryService, $swal, $router, $setService, $route };
+export default {
+  userRoles,
+  $entityService,
+  $store,
+  $configService,
+  $env,
+  $loggerService,
+  $queryService,
+  $swal,
+  $router,
+  $setService,
+  $route,
+  editorValidity,
+  invalidEditorEntity,
+  editorEntity,
+  valueVariableMap
+};

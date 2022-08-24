@@ -1,0 +1,133 @@
+<template>
+  <div class="builder-child-container" :id="id">
+    <component :is="processComponentType(shape.componentType)" :shape="shape" :mode="mode" @updateClicked="updateClicked" :value="value" />
+    <AddDeleteButtons :show="showButtons" :position="position" :options="getButtonOptions()" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
+  </div>
+</template>
+
+<script lang="ts">
+import EntitySearch from "./EntitySearch.vue";
+import EntityAutoComplete from "./EntityAutoComplete.vue";
+
+export default defineComponent({
+  components: { EntitySearch, EntityAutoComplete }
+});
+</script>
+
+<script setup lang="ts">
+import { computed, PropType, watch, onMounted, ref, Ref, defineComponent } from "vue";
+import _ from "lodash";
+import AddDeleteButtons from "@/components/shapeComponents/AddDeleteButtons.vue";
+import { ComponentDetails, PropertyShape } from "im-library/dist/types/interfaces/Interfaces";
+import { Helpers, Models, Enums, Services } from "im-library";
+const {
+  DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject },
+  EditorMethods: { processComponentType }
+} = Helpers;
+const { ComponentType } = Enums;
+
+const props = defineProps({
+  id: { type: String, required: true },
+  position: { type: Number, required: true },
+  value: { type: Object as PropType<any>, required: false },
+  showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, required: true },
+  shape: { type: Object as PropType<PropertyShape>, required: true },
+  mode: { type: String as PropType<Enums.EditorMode>, required: true }
+});
+
+const emit = defineEmits({
+  updateClicked: (_payload: ComponentDetails) => true,
+  addNextOptionsClicked: (_payload: any) => true,
+  deleteClicked: (_payload: any) => true,
+  addClicked: (_payload: any) => true
+});
+
+function createEntity(data?: any): ComponentDetails {
+  if (data)
+    return {
+      value: data,
+      id: props.id,
+      position: props.position,
+      type: ComponentType.BUILDER_CHILD_WRAPPER,
+      json: data,
+      showButtons: props.showButtons,
+      shape: props.shape,
+      mode: props.mode
+    };
+  else {
+    return {
+      value: undefined,
+      id: props.id,
+      position: props.position,
+      type: ComponentType.BUILDER_CHILD_WRAPPER,
+      json: {},
+      showButtons: props.showButtons,
+      shape: props.shape,
+      mode: props.mode
+    };
+  }
+}
+
+function deleteClicked(): void {
+  emit("deleteClicked", createEntity());
+}
+
+function updateClicked(data: any): void {
+  emit("updateClicked", createEntity(data));
+}
+
+function addNextClicked(item: any): void {
+  emit("addNextOptionsClicked", {
+    position: props.position + 1,
+    selectedType: item
+  });
+}
+
+function getButtonOptions() {
+  return [ComponentType.ENTITY_SEARCH];
+}
+</script>
+
+<style scoped>
+.builder-child-container {
+  flex: 1 1 auto;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.label-container {
+  flex: 1 1 auto;
+  padding: 1rem;
+  border: 1px solid #ffc952;
+  border-radius: 3px;
+  position: relative;
+  min-width: 15rem;
+}
+
+.label {
+  cursor: pointer;
+  border: 1px solid #dee2e6;
+  border-radius: 3px;
+  background-color: #ffffff;
+  padding: 0.25rem;
+}
+
+.float-text {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+.search-input {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>

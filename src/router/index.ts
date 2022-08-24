@@ -3,9 +3,7 @@ import Editor from "../views/Editor.vue";
 import Creator from "../views/Creator.vue";
 import Query from "@/views/Query.vue";
 import TypeSelector from "@/components/creator/TypeSelector.vue";
-import SummaryEditor from "@/components/edit/SummaryEditor.vue";
-import ParentsEditor from "@/components/edit/ParentsEditor.vue";
-import MemberEditor from "@/components/edit/MemberEditor.vue";
+import StepsGroup from "@/components/creator/StepsGroup.vue";
 import { AccessDenied, SnomedLicense, Services, PageNotFound, EntityNotFound, Helpers, Config } from "im-library";
 import Workflow from "../views/Workflow.vue";
 import TaskDefinition from "../components/workflow/TaskDefinition.vue";
@@ -14,12 +12,15 @@ import Mapper from "../views/Mapper.vue";
 const { Env } = Services;
 
 import store from "@/store/index";
+import axios from "axios";
 import { nextTick } from "vue";
-import vm from "@/main";
+const { EntityService } = Services;
 
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
+
+const entityService = new EntityService(axios);
 
 const APP_TITLE = "IM Editor";
 
@@ -31,13 +32,7 @@ const routes: Array<RouteRecordRaw> = [
     meta: {
       requiresAuth: true
     },
-    redirect: { name: "TypeSelector" },
-    children: [
-      { path: "type", name: "TypeSelector", component: TypeSelector },
-      { path: "summary", name: "Summary", component: SummaryEditor },
-      { path: "parents", name: "Parents", component: ParentsEditor },
-      { path: "members", name: "Members", component: MemberEditor }
-    ]
+    children: [{ path: "type", name: "TypeSelector", component: TypeSelector }]
   },
   {
     path: "/editor/:selectedIri?",
@@ -46,7 +41,8 @@ const routes: Array<RouteRecordRaw> = [
     meta: {
       requiresAuth: true,
       requiresLicense: true
-    }
+    },
+    children: []
   },
   {
     path: "/query",
@@ -148,12 +144,20 @@ router.beforeEach(async (to, from) => {
     const iri = to.params.selectedIri as string;
     try {
       new URL(iri);
-      if (!(await vm.$entityService.iriExists(iri))) {
+      if (!(await entityService.iriExists(iri))) {
         router.push({ name: "EntityNotFound" });
       }
     } catch (_error) {
       router.push({ name: "EntityNotFound" });
     }
+    router.push({ name: "Editor" });
+  }
+
+  if (to.name === "PageNotFound" && to.path.startsWith("/creator/")) {
+    router.push({ name: "Creator" });
+  }
+  if (to.name === "PageNotFound" && to.path.startsWith("/editor/")) {
+    router.push({ name: "Editor" });
   }
 
   return true;

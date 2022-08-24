@@ -8,35 +8,26 @@
   </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent } from "vue";
+<script setup lang="ts">
+import { computed, onMounted, provide, ref, Ref, readonly } from "vue";
 import ProgressSpinner from "primevue/progressspinner";
 import AuthService from "@/services/AuthService";
+import injectionKeys from "@/injectionKeys/injectionKeys";
+import store from "@/store/index";
 
-export default defineComponent({
-  name: "App",
-  components: { ProgressSpinner: ProgressSpinner },
-  provide() {
-    return {
-      userRoles: computed(() => this.userRoles)
-    };
-  },
-  async mounted() {
-    // check for user and log them in if found or logout if not
-    this.loading = true;
-    await this.$store.dispatch("authenticateCurrentUser");
-    await this.$store.dispatch("fetchFilterSettings");
-    const roles = await AuthService.getRoles();
-    if (roles) this.userRoles = roles;
-    this.loading = false;
-  },
-  data() {
-    return {
-      loading: false,
-      userRoles: [] as string[]
-    };
-  }
+let loading = ref(false);
+let userRoles: Ref<string[]> = ref([]);
+
+onMounted(async () => {
+  loading.value = true;
+  await store.dispatch("authenticateCurrentUser");
+  await store.dispatch("fetchFilterSettings");
+  const roles = await AuthService.getRoles();
+  if (roles) userRoles.value = roles;
+  loading.value = false;
 });
+
+provide(injectionKeys.userRoles, readonly(userRoles));
 </script>
 
 <style>
