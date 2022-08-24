@@ -31,14 +31,22 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
-import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
 import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
 import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
 import Refinement from "@/components/edit/memberEditor/builder/Refinement.vue";
-import { mapState } from "vuex";
+
+export default defineComponent({
+  components: { Entity, AddNext, Refinement }
+});
+</script>
+
+<script setup lang="ts">
+import { defineComponent, PropType, ref, Ref, watch, computed, onMounted } from "vue";
+import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
+import _ from "lodash";
+import { mapState, useStore } from "vuex";
 import { Vocabulary, Helpers, Enums } from "im-library";
-import { EntityReferenceNode, TTIriRef, ComponentDetails } from "im-library/dist/types/interfaces/Interfaces";
+import { EntityReferenceNode, TTIriRef, ComponentDetails, PropertyShape, PropertyGroup } from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
   EditorBuilderJsonMethods: { genNextOptions, generateNewComponent, updateItem, addItem, updatePositions }
@@ -46,260 +54,257 @@ const {
 const { SHACL, IM } = Vocabulary;
 const { ComponentType } = Enums;
 
-export default defineComponent({
-  name: "Logic",
-  props: {
-    id: { type: String, required: true },
-    position: { type: Number, required: true },
-    value: {
-      type: Object as PropType<{ iri: string; children: PropType<Array<any>> | undefined; options: { iri: string; name: string }[] }>,
-      required: true
-    },
-    showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
-    builderType: { type: String as PropType<Enums.BuilderType>, required: true }
+const props = defineProps({
+  id: { type: String, required: true },
+  position: { type: Number, required: true },
+  value: {
+    type: Object as PropType<{ iri: string; children: PropType<Array<any>> | undefined; options: { iri: string; name: string }[] }>,
+    required: true
   },
-  components: { AddDeleteButtons, AddNext, Entity, Refinement },
-  emits: {
-    addNextOptionsClicked: (_payload: any) => true,
-    deleteClicked: (_payload: ComponentDetails) => true,
-    updateClicked: (_payload: ComponentDetails) => true
-  },
-  computed: mapState(["filterOptions"]),
-  watch: {
-    selected(): void {
-      if (!this.loading) {
-        this.onConfirm();
-      }
-    },
-    logicBuild: {
-      handler() {
-        this.updateRefinementsAssociatedMembers();
-        this.onConfirm();
-      },
-      deep: true
-    },
-    value: {
-      async handler() {
-        if (!this.value.children && this.logicBuild[0].type !== ComponentType.ADD_NEXT) await this.init();
-      },
-      deep: true
+  showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
+  shape: { type: Object as PropType<PropertyShape | PropertyGroup>, required: true },
+  mode: { type: String as PropType<Enums.EditorMode>, required: true }
+});
+
+const emit = defineEmits({
+  addNextOptionsClicked: (_payload: any) => true,
+  deleteClicked: (_payload: ComponentDetails) => true,
+  updateClicked: (_payload: ComponentDetails) => true
+});
+
+const store = useStore();
+const filterOptions = computed(() => store.state.filterOptions);
+
+let selected: Ref<{ iri: string; name: string }> = ref({} as { iri: string; name: string });
+let logicBuild: Ref<any[]> = ref([]);
+let loading = ref(true);
+
+const addDefaultOptions = [ComponentType.LOGIC, ComponentType.ENTITY, ComponentType.REFINEMENT];
+
+watch(selected, () => {
+  if (!loading.value) onConfirm();
+});
+
+watch(logicBuild, () => {
+  updateRefinementsAssociatedMembers();
+  onConfirm();
+});
+
+watch(
+  () => _.cloneDeep(props.value),
+  async () => {
+    if (!props.value.children && logicBuild.value[0].type !== ComponentType.ADD_NEXT) await init();
+  }
+);
+
+onMounted(async () => {
+  await init();
+});
+
+async function init() {
+  loading.value = true;
+  let found;
+  if (isObjectHasKeys(props.value, ["options"])) {
+    found = props.value.options.find(option => option.iri === props.value.iri);
+  }
+  selected.value = found ? found : props.value.options[1];
+  await createBuild();
+  loading.value = false;
+}
+
+async function createBuild() {
+  logicBuild.value = [];
+  if (!hasChildren(props.value)) {
+    createDefaultBuild();
+    return;
+  }
+  let position = 0;
+  for (const child of props.value.children) {
+    logicBuild.value.push(await processChild(child, position));
+    position++;
+  }
+  if (!isArrayHasLength(logicBuild.value)) {
+    createDefaultBuild();
+  }
+}
+
+function createDefaultBuild() {
+  selected.value = props.value.options[0];
+  logicBuild.value = [genNextOptions(-1, ComponentType.LOGIC, props.shape, props.mode)];
+}
+
+async function processChild(child: any, position: number) {
+  if (isObjectHasKeys(child, ["@id"])) return await processIri(child, position);
+  else if (isObjectHasKeys(child, [SHACL.AND]) || isObjectHasKeys(child, [SHACL.OR]) || isObjectHasKeys(child, [SHACL.NOT]))
+    return processLogic(child, position);
+  else return processRefinement(child, position);
+}
+
+function processLogic(child: any, position: number) {
+  for (const [key, value] of Object.entries(child)) {
+    return generateNewComponent(ComponentType.LOGIC, position, { iri: key, children: value }, props.shape, { minus: true, plus: true }, props.mode);
+  }
+}
+
+async function processIri(iri: TTIriRef, position: number) {
+  const typeOptions = filterOptions.value.types.filter(
+    (type: EntityReferenceNode) =>
+      type["@id"] === IM.VALUE_SET || type["@id"] === IM.CONCEPT_SET || type["@id"] === IM.CONCEPT_SET_GROUP || type["@id"] === IM.CONCEPT
+  );
+  const options = { status: filterOptions.value.status, schemes: filterOptions.value.schemes, types: typeOptions };
+  return generateNewComponent(
+    ComponentType.ENTITY,
+    position,
+    { filterOptions: options, entity: iri, type: ComponentType.ENTITY, label: "Member" },
+    props.shape,
+    { minus: true, plus: true },
+    props.mode
+  );
+}
+
+function processRefinement(child: any, position: number) {
+  for (const [key, value] of Object.entries(child)) {
+    const associatedMember = getRefinementAssociatedmember(position);
+    return generateNewComponent(
+      ComponentType.REFINEMENT,
+      position,
+      { propertyIri: key, children: value, associatedMember: associatedMember },
+      props.shape,
+      { minus: true, plus: true },
+      props.mode
+    );
+  }
+}
+
+function getRefinementAssociatedmember(position: number) {
+  let associatedMember = {} as TTIriRef;
+  let i = position - 1;
+  while (i >= 0) {
+    if (logicBuild.value[i] && logicBuild.value[i].type === ComponentType.ENTITY) {
+      associatedMember = logicBuild.value[i].value.entity;
+      i = -1;
     }
-  },
-  async mounted() {
-    await this.init();
-  },
-  data() {
-    return {
-      selected: {} as { iri: string; name: string },
-      logicBuild: [] as any[],
-      loading: true,
-      addDefaultOptions: [ComponentType.LOGIC, ComponentType.ENTITY, ComponentType.REFINEMENT]
-    };
-  },
-  methods: {
-    async init() {
-      this.loading = true;
-      let found;
-      if (isObjectHasKeys(this.value, ["options"])) {
-        found = this.value.options.find(option => option.iri === this.value.iri);
-      }
-      this.selected = found ? found : this.value.options[1];
-      await this.createBuild();
-      this.loading = false;
-    },
+    i--;
+  }
+  return associatedMember;
+}
 
-    async createBuild() {
-      this.logicBuild = [];
-      if (!this.hasChildren(this.value)) {
-        this.createDefaultBuild();
-        return;
-      }
-      let position = 0;
-      for (const child of this.value.children) {
-        this.logicBuild.push(await this.processChild(child, position));
-        position++;
-      }
-      if (!isArrayHasLength(this.logicBuild)) {
-        this.createDefaultBuild();
-      }
-    },
-
-    createDefaultBuild() {
-      this.selected = this.value.options[0];
-      this.logicBuild = [genNextOptions(-1, ComponentType.LOGIC, this.builderType)];
-    },
-
-    async processChild(child: any, position: number) {
-      if (isObjectHasKeys(child, ["@id"])) return await this.processIri(child, position);
-      else if (isObjectHasKeys(child, [SHACL.AND]) || isObjectHasKeys(child, [SHACL.OR]) || isObjectHasKeys(child, [SHACL.NOT]))
-        return this.processLogic(child, position);
-      else return this.processRefinement(child, position);
-    },
-
-    processLogic(child: any, position: number) {
-      for (const [key, value] of Object.entries(child)) {
-        return generateNewComponent(ComponentType.LOGIC, position, { iri: key, children: value }, this.builderType, { minus: true, plus: true });
-      }
-    },
-
-    async processIri(iri: TTIriRef, position: number) {
-      const typeOptions = this.filterOptions.types.filter(
-        (type: EntityReferenceNode) =>
-          type["@id"] === IM.VALUE_SET || type["@id"] === IM.CONCEPT_SET || type["@id"] === IM.CONCEPT_SET_GROUP || type["@id"] === IM.CONCEPT
-      );
-      const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
-      return generateNewComponent(
-        ComponentType.ENTITY,
-        position,
-        { filterOptions: options, entity: iri, type: ComponentType.ENTITY, label: "Member" },
-        this.builderType,
-        { minus: true, plus: true }
-      );
-    },
-
-    processRefinement(child: any, position: number) {
-      for (const [key, value] of Object.entries(child)) {
-        const associatedMember = this.getRefinementAssociatedmember(position);
-        return generateNewComponent(
-          ComponentType.REFINEMENT,
-          position,
-          { propertyIri: key, children: value, associatedMember: associatedMember },
-          this.builderType,
-          { minus: true, plus: true }
-        );
-      }
-    },
-
-    getRefinementAssociatedmember(position: number) {
-      let associatedMember = {} as TTIriRef;
-      let i = position - 1;
-      while (i >= 0) {
-        if (this.logicBuild[i] && this.logicBuild[i].type === ComponentType.ENTITY) {
-          associatedMember = this.logicBuild[i].value.entity;
-          i = -1;
-        }
-        i--;
-      }
-      return associatedMember;
-    },
-
-    updateRefinementsAssociatedMembers() {
-      for (const item of this.logicBuild) {
-        if (item.type === ComponentType.REFINEMENT && item.value) {
-          const associatedMember = this.getRefinementAssociatedmember(item.position);
-          item.value.associatedMember = associatedMember;
-        }
-      }
-    },
-
-    hasChildren(data: any): data is { iri: string; children: any[] } {
-      if (isArrayHasLength((data as { iri: string; children: any[] }).children)) return true;
-      return false;
-    },
-
-    onConfirm(): void {
-      this.$emit("updateClicked", {
-        id: this.id,
-        value: { iri: this.selected.iri, children: this.logicBuild, options: this.value.options },
-        position: this.position,
-        type: ComponentType.LOGIC,
-        json: this.createLogicJson(),
-        builderType: this.builderType,
-        showButtons: this.showButtons
-      });
-    },
-
-    createLogicJson() {
-      let json = {} as any;
-      if (this.selected.iri) json[this.selected.iri] = [];
-      if (this.logicBuild.length) {
-        for (const item of this.logicBuild) {
-          if (item.type !== ComponentType.ADD_NEXT) json[this.selected.iri].push(item.json);
-        }
-      }
-      return json;
-    },
-
-    updateItemWrapper(data: ComponentDetails) {
-      updateItem(data, this.logicBuild);
-    },
-
-    addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
-      console.log(data);
-      if (data.selectedType === ComponentType.ENTITY) {
-        const typeOptions = this.filterOptions.types.filter(
-          (type: EntityReferenceNode) =>
-            type["@id"] === IM.VALUE_SET || type["@id"] === IM.CONCEPT_SET || type["@id"] === IM.CONCEPT_SET_GROUP || type["@id"] === IM.CONCEPT
-        );
-        const options = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
-        data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Member" };
-      }
-      if (data.selectedType === ComponentType.LOGIC) {
-        data.value = { options: this.value.options, iri: "", children: undefined };
-      }
-      addItem(data, this.logicBuild, this.builderType, { minus: true, plus: true });
-      this.removeAddNexts();
-    },
-
-    removeAddNexts() {
-      if (this.logicBuild.some(child => child.type === ComponentType.ADD_NEXT) && this.logicBuild.length > 1) {
-        this.logicBuild = this.logicBuild.filter(child => child.type !== ComponentType.ADD_NEXT);
-        updatePositions(this.logicBuild);
-      }
-    },
-
-    deleteItem(data: ComponentDetails): void {
-      const index = this.logicBuild.findIndex(item => item.position === data.position);
-      this.logicBuild.splice(index, 1);
-      const length = this.logicBuild.length;
-      if (length === 0) {
-        this.createDefaultBuild();
-        return;
-      }
-      if (data.position === 0) {
-        if (!this.addDefaultOptions.includes(this.logicBuild[0].type)) {
-          this.logicBuild.unshift({
-            id: "addNext_" + 0,
-            value: {
-              previousPosition: data.position,
-              previousComponentType: data.type,
-              parentGroup: data.builderType
-            },
-            position: 0,
-            type: ComponentType.ADD_NEXT,
-            json: {},
-            builderType: data.builderType,
-            showButtons: { minus: true, plus: true }
-          });
-        }
-      }
-      updatePositions(this.logicBuild);
-    },
-
-    deleteClicked(): void {
-      this.$emit("deleteClicked", {
-        id: this.id,
-        value: this.selected,
-        position: this.position,
-        type: ComponentType.LOGIC,
-        builderType: this.builderType,
-        json: this.selected.iri,
-        showButtons: this.showButtons
-      });
-    },
-
-    addNextClicked(item: any): void {
-      this.$emit("addNextOptionsClicked", {
-        position: this.position + 1,
-        selectedType: item
-      });
-    },
-
-    getButtonOptions() {
-      return [ComponentType.ENTITY, ComponentType.LOGIC, ComponentType.REFINEMENT];
+function updateRefinementsAssociatedMembers() {
+  for (const item of logicBuild.value) {
+    if (item.type === ComponentType.REFINEMENT && item.value) {
+      const associatedMember = getRefinementAssociatedmember(item.position);
+      item.value.associatedMember = associatedMember;
     }
   }
-});
+}
+
+function hasChildren(data: any): data is { iri: string; children: any[] } {
+  if (isArrayHasLength((data as { iri: string; children: any[] }).children)) return true;
+  return false;
+}
+
+function onConfirm(): void {
+  emit("updateClicked", {
+    id: props.id,
+    value: { iri: selected.value.iri, children: logicBuild.value, options: props.value.options },
+    position: props.position,
+    type: ComponentType.LOGIC,
+    json: createLogicJson(),
+    shape: props.shape,
+    showButtons: props.showButtons,
+    mode: props.mode
+  });
+}
+
+function createLogicJson() {
+  let json = {} as any;
+  if (selected.value.iri) json[selected.value.iri] = [];
+  if (logicBuild.value.length) {
+    for (const item of logicBuild.value) {
+      if (item.type !== ComponentType.ADD_NEXT) json[selected.value.iri].push(item.json);
+    }
+  }
+  return json;
+}
+
+function updateItemWrapper(data: ComponentDetails) {
+  updateItem(data, logicBuild.value);
+}
+
+function addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any }): void {
+  if (data.selectedType === ComponentType.ENTITY) {
+    const typeOptions = filterOptions.value.types.filter(
+      (type: EntityReferenceNode) =>
+        type["@id"] === IM.VALUE_SET || type["@id"] === IM.CONCEPT_SET || type["@id"] === IM.CONCEPT_SET_GROUP || type["@id"] === IM.CONCEPT
+    );
+    const options = { status: filterOptions.value.status, schemes: filterOptions.value.schemes, types: typeOptions };
+    data.value = { filterOptions: options, entity: undefined, type: ComponentType.ENTITY, label: "Member" };
+  }
+  if (data.selectedType === ComponentType.LOGIC) {
+    data.value = { options: props.value.options, iri: "", children: undefined };
+  }
+  addItem(data, logicBuild.value, { minus: true, plus: true }, props.shape, props.mode);
+  removeAddNexts();
+}
+
+function removeAddNexts() {
+  if (logicBuild.value.some(child => child.type === ComponentType.ADD_NEXT) && logicBuild.value.length > 1) {
+    logicBuild.value = logicBuild.value.filter(child => child.type !== ComponentType.ADD_NEXT);
+    updatePositions(logicBuild.value);
+  }
+}
+
+function deleteItem(data: ComponentDetails): void {
+  const index = logicBuild.value.findIndex(item => item.position === data.position);
+  logicBuild.value.splice(index, 1);
+  const length = logicBuild.value.length;
+  if (length === 0) {
+    createDefaultBuild();
+    return;
+  }
+  if (data.position === 0) {
+    if (!addDefaultOptions.includes(logicBuild.value[0].type)) {
+      logicBuild.value.unshift({
+        id: "addNext_" + 0,
+        value: {
+          previousPosition: data.position,
+          previousComponentType: data.type
+        },
+        position: 0,
+        type: ComponentType.ADD_NEXT,
+        json: {},
+        shape: data.shape,
+        showButtons: { minus: true, plus: true },
+        mode: data.mode
+      });
+    }
+  }
+  updatePositions(logicBuild.value);
+}
+
+function deleteClicked(): void {
+  emit("deleteClicked", {
+    id: props.id,
+    value: selected.value,
+    position: props.position,
+    type: ComponentType.LOGIC,
+    shape: props.shape,
+    json: selected.value.iri,
+    showButtons: props.showButtons,
+    mode: props.mode
+  });
+}
+
+function addNextClicked(item: any): void {
+  emit("addNextOptionsClicked", {
+    position: props.position + 1,
+    selectedType: item
+  });
+}
+
+function getButtonOptions() {
+  return [ComponentType.ENTITY, ComponentType.LOGIC, ComponentType.REFINEMENT];
+}
 </script>
 
 <style scoped>
