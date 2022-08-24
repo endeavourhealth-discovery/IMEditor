@@ -13,9 +13,10 @@ import EntityDropdown from "../shapeComponents/EntityDropdown.vue";
 import HtmlInput from "@/components/shapeComponents/HtmlInput.vue";
 import TextInput from "@/components/shapeComponents/TextInput.vue";
 import TextDisplay from "@/components/shapeComponents/TextDisplay.vue";
+import MembersBuilder from "../shapeComponents/MembersBuilder.vue";
 
 export default defineComponent({
-  components: { EntityComboBox, ArrayBuilder, EntityDropdown, HtmlInput, TextDisplay, TextInput }
+  components: { EntityComboBox, ArrayBuilder, EntityDropdown, HtmlInput, TextDisplay, TextInput, MembersBuilder }
 });
 </script>
 
@@ -67,6 +68,8 @@ function processComponentType(type: TTIriRef): any {
       return ComponentType.ENTITY_COMBOBOX;
     case IM.ENTITY_DROPDOWN_COMPONENT:
       return ComponentType.ENTITY_DROPDOWN;
+    case IM.MEMBERS_BUILDER:
+      return ComponentType.MEMBERS_BUILDER;
     default:
       throw new Error("Invalid component type encountered in shape group" + type["@id"]);
   }
@@ -95,11 +98,11 @@ function processEntityValue(property: PropertyShape | PropertyGroup) {
 
 .property-container {
   width: 100%;
-  max-height: 100%;
+  /* max-height: 100%; */
   display: flex;
   flex-flow: row;
   justify-content: center;
-  overflow: auto;
+  /* overflow: auto; */
   padding: 2rem 0 0 0;
 }
 </style>

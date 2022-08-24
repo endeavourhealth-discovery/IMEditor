@@ -1,17 +1,20 @@
 <template>
   <div class="entity-combobox-container">
-    <span class="p-float-label">
-      <MultiSelect
-        :disabled="props.shape.path['@id'] === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' && mode === 'create'"
-        class="multi-select"
-        :class="invalid && 'invalid'"
-        v-model="selectedEntities"
-        :options="dropdownOptions"
-        optionLabel="name"
-        display="chip"
-      />
-      <label>{{ shape.name }}</label>
-    </span>
+    <div class="multiselect-loading-container">
+      <span class="p-float-label">
+        <MultiSelect
+          :disabled="loading"
+          class="multi-select"
+          :class="invalid && 'invalid'"
+          v-model="selectedEntities"
+          :options="dropdownOptions"
+          optionLabel="name"
+          display="chip"
+        />
+        <label>{{ shape.name }}</label>
+      </span>
+      <ProgressSpinner v-if="loading" class="loading-icon" stroke-width="8" />
+    </div>
   </div>
 </template>
 
@@ -45,16 +48,19 @@ const entityService = new EntityService(axios);
 
 const dropdownOptions: Ref<TTIriRef[]> = ref([]);
 onMounted(async () => {
+  loading.value = true;
   dropdownOptions.value = await getDropdownOptions();
   if (props.value && isArrayHasLength(props.value)) selectedEntities.value = props.value;
   else if (isObjectHasKeys(props.shape, ["isIri"])) {
     const found = dropdownOptions.value.find(option => option["@id"] === props.shape.isIri["@id"]);
     if (found) selectedEntities.value = [found];
   }
+  loading.value = false;
 });
 
 let key = props.shape.path["@id"];
 
+let loading = ref(false);
 let selectedEntities: Ref<TTIriRef[]> = ref([]);
 watch(selectedEntities, async newValue => {
   if (isArrayHasLength(newValue)) {
@@ -76,8 +82,11 @@ async function getDropdownOptions(): Promise<TTIriRef[]> {
         return { "@id": item.iri, name: item.name };
       });
     else return [];
+  } else if (isObjectHasKeys(props.shape, ["function", "argument"])) {
+    const args = processArguments(props.shape);
+    return (await queryService.runFunction(props.shape.function["@id"], args)).sort(byName);
   } else if (isObjectHasKeys(props.shape, ["function"])) {
-    return (await queryService.runFunction(props.shape.function["@id"])).options.sort(byName);
+    return (await queryService.runFunction(props.shape.function["@id"])).sort(byName);
   } else throw new Error("propertyshape is missing 'search' or 'function' parameter to fetch dropdown options");
 }
 
@@ -102,10 +111,31 @@ function defaultValidity() {
 </script>
 
 <style scoped>
-.entity-combobox-container,
-.multi-select {
+.multiselect-loading-container {
+  display: flex;
+  flex-flow: row nowrap;
   width: 25rem;
+  align-items: center;
+  height: fit-content;
 }
+
+.p-float-label {
+  flex: 1 1 auto;
+}
+
+.multi-select {
+  width: 100%;
+}
+
+.loading-icon {
+  flex: 0 0 auto;
+}
+
+.p-progress-spinner {
+  width: 2rem;
+  height: 2rem;
+}
+
 .invalid {
   border-color: #e24c4c;
 }
