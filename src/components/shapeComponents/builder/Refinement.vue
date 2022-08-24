@@ -37,9 +37,9 @@
 </template>
 
 <script lang="ts">
-import Property from "@/components/edit/memberEditor/builder/Property.vue";
-import Quantifier from "@/components/edit/memberEditor/builder/Quantifier.vue";
-import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
+import Property from "@/components/shapeComponents/builder/Property.vue";
+import Quantifier from "@/components/shapeComponents/builder/Quantifier.vue";
+import AddNext from "@/components/shapeComponents/builder/AddNext.vue";
 
 export default defineComponent({
   components: { Property, Quantifier, AddNext }
