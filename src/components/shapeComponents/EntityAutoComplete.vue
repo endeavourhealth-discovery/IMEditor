@@ -85,7 +85,7 @@ import {
   PropertyShape,
   QueryRequest
 } from "im-library/dist/types/interfaces/Interfaces";
-import injectionKeys from "@/injectionKeys/injectionKeys.js";
+import injectionKeys from "@/injectionKeys/injectionKeys";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject },
   TypeGuards: { isTTIriRef },

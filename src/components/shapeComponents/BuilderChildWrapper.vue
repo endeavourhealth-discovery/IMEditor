@@ -8,9 +8,10 @@
 <script lang="ts">
 import EntitySearch from "./EntitySearch.vue";
 import EntityAutoComplete from "./EntityAutoComplete.vue";
+import ComponentGroup from "./ComponentGroup.vue";
 
 export default defineComponent({
-  components: { EntitySearch, EntityAutoComplete }
+  components: { EntitySearch, EntityAutoComplete, ComponentGroup }
 });
 </script>
 
@@ -18,7 +19,7 @@ export default defineComponent({
 import { computed, PropType, watch, onMounted, ref, Ref, defineComponent } from "vue";
 import _ from "lodash";
 import AddDeleteButtons from "@/components/shapeComponents/AddDeleteButtons.vue";
-import { ComponentDetails, PropertyShape } from "im-library/dist/types/interfaces/Interfaces";
+import { ComponentDetails, PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 import { Helpers, Models, Enums, Services } from "im-library";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject },
@@ -32,7 +33,8 @@ const props = defineProps({
   value: { type: Object as PropType<any>, required: false },
   showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, required: true },
   shape: { type: Object as PropType<PropertyShape>, required: true },
-  mode: { type: String as PropType<Enums.EditorMode>, required: true }
+  mode: { type: String as PropType<Enums.EditorMode>, required: true },
+  nextComponentOptions: { type: Array as PropType<Enums.ComponentType[]>, required: true }
 });
 
 const emit = defineEmits({
@@ -84,7 +86,7 @@ function addNextClicked(item: any): void {
 }
 
 function getButtonOptions() {
-  return [ComponentType.ENTITY_SEARCH];
+  return props.nextComponentOptions.map(option => processComponentType({ "@id": option } as TTIriRef));
 }
 </script>
 
