@@ -16,7 +16,7 @@ import _ from "lodash";
 const props = defineProps({
   position: Number,
   show: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
-  options: { type: Array as PropType<Array<ComponentType>>, required: true }
+  options: { type: Array as PropType<{ type: ComponentType; name: string }[]>, required: true }
 });
 
 const emit = defineEmits({
@@ -25,7 +25,7 @@ const emit = defineEmits({
 });
 
 let menuOptions: Ref<any[]> = ref([]);
-let selected: Ref<ComponentType | undefined> = ref();
+let selected: Ref<{ type: ComponentType; name: string } | undefined> = ref();
 
 const optionsMenu = ref();
 
@@ -33,6 +33,13 @@ watch(
   () => _.cloneDeep(selected.value),
   newValue => {
     if (newValue) emit("addNextClicked", newValue);
+  }
+);
+
+watch(
+  () => props.options,
+  () => {
+    setMenuOptions();
   }
 );
 
@@ -49,12 +56,12 @@ function deleteClicked() {
 }
 
 function setMenuOptions() {
+  menuOptions.value = [];
   for (const item of props.options) {
     menuOptions.value.push({
-      label: item,
+      label: item.name,
       command: (option: any) => {
-        selected.value = undefined;
-        selected.value = option.item.label;
+        selected.value = props.options.find(item => item.name === option.item.label);
       }
     });
   }

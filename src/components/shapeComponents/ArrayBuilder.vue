@@ -183,8 +183,10 @@ function defaultValidation() {
 
 function addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any; shape: PropertyShape | PropertyGroup }): void {
   let shape;
-  if (isPropertyGroup(props.shape)) {
-    shape = props.shape.property.find(p => p.componentType["@id"] === IM.ENTITY_SEARCH_COMPONENT);
+  if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["property"])) {
+    shape = props.shape.property.find(p => processComponentType(p.componentType) === data.selectedType);
+  } else if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["subGroup"])) {
+    shape = props.shape.subGroup.find(s => processComponentType(s.componentType) === data.selectedType);
   }
   if (data.selectedType !== ComponentType.BUILDER_CHILD_WRAPPER) {
     data.selectedType = ComponentType.BUILDER_CHILD_WRAPPER;
@@ -207,9 +209,14 @@ function updateItemWrapper(data: ComponentDetails) {
 }
 
 function getNextComponentOptions() {
-  if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["subGroup"])) return props.shape.subGroup.map(subGroup => subGroup.componentType["@id"]);
+  if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["subGroup"]))
+    return props.shape.subGroup.map(subGroup => {
+      return { type: processComponentType(subGroup.componentType), name: subGroup.name };
+    });
   else if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["property"]))
-    return props.shape.property.map(property => property.componentType["@id"]);
+    return props.shape.property.map(property => {
+      return { type: processComponentType(property.componentType), name: property.name };
+    });
   else return;
 }
 </script>
