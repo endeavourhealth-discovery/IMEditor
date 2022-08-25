@@ -15,6 +15,7 @@
           :showButtons="item.showButtons"
           :shape="item.shape"
           :mode="mode"
+          :nextComponentOptions="getNextComponentOptions()"
           @deleteClicked="deleteItem"
           @addClicked="addItemWrapper"
           @updateClicked="updateItemWrapper"
@@ -118,11 +119,19 @@ function createBuild() {
 function createDefaultBuild() {
   build.value = [];
   if (isPropertyGroup(props.shape))
-    props.shape.property.forEach(property => {
-      build.value.push(
-        generateNewComponent(ComponentType.BUILDER_CHILD_WRAPPER, property.order - 1, undefined, property, { minus: true, plus: true }, props.mode)
-      );
-    });
+    if (isObjectHasKeys(props.shape, ["property"])) {
+      props.shape.property.forEach(property => {
+        build.value.push(
+          generateNewComponent(ComponentType.BUILDER_CHILD_WRAPPER, property.order - 1, undefined, property, { minus: true, plus: true }, props.mode)
+        );
+      });
+    } else if (isObjectHasKeys(props.shape, ["subGroup"])) {
+      props.shape.subGroup.forEach(subGroup => {
+        build.value.push(
+          generateNewComponent(ComponentType.BUILDER_CHILD_WRAPPER, subGroup.order - 1, undefined, subGroup, { minus: true, plus: true }, props.mode)
+        );
+      });
+    }
 }
 
 function processChild(child: any, position: number) {
@@ -195,6 +204,13 @@ function deleteItem(data: ComponentDetails): void {
 
 function updateItemWrapper(data: ComponentDetails) {
   updateItem(data, build.value);
+}
+
+function getNextComponentOptions() {
+  if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["subGroup"])) return props.shape.subGroup.map(subGroup => subGroup.componentType["@id"]);
+  else if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["property"]))
+    return props.shape.property.map(property => property.componentType["@id"]);
+  else return;
 }
 </script>
 

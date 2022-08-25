@@ -16,7 +16,8 @@
             :id="item.id"
             :position="item.position"
             :showButtons="item.showButtons"
-            :builderType="item.builderType"
+            :shape="item.shape"
+            :mode="item.mode"
             @deleteClicked="deleteItem"
             @addClicked="addItemWrapper"
             @updateClicked="updateItemWrapper"
@@ -31,9 +32,9 @@
 </template>
 
 <script lang="ts">
-import Entity from "@/components/edit/memberEditor/builder/Entity.vue";
-import AddNext from "@/components/edit/memberEditor/builder/AddNext.vue";
-import Refinement from "@/components/edit/memberEditor/builder/Refinement.vue";
+import Entity from "@/components/shapeComponents/builder/Entity.vue";
+import AddNext from "@/components/shapeComponents/builder/AddNext.vue";
+import Refinement from "@/components/shapeComponents/builder/Refinement.vue";
 
 export default defineComponent({
   components: { Entity, AddNext, Refinement }
