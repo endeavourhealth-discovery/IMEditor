@@ -53,7 +53,7 @@ const { BuilderType, ComponentType } = Enums;
 const { IM } = Vocabulary;
 
 const props = defineProps({
-  shape: { type: Object as PropType<PropertyShape | PropertyGroup>, required: true },
+  shape: { type: Object as PropType<PropertyGroup>, required: true },
   mode: { type: String as PropType<Enums.EditorMode>, required: true },
   value: { type: Array as PropType<TTIriRef[]>, required: false }
 });
@@ -77,6 +77,7 @@ onMounted(() => {
 watch(
   () => _.cloneDeep(props.shape),
   () => {
+    key = props.shape.path["@id"];
     createBuild();
   }
 );
@@ -106,10 +107,6 @@ function createBuild() {
     build.value.push(processChild(item, position));
     position++;
   });
-  for (const item in props.value) {
-    build.value.push(processChild(item, position));
-    position++;
-  }
   if (!isArrayHasLength(build.value)) {
     createDefaultBuild();
   }
@@ -139,7 +136,7 @@ function processChild(child: any, position: number) {
     ComponentType.BUILDER_CHILD_WRAPPER,
     position,
     child,
-    props.shape,
+    isObjectHasKeys(props.shape, ["property"]) ? props.shape.property[0] : props.shape.subGroup[0],
     {
       minus: true,
       plus: true
