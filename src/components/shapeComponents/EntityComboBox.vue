@@ -84,9 +84,9 @@ async function getDropdownOptions(): Promise<TTIriRef[]> {
     else return [];
   } else if (isObjectHasKeys(props.shape, ["function", "argument"])) {
     const args = processArguments(props.shape);
-    return (await queryService.runFunction(props.shape.function["@id"], args)).sort(byName);
+    return await queryService.runFunction(props.shape.function["@id"], args);
   } else if (isObjectHasKeys(props.shape, ["function"])) {
-    return (await queryService.runFunction(props.shape.function["@id"])).sort(byName);
+    return await queryService.runFunction(props.shape.function["@id"]);
   } else throw new Error("propertyshape is missing 'search' or 'function' parameter to fetch dropdown options");
 }
 

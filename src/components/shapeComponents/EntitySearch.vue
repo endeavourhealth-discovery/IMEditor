@@ -184,7 +184,7 @@ async function updateSelectedResult(data: ConceptSummary | TTIriRef) {
 function updateEntity() {
   const result = {} as any;
   result[key.value] = selectedResult.value;
-  if (entityUpdate) entityUpdate(result);
+  if (entityUpdate && !props.shape.builderChild) entityUpdate(result);
 }
 
 async function updateValidity() {

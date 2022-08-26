@@ -113,7 +113,7 @@ function processArguments(property: PropertyShape) {
     else key = arg.parameter;
     if (arg.valueIri) value = arg.valueIri;
     else if (arg.valueVariable) value = valueVariableMap?.value.get(arg.valueVariable);
-    else if (arg.valueText) value = arg.valueText;
+    else if (arg.valueData) value = arg.valueData;
     result.set(key, value);
   });
   return result;

@@ -10,35 +10,32 @@
     </TopBar>
     <ConfirmDialog></ConfirmDialog>
     <div id="editor-main-container">
-      <div v-if="loading" class="loading-container">
-        <ProgressSpinner />
-      </div>
-      <div v-else class="content-buttons-container">
-        <div class="content-json-container">
-          <div v-if="groups.length" class="steps-content">
+      <div class="content-buttons-container">
+        <div class="content-sidebar-container">
+          <div v-if="loading" class="loading-container">
+            <ProgressSpinner />
+          </div>
+          <div v-else class="steps-content">
             <Steps :model="stepsItems" :readonly="false" @click="stepsClicked" />
             <router-view v-slot="{ Component }">
               <keep-alive>
-                <component :is="Component" :shape="groups[currentStep]" :mode="EditorMode.EDIT" />
+                <component :is="Component" :shape="groups.length ? groups[currentStep] : undefined" :mode="EditorMode.EDIT" />
               </keep-alive>
             </router-view>
           </div>
-          <Divider v-if="showJson" layout="vertical" />
-          <div v-if="showJson" class="json-container">
-            <div class="json-header-container">
-              <span class="json-header">JSON viewer</span>
-            </div>
-            <VueJsonPretty v-if="isObjectHasKeys(editorEntity)" class="json" :path="'res'" :data="editorEntity" @click="handleClick" />
+          <Divider v-if="showSidebar" layout="vertical" />
+          <div v-if="showSidebar" class="sidebar-container">
+            <SideBar :editorEntity="editorEntity" />
           </div>
           <Button
-            class="p-button-rounded p-button-info p-button-outlined json-toggle"
-            :label="showJson ? 'hide JSON' : 'show JSON'"
-            @click="showJson = !showJson"
+            class="p-button-rounded p-button-info p-button-outlined sidebar-toggle"
+            :label="showSidebar ? 'hide sidebar' : 'show sidebar'"
+            @click="showSidebar = !showSidebar"
           />
         </div>
         <div class="button-bar" id="editor-button-bar">
           <Button :disabled="currentStep === 0" icon="pi pi-angle-left" label="Back" @click="stepsBack" />
-          <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="$router.go(-1)" />
+          <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="router.go(-1)" />
           <Button icon="pi pi-refresh" label="Reset" class="p-button-warning" @click="refreshEditor" />
           <Button icon="pi pi-check" label="Save" class="save-button" @click="submit" />
           <Button :disabled="currentStep >= stepsItems.length - 1" icon="pi pi-angle-right" label="Next" @click="stepsForward" />
@@ -59,6 +56,7 @@ export default defineComponent({
 
 <script setup lang="ts">
 import { computed, defineComponent, inject, onBeforeUnmount, onMounted, onUnmounted, provide, ref, Ref, watch } from "vue";
+import SideBar from "@/components/creator/SideBar.vue";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import { useRouter } from "vue-router";
 import { useConfirm } from "primevue/useconfirm";
@@ -68,7 +66,6 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import store from "@/store";
 import ConfirmDialog from "primevue/confirmdialog";
-import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import { Enums, Vocabulary, Helpers, Services } from "im-library";
 const { IM, RDF, RDFS } = Vocabulary;
@@ -103,7 +100,7 @@ let editorEntity: Ref<any> = ref({});
 let loading = ref(true);
 let stepsItems: Ref<{ label: string; to: string }[]> = ref([]);
 let currentStep = ref(0);
-let showJson = ref(false);
+let showSidebar = ref(false);
 let editorInvalidEntity = ref(false);
 let editorValidity: Ref<{ key: string; valid: boolean }[]> = ref([]);
 let shape: Ref<FormGenerator | undefined> = ref();
@@ -192,14 +189,24 @@ async function getShape(type: string): Promise<void> {
 }
 
 function setValueVariableMap(entity: any, groups: PropertyGroup[]) {
-  if (entity && entity.length) {
+  if (entity && groups.length) {
     groups.forEach(group => {
-      group.property.forEach(property => {
-        if (property.valueVariable) {
-          const value = entity[property.path["@id"]];
-          valueVariableMap.value.set(property.valueVariable, value);
-        }
-      });
+      if (isObjectHasKeys(group, ["property"])) {
+        group.property.forEach(property => {
+          if (property.builderChild && property.valueVariable) {
+            let value = undefined as any;
+            const found = entity[group.path["@id"]];
+            if (found) value = entity[group.path["@id"]][property.order - 1];
+            valueVariableMap.value.set(property.valueVariable + property.order, value);
+          } else if (property.valueVariable) {
+            const value = entity[property.path["@id"]];
+            valueVariableMap.value.set(property.valueVariable, value);
+          }
+        });
+      }
+      if (isObjectHasKeys(group, ["subGroup"])) {
+        setValueVariableMap(entity, group.subGroup);
+      }
     });
   }
 }
@@ -253,19 +260,24 @@ function setSteps() {
   const editorRoute = router.options.routes.find(r => r.name === "Editor");
   if (editorRoute) {
     groups.value.forEach(group => {
-      const label = getNameFromLabel(group.label);
-      if (editorRoute.children?.findIndex(route => route.name === label) === -1) {
-        editorRoute.children?.push({ path: label, name: label, component: group.componentType });
+      const component = processComponentType(group.componentType);
+      if (editorRoute.children?.findIndex(route => route.name === group.name) === -1) {
+        console.log(component);
+        editorRoute.children?.push({ path: group.name, name: group.name, component: component });
       }
-      stepsItems.value.push({ label: getNameFromLabel(group.label), to: "/editor/" + label });
+      stepsItems.value.push({ label: group.name, to: "/editor/" + group.name });
     });
     router.addRoute(editorRoute);
   }
 }
 
-function getNameFromLabel(label: string) {
-  if (!label) return "";
-  return label.split("-")[1].trim();
+function processComponentType(type: TTIriRef) {
+  switch (type["@id"]) {
+    case IM.STEPS_GROUP_COMPONENT:
+      return StepsGroup;
+    default:
+      throw new Error("Invalid component type encountered in shape group" + type["@id"]);
+  }
 }
 
 function confirmLeavePage() {
@@ -440,16 +452,7 @@ defineExpose({ confirmLeavePage });
   overflow: auto;
 }
 
-.loading-container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-flow: row;
-  justify-content: center;
-  align-items: center;
-}
-
-.content-json-container {
+.content-sidebar-container {
   flex: 1 1 auto;
   width: 100%;
   display: flex;
@@ -459,17 +462,39 @@ defineExpose({ confirmLeavePage });
   position: relative;
 }
 
-.json-container {
-  width: 50vw;
-  height: 100%;
+.steps-content {
+  flex: 1 1 auto;
+  width: 100%;
+  overflow: auto;
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-start;
+  align-items: center;
+}
+
+.p-steps {
+  width: 90%;
+}
+
+.sidebar-toggle {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: #ffffff !important;
+}
+
+.loading-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-flow: row;
+  justify-content: center;
+  align-items: center;
 }
 
 .steps-content {
   flex: 1 1 auto;
-  height: 100%;
+  width: 100%;
   overflow: auto;
   display: flex;
   flex-flow: column nowrap;
@@ -480,40 +505,6 @@ defineExpose({ confirmLeavePage });
 .p-steps {
   width: 100%;
   padding-top: 1rem;
-}
-
-.json {
-  flex: 0 1 auto;
-  width: 100%;
-  overflow: auto;
-  border: 1px #dee2e6 solid;
-  border-radius: 3px;
-}
-
-.json-header-container {
-  padding: 0.5rem;
-  height: 3rem;
-  flex: 0 0 auto;
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: flex-start;
-  align-items: center;
-}
-
-.json-header {
-  font-size: 1.5rem;
-}
-
-.json:deep(.vjs-value__string) {
-  word-break: break-all;
-}
-
-.json:deep(.vjs-value) {
-  font-size: 1rem;
-}
-
-.json:deep(.vjs-key) {
-  font-size: 1rem;
 }
 
 .placeholder {
@@ -565,7 +556,7 @@ defineExpose({ confirmLeavePage });
   align-self: center;
 }
 
-.json-toggle {
+.sidebar-toggle {
   position: absolute;
   top: 5px;
   right: 5px;

@@ -53,7 +53,7 @@ const { BuilderType, ComponentType } = Enums;
 const { IM } = Vocabulary;
 
 const props = defineProps({
-  shape: { type: Object as PropType<PropertyShape | PropertyGroup>, required: true },
+  shape: { type: Object as PropType<PropertyGroup>, required: true },
   mode: { type: String as PropType<Enums.EditorMode>, required: true },
   value: { type: Array as PropType<TTIriRef[]>, required: false }
 });
@@ -77,6 +77,7 @@ onMounted(() => {
 watch(
   () => _.cloneDeep(props.shape),
   () => {
+    key = props.shape.path["@id"];
     createBuild();
   }
 );
@@ -106,10 +107,6 @@ function createBuild() {
     build.value.push(processChild(item, position));
     position++;
   });
-  for (const item in props.value) {
-    build.value.push(processChild(item, position));
-    position++;
-  }
   if (!isArrayHasLength(build.value)) {
     createDefaultBuild();
   }
@@ -139,7 +136,7 @@ function processChild(child: any, position: number) {
     ComponentType.BUILDER_CHILD_WRAPPER,
     position,
     child,
-    props.shape,
+    isObjectHasKeys(props.shape, ["property"]) ? props.shape.property[0] : props.shape.subGroup[0],
     {
       minus: true,
       plus: true
@@ -183,8 +180,10 @@ function defaultValidation() {
 
 function addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any; shape: PropertyShape | PropertyGroup }): void {
   let shape;
-  if (isPropertyGroup(props.shape)) {
-    shape = props.shape.property.find(p => p.componentType["@id"] === IM.ENTITY_SEARCH_COMPONENT);
+  if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["property"])) {
+    shape = props.shape.property.find(p => processComponentType(p.componentType) === data.selectedType);
+  } else if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["subGroup"])) {
+    shape = props.shape.subGroup.find(s => processComponentType(s.componentType) === data.selectedType);
   }
   if (data.selectedType !== ComponentType.BUILDER_CHILD_WRAPPER) {
     data.selectedType = ComponentType.BUILDER_CHILD_WRAPPER;
@@ -207,9 +206,14 @@ function updateItemWrapper(data: ComponentDetails) {
 }
 
 function getNextComponentOptions() {
-  if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["subGroup"])) return props.shape.subGroup.map(subGroup => subGroup.componentType["@id"]);
+  if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["subGroup"]))
+    return props.shape.subGroup.map(subGroup => {
+      return { type: processComponentType(subGroup.componentType), name: subGroup.name };
+    });
   else if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["property"]))
-    return props.shape.property.map(property => property.componentType["@id"]);
+    return props.shape.property.map(property => {
+      return { type: processComponentType(property.componentType), name: property.name };
+    });
   else return;
 }
 </script>

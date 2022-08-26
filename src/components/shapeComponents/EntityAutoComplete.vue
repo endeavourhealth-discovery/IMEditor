@@ -255,7 +255,7 @@ function summaryToTTIriRef(summary: ConceptSummary) {
 function updateEntity(value: ConceptSummary) {
   const result = {} as any;
   result[key.value] = summaryToTTIriRef(value);
-  if (entityUpdate) entityUpdate(result);
+  if (entityUpdate && !props.shape.builderChild) entityUpdate(result);
 }
 
 async function updateValidity(value: ConceptSummary) {

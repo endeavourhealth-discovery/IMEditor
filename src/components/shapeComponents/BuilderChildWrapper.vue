@@ -1,7 +1,13 @@
 <template>
   <div class="builder-child-container" :id="id">
     <component :is="processComponentType(shape.componentType)" :shape="shape" :mode="mode" @updateClicked="updateClicked" :value="value" />
-    <AddDeleteButtons :show="showButtons" :position="position" :options="getButtonOptions()" @deleteClicked="deleteClicked" @addNextClicked="addNextClicked" />
+    <AddDeleteButtons
+      :show="showButtons"
+      :position="position"
+      :options="nextComponentOptions"
+      @deleteClicked="deleteClicked"
+      @addNextClicked="addNextClicked"
+    />
   </div>
 </template>
 
@@ -34,7 +40,7 @@ const props = defineProps({
   showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, required: true },
   shape: { type: Object as PropType<PropertyShape>, required: true },
   mode: { type: String as PropType<Enums.EditorMode>, required: true },
-  nextComponentOptions: { type: Array as PropType<Enums.ComponentType[]>, required: true }
+  nextComponentOptions: { type: Array as PropType<{ type: Enums.ComponentType; name: string }[]>, required: true }
 });
 
 const emit = defineEmits({
@@ -81,12 +87,8 @@ function updateClicked(data: any): void {
 function addNextClicked(item: any): void {
   emit("addNextOptionsClicked", {
     position: props.position + 1,
-    selectedType: item
+    selectedType: item.type
   });
-}
-
-function getButtonOptions() {
-  return props.nextComponentOptions.map(option => processComponentType({ "@id": option } as TTIriRef));
 }
 </script>
 
