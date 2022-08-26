@@ -78,8 +78,6 @@ const {
 const { Env, EntityService } = Services;
 const { EditorMode } = Enums;
 
-const userRoles = inject(injectionKeys.userRoles);
-
 const router = useRouter();
 const confirm = useConfirm();
 
@@ -101,7 +99,6 @@ let loading = ref(true);
 let stepsItems: Ref<{ label: string; to: string }[]> = ref([]);
 let currentStep = ref(0);
 let showSidebar = ref(false);
-let editorInvalidEntity = ref(false);
 let editorValidity: Ref<{ key: string; valid: boolean }[]> = ref([]);
 let shape: Ref<FormGenerator | undefined> = ref();
 let targetShape: Ref<TTIriRef | undefined> = ref();
@@ -110,7 +107,6 @@ let valueVariableMap: Ref<Map<string, any>> = ref(new Map<string, any>());
 let entityName = ref("");
 
 provide(injectionKeys.editorValidity, { validity: editorValidity, updateValidity, removeValidity });
-provide(injectionKeys.invalidEditorEntity, editorInvalidEntity);
 
 provide(injectionKeys.editorEntity, { editorEntity, updateEntity });
 provide(injectionKeys.valueVariableMap, valueVariableMap);
@@ -125,13 +121,6 @@ onMounted(async () => {
   } else window.location.href = Env.DIRECTORY_URL;
   loading.value = false;
 });
-
-watch(
-  () => _.cloneDeep(editorValidity.value),
-  newValue => {
-    editorInvalidEntity.value = newValue.every(item => item.valid);
-  }
-);
 
 watch(
   () => _.cloneDeep(editorEntity.value),

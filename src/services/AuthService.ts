@@ -3,7 +3,9 @@ import { Models } from "im-library";
 const { User, CustomAlert } = Models;
 
 export default {
-  async signOut(): Promise<Models.CustomAlert> {
+
+
+async signOut(): Promise<Models.CustomAlert> {
     try {
       await Auth.signOut({ global: true });
       return new CustomAlert(200, "Logged out successfully");
@@ -21,7 +23,8 @@ export default {
         cognitoUser.attributes["custom:surname"],
         cognitoUser.attributes.email,
         "",
-        cognitoUser.attributes["custom:avatar"]
+        cognitoUser.attributes["custom:avatar"],
+        cognitoUser?.signInUserSession?.accessToken?.payload["cognito:groups"] || []
       );
       authenticatedUser.setId(cognitoUser.attributes.sub);
       return new CustomAlert(200, "User authenticated successfully", undefined, authenticatedUser);
@@ -29,12 +32,12 @@ export default {
       return new CustomAlert(403, "Error authenticating current user", err);
     }
   },
-
+/*
   async getRoles() {
     try {
       return (await Auth.currentSession()).getIdToken().payload["cognito:groups"];
     } catch (error) {
       return [];
     }
-  }
+  }*/
 };
