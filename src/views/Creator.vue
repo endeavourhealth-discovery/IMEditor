@@ -46,10 +46,9 @@
 <script lang="ts">
 import TypeSelector from "@/components/creator/TypeSelector.vue";
 import StepsGroup from "@/components/creator/StepsGroup.vue";
-import ArrayBuilder from "@/components/shapeComponents/ArrayBuilder.vue";
 
 export default defineComponent({
-  components: { ArrayBuilder, StepsGroup, TypeSelector }
+  components: { StepsGroup, TypeSelector }
 });
 </script>
 
@@ -231,8 +230,6 @@ function processComponentType(type: TTIriRef) {
   switch (type["@id"]) {
     case IM.STEPS_GROUP_COMPONENT:
       return StepsGroup;
-    case IM.ARRAY_BUILDER_COMPONENT:
-      return ArrayBuilder;
     default:
       throw new Error("Invalid component type encountered in shape group" + type["@id"]);
   }
