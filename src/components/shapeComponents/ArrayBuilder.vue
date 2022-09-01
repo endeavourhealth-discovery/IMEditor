@@ -5,7 +5,7 @@
       <ProgressSpinner />
     </div>
     <div v-else class="children-container" :class="invalid && 'invalid'">
-      <small v-if="invalid" class="validate-error">Failed validation</small>
+      <small v-if="invalid" class="validate-error">{{ validationErrorMessage }}</small>
       <template v-for="item of build" :key="item.id">
         <component
           :is="item.type"
@@ -59,6 +59,7 @@ const props = defineProps({
 });
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
+const deleteEntityKey = inject(injectionKeys.editorEntity)?.deleteEntityKey;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
 
 const queryService = new QueryService(axios);
@@ -66,18 +67,18 @@ const queryService = new QueryService(axios);
 let key = props.shape.path["@id"];
 
 let loading = ref(true);
-
-let filters: Ref<{ status: EntityReferenceNode[]; schemes: Namespace[]; types: EntityReferenceNode[] } | undefined> = ref();
-
+let validationErrorMessage = "Failed validation";
 let build: Ref<ComponentDetails[]> = ref([]);
 onMounted(() => {
-  setFilters();
+  key = props.shape.path["@id"];
+  if (isObjectHasKeys(props.shape, ["validationErrorMessage"])) validationErrorMessage = props.shape.validationErrorMessage;
   createBuild();
 });
 watch(
   () => _.cloneDeep(props.shape),
   () => {
     key = props.shape.path["@id"];
+    if (isObjectHasKeys(props.shape, ["validationErrorMessage"])) validationErrorMessage = props.shape.validationErrorMessage;
     createBuild();
   }
 );
@@ -88,11 +89,6 @@ watch(
     if (validityUpdate) await updateValidity();
   }
 );
-
-function setFilters() {
-  const typeOptions = store.state.filterOptions.types.filter(type => type["@id"] === IM.CONCEPT);
-  filters.value = { status: store.state.filterOptions.status, schemes: store.state.filterOptions.schemes, types: typeOptions };
-}
 
 function createBuild() {
   loading.value = true;
@@ -162,12 +158,13 @@ function updateEntity() {
   const value = generateBuildAsJson();
   const result = {} as any;
   result[key] = value;
-  if (entityUpdate) entityUpdate(result);
+  if (entityUpdate && value.length) entityUpdate(result);
+  else if (deleteEntityKey && !props.shape.minCount) deleteEntityKey(key);
 }
 
 async function updateValidity() {
   if (isPropertyShape(props.shape) && isObjectHasKeys(props.shape, ["validation"])) {
-    invalid.value = !(await queryService.checkValidation(generateBuildAsJson(), props.shape.validation["@id"]));
+    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], generateBuildAsJson()));
   } else {
     invalid.value = !defaultValidation();
   }
