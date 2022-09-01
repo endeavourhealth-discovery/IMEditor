@@ -117,7 +117,8 @@ const emit = defineEmits({
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
-const valueVariableMap = inject(injectionKeys.valueVariableMap);
+const valueVariableMap = inject(injectionKeys.valueVariableMap)?.valueVariableMap;
+const valueVariableMapUpdate = inject(injectionKeys.valueVariableMap)?.updateValueVariableMap;
 
 watch(
   () => _.cloneDeep(valueVariableMap?.value),
@@ -245,7 +246,15 @@ async function itemSelected(value: ConceptSummary) {
     } else {
       emit("updateClicked", summaryToTTIriRef(value));
     }
+    updateValueVariableMap(value);
   }
+}
+
+function updateValueVariableMap(data: ConceptSummary) {
+  if (!props.shape.valueVariable) return;
+  let mapKey = props.shape.valueVariable;
+  if (props.shape.builderChild) mapKey = mapKey + props.shape.order;
+  if (valueVariableMapUpdate) valueVariableMapUpdate(mapKey, summaryToTTIriRef(data));
 }
 
 function summaryToTTIriRef(summary: ConceptSummary) {

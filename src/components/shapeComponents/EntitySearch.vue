@@ -69,6 +69,7 @@ const emit = defineEmits({
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
+const valueVariableMapUpdate = inject(injectionKeys.valueVariableMap)?.updateValueVariableMap;
 
 const entityService = new EntityService(axios);
 const queryService = new QueryService(axios);
@@ -174,10 +175,11 @@ async function updateSelectedResult(data: ConceptSummary | TTIriRef) {
   }
   if (!props.shape.builderChild && key.value) {
     updateEntity();
-    await updateValidity();
   } else {
     emit("updateClicked", selectedResult.value);
   }
+  await updateValidity();
+  updateValueVariableMap(selectedResult.value);
   hideOverlay();
 }
 
@@ -185,6 +187,13 @@ function updateEntity() {
   const result = {} as any;
   result[key.value] = selectedResult.value;
   if (entityUpdate && !props.shape.builderChild) entityUpdate(result);
+}
+
+function updateValueVariableMap(data: TTIriRef) {
+  if (!props.shape.valueVariable) return;
+  let mapKey = props.shape.valueVariable;
+  if (props.shape.builderChild) mapKey = mapKey + props.shape.order;
+  if (valueVariableMapUpdate) valueVariableMapUpdate(mapKey, data);
 }
 
 async function updateValidity() {

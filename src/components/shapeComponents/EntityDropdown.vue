@@ -33,6 +33,7 @@ const props = defineProps({
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
+const valueVariableMapUpdate = inject(injectionKeys.valueVariableMap)?.updateValueVariableMap;
 
 const queryService = new QueryService(axios);
 const entityService = new EntityService(axios);
@@ -51,8 +52,9 @@ onMounted(() => {
 });
 watch(selectedEntity, async newValue => {
   if (isTTIriRef(newValue)) {
-    updateEntity();
-    await updateValidity();
+    updateEntity(newValue);
+    updateValueVariableMap(newValue);
+    await updateValidity(newValue);
   }
 });
 
@@ -74,22 +76,29 @@ async function getDropdownOptions() {
   } else throw new Error("propertyshape is missing 'select' or 'function' parameter to fetch dropdown options");
 }
 
-function updateEntity() {
+function updateEntity(data: TTIriRef) {
   const result = {} as any;
-  result[key] = selectedEntity.value;
+  result[key] = data;
   if (entityUpdate) entityUpdate(result);
 }
 
-async function updateValidity() {
+function updateValueVariableMap(data: TTIriRef) {
+  if (!props.shape.valueVariable) return;
+  let mapKey = props.shape.valueVariable;
+  if (props.shape.builderChild) mapKey = mapKey + props.shape.order;
+  if (valueVariableMapUpdate) valueVariableMapUpdate(mapKey, data);
+}
+
+async function updateValidity(data: TTIriRef) {
   if (isObjectHasKeys(props.shape, ["validation"])) {
-    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], selectedEntity.value));
+    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], data));
   } else {
-    invalid.value = !defaultValidation();
+    invalid.value = !defaultValidation(data);
   }
   if (validityUpdate) validityUpdate({ key: key, valid: !invalid.value });
 }
 
-function defaultValidation() {
+function defaultValidation(data: TTIriRef) {
   return true;
 }
 </script>

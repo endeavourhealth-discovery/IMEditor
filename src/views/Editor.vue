@@ -290,10 +290,6 @@ function updateEntity(data: any) {
       }
     }
   }
-
-  if (editorInvalidEntity.value) {
-    isValidEntity(editorEntity.value);
-  }
 }
 
 function deleteEntityKey(data: string) {

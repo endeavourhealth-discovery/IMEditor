@@ -42,6 +42,7 @@ const props = defineProps({
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
+const valueVariableMapUpdate = inject(injectionKeys.valueVariableMap)?.updateValueVariableMap;
 
 const queryService = new QueryService(axios);
 const entityService = new EntityService(axios);
@@ -64,8 +65,9 @@ let loading = ref(false);
 let selectedEntities: Ref<TTIriRef[]> = ref([]);
 watch(selectedEntities, async newValue => {
   if (isArrayHasLength(newValue)) {
-    updateEntity();
-    await updateValidity();
+    updateEntity(newValue);
+    updateValueVariableMap(newValue);
+    await updateValidity(newValue);
   }
 });
 
@@ -90,22 +92,29 @@ async function getDropdownOptions(): Promise<TTIriRef[]> {
   } else throw new Error("propertyshape is missing 'search' or 'function' parameter to fetch dropdown options");
 }
 
-function updateEntity() {
+function updateEntity(data: TTIriRef) {
   const result = {} as any;
-  result[key] = selectedEntities.value;
+  result[key] = data;
   if (entityUpdate) entityUpdate(result);
 }
 
-async function updateValidity() {
+function updateValueVariableMap(data: TTIriRef) {
+  if (!props.shape.valueVariable) return;
+  let mapKey = props.shape.valueVariable;
+  if (props.shape.builderChild) mapKey = mapKey + props.shape.order;
+  if (valueVariableMapUpdate) valueVariableMapUpdate(mapKey, data);
+}
+
+async function updateValidity(data: TTIriRef) {
   if (isObjectHasKeys(props.shape, ["validation"])) {
-    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], selectedEntities.value));
+    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], data));
   } else {
-    invalid.value = !defaultValidity();
+    invalid.value = !defaultValidity(data);
   }
   if (validityUpdate) validityUpdate({ key: key, valid: !invalid.value });
 }
 
-function defaultValidity() {
+function defaultValidity(data: TTIriRef) {
   return true;
 }
 </script>
