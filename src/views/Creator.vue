@@ -109,8 +109,8 @@ let valueVariableMap: Ref<Map<string, any>> = ref(new Map<string, any>());
 provide(injectionKeys.editorValidity, { validity: creatorValidity, updateValidity, removeValidity });
 provide(injectionKeys.invalidEditorEntity, creatorInvalidEntity);
 
-provide(injectionKeys.editorEntity, { editorEntity, updateEntity });
-provide(injectionKeys.valueVariableMap, valueVariableMap);
+provide(injectionKeys.editorEntity, { editorEntity, updateEntity, deleteEntityKey });
+provide(injectionKeys.valueVariableMap, { valueVariableMap, updateValueVariableMap });
 
 onMounted(async () => {
   loading.value = true;
@@ -141,10 +141,6 @@ watch(
   }
 );
 
-watch([() => _.cloneDeep(editorEntity.value), () => _.cloneDeep(groups.value)], ([newEntity, newGroups]) => {
-  setValueVariableMap(newEntity, newGroups);
-});
-
 const entityService = new EntityService(axios);
 
 async function getShape(type: string): Promise<void> {
@@ -152,27 +148,8 @@ async function getShape(type: string): Promise<void> {
   if (shapeIri) shape.value = await entityService.getShape(shapeIri["@id"]);
 }
 
-function setValueVariableMap(entity: any, groups: PropertyGroup[]) {
-  if (entity && groups.length) {
-    groups.forEach(group => {
-      if (isObjectHasKeys(group, ["property"])) {
-        group.property.forEach(property => {
-          if (property.builderChild && property.valueVariable) {
-            let value = undefined as any;
-            const found = entity[group.path["@id"]];
-            if (found) value = entity[group.path["@id"]][property.order - 1];
-            valueVariableMap.value.set(property.valueVariable + property.order, value);
-          } else if (property.valueVariable) {
-            const value = entity[property.path["@id"]];
-            valueVariableMap.value.set(property.valueVariable, value);
-          }
-        });
-      }
-      if (isObjectHasKeys(group, ["subGroup"])) {
-        setValueVariableMap(entity, group.subGroup);
-      }
-    });
-  }
+function updateValueVariableMap(key: string, value: any) {
+  valueVariableMap.value.set(key, value);
 }
 
 function updateValidity(data: { key: string; valid: boolean }) {
@@ -282,6 +259,10 @@ function updateEntity(data: any) {
   if (creatorInvalidEntity.value) {
     isValidEntity(editorEntity.value);
   }
+}
+
+function deleteEntityKey(data: string) {
+  if (data) delete editorEntity.value[data];
 }
 
 function checkForChanges() {
