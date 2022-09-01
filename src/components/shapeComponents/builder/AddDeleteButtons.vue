@@ -8,60 +8,64 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from "@vue/runtime-core";
+<script setup lang="ts">
+import { defineComponent, onMounted, PropType, ref, Ref, watch } from "vue";
 import { ComponentType } from "im-library/dist/types/enums/Enums";
+import _ from "lodash";
 
-export default defineComponent({
-  name: "AddDeleteButtons",
-  props: {
-    position: Number,
-    show: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
-    options: { type: Array as PropType<Array<ComponentType>>, required: true }
-  },
-  emits: {
-    addNextClicked: (_payload: ComponentType) => true,
-    deleteClicked: () => true
-  },
-  watch: {
-    selected: {
-      handler(newValue) {
-        if (this.selected) this.$emit("addNextClicked", newValue);
-      },
-      deep: true
-    }
-  },
-  mounted() {
-    this.setMenuOptions();
-  },
-  data() {
-    return {
-      menuOptions: [] as any[],
-      selected: null as ComponentType | null
-    };
-  },
-  methods: {
-    addNextClicked(event: any) {
-      (this.$refs.optionsMenu as any).toggle(event);
-    },
-
-    deleteClicked() {
-      this.$emit("deleteClicked");
-    },
-
-    setMenuOptions() {
-      for (const item of this.options) {
-        this.menuOptions.push({
-          label: item,
-          command: (option: any) => {
-            this.selected = null;
-            this.selected = option.item.label;
-          }
-        });
-      }
-    }
-  }
+const props = defineProps({
+  position: Number,
+  show: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
+  options: { type: Array as PropType<ComponentType[]>, required: true }
 });
+
+const emit = defineEmits({
+  addNextClicked: (_payload: any) => true,
+  deleteClicked: () => true
+});
+
+let menuOptions: Ref<any[]> = ref([]);
+let selected: Ref<ComponentType | undefined> = ref();
+
+const optionsMenu = ref();
+
+watch(
+  () => _.cloneDeep(selected.value),
+  newValue => {
+    if (newValue) emit("addNextClicked", newValue);
+  }
+);
+
+watch(
+  () => props.options,
+  () => {
+    setMenuOptions();
+  }
+);
+
+onMounted(() => {
+  setMenuOptions();
+});
+
+function addNextClicked(event: any) {
+  (optionsMenu.value as any).toggle(event);
+}
+
+function deleteClicked() {
+  emit("deleteClicked");
+}
+
+function setMenuOptions() {
+  menuOptions.value = [];
+  for (const item of props.options) {
+    menuOptions.value.push({
+      label: item,
+      command: (option: any) => {
+        selected.value = option.label;
+      }
+    });
+  }
+}
 </script>
 
 <style scoped>
