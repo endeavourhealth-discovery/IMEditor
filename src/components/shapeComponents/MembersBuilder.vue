@@ -7,22 +7,9 @@
       </div>
     </div>
     <div v-else id="members-build" :class="invalid && 'invalid'">
-      <small v-if="invalid" class="validate-error">Entity must have at least 1 parent.</small>
+      <small v-if="invalid" class="validate-error">{{ validationErrorMessage }}</small>
       <template v-for="item of membersBuild" :key="item.id">
-        <component
-          :is="item.type"
-          :value="item.value"
-          :id="item.id"
-          :position="item.position"
-          :showButtons="item.showButtons"
-          :shape="item.shape"
-          :mode="item.mode"
-          @deleteClicked="deleteItem"
-          @addClicked="addItemWrapper"
-          @updateClicked="updateItemWrapper"
-          @addNextOptionsClicked="addItemWrapper"
-        >
-        </component>
+        <component :is="item.type" :value="item.value" :shape="item.shape" :mode="item.mode"> </component>
       </template>
     </div>
   </div>
@@ -70,6 +57,7 @@ const queryService = new QueryService(axios);
 let membersBuild: Ref<any[]> = ref([]);
 let loading = ref(true);
 let invalid = ref(false);
+let validationErrorMessage = "Validation failed";
 
 watch(
   () => _.cloneDeep(membersBuild.value),
@@ -80,6 +68,7 @@ watch(
 );
 
 onMounted(async () => {
+  if (props.shape.validationErrorMessage) validationErrorMessage = props.shape.validationErrorMessage;
   await createBuild(editorEntity?.value);
 });
 
@@ -93,11 +82,6 @@ async function createBuild(entity: any) {
   }
   if (isObjectHasKeys(entity, [IM.DEFINITION])) {
     membersBuild.value.push(generateNewComponent(ComponentType.DEFINITION, 0, entity[IM.DEFINITION], props.shape, { minus: true, plus: true }, props.mode));
-  }
-  if (isObjectHasKeys(entity, [IM.HAS_MEMBER])) {
-    membersBuild.value.push(
-      generateNewComponent(ComponentType.HAS_MEMBER, membersBuild.value.length, entity[IM.HAS_MEMBER], props.shape, { minus: true, plus: true }, props.mode)
-    );
   }
   if (!isArrayHasLength(membersBuild.value)) {
     createDefaultBuild();
@@ -132,7 +116,7 @@ async function updateValidity() {
   if (isPropertyShape(props.shape) && isObjectHasKeys(props.shape, ["validation"])) {
     for (const item of membersBuild.value) {
       const result = {} as { key: string; valid: boolean };
-      invalid.value = !(await queryService.checkValidation(item.json, props.shape.validation["@id"]));
+      invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], item.json));
       if (validityUpdate) {
         if (item.type === ComponentType.DEFINITION) result.key = IM.DEFINITION;
         if (item.type === ComponentType.HAS_MEMBER) result.key = IM.HAS_MEMBER;
