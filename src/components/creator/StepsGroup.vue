@@ -8,6 +8,7 @@
 
 <script lang="ts">
 import ArrayBuilder from "@/components/shapeComponents/ArrayBuilder.vue";
+import ArrayBuilderWithDropdown from "../shapeComponents/ArrayBuilderWithDropdown.vue";
 import EntityComboBox from "../shapeComponents/EntityComboBox.vue";
 import EntityDropdown from "../shapeComponents/EntityDropdown.vue";
 import HtmlInput from "@/components/shapeComponents/HtmlInput.vue";
@@ -16,7 +17,7 @@ import TextDisplay from "@/components/shapeComponents/TextDisplay.vue";
 import MembersBuilder from "../shapeComponents/MembersBuilder.vue";
 
 export default defineComponent({
-  components: { EntityComboBox, ArrayBuilder, EntityDropdown, HtmlInput, TextDisplay, TextInput, MembersBuilder }
+  components: { EntityComboBox, ArrayBuilder, ArrayBuilderWithDropdown, EntityDropdown, HtmlInput, TextDisplay, TextInput, MembersBuilder }
 });
 </script>
 
