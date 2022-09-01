@@ -39,7 +39,7 @@ const valueVariableMapUpdate = inject(injectionKeys.valueVariableMap)?.updateVal
 
 const queryService = new QueryService(axios);
 
-let key = props.shape.path["@id"];
+let key = props.shape.path["@id"] == IM.ID ? IM.IRI : props.shape.path["@id"];
 let loading = ref(false);
 
 let invalid = ref(false);
@@ -111,7 +111,7 @@ function processArguments(property: PropertyShape) {
   property.argument.forEach(arg => {
     let key = "";
     let value: any;
-    if (arg.parameter === "this") key = property.path["@id"];
+    if (arg.parameter === "this") key = props.shape.path["@id"] == IM.ID ? IM.IRI : props.shape.path["@id"];
     else key = arg.parameter;
     if (arg.valueIri) value = arg.valueIri;
     else if (arg.valueVariable) value = valueVariableMap?.value.get(arg.valueVariable);
