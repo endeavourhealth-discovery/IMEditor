@@ -15,9 +15,10 @@
 import EntitySearch from "./EntitySearch.vue";
 import EntityAutoComplete from "./EntityAutoComplete.vue";
 import ComponentGroup from "./ComponentGroup.vue";
+import ArrayBuilderWithDropdown from "./ArrayBuilderWithDropdown.vue";
 
 export default defineComponent({
-  components: { EntitySearch, EntityAutoComplete, ComponentGroup }
+  components: { EntitySearch, EntityAutoComplete, ComponentGroup, ArrayBuilderWithDropdown }
 });
 </script>
 
