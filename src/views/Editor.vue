@@ -228,7 +228,6 @@ function setSteps() {
     groups.value.forEach(group => {
       const component = processComponentType(group.componentType);
       if (editorRoute.children?.findIndex(route => route.name === group.name) === -1) {
-        console.log(component);
         editorRoute.children?.push({ path: group.name, name: group.name, component: component });
       }
       stepsItems.value.push({ label: group.name, to: "/editor/" + group.name });

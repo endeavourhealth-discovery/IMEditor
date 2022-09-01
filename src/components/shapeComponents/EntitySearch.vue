@@ -6,7 +6,7 @@
         ref="miniSearchInput"
         type="text"
         v-model="searchTerm"
-        @input="search"
+        @input="debounceForSearch"
         @keyup.enter="search"
         @focus="showOverlay"
         @change="showOverlay"
@@ -93,6 +93,7 @@ let searchResults: Ref<ConceptSummary[]> = ref([]);
 let label = ref("");
 let key = ref("");
 let invalid = ref(false);
+let debounce = ref(0);
 
 const miniSearchOP = ref();
 const treeOP = ref();
@@ -109,21 +110,15 @@ async function init() {
   label.value = props.shape.name;
 }
 
-//function debounceForSearch(): void {
-//   clearTimeout(this.debounce);
-//   debounce.value = window.setTimeout(() => {
-//     search();
-//   }, 600);
-// }
-
-//function checkKey(event: any) {
-//   if (event.code === "Enter") {
-//     search();
-//   }
-// }
+function debounceForSearch(): void {
+  clearTimeout(debounce.value);
+  debounce.value = window.setTimeout(() => {
+    search();
+  }, 600);
+}
 
 async function search(): Promise<void> {
-  if (searchTerm.value.length > 0) {
+  if (searchTerm.value.length > 2) {
     loading.value = true;
     let query = {} as QueryRequest;
     if (isObjectHasKeys(props.shape, ["select", "argument"])) {
