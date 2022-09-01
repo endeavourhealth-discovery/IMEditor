@@ -32,16 +32,24 @@
   </OverlayPanel>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from "@vue/runtime-core";
+<script setup lang="ts">
+import { computed, defineComponent, onMounted, PropType, Ref, ref, watch } from "vue";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import axios from "axios";
 import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/SearchMiniOverlay.vue";
 import QuantifierTree from "@/components/edit/memberEditor/builder/quantifier/QuantifierTree.vue";
 import AddDeleteButtons from "@/components/edit/memberEditor/builder/AddDeleteButtons.vue";
-import { mapState } from "vuex";
-import { Vocabulary, Helpers, Enums, Models } from "im-library";
-import { TTIriRef, ComponentDetails, Namespace, EntityReferenceNode, SearchRequest, ConceptSummary } from "im-library/dist/types/interfaces/Interfaces";
+import { mapState, useStore } from "vuex";
+import { Vocabulary, Helpers, Enums, Models, Services } from "im-library";
+import {
+  TTIriRef,
+  ComponentDetails,
+  Namespace,
+  EntityReferenceNode,
+  SearchRequest,
+  ConceptSummary,
+  PropertyShape
+} from "im-library/dist/types/interfaces/Interfaces";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject },
   TypeGuards: { isTTIriRef },
@@ -49,212 +57,215 @@ const {
 } = Helpers;
 const { IM, RDFS } = Vocabulary;
 const { ComponentType, SortBy } = Enums;
+const { QueryService, EntityService } = Services;
 
-export default defineComponent({
-  name: "Quantifier",
-  props: {
-    id: { type: String, required: true },
-    position: { type: Number, required: true },
-    value: { type: Object as PropType<{ propertyIri: string; quantifier: TTIriRef }>, required: true },
-    showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
-    builderType: { type: String as PropType<Enums.BuilderType>, required: true }
-  },
-  emits: {
-    updateClicked: (_payload: ComponentDetails) => true,
-    addNextOptionsClicked: (_payload: any) => true,
-    deleteClicked: (_payload: ComponentDetails) => true,
-    addClicked: (_payload: any) => true
-  },
-  components: { AddDeleteButtons, SearchMiniOverlay, QuantifierTree },
-  computed: mapState(["filterOptions", "selectedFilters"]),
-  watch: {
-    value: {
-      async handler() {
-        await this.init();
-      },
-      deep: true
-    },
-    selectedResult: {
-      handler(newValue, oldValue) {
-        if (newValue && JSON.stringify(newValue) !== JSON.stringify(oldValue) && newValue["@id"]) this.onConfirm();
-      },
-      deep: true
-    }
-  },
-  async mounted() {
-    await this.init();
-  },
-  data() {
-    return {
-      loading: false,
-      selectedResult: {} as TTIriRef,
-      invalidAssociatedProperty: false,
-      controller: {} as AbortController,
-      isAs: [] as string[],
-      searchTerm: "",
-      searchResults: [] as ConceptSummary[]
-    };
-  },
-  methods: {
-    async init() {
-      this.loading = true;
-      if (this.value.propertyIri) {
-        this.invalidAssociatedProperty = false;
-        const query = this.createQuantifierOptionsQuery(this.value.propertyIri);
-        const queryResult = await this.$queryService.queryIM(query);
-        if (isObjectHasKeys(queryResult, ["entities", "@context"]) && isArrayHasLength(queryResult.entities)) {
-          this.isAs = queryResult.entities.map(result => result["@id"]);
-        }
-        if (isArrayHasLength(this.isAs)) {
-          if (this.value && isTTIriRef(this.value.quantifier)) {
-            this.searchTerm = this.value.quantifier.name;
-            await this.search();
-            const found = this.searchResults.find(item => item.iri === this.value.quantifier["@id"]);
-            if (found) this.selectedResult = { "@id": found.iri, name: found.name };
-          }
-        }
-      } else {
-        this.invalidAssociatedProperty = true;
-      }
-      this.loading = false;
-    },
-
-    hideOverlay(): void {
-      const x = this.$refs.miniSearchOP as any;
-      if (x) x.hide();
-    },
-
-    showOverlay(event: any): void {
-      const x = this.$refs.miniSearchOP as any;
-      if (x) x.show(event, event.target);
-    },
-
-    showTreeDialog(event: any): void {
-      const x = this.$refs.treeOP as any;
-      if (x) x.show(event, event.target);
-    },
-
-    hideTreeOverlay(): void {
-      const x = this.$refs.treeOP as any;
-      if (x) x.hide();
-    },
-
-    updateSelectedResult(data: ConceptSummary | TTIriRef) {
-      if (!isObjectHasKeys(data)) {
-        this.selectedResult = {} as TTIriRef;
-        this.searchTerm = "";
-      } else if (isTTIriRef(data)) {
-        this.selectedResult = data;
-        this.searchTerm = data.name;
-      } else {
-        this.selectedResult = { "@id": data.iri, name: data.name };
-        this.searchTerm = data.name;
-      }
-      this.onConfirm();
-      this.hideOverlay();
-      this.hideTreeOverlay();
-    },
-
-    createQuantifierOptionsQuery(iri: string) {
-      return {
-        name: "Ranges for finding site",
-        description: "retrieves the high level concepts allowable as values of the attribute finding side",
-        activeOnly: true,
-        resultFormat: "OBJECT",
-        select: {
-          property: [
-            {
-              "@id": "http://endhealth.info/im#id"
-            },
-            {
-              "@id": "http://www.w3.org/2000/01/rdf-schema#label"
-            }
-          ],
-          match: {
-            property: {
-              "@id": "http://www.w3.org/2000/01/rdf-schema#range"
-            },
-            inverseOf: true,
-            isConcept: [
-              {
-                includeSupertypes: true,
-                "@id": iri
-              }
-            ]
-          }
-        }
-      };
-    },
-
-    async search() {
-      if (this.searchTerm.length > 0) {
-        this.loading = true;
-        this.searchResults = [];
-        const searchRequest = {} as SearchRequest;
-        searchRequest.termFilter = this.searchTerm;
-        searchRequest.isA = this.isAs;
-        this.setFilters(searchRequest);
-        if (!isObject(this.controller)) {
-          this.controller.abort();
-        }
-        this.controller = new AbortController();
-        const result = await this.$entityService.advancedSearch(searchRequest, this.controller);
-        if (isArrayHasLength(result)) {
-          this.searchResults = result;
-        }
-        this.loading = false;
-      }
-    },
-
-    setFilters(searchRequest: SearchRequest) {
-      const typeOptions = this.filterOptions.types.filter((type: EntityReferenceNode) => type["@id"] === IM.CONCEPT || type["@id"] === IM.CONCEPT_SET);
-      const filteredFilterOptions = { status: this.filterOptions.status, schemes: this.filterOptions.schemes, types: typeOptions };
-
-      searchRequest.schemeFilter = filteredFilterOptions.schemes.map((scheme: Namespace) => scheme.iri);
-
-      searchRequest.statusFilter = [];
-      for (const status of filteredFilterOptions.status) {
-        if (status["@id"] === IM.ACTIVE) searchRequest.statusFilter.push(status["@id"]);
-      }
-
-      searchRequest.typeFilter = [];
-      for (const type of filteredFilterOptions.types) {
-        searchRequest.typeFilter.push(type["@id"]);
-      }
-    },
-
-    createQuantifier(): ComponentDetails {
-      return {
-        value: this.createAsJson(),
-        id: this.id,
-        position: this.position,
-        type: ComponentType.QUANTIFIER,
-        json: this.selectedResult,
-        builderType: this.builderType,
-        showButtons: this.showButtons
-      };
-    },
-
-    onConfirm() {
-      this.$emit("updateClicked", this.createQuantifier());
-    },
-
-    createAsJson() {
-      return { quantifier: this.selectedResult, propertyIri: this.value.propertyIri };
-    },
-
-    deleteClicked(): void {
-      this.$emit("deleteClicked", this.createQuantifier());
-    },
-
-    addNextClicked(): void {
-      this.$emit("addNextOptionsClicked", {
-        selectedType: ComponentType.QUANTIFIER,
-        position: this.position + 1
-      });
-    }
-  }
+const props = defineProps({
+  id: { type: String, required: true },
+  position: { type: Number, required: true },
+  value: { type: Object as PropType<{ propertyIri: string; quantifier: TTIriRef }>, required: true },
+  showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, default: { minus: true, plus: true } },
+  mode: { type: String as PropType<Enums.EditorMode>, required: true },
+  shape: { type: Object as PropType<PropertyShape>, required: true }
 });
+
+const emit = defineEmits({
+  updateClicked: (_payload: ComponentDetails) => true,
+  addNextOptionsClicked: (_payload: any) => true,
+  deleteClicked: (_payload: ComponentDetails) => true,
+  addClicked: (_payload: any) => true
+});
+
+const queryService = new QueryService(axios);
+const entityService = new EntityService(axios);
+
+const store = useStore();
+const filterOptions = computed(() => store.state.filterOptions);
+const selectedFilters = computed(() => store.state.selectedFilters);
+
+watch(
+  () => props.value,
+  async () => {
+    await init();
+  }
+);
+
+let loading = ref(false);
+let selectedResult: Ref<TTIriRef> = ref({} as TTIriRef);
+let invalidAssociatedProperty = ref(false);
+let controller: Ref<AbortController> = ref({} as AbortController);
+let isAs: Ref<string[]> = ref([]);
+let searchTerm = ref("");
+let searchResults: Ref<ConceptSummary[]> = ref([]);
+
+watch(selectedResult, (newValue, oldValue) => {
+  if (newValue && JSON.stringify(newValue) !== JSON.stringify(oldValue) && newValue["@id"]) onConfirm();
+});
+
+const miniSearchOP = ref();
+const treeOP = ref();
+
+onMounted(async () => {
+  await init();
+});
+
+async function init() {
+  loading.value = true;
+  if (props.value.propertyIri) {
+    invalidAssociatedProperty.value = false;
+    const query = createQuantifierOptionsQuery(props.value.propertyIri);
+    const queryResult = await queryService.queryIM(query);
+    if (isObjectHasKeys(queryResult, ["entities", "@context"]) && isArrayHasLength(queryResult.entities)) {
+      isAs.value = queryResult.entities.map(result => result["@id"]);
+    }
+    if (isArrayHasLength(isAs.value)) {
+      if (props.value && isTTIriRef(props.value.quantifier)) {
+        searchTerm.value = props.value.quantifier.name;
+        await search();
+        const found = searchResults.value.find(item => item.iri === props.value.quantifier["@id"]);
+        if (found) selectedResult.value = { "@id": found.iri, name: found.name };
+      }
+    }
+  } else {
+    invalidAssociatedProperty.value = true;
+  }
+  loading.value = false;
+}
+
+function hideOverlay(): void {
+  const x = miniSearchOP.value as any;
+  if (x) x.hide();
+}
+
+function showOverlay(event: any): void {
+  const x = miniSearchOP.value as any;
+  if (x) x.show(event, event.target);
+}
+
+function showTreeDialog(event: any): void {
+  const x = treeOP.value as any;
+  if (x) x.show(event, event.target);
+}
+
+function hideTreeOverlay(): void {
+  const x = treeOP as any;
+  if (x) x.hide();
+}
+
+function updateSelectedResult(data: ConceptSummary | TTIriRef) {
+  if (!isObjectHasKeys(data)) {
+    selectedResult.value = {} as TTIriRef;
+    searchTerm.value = "";
+  } else if (isTTIriRef(data)) {
+    selectedResult.value = data;
+    searchTerm.value = data.name;
+  } else {
+    selectedResult.value = { "@id": data.iri, name: data.name };
+    searchTerm.value = data.name;
+  }
+  onConfirm();
+  hideOverlay();
+  hideTreeOverlay();
+}
+
+function createQuantifierOptionsQuery(iri: string) {
+  return {
+    name: "Ranges for finding site",
+    description: "retrieves the high level concepts allowable as values of the attribute finding side",
+    activeOnly: true,
+    resultFormat: "OBJECT",
+    select: {
+      property: [
+        {
+          "@id": "http://endhealth.info/im#id"
+        },
+        {
+          "@id": "http://www.w3.org/2000/01/rdf-schema#label"
+        }
+      ],
+      match: {
+        property: {
+          "@id": "http://www.w3.org/2000/01/rdf-schema#range"
+        },
+        inverseOf: true,
+        isConcept: [
+          {
+            includeSupertypes: true,
+            "@id": iri
+          }
+        ]
+      }
+    }
+  };
+}
+
+async function search() {
+  if (searchTerm.value.length > 0) {
+    loading.value = true;
+    searchResults.value = [];
+    const searchRequest = {} as SearchRequest;
+    searchRequest.termFilter = searchTerm.value;
+    searchRequest.isA = isAs.value;
+    setFilters(searchRequest);
+    if (!isObject(controller.value)) {
+      controller.value.abort();
+    }
+    controller.value = new AbortController();
+    const result = await entityService.advancedSearch(searchRequest, controller.value);
+    if (isArrayHasLength(result)) {
+      searchResults.value = result;
+    }
+    loading.value = false;
+  }
+}
+
+function setFilters(searchRequest: SearchRequest) {
+  const typeOptions = filterOptions.value.types.filter((type: EntityReferenceNode) => type["@id"] === IM.CONCEPT || type["@id"] === IM.CONCEPT_SET);
+  const filteredFilterOptions = { status: filterOptions.value.status, schemes: filterOptions.value.schemes, types: typeOptions };
+
+  searchRequest.schemeFilter = filteredFilterOptions.schemes.map((scheme: Namespace) => scheme.iri);
+
+  searchRequest.statusFilter = [];
+  for (const status of filteredFilterOptions.status) {
+    if (status["@id"] === IM.ACTIVE) searchRequest.statusFilter.push(status["@id"]);
+  }
+
+  searchRequest.typeFilter = [];
+  for (const type of filteredFilterOptions.types) {
+    searchRequest.typeFilter.push(type["@id"]);
+  }
+}
+
+function createQuantifier(): ComponentDetails {
+  return {
+    value: createAsJson(),
+    id: props.id,
+    position: props.position,
+    type: ComponentType.QUANTIFIER,
+    json: selectedResult.value,
+    shape: props.shape,
+    showButtons: props.showButtons,
+    mode: props.mode
+  };
+}
+
+function onConfirm() {
+  emit("updateClicked", createQuantifier());
+}
+
+function createAsJson() {
+  return { quantifier: selectedResult.value, propertyIri: props.value.propertyIri };
+}
+
+function deleteClicked(): void {
+  emit("deleteClicked", createQuantifier());
+}
+
+function addNextClicked(): void {
+  emit("addNextOptionsClicked", {
+    selectedType: ComponentType.QUANTIFIER,
+    position: props.position + 1
+  });
+}
 </script>
 
 <style scoped>
