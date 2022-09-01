@@ -37,7 +37,7 @@ const {
 const props = defineProps({
   shape: { type: Object as PropType<PropertyGroup>, required: true },
   mode: { type: String as PropType<Enums.EditorMode>, required: true },
-  value: { type: Object as PropType<TTIriRef>, required: false }
+  value: { type: Array as PropType<TTIriRef[]>, required: false }
 });
 
 watch(
@@ -56,6 +56,9 @@ onMounted(() => {
 });
 
 function processEntityValue(property: PropertyShape | PropertyGroup) {
+  if (props.value && isPropertyShape(property)) {
+    return props.value[property.order - 1];
+  }
   if (isPropertyShape(property) && isObjectHasKeys(editorEntity, [property.path["@id"]])) {
     return editorEntity[property.path["@id"]];
   }
