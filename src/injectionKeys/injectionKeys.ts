@@ -22,8 +22,8 @@ const editorValidity = Symbol("editorValidity") as InjectionKey<{
   removeValidity: Function;
 }>;
 const invalidEditorEntity = Symbol("invalidEditorEntity") as InjectionKey<Ref<boolean>>;
-const editorEntity = Symbol("editorEntity") as InjectionKey<{ editorEntity: Ref<any>; updateEntity: Function }>;
-const valueVariableMap = Symbol("valueVariableMap") as InjectionKey<Ref<Map<string, any>>>;
+const editorEntity = Symbol("editorEntity") as InjectionKey<{ editorEntity: Ref<any>; updateEntity: Function; deleteEntityKey: Function }>;
+const valueVariableMap = Symbol("valueVariableMap") as InjectionKey<{ valueVariableMap: Ref<Map<string, any>>; updateValueVariableMap: Function }>;
 
 export default {
   userRoles,
