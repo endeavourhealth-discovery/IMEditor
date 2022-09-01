@@ -34,7 +34,8 @@ const props = defineProps({
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
-const valueVariableMap = inject(injectionKeys.valueVariableMap);
+const valueVariableMap = inject(injectionKeys.valueVariableMap)?.valueVariableMap;
+const valueVariableMapUpdate = inject(injectionKeys.valueVariableMap)?.updateValueVariableMap;
 
 const queryService = new QueryService(axios);
 
@@ -50,7 +51,8 @@ watch([() => props.value, () => props.shape], async ([newPropsValue, newShapeVal
 });
 watch(userInput, async newValue => {
   if (newValue) {
-    updateEntity();
+    updateEntity(newValue);
+    updateValueVariableMap(newValue);
     await updateValidity();
   }
 });
@@ -119,15 +121,22 @@ function processArguments(property: PropertyShape) {
   return result;
 }
 
-function updateEntity() {
+function updateEntity(data: string) {
   const result = {} as any;
-  result[key] = userInput.value;
+  result[key] = data;
   if (entityUpdate) entityUpdate(result);
+}
+
+function updateValueVariableMap(data: string) {
+  if (!props.shape.valueVariable) return;
+  let mapKey = props.shape.valueVariable;
+  if (props.shape.builderChild) mapKey = mapKey + props.shape.order;
+  if (valueVariableMapUpdate) valueVariableMapUpdate(mapKey, data);
 }
 
 async function updateValidity() {
   if (isObjectHasKeys(props.shape, ["validation"])) {
-    invalid.value = !(await queryService.checkValidation(userInput, props.shape.validation["@id"]));
+    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], userInput));
   } else {
     invalid.value = !defaultValidation();
   }
