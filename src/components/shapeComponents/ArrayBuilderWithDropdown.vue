@@ -4,7 +4,7 @@
       <ProgressSpinner />
     </div>
     <div v-else class="dropdown-children-container">
-      <h3>{{ shape.name }}:</h3>
+      <!-- <h3>{{ shape.name }}:</h3> -->
       <Dropdown v-model="selectedOption" :options="dropdownOptions" optionLabel="name" placeholder="Select..." />
       <div class="children-container" :class="invalid && 'invalid'">
         <small v-if="invalid" class="validate-error">{{ validationErrorMessage }}</small>
@@ -272,20 +272,26 @@ function updateItemWrapper(data: ComponentDetails) {
 }
 
 function getNextComponentOptions() {
+  const options = [];
   if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["subGroup"]))
-    return props.shape.subGroup.map(subGroup => {
-      return { type: processComponentType(subGroup.componentType), name: subGroup.name };
-    });
-  else if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["property"]))
-    return props.shape.property.map(property => {
-      return { type: processComponentType(property.componentType), name: property.name };
-    });
+    options.push(
+      props.shape.subGroup.map(subGroup => {
+        return { type: processComponentType(subGroup.componentType), name: subGroup.name };
+      })
+    );
+  if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["property"]))
+    options.push(
+      props.shape.property.map(property => {
+        return { type: processComponentType(property.componentType), name: property.name };
+      })
+    );
+  if (options.length) return options;
   else return;
 }
 </script>
 
 <style scoped>
-.array-builder-container {
+.array-dropdown-builder-container {
   width: 100%;
   display: flex;
   flex-flow: column nowrap;
@@ -298,7 +304,16 @@ function getNextComponentOptions() {
   display: flex;
   flex-flow: column;
 }
+
+.dropdown-children-container {
+  border: 1px solid #dee2e6;
+  border-radius: 3px;
+  padding: 1rem;
+  overflow: auto;
+}
+
 .children-container {
+  margin-left: 2rem;
   padding: 1rem;
   border: 1px solid #dee2e6;
   border-radius: 3px;

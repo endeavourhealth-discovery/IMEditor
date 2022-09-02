@@ -85,11 +85,13 @@ function setProperties(shape: PropertyGroup) {
 
 .property-container {
   width: 100%;
-  /* max-height: 100%; */
+  flex: 0 1 auto;
+  max-height: 100%;
   display: flex;
   flex-flow: row;
   justify-content: center;
-  /* overflow: auto; */
+  align-content: flex-start;
+  overflow: auto;
   padding: 2rem 0 0 0;
 }
 </style>
