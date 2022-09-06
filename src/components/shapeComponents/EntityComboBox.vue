@@ -1,34 +1,37 @@
 <template>
   <div class="entity-combobox-container">
     <div class="multiselect-loading-container">
-      <span class="p-float-label">
-        <MultiSelect
-          :disabled="loading"
-          class="multi-select"
-          :class="invalid && 'invalid'"
-          v-model="selectedEntities"
-          :options="dropdownOptions"
-          optionLabel="name"
-          display="chip"
-        />
-        <label>{{ shape.name }}</label>
+      <span class="field">
+        <label for="chip-group">{{ shape.name }}</label>
+        <div id="chip-group" class="chip-group">
+          <Chip v-if="fixedOption" :label="fixedOption.name" class="fixed-chip"/>
+          <MultiSelect
+              :disabled="loading"
+              class="multi-select"
+              :class="invalid && 'invalid'"
+              v-model="selectedEntities"
+              :options="dropdownOptions"
+              optionLabel="name"
+              display="chip"
+          />
+        </div>
       </span>
-      <ProgressSpinner v-if="loading" class="loading-icon" stroke-width="8" />
+      <ProgressSpinner v-if="loading" class="loading-icon" stroke-width="8"/>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, watch, computed, onMounted, inject, PropType } from "vue";
-import { Enums, Helpers, Services } from "im-library";
-import store from "@/store";
-import injectionKeys from "@/injectionKeys/injectionKeys";
-import _ from "lodash";
-import { PropertyShape, TTIriRef, QueryRequest } from "im-library/dist/types/interfaces/Interfaces";
-import axios from "axios";
+import {ref, Ref, watch, onMounted, inject, PropType} from 'vue';
+import {Enums, Helpers, Services, Vocabulary} from 'im-library';
+import injectionKeys from '@/injectionKeys/injectionKeys';
+import {PropertyShape, TTIriRef, QueryRequest} from 'im-library/dist/types/interfaces/Interfaces';
+import axios from 'axios';
+
+const {RDFS } = Vocabulary;
+
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength },
-  Sorters: { byName },
   EditorMethods: { processArguments },
   Transforms: { mapToObject }
 } = Helpers;
@@ -48,21 +51,12 @@ const queryService = new QueryService(axios);
 const entityService = new EntityService(axios);
 
 const dropdownOptions: Ref<TTIriRef[]> = ref([]);
-onMounted(async () => {
-  loading.value = true;
-  dropdownOptions.value = await getDropdownOptions();
-  if (props.value && isArrayHasLength(props.value)) selectedEntities.value = props.value;
-  else if (isObjectHasKeys(props.shape, ["isIri"])) {
-    const found = dropdownOptions.value.find(option => option["@id"] === props.shape.isIri["@id"]);
-    if (found) selectedEntities.value = [found];
-  }
-  loading.value = false;
-});
+const fixedOption: Ref<TTIriRef> = ref({} as TTIriRef);
+const loading = ref(false);
+const selectedEntities: Ref<TTIriRef[]> = ref([]);
 
-let key = props.shape.path["@id"];
+let key = props.shape.path['@id'];
 
-let loading = ref(false);
-let selectedEntities: Ref<TTIriRef[]> = ref([]);
 watch(selectedEntities, async newValue => {
   if (isArrayHasLength(newValue)) {
     updateEntity(newValue);
@@ -71,25 +65,51 @@ watch(selectedEntities, async newValue => {
   }
 });
 
+onMounted(async () => {
+  loading.value = true;
+  dropdownOptions.value = await getDropdownOptions();
+
+  if (props.value && isArrayHasLength(props.value))
+    selectedEntities.value = props.value;
+
+  if (isObjectHasKeys(props.shape, ['isIri']))
+    processFixedValue();
+
+  loading.value = false;
+});
+
+function processFixedValue() {
+  fixedOption.value = props.shape.isIri;
+  dropdownOptions.value = dropdownOptions.value.filter(o => o['@id'] != fixedOption.value['@id']);
+  selectedEntities.value = selectedEntities.value.filter(o => o['@id'] != fixedOption.value['@id']);
+
+  if (!props.value || !props?.value.find(p => p['@id'] === fixedOption.value['@id'])) {
+    let update: any = {};
+    update[key] = props.value ? props.value.concat(fixedOption.value) : [fixedOption.value];
+    if (entityUpdate)
+      entityUpdate(update);
+  }
+}
+
 let invalid = ref(false);
 
 async function getDropdownOptions(): Promise<TTIriRef[]> {
-  if (isObjectHasKeys(props.shape, ["select", "argument"])) {
+  if (isObjectHasKeys(props.shape, ['select', 'argument'])) {
     const args = processArguments(props.shape);
     const replacedArgs = mapToObject(args);
     const queryRequest = { argument: replacedArgs, queryIri: props.shape.select[0] } as QueryRequest;
     const result = await queryService.entityQuery(queryRequest);
     if (result)
       return result.map((item: any) => {
-        return { "@id": item.iri, name: item.name };
+        return { '@id': item['@id'], name: item[RDFS.LABEL] };
       });
     else return [];
-  } else if (isObjectHasKeys(props.shape, ["function", "argument"])) {
+  } else if (isObjectHasKeys(props.shape, ['function', 'argument'])) {
     const args = processArguments(props.shape);
-    return await queryService.runFunction(props.shape.function["@id"], args);
-  } else if (isObjectHasKeys(props.shape, ["function"])) {
-    return await queryService.runFunction(props.shape.function["@id"]);
-  } else throw new Error("propertyshape is missing 'search' or 'function' parameter to fetch dropdown options");
+    return queryService.runFunction(props.shape.function['@id'], args);
+  } else if (isObjectHasKeys(props.shape, ['function'])) {
+    return queryService.runFunction(props.shape.function['@id']);
+  } else throw new Error('propertyshape is missing \'search\' or \'function\' parameter to fetch dropdown options');
 }
 
 function updateEntity(data: TTIriRef) {
@@ -106,8 +126,8 @@ function updateValueVariableMap(data: TTIriRef) {
 }
 
 async function updateValidity(data: TTIriRef) {
-  if (isObjectHasKeys(props.shape, ["validation"])) {
-    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], data));
+  if (isObjectHasKeys(props.shape, ['validation'])) {
+    invalid.value = !(await queryService.checkValidation(props.shape.validation['@id'], data));
   } else {
     invalid.value = !defaultValidity(data);
   }
@@ -128,12 +148,22 @@ function defaultValidity(data: TTIriRef) {
   height: fit-content;
 }
 
-.p-float-label {
-  flex: 1 1 auto;
+.field {
+  width: 100%;
+}
+
+.chip-group {
+  display: flex;
+  width: 100%;
+}
+
+.fixed-chip {
+  flex-basis: content;
+  flex: 0 0 auto;
 }
 
 .multi-select {
-  width: 100%;
+  flex: 1 1 auto;
 }
 
 .loading-icon {

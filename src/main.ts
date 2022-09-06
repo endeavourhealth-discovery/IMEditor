@@ -76,6 +76,7 @@ import Tag from "primevue/tag";
 import AutoComplete from "primevue/autocomplete";
 import Sidebar from "primevue/sidebar";
 import Steps from "primevue/steps";
+import Chip from 'primevue/chip';
 import Chips from "primevue/chips";
 import InputNumber from "primevue/inputnumber";
 
@@ -164,6 +165,7 @@ const app = createApp(App)
   .component("AutoComplete", AutoComplete)
   .component("Sidebar", Sidebar)
   .component("Chips", Chips)
+  .component("Chip", Chip)
   .component("InputNumber", InputNumber)
   .component("Steps", Steps);
 
