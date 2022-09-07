@@ -33,9 +33,16 @@ const props = defineProps({
 });
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
+const editorEntity = inject(injectionKeys.editorEntity)?.editorEntity;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
 const valueVariableMap = inject(injectionKeys.valueVariableMap)?.valueVariableMap;
 const valueVariableMapUpdate = inject(injectionKeys.valueVariableMap)?.updateValueVariableMap;
+if (valueVariableMap) {
+  watch(
+    () => _.cloneDeep(valueVariableMap.value),
+    async () => await init()
+  );
+}
 
 const queryService = new QueryService(axios);
 
@@ -57,13 +64,7 @@ watch(userInput, async newValue => {
   }
 });
 onMounted(async () => {
-  if (props.value) userInput.value = props.value;
-  else {
-    loading.value = true;
-    const result = await processPropertyValue(props.shape);
-    if (result) userInput.value = result;
-    loading.value = false;
-  }
+  await init();
 });
 
 watch(
@@ -77,6 +78,16 @@ watch(
   }
 );
 
+async function init() {
+  if (props.value) userInput.value = props.value;
+  else {
+    loading.value = true;
+    const result = await processPropertyValue(props.shape);
+    if (result) userInput.value = result;
+    loading.value = false;
+  }
+}
+
 function compareMaps(map1: Map<string, any>, map2: Map<string, any>) {
   let testValue;
   if (map1.size !== map2.size) return false;
@@ -88,7 +99,6 @@ function compareMaps(map1: Map<string, any>, map2: Map<string, any>) {
 }
 
 async function processPropertyValue(property: PropertyShape): Promise<string> {
-  if (props.mode === EditorMode.EDIT) return "";
   if (isObjectHasKeys(property, ["isIri"])) {
     return property.isIri["@id"];
   }
