@@ -27,6 +27,7 @@ const props = defineProps({
 });
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
+const editorEntity = inject(injectionKeys.editorEntity)?.editorEntity;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
 const valueVariableMapUpdate = inject(injectionKeys.valueVariableMap)?.updateValueVariableMap;
 
@@ -60,7 +61,8 @@ function updateValueVariableMap(data: string) {
 }
 
 async function updateValidity() {
-  if (isObjectHasKeys(props.shape, ["validation"])) invalid.value = await queryService.checkValidation(props.shape.validation["@id"], userInput.value);
+  if (isObjectHasKeys(props.shape, ["validation"]) && editorEntity)
+    invalid.value = await queryService.checkValidation(props.shape.validation["@id"], editorEntity.value);
   else invalid.value = !defaultValidation(userInput.value);
   if (validityUpdate) validityUpdate({ key: key, valid: !invalid.value });
 }

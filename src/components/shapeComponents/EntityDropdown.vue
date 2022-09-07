@@ -32,6 +32,7 @@ const props = defineProps({
 });
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
+const editorEntity = inject(injectionKeys.editorEntity)?.editorEntity;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
 const valueVariableMapUpdate = inject(injectionKeys.valueVariableMap)?.updateValueVariableMap;
 
@@ -90,8 +91,8 @@ function updateValueVariableMap(data: TTIriRef) {
 }
 
 async function updateValidity(data: TTIriRef) {
-  if (isObjectHasKeys(props.shape, ["validation"])) {
-    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], data));
+  if (isObjectHasKeys(props.shape, ["validation"]) && editorEntity) {
+    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], editorEntity.value));
   } else {
     invalid.value = !defaultValidation(data);
   }

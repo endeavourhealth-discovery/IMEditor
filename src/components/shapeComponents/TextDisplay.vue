@@ -145,8 +145,8 @@ function updateValueVariableMap(data: string) {
 }
 
 async function updateValidity() {
-  if (isObjectHasKeys(props.shape, ["validation"])) {
-    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], userInput));
+  if (isObjectHasKeys(props.shape, ["validation"]) && editorEntity) {
+    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], editorEntity.value));
   } else {
     invalid.value = !defaultValidation();
   }

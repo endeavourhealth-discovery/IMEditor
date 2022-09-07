@@ -59,6 +59,7 @@ const props = defineProps({
 });
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
+const editorEntity = inject(injectionKeys.editorEntity)?.editorEntity;
 const deleteEntityKey = inject(injectionKeys.editorEntity)?.deleteEntityKey;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
 
@@ -70,25 +71,24 @@ let loading = ref(true);
 let validationErrorMessage = "Failed validation";
 let build: Ref<ComponentDetails[]> = ref([]);
 onMounted(() => {
-  key = props.shape.path["@id"];
-  if (isObjectHasKeys(props.shape, ["validationErrorMessage"])) validationErrorMessage = props.shape.validationErrorMessage;
-  createBuild();
+  init();
+});
+watch([() => _.cloneDeep(props.value), () => _.cloneDeep(props.shape)], () => {
+  init();
 });
 watch(
-  () => _.cloneDeep(props.shape),
-  () => {
-    key = props.shape.path["@id"];
-    if (isObjectHasKeys(props.shape, ["validationErrorMessage"])) validationErrorMessage = props.shape.validationErrorMessage;
-    createBuild();
-  }
-);
-watch(
   () => _.cloneDeep(build.value),
-  async () => {
-    if (entityUpdate) updateEntity();
+  async newValue => {
+    if (entityUpdate && isArrayHasLength(newValue)) updateEntity();
     if (validityUpdate) await updateValidity();
   }
 );
+
+function init() {
+  key = props.shape.path["@id"];
+  if (isObjectHasKeys(props.shape, ["validationErrorMessage"])) validationErrorMessage = props.shape.validationErrorMessage;
+  createBuild();
+}
 
 function createBuild() {
   loading.value = true;
@@ -159,12 +159,11 @@ function updateEntity() {
   const result = {} as any;
   result[key] = value;
   if (entityUpdate && value.length) entityUpdate(result);
-  else if (deleteEntityKey && !props.shape.minCount) deleteEntityKey(key);
 }
 
 async function updateValidity() {
-  if (isPropertyShape(props.shape) && isObjectHasKeys(props.shape, ["validation"])) {
-    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], generateBuildAsJson()));
+  if (isPropertyShape(props.shape) && isObjectHasKeys(props.shape, ["validation"]) && editorEntity) {
+    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], editorEntity.value));
   } else {
     invalid.value = !defaultValidation();
   }
@@ -192,6 +191,7 @@ function deleteItem(data: ComponentDetails): void {
   const index = build.value.findIndex(item => item.position === data.position);
   build.value.splice(index, 1);
   if (build.value.length === 0) {
+    if (deleteEntityKey) deleteEntityKey(key);
     createDefaultBuild();
     return;
   }

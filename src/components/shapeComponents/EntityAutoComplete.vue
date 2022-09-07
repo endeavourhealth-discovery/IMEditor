@@ -116,6 +116,7 @@ const emit = defineEmits({
 });
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
+const editorEntity = inject(injectionKeys.editorEntity)?.editorEntity;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
 const valueVariableMap = inject(injectionKeys.valueVariableMap)?.valueVariableMap;
 const valueVariableMapUpdate = inject(injectionKeys.valueVariableMap)?.updateValueVariableMap;
@@ -268,8 +269,8 @@ function updateEntity(value: ConceptSummary) {
 }
 
 async function updateValidity(value: ConceptSummary) {
-  if (isObjectHasKeys(props.shape, ["validation"])) {
-    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], value));
+  if (isObjectHasKeys(props.shape, ["validation"]) && editorEntity) {
+    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], editorEntity.value));
   } else {
     invalid.value = !defaultValidity();
   }

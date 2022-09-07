@@ -67,6 +67,7 @@ const emit = defineEmits({
 });
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
+const editorEntity = inject(injectionKeys.editorEntity)?.editorEntity;
 const deleteEntityKey = inject(injectionKeys.editorEntity)?.deleteEntityKey;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
 
@@ -228,12 +229,11 @@ function updateEntity() {
   result[key] = value;
   if (entityUpdate && isObjectHasKeys(value) && !props.shape.builderChild) entityUpdate(result);
   else if (entityUpdate && isObjectHasKeys(value)) emit("updateClicked", value);
-  else if (deleteEntityKey && !props.shape.minCount) deleteEntityKey(key);
 }
 
 async function updateValidity() {
-  if (isPropertyShape(props.shape) && isObjectHasKeys(props.shape, ["validation"])) {
-    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], generateBuildAsJson()));
+  if (isPropertyShape(props.shape) && isObjectHasKeys(props.shape, ["validation"]) && editorEntity) {
+    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], editorEntity.value));
   } else {
     invalid.value = !defaultValidation();
   }
@@ -261,6 +261,7 @@ function deleteItem(data: ComponentDetails): void {
   const index = build.value.findIndex(item => item.position === data.position);
   build.value.splice(index, 1);
   if (build.value.length === 0) {
+    if (deleteEntityKey) deleteEntityKey(key);
     createDefaultBuild();
     return;
   }
