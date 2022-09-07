@@ -88,6 +88,8 @@ onMounted(async () => {
   if (isObjectHasKeys(props.shape, ["validationErrorMessage"])) validationErrorMessage = props.shape.validationErrorMessage;
   dropdownOptions.value = await getDropdownOptions();
   await createBuild();
+  if (entityUpdate) updateEntity();
+  if (validityUpdate) await updateValidity();
   loading.value = false;
 });
 watch(
@@ -99,14 +101,18 @@ watch(
     dropdownOptions.value = await getDropdownOptions();
     setDropdownFromValue();
     await createBuild();
+    if (entityUpdate) updateEntity();
+    if (validityUpdate) await updateValidity();
     loading.value = false;
   }
 );
 watch(
   () => _.cloneDeep(build.value),
   async () => {
-    if (entityUpdate) updateEntity();
-    if (validityUpdate) await updateValidity();
+    if (!loading.value) {
+      if (entityUpdate) updateEntity();
+      if (validityUpdate) await updateValidity();
+    }
   }
 );
 
@@ -327,5 +333,11 @@ function getNextComponentOptions() {
 }
 .invalid {
   border-color: #e24c4c;
+}
+
+.validate-error {
+  color: #e24c4c;
+  font-size: 0.8rem;
+  padding: 0 0 0.25rem 0;
 }
 </style>

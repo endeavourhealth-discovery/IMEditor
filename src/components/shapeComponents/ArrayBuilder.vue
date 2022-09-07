@@ -243,4 +243,10 @@ function getNextComponentOptions() {
 .invalid {
   border-color: #e24c4c;
 }
+
+.validate-error {
+  color: #e24c4c;
+  font-size: 0.8rem;
+  padding: 0 0 0.25rem 0;
+}
 </style>
