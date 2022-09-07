@@ -348,6 +348,7 @@ function refreshCreator() {
     if (result.isConfirmed) {
       editorEntity.value = { ...editorEntityOriginal.value };
       currentStep.value = 0;
+      router.push(stepsItems.value[currentStep.value].to);
     }
   });
 }
