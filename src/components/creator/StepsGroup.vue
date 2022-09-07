@@ -14,10 +14,9 @@ import EntityDropdown from "../shapeComponents/EntityDropdown.vue";
 import HtmlInput from "@/components/shapeComponents/HtmlInput.vue";
 import TextInput from "@/components/shapeComponents/TextInput.vue";
 import TextDisplay from "@/components/shapeComponents/TextDisplay.vue";
-import MembersBuilder from "../shapeComponents/MembersBuilder.vue";
 
 export default defineComponent({
-  components: { EntityComboBox, ArrayBuilder, ArrayBuilderWithDropdown, EntityDropdown, HtmlInput, TextDisplay, TextInput, MembersBuilder }
+  components: { EntityComboBox, ArrayBuilder, ArrayBuilderWithDropdown, EntityDropdown, HtmlInput, TextDisplay, TextInput }
 });
 </script>
 
