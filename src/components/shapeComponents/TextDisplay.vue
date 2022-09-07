@@ -52,7 +52,7 @@ let loading = ref(false);
 let invalid = ref(false);
 
 let userInput = ref("");
-watch([() => props.value, () => props.shape], async ([newPropsValue, newShapeValue]) => {
+watch([() => _.cloneDeep(props.value), () => _.cloneDeep(props.shape)], async ([newPropsValue, newShapeValue]) => {
   if (newPropsValue && newShapeValue) userInput.value = newPropsValue;
   else userInput.value = await processPropertyValue(newShapeValue);
 });
