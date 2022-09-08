@@ -76,7 +76,7 @@ import Tag from "primevue/tag";
 import AutoComplete from "primevue/autocomplete";
 import Sidebar from "primevue/sidebar";
 import Steps from "primevue/steps";
-import Chip from 'primevue/chip';
+import Chip from "primevue/chip";
 import Chips from "primevue/chips";
 import InputNumber from "primevue/inputnumber";
 
@@ -93,12 +93,7 @@ import IMLibrary, { Helpers, Services } from "im-library";
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
-const { ConfigService, EntityService, Env, LoggerService, QueryService, SetService } = Services;
-
-const configService = new ConfigService(axios);
-const entityService = new EntityService(axios);
-const queryService = new QueryService(axios);
-const setService = new SetService(axios);
+const { Env } = Services;
 
 Amplify.configure(awsconfig);
 Auth.configure(awsconfig);
@@ -169,18 +164,9 @@ const app = createApp(App)
   .component("InputNumber", InputNumber)
   .component("Steps", Steps);
 
-app.config.globalProperties.$configService = configService;
-app.config.globalProperties.$entityService = entityService;
-app.config.globalProperties.$env = Env;
-app.config.globalProperties.$loggerService = LoggerService;
-app.config.globalProperties.$queryService = queryService;
-app.config.globalProperties.$setService = setService;
-
 app.config.unwrapInjectedRef = true;
 
 const vm = app.mount("#app");
-
-export default vm;
 
 axios.interceptors.request.use(async (request: any) => {
   if (store.state.isLoggedIn && Env.API && request.url?.startsWith(Env.API)) {
