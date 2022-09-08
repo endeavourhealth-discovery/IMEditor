@@ -20,110 +20,109 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
 import TermsTable from "@/components/infobar/infoSideBar/TermsTable.vue";
+
+export default defineComponent({
+  components: { TermsTable }
+});
+</script>
+
+<script setup lang="ts">
+import { defineComponent, onMounted, PropType, ref, Ref } from "vue";
 import { DefinitionConfig } from "im-library/dist/types/interfaces/Interfaces";
-import { Helpers } from "im-library";
+import { Helpers, Services } from "im-library";
+import axios from "axios";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject }
 } = Helpers;
+const { EntityService } = Services;
 
-export default defineComponent({
-  name: "Definition",
-  components: {
-    TermsTable
-  },
-  props: {
-    concept: { type: Object, required: true },
-    configs: { type: Array as PropType<Array<DefinitionConfig>>, required: true },
-    totalCount: { type: Number as any }
-  },
+const props = defineProps({
+  concept: { type: Object, required: true },
+  configs: { type: Array as PropType<Array<DefinitionConfig>>, required: true },
+  totalCount: { type: Number as any }
+});
 
-  data() {
-    return {
-      nextPage: 2,
-      pageSize: 10,
-      loadButton: false,
-      children: {} as any
-    };
-  },
+const entityService = new EntityService(axios);
 
-  mounted() {
-    if (this.totalCount >= this.pageSize) {
-      this.loadButton = true;
-    }
-  },
+let nextPage = ref(2);
+let pageSize = ref(10);
+let loadButton = ref(false);
+let children: Ref<any> = ref({});
 
-  methods: {
-    showItem(config: DefinitionConfig, index: number): boolean {
-      let dataResults = [];
-      if (config.type === "SectionDivider") {
-        let i = index - 1;
-        while (i > 0) {
-          const data = this.concept[this.configs[i].predicate];
-          if (this.configs[i].type === "SectionDivider") {
-            break;
-          }
-          dataResults.push(this.hasData(data));
-          i--;
-        }
-      } else if (config.type === "TextSectionHeader") {
-        let i = index + 1;
-        while (i < this.configs.length) {
-          const data = this.concept[this.configs[i].predicate];
-          if (this.configs[i].type === "SectionDivider") {
-            break;
-          }
-          dataResults.push(this.hasData(data));
-          i++;
-        }
-      } else {
-        const data = this.concept[this.configs[index].predicate];
-        dataResults.push(this.hasData(data));
-      }
-      return !dataResults.every(value => value === false);
-    },
-
-    hasData(data: any): boolean {
-      if (!data) {
-        return false;
-      } else if (Array.isArray(data)) {
-        return isArrayHasLength(data) ? true : false;
-      } else if (typeof data === "string") {
-        return true;
-      } else if (typeof data === "number") {
-        return true;
-      } else if (isObjectHasKeys(data, ["count"])) {
-        return data.count ? true : false;
-      } else if (isObjectHasKeys(data, ["entity", "predicates"])) {
-        return isObjectHasKeys(data.entity);
-      } else if (isObject(data)) {
-        return isObjectHasKeys(data) ? true : false;
-      } else {
-        console.log(`Unexpected data type encountered for function hasData in definition. Data: ${JSON.stringify(data)}`);
-        return false;
-      }
-    },
-
-    async loadMore(predicate: string) {
-      if (this.loadButton) {
-        if (this.nextPage * this.pageSize < this.totalCount) {
-          this.children = await this.$entityService.getPagedChildren(this.concept["@id"], this.nextPage, this.pageSize);
-          this.concept[predicate] = this.concept[predicate].concat(this.children.result);
-          this.nextPage = this.nextPage + 1;
-          this.loadButton = true;
-        } else if (this.nextPage * this.pageSize > this.totalCount) {
-          this.children = await this.$entityService.getPagedChildren(this.concept["@id"], this.nextPage, this.totalCount - (this.nextPage - 1) * this.pageSize + 1);
-          this.concept[predicate] = this.concept[predicate].concat(this.children.result);
-          this.loadButton = false;
-        } else {
-          this.loadButton = false;
-        }
-      }
-      this.showItem(this.configs[1], 1);
-    }
+onMounted(() => {
+  if (props.totalCount >= pageSize.value) {
+    loadButton.value = true;
   }
 });
+
+function showItem(config: DefinitionConfig, index: number): boolean {
+  let dataResults = [];
+  if (config.type === "SectionDivider") {
+    let i = index - 1;
+    while (i > 0) {
+      const data = props.concept[props.configs[i].predicate];
+      if (props.configs[i].type === "SectionDivider") {
+        break;
+      }
+      dataResults.push(hasData(data));
+      i--;
+    }
+  } else if (config.type === "TextSectionHeader") {
+    let i = index + 1;
+    while (i < props.configs.length) {
+      const data = props.concept[props.configs[i].predicate];
+      if (props.configs[i].type === "SectionDivider") {
+        break;
+      }
+      dataResults.push(hasData(data));
+      i++;
+    }
+  } else {
+    const data = props.concept[props.configs[index].predicate];
+    dataResults.push(hasData(data));
+  }
+  return !dataResults.every(value => value === false);
+}
+
+function hasData(data: any): boolean {
+  if (!data) {
+    return false;
+  } else if (Array.isArray(data)) {
+    return isArrayHasLength(data) ? true : false;
+  } else if (typeof data === "string") {
+    return true;
+  } else if (typeof data === "number") {
+    return true;
+  } else if (isObjectHasKeys(data, ["count"])) {
+    return data.count ? true : false;
+  } else if (isObjectHasKeys(data, ["entity", "predicates"])) {
+    return isObjectHasKeys(data.entity);
+  } else if (isObject(data)) {
+    return isObjectHasKeys(data) ? true : false;
+  } else {
+    console.log(`Unexpected data type encountered for function hasData in definition. Data: ${JSON.stringify(data)}`);
+    return false;
+  }
+}
+
+async function loadMore(predicate: string) {
+  if (loadButton.value) {
+    if (nextPage.value * pageSize.value < props.totalCount) {
+      children.value = await entityService.getPagedChildren(props.concept["@id"], nextPage.value, pageSize.value);
+      props.concept[predicate] = props.concept[predicate].concat(children.value.result);
+      nextPage.value = nextPage.value + 1;
+      loadButton.value = true;
+    } else if (nextPage.value * pageSize.value > props.totalCount) {
+      children.value = await entityService.getPagedChildren(props.concept["@id"], nextPage.value, props.totalCount - (nextPage.value - 1) * pageSize.value + 1);
+      props.concept[predicate] = props.concept[predicate].concat(children.value.result);
+      loadButton.value = false;
+    } else {
+      loadButton.value = false;
+    }
+  }
+  showItem(props.configs[1], 1);
+}
 </script>
 
 <style scoped>
