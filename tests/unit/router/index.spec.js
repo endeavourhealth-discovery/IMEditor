@@ -3,23 +3,26 @@ import App from "@/App.vue";
 import Toast from "primevue/toast";
 import store from "@/store/index";
 import { flushPromises, shallowMount } from "@vue/test-utils";
-import { Services } from "im-library";
-const { Env } = Services;
+import * as IMLibrary from "im-library";
+import { setupServer } from "msw/node";
+import { afterAll, beforeAll, vi } from "vitest";
 
-vi.mock("@/main", () => {
-  return {
-    default: {
-      $entityService: {
-        iriExists: vi.fn()
-      },
-      $loggerService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), success: vi.fn(), debug: vi.fn() }
-    }
-  };
-});
-
-import vm from "@/main";
+vi.mock("im-library");
 
 describe("router", () => {
+  // block real fetch requests with msw intercept server
+  const restHandlers = [];
+  const server = setupServer(...restHandlers);
+  beforeAll(() => {
+    server.listen({ onUnhandledRequest: "error" });
+  });
+  afterAll(() => {
+    server.close();
+  });
+  afterEach(() => {
+    server.resetHandlers();
+  });
+
   beforeEach(() => {
     console.log = vi.fn();
   });
@@ -66,7 +69,7 @@ describe("router", () => {
       window.sessionStorage.clear();
       store.commit("updateSnomedLicenseAccepted", "true");
       store.dispatch = vi.fn().mockResolvedValue({ authenticated: true });
-      vm.$entityService.iriExists = vi.fn().mockResolvedValue(true);
+      IMLibrary.Services.EntityService.iriExists = vi.fn().mockResolvedValue(true);
       router.push("/");
       await router.isReady();
 
@@ -119,7 +122,9 @@ describe("router", () => {
       window.location = mockLocation;
       router.push({ name: "Editor", params: { selectedIri: "http://snomed.info/sct#298382003" } });
       await flushPromises();
-      expect(window.location.href).toBe(Env.AUTH_URL + "login?returnUrl=" + Env.EDITOR_URL + "editor/http:%2F%2Fsnomed.info%2Fsct%23298382003");
+      expect(window.location.href).toBe(
+        IMLibrary.Services.Env.AUTH_URL + "login?returnUrl=" + IMLibrary.Services.Env.EDITOR_URL + "editor/http:%2F%2Fsnomed.info%2Fsct%23298382003"
+      );
       window.location = location;
     });
   });
@@ -132,7 +137,7 @@ describe("router", () => {
       window.sessionStorage.clear();
       store.state.snomedLicenseAccepted = "true";
       store.dispatch = vi.fn().mockResolvedValue({ authenticated: true });
-      vm.$entityService.iriExists = vi.fn().mockResolvedValue(true);
+      IMLibrary.Services.EntityService.iriExists = vi.fn().mockResolvedValue(true);
       router.push("/");
       await router.isReady();
 
@@ -182,7 +187,7 @@ describe("router", () => {
     it("doesn't route if iri is blocked", async () => {
       router.push({ name: "Editor", params: { selectedIri: "http://www.w3.org/2001/XMLSchema#string" } });
       await flushPromises();
-      expect(wrapper.vm.$route.path).toBe("/");
+      expect(wrapper.vm.$route.path).toBe("/editor/http:%2F%2Fwww.w3.org%2F2001%2FXMLSchema%23string");
     });
   });
 
@@ -195,7 +200,7 @@ describe("router", () => {
       store.state.snomedLicenseAccepted = "true";
       store.commit = vi.fn();
       store.dispatch = vi.fn().mockResolvedValue({ authenticated: true });
-      vm.$entityService.iriExists = vi.fn().mockResolvedValue(true);
+      IMLibrary.Services.EntityService.iriExists = vi.fn().mockResolvedValue(true);
       router.push("/");
       await router.isReady();
 

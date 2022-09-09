@@ -105,7 +105,7 @@ if (import.meta.env.MODE === "mock") {
 }
 
 const app = createApp(App)
-  .use(store as any)
+  .use(store)
   .use(router)
   .use(PrimeVue, { ripple: true })
   .use(IMLibrary.install as Plugin, { store })
