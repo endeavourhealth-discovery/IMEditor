@@ -4,6 +4,7 @@ import router from "./router";
 import store from "./store";
 import PrimeVue from "primevue/config";
 import VueClipboard from "vue3-clipboard";
+import { worker } from "./mocks/browser";
 
 // Font Awesome
 import { library, dom } from "@fortawesome/fontawesome-svg-core";
@@ -98,8 +99,13 @@ const { Env } = Services;
 Amplify.configure(awsconfig);
 Auth.configure(awsconfig);
 
+// msw initialising
+if (import.meta.env.MODE === "mock") {
+  worker.start();
+}
+
 const app = createApp(App)
-  .use(store as any)
+  .use(store)
   .use(router)
   .use(PrimeVue, { ripple: true })
   .use(IMLibrary.install as Plugin, { store })

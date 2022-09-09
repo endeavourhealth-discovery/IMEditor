@@ -71,8 +71,8 @@
 import { PropType, watch, ref, Ref, onMounted, inject, onBeforeUnmount } from "vue";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import axios from "axios";
-import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/SearchMiniOverlay.vue";
-import QuantifierTree from "@/components/edit/memberEditor/builder/quantifier/QuantifierTree.vue";
+import SearchMiniOverlay from "@/components/shapeComponents/builder/entity/SearchMiniOverlay.vue";
+import QuantifierTree from "@/components/shapeComponents/builder/quantifier/QuantifierTree.vue";
 import _ from "lodash";
 import { Vocabulary, Helpers, Enums, Models, Services } from "im-library";
 import {

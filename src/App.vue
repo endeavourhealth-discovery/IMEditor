@@ -11,7 +11,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import ProgressSpinner from "primevue/progressspinner";
-import store from "@/store/index";
+import { useStore } from "vuex";
+
+const store = useStore();
 
 let loading = ref(false);
 
@@ -21,7 +23,6 @@ onMounted(async () => {
   await store.dispatch("fetchFilterSettings");
   loading.value = false;
 });
-
 </script>
 
 <style>
