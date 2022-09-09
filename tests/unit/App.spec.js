@@ -4,12 +4,18 @@ import Toast from "primevue/toast";
 import ProgressSpinner from "primevue/progressspinner";
 import { setupServer } from "msw/node";
 import { afterAll, beforeAll, vi } from "vitest";
-import { createStore } from "vuex";
+import * as vuex from "vuex";
+
+vi.mock("vuex", () => ({
+  useStore: () => ({
+    dispatch: mockDispatch
+  })
+}));
+
+const mockDispatch = vi.fn();
 
 describe("App.vue", () => {
   let wrapper;
-  let mockStore;
-  const actions = { authenticateCurrentUser: vi.fn(), fetchFilterSettings: vi.fn() };
 
   const restHandlers = [];
   const server = setupServer(...restHandlers);
@@ -28,21 +34,18 @@ describe("App.vue", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    mockStore = createStore({
-      actions: actions
-    });
     wrapper = shallowMount(App, {
       global: {
         components: { Toast, ProgressSpinner },
-        stubs: ["router-link", "router-view"],
-        plugins: [mockStore]
+        stubs: ["router-link", "router-view"]
       }
     });
   });
 
   it("should check auth and update blockedIris on mount", async () => {
     await flushPromises();
-    expect(actions.authenticateCurrentUser).toHaveBeenCalledTimes(1);
-    expect(actions.fetchFilterSettings).toHaveBeenCalledTimes(1);
+    expect(mockDispatch).toHaveBeenCalledTimes(2);
+    expect(mockDispatch).toHaveBeenNthCalledWith(1, "authenticateCurrentUser");
+    expect(mockDispatch).toHaveBeenNthCalledWith(2, "fetchFilterSettings");
   });
 });
