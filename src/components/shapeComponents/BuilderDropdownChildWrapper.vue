@@ -15,10 +15,9 @@
 import EntitySearch from "./EntitySearch.vue";
 import EntityAutoComplete from "./EntityAutoComplete.vue";
 import ComponentGroup from "./ComponentGroup.vue";
-import ArrayBuilderWithDropdown from "./ArrayBuilderWithDropdown.vue";
 
 export default defineComponent({
-  components: { EntitySearch, EntityAutoComplete, ComponentGroup, ArrayBuilderWithDropdown }
+  components: { EntitySearch, EntityAutoComplete, ComponentGroup }
 });
 </script>
 
@@ -57,7 +56,7 @@ function createEntity(data?: any): ComponentDetails {
       value: data,
       id: props.id,
       position: props.position,
-      type: ComponentType.BUILDER_CHILD_WRAPPER,
+      type: ComponentType.BUILDER_DROPDOWN_CHILD_WRAPPER,
       json: data,
       showButtons: props.showButtons,
       shape: props.shape,
@@ -68,7 +67,7 @@ function createEntity(data?: any): ComponentDetails {
       value: undefined,
       id: props.id,
       position: props.position,
-      type: ComponentType.BUILDER_CHILD_WRAPPER,
+      type: ComponentType.BUILDER_DROPDOWN_CHILD_WRAPPER,
       json: {},
       showButtons: props.showButtons,
       shape: props.shape,

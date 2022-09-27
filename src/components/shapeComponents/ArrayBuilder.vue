@@ -5,7 +5,7 @@
       <ProgressSpinner />
     </div>
     <div v-else class="children-container" :class="invalid && 'invalid'">
-      <small v-if="invalid" class="validate-error">Failed validation</small>
+      <small v-if="invalid" class="validate-error">{{ validationErrorMessage }}</small>
       <template v-for="item of build" :key="item.id">
         <component
           :is="item.type"
@@ -15,6 +15,7 @@
           :showButtons="item.showButtons"
           :shape="item.shape"
           :mode="mode"
+          :nextComponentOptions="getNextComponentOptions()"
           @deleteClicked="deleteItem"
           @addClicked="addItemWrapper"
           @updateClicked="updateItemWrapper"
@@ -52,12 +53,14 @@ const { BuilderType, ComponentType } = Enums;
 const { IM } = Vocabulary;
 
 const props = defineProps({
-  shape: { type: Object as PropType<PropertyShape | PropertyGroup>, required: true },
+  shape: { type: Object as PropType<PropertyGroup>, required: true },
   mode: { type: String as PropType<Enums.EditorMode>, required: true },
   value: { type: Array as PropType<TTIriRef[]>, required: false }
 });
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
+const editorEntity = inject(injectionKeys.editorEntity)?.editorEntity;
+const deleteEntityKey = inject(injectionKeys.editorEntity)?.deleteEntityKey;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
 
 const queryService = new QueryService(axios);
@@ -65,31 +68,26 @@ const queryService = new QueryService(axios);
 let key = props.shape.path["@id"];
 
 let loading = ref(true);
-
-let filters: Ref<{ status: EntityReferenceNode[]; schemes: Namespace[]; types: EntityReferenceNode[] } | undefined> = ref();
-
+let validationErrorMessage = "Failed validation";
 let build: Ref<ComponentDetails[]> = ref([]);
 onMounted(() => {
-  setFilters();
-  createBuild();
+  init();
+});
+watch([() => _.cloneDeep(props.value), () => _.cloneDeep(props.shape)], () => {
+  init();
 });
 watch(
-  () => _.cloneDeep(props.shape),
-  () => {
-    createBuild();
-  }
-);
-watch(
   () => _.cloneDeep(build.value),
-  async () => {
-    if (entityUpdate) updateEntity();
+  async newValue => {
+    if (entityUpdate && isArrayHasLength(newValue)) updateEntity();
     if (validityUpdate) await updateValidity();
   }
 );
 
-function setFilters() {
-  const typeOptions = store.state.filterOptions.types.filter(type => type["@id"] === IM.CONCEPT);
-  filters.value = { status: store.state.filterOptions.status, schemes: store.state.filterOptions.schemes, types: typeOptions };
+function init() {
+  key = props.shape.path["@id"];
+  if (isObjectHasKeys(props.shape, ["validationErrorMessage"])) validationErrorMessage = props.shape.validationErrorMessage;
+  createBuild();
 }
 
 function createBuild() {
@@ -105,10 +103,6 @@ function createBuild() {
     build.value.push(processChild(item, position));
     position++;
   });
-  for (const item in props.value) {
-    build.value.push(processChild(item, position));
-    position++;
-  }
   if (!isArrayHasLength(build.value)) {
     createDefaultBuild();
   }
@@ -118,11 +112,19 @@ function createBuild() {
 function createDefaultBuild() {
   build.value = [];
   if (isPropertyGroup(props.shape))
-    props.shape.property.forEach(property => {
-      build.value.push(
-        generateNewComponent(ComponentType.BUILDER_CHILD_WRAPPER, property.order - 1, undefined, property, { minus: true, plus: true }, props.mode)
-      );
-    });
+    if (isObjectHasKeys(props.shape, ["property"])) {
+      props.shape.property.forEach(property => {
+        build.value.push(
+          generateNewComponent(ComponentType.BUILDER_CHILD_WRAPPER, property.order - 1, undefined, property, { minus: true, plus: true }, props.mode)
+        );
+      });
+    } else if (isObjectHasKeys(props.shape, ["subGroup"])) {
+      props.shape.subGroup.forEach(subGroup => {
+        build.value.push(
+          generateNewComponent(ComponentType.BUILDER_CHILD_WRAPPER, subGroup.order - 1, undefined, subGroup, { minus: true, plus: true }, props.mode)
+        );
+      });
+    }
 }
 
 function processChild(child: any, position: number) {
@@ -130,7 +132,7 @@ function processChild(child: any, position: number) {
     ComponentType.BUILDER_CHILD_WRAPPER,
     position,
     child,
-    props.shape,
+    isObjectHasKeys(props.shape, ["property"]) ? props.shape.property[0] : props.shape.subGroup[0],
     {
       minus: true,
       plus: true
@@ -156,12 +158,12 @@ function updateEntity() {
   const value = generateBuildAsJson();
   const result = {} as any;
   result[key] = value;
-  if (entityUpdate) entityUpdate(result);
+  if (entityUpdate && value.length) entityUpdate(result);
 }
 
 async function updateValidity() {
-  if (isPropertyShape(props.shape) && isObjectHasKeys(props.shape, ["validation"])) {
-    invalid.value = !(await queryService.checkValidation(generateBuildAsJson(), props.shape.validation["@id"]));
+  if (isPropertyShape(props.shape) && isObjectHasKeys(props.shape, ["validation"]) && editorEntity) {
+    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], editorEntity.value));
   } else {
     invalid.value = !defaultValidation();
   }
@@ -174,8 +176,10 @@ function defaultValidation() {
 
 function addItemWrapper(data: { selectedType: Enums.ComponentType; position: number; value: any; shape: PropertyShape | PropertyGroup }): void {
   let shape;
-  if (isPropertyGroup(props.shape)) {
-    shape = props.shape.property.find(p => p.componentType["@id"] === IM.ENTITY_SEARCH_COMPONENT);
+  if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["property"])) {
+    shape = props.shape.property.find(p => processComponentType(p.componentType) === data.selectedType);
+  } else if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["subGroup"])) {
+    shape = props.shape.subGroup.find(s => processComponentType(s.componentType) === data.selectedType);
   }
   if (data.selectedType !== ComponentType.BUILDER_CHILD_WRAPPER) {
     data.selectedType = ComponentType.BUILDER_CHILD_WRAPPER;
@@ -187,6 +191,7 @@ function deleteItem(data: ComponentDetails): void {
   const index = build.value.findIndex(item => item.position === data.position);
   build.value.splice(index, 1);
   if (build.value.length === 0) {
+    if (deleteEntityKey) deleteEntityKey(key);
     createDefaultBuild();
     return;
   }
@@ -195,6 +200,18 @@ function deleteItem(data: ComponentDetails): void {
 
 function updateItemWrapper(data: ComponentDetails) {
   updateItem(data, build.value);
+}
+
+function getNextComponentOptions() {
+  if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["subGroup"]))
+    return props.shape.subGroup.map(subGroup => {
+      return { type: processComponentType(subGroup.componentType), name: subGroup.name };
+    });
+  else if (isPropertyGroup(props.shape) && isObjectHasKeys(props.shape, ["property"]))
+    return props.shape.property.map(property => {
+      return { type: processComponentType(property.componentType), name: property.name };
+    });
+  else return;
 }
 </script>
 
@@ -225,5 +242,11 @@ function updateItemWrapper(data: ComponentDetails) {
 }
 .invalid {
   border-color: #e24c4c;
+}
+
+.validate-error {
+  color: #e24c4c;
+  font-size: 0.8rem;
+  padding: 0 0 0.25rem 0;
 }
 </style>

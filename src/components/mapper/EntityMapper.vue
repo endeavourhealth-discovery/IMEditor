@@ -141,214 +141,214 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
-import { mapState } from "vuex";
-import { Vocabulary, Helpers, Models, Enums, Config } from "im-library";
+<script setup lang="ts">
+import { computed, defineComponent, onMounted, reactive, ref, Ref } from "vue";
+import { mapState, useStore } from "vuex";
+import { Vocabulary, Helpers, Models, Enums, Config, Services } from "im-library";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import axios from "axios";
-import { Namespace, EntityReferenceNode, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { Namespace, EntityReferenceNode, TTIriRef, ConceptSummary, SearchRequest } from "im-library/dist/types/interfaces/Interfaces";
 import DirectService from "@/services/DirectService";
-
+import { useRoute } from "vue-router";
+import { useToast } from "primevue/usetoast";
 const {
   ConceptTypeMethods: { getNamesAsStringFromTypes },
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys }
 } = Helpers;
 const { SortBy } = Enums;
+const { Env, EntityService, LoggerService } = Services;
 
-export default defineComponent({
-  name: "EntityMapper",
-  computed: {
-    ...mapState(["filterOptions"])
-  },
-  emits: {
-    showDetails: (_payload: string) => true
-  },
+const emit = defineEmits({
+  showDetails: (_payload: string) => true
+});
 
-  async mounted() {
-    this.taskIri = this.$route.params.taskIri as string;
-    if (this.taskIri) {
-      this.taskName = (await this.$entityService.getPartialEntity(this.taskIri, [Vocabulary.RDFS.LABEL]))[Vocabulary.RDFS.LABEL];
-      await this.getMappings();
-      await this.getMappingSuggestions(this.taskIri, this.taskName);
-    }
-  },
-  data() {
-    return {
-      actions: [] as any[],
-      taskIri: "",
-      taskName: "",
-      searching: false,
-      searchTerm: "",
-      searchResults: [] as any[],
-      request: {} as { cancel: any; msg: string },
-      suggestions: [] as any[],
-      selectedSuggestions: [] as any[],
-      selectedMappings: [] as any[],
-      mappings: [] as any[],
-      loading: false,
-      saveLoading: false,
-      hoveredResult: {} as Models.Search.ConceptSummary,
-      overlayLocation: {} as any,
-      controller: {} as AbortController,
-      hoveredItem: {} as any,
-      selectedFilters: {
-        scheme: Config.FilterDefaults.schemeOptions,
-        type: [Vocabulary.IM.CONCEPT],
-        status: [],
-        usage: undefined
-      }
-    };
-  },
-  methods: {
-    async saveMappings() {
-      this.saveLoading = true;
-      const mappingsMap = {} as any;
-      const mappingIris = [] as string[];
-      for (const mapping of this.mappings) {
-        mappingIris.push(mapping.iri);
-      }
-      mappingsMap[this.taskIri] = mappingIris;
-      try {
-        await this.$entityService.saveMapping(mappingsMap);
-        this.$toast.add(this.$loggerService.success("Mappings were saved"));
-      } catch (error) {
-        this.$toast.add(this.$loggerService.error("Mappings were not saved"));
-      }
-      this.saveLoading = false;
-    },
+const route = useRoute();
+const entityService = new EntityService(axios);
+const store = useStore();
+const toast = useToast();
 
-    view(iri: string) {
-      if (iri) DirectService.directTo(this.$env.VIEWER_URL, iri, this, "concept");
-    },
+const filterOptions = computed(() => store.state.filterOptions);
 
-    showInfo(iri: string) {
-      if (iri) this.$emit("showDetails", iri);
-    },
+let actions: Ref<any[]> = ref([]);
+let taskIri = ref("");
+let taskName = ref("");
+let searching = ref(false);
+let searchTerm = ref("");
+let searchResults: Ref<any[]> = ref([]);
+let request: Ref<{ cancel: any; msg: string }> = ref({} as { cancel: any; msg: string });
+let suggestions: Ref<any[]> = ref([]);
+let selectedSuggestions: Ref<any[]> = ref([]);
+let selectedMappings: Ref<any[]> = ref([]);
+let mappings: Ref<any[]> = ref([]);
+let loading = ref(false);
+let saveLoading = ref(false);
+let hoveredResult: Ref<ConceptSummary> = ref({} as ConceptSummary);
+let controller: Ref<AbortController> = ref({} as AbortController);
+let hoveredItem = ref({} as any);
+const selectedFilters = reactive({
+  scheme: Config.FilterDefaults.schemeOptions,
+  type: [Vocabulary.IM.CONCEPT],
+  status: [],
+  usage: undefined
+});
 
-    hideOverlay(): void {
-      const x = this.$refs.summary_overlay as any;
-      x.hide();
-    },
+const summary_overlay = ref();
 
-    async getMappings() {
-      this.mappings = [];
-      const mappings = (await this.$entityService.getPartialEntity(this.taskIri, [Vocabulary.IM.MATCHED_TO]))[Vocabulary.IM.MATCHED_TO] as any[];
-      if (Helpers.DataTypeCheckers.isArrayHasLength(mappings))
-        this.mappings = mappings.map(mapping => {
-          return {
-            iri: mapping["@id"],
-            name: mapping.name
-          };
-        });
-    },
-
-    addToMappings(row: any) {
-      const found = this.mappings.find(mapping => mapping.iri === row.data.iri);
-      if (!found) {
-        this.mappings.push(row.data);
-      }
-    },
-
-    showOverlay(event: any, data: Models.Search.ConceptSummary): void {
-      this.hoveredItem = data;
-      const x = this.$refs.summary_overlay as any;
-      x.show(event, event.target);
-    },
-
-    addSelected() {
-      for (const selected of this.selectedSuggestions) {
-        const found = this.mappings.find(mapping => mapping.iri === selected.iri);
-        if (!found) {
-          this.mappings.push(selected);
-        }
-      }
-    },
-
-    removeSelected() {
-      for (const selected of this.selectedMappings) {
-        const foundIndex = this.mappings.findIndex(mapping => mapping.iri === selected.iri);
-        if (foundIndex !== -1) {
-          this.mappings.splice(foundIndex, 1);
-        }
-      }
-    },
-
-    async getMappingSuggestions(iri: string, term: string) {
-      this.loading = true;
-      const searchRequest = await this.prepareSearchRequest(term);
-      this.controller = new AbortController();
-      let results = await this.$entityService.getMappingSuggestions(searchRequest, this.controller);
-      const i = results.findIndex(entity => entity.iri === iri);
-      if (i !== -1) {
-        results.splice(i, 1);
-      }
-      this.suggestions = results.length ? results : [];
-      this.loading = false;
-    },
-
-    async prepareSearchRequest(term: string) {
-      this.searchResults = [];
-      const searchRequest = {} as Models.Search.SearchRequest;
-      searchRequest.termFilter = term;
-      searchRequest.sortBy = SortBy.Usage;
-      searchRequest.page = 1;
-      searchRequest.size = 100;
-      this.setFilters(searchRequest);
-      if (isObjectHasKeys(this.request, ["cancel", "msg"])) {
-        await this.request.cancel({ status: 499, message: "Search cancelled by user" });
-      }
-      const axiosSource = axios.CancelToken.source();
-      this.request = { cancel: axiosSource.cancel, msg: "Loading..." };
-      return searchRequest;
-    },
-
-    async search(): Promise<void> {
-      this.searching = true;
-      if (this.searchTerm.length > 0) {
-        this.searchResults = [];
-        const searchRequest = {} as Models.Search.SearchRequest;
-        searchRequest.termFilter = this.searchTerm;
-        searchRequest.sortBy = SortBy.Usage;
-        searchRequest.page = 1;
-        searchRequest.size = 100;
-        this.setFilters(searchRequest);
-        if (!Helpers.DataTypeCheckers.isObject(this.controller)) {
-          this.controller.abort();
-        }
-        this.controller = new AbortController();
-        await this.fetchSearchResults(searchRequest, this.controller);
-      } else {
-        await this.getMappingSuggestions(this.taskIri, this.taskName);
-      }
-      this.searching = false;
-    },
-
-    setFilters(searchRequest: Models.Search.SearchRequest) {
-      searchRequest.schemeFilter = this.selectedFilters.scheme;
-      searchRequest.statusFilter = this.selectedFilters.status;
-      searchRequest.typeFilter = this.selectedFilters.type;
-    },
-
-    async fetchSearchResults(searchRequest: Models.Search.SearchRequest, controller: AbortController) {
-      const result = await this.$entityService.advancedSearch(searchRequest, controller);
-      if (result && isArrayHasLength(result)) {
-        this.searchResults = result.map(item => {
-          return { iri: item.iri, name: item.name, type: item.entityType, scheme: item.scheme, status: item.status, usage: item.weighting };
-        });
-      } else {
-        this.searchResults = [];
-      }
-      this.suggestions = this.searchResults;
-    },
-
-    getConceptTypes(types: TTIriRef[]): string {
-      return getNamesAsStringFromTypes(types);
-    }
+onMounted(async () => {
+  taskIri.value = route.params.taskIri as string;
+  if (taskIri.value) {
+    taskName.value = (await entityService.getPartialEntity(taskIri.value, [Vocabulary.RDFS.LABEL]))[Vocabulary.RDFS.LABEL];
+    await getMappings();
+    await getMappingSuggestions(taskIri.value, taskName.value);
   }
 });
+
+async function saveMappings() {
+  saveLoading.value = true;
+  const mappingsMap = {} as any;
+  const mappingIris = [] as string[];
+  for (const mapping of mappings.value) {
+    mappingIris.push(mapping.iri);
+  }
+  mappingsMap[taskIri.value] = mappingIris;
+  try {
+    await entityService.saveMapping(mappingsMap);
+    toast.add(LoggerService.success("Mappings were saved"));
+  } catch (error) {
+    toast.add(LoggerService.error("Mappings were not saved"));
+  }
+  saveLoading.value = false;
+}
+
+function view(iri: string) {
+  if (iri) DirectService.directTo(Env.VIEWER_URL, iri, this, "concept");
+}
+
+function showInfo(iri: string) {
+  if (iri) emit("showDetails", iri);
+}
+
+function hideOverlay(): void {
+  const x = summary_overlay.value as any;
+  x.hide();
+}
+
+async function getMappings() {
+  mappings.value = [];
+  const results = (await entityService.getPartialEntity(taskIri.value, [Vocabulary.IM.MATCHED_TO]))[Vocabulary.IM.MATCHED_TO] as any[];
+  if (Helpers.DataTypeCheckers.isArrayHasLength(mappings))
+    mappings.value = results.map(mapping => {
+      return {
+        iri: mapping["@id"],
+        name: mapping.name
+      };
+    });
+}
+
+function addToMappings(row: any) {
+  const found = mappings.value.find(mapping => mapping.iri === row.data.iri);
+  if (!found) {
+    mappings.value.push(row.data);
+  }
+}
+
+function showOverlay(event: any, data: ConceptSummary): void {
+  hoveredItem.value = data;
+  const x = summary_overlay.value as any;
+  x.show(event, event.target);
+}
+
+function addSelected() {
+  for (const selected of selectedSuggestions.value) {
+    const found = mappings.value.find(mapping => mapping.iri === selected.iri);
+    if (!found) {
+      mappings.value.push(selected);
+    }
+  }
+}
+
+function removeSelected() {
+  for (const selected of selectedMappings.value) {
+    const foundIndex = mappings.value.findIndex(mapping => mapping.iri === selected.iri);
+    if (foundIndex !== -1) {
+      mappings.value.splice(foundIndex, 1);
+    }
+  }
+}
+
+async function getMappingSuggestions(iri: string, term: string) {
+  loading.value = true;
+  const searchRequest = await prepareSearchRequest(term);
+  controller.value = new AbortController();
+  let results = await entityService.getMappingSuggestions(searchRequest, controller.value);
+  const i = results.findIndex(entity => entity.iri === iri);
+  if (i !== -1) {
+    results.splice(i, 1);
+  }
+  suggestions.value = results.length ? results : [];
+  loading.value = false;
+}
+
+async function prepareSearchRequest(term: string) {
+  searchResults.value = [];
+  const searchRequest = {} as SearchRequest;
+  searchRequest.termFilter = term;
+  searchRequest.sortBy = SortBy.Usage;
+  searchRequest.page = 1;
+  searchRequest.size = 100;
+  setFilters(searchRequest);
+  if (isObjectHasKeys(request.value, ["cancel", "msg"])) {
+    await request.value.cancel({ status: 499, message: "Search cancelled by user" });
+  }
+  const axiosSource = axios.CancelToken.source();
+  request.value = { cancel: axiosSource.cancel, msg: "Loading..." };
+  return searchRequest;
+}
+
+async function search(): Promise<void> {
+  searching.value = true;
+  if (searchTerm.value.length > 0) {
+    searchResults.value = [];
+    const searchRequest = {} as SearchRequest;
+    searchRequest.termFilter = searchTerm.value;
+    searchRequest.sortBy = SortBy.Usage;
+    searchRequest.page = 1;
+    searchRequest.size = 100;
+    setFilters(searchRequest);
+    if (!Helpers.DataTypeCheckers.isObject(controller.value)) {
+      controller.value.abort();
+    }
+    controller.value = new AbortController();
+    await fetchSearchResults(searchRequest, controller.value);
+  } else {
+    await getMappingSuggestions(taskIri.value, taskName.value);
+  }
+  searching.value = false;
+}
+
+function setFilters(searchRequest: SearchRequest) {
+  searchRequest.schemeFilter = selectedFilters.scheme;
+  searchRequest.statusFilter = selectedFilters.status;
+  searchRequest.typeFilter = selectedFilters.type;
+}
+
+async function fetchSearchResults(searchRequest: SearchRequest, controller: AbortController) {
+  const result = await entityService.advancedSearch(searchRequest, controller);
+  if (result && isArrayHasLength(result)) {
+    searchResults.value = result.map(item => {
+      return { iri: item.iri, name: item.name, type: item.entityType, scheme: item.scheme, status: item.status, usage: item.weighting };
+    });
+  } else {
+    searchResults.value = [];
+  }
+  suggestions.value = searchResults.value;
+}
+
+function getConceptTypes(types: TTIriRef[]): string {
+  return getNamesAsStringFromTypes(types);
+}
 </script>
 
 <style scoped>

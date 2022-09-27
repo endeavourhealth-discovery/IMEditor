@@ -46,10 +46,9 @@
 <script lang="ts">
 import TypeSelector from "@/components/creator/TypeSelector.vue";
 import StepsGroup from "@/components/creator/StepsGroup.vue";
-import ArrayBuilder from "@/components/shapeComponents/ArrayBuilder.vue";
 
 export default defineComponent({
-  components: { ArrayBuilder, StepsGroup, TypeSelector }
+  components: { StepsGroup, TypeSelector }
 });
 </script>
 
@@ -65,17 +64,17 @@ import { useConfirm } from "primevue/useconfirm";
 import { useRouter } from "vue-router";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import { FormGenerator, PropertyGroup, PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength },
   ConceptTypeMethods: { isValueSet },
   EntityValidator: { hasValidIri, hasValidName, hasValidParents, hasValidTypes, hasValidStatus },
-  Converters: { iriToUrl }
+  Converters: { iriToUrl },
+  UtililityMethods: { debounce }
 } = Helpers;
 const { IM, RDF, RDFS } = Vocabulary;
-const { EntityService, Env } = Services;
+const { EntityService, Env, FilerService } = Services;
 const { ComponentType, EditorMode } = Enums;
-
-const userRoles = inject(injectionKeys.userRoles);
 
 const props = defineProps({ type: { type: Object as PropType<TTIriRef>, required: false } });
 
@@ -100,7 +99,6 @@ let loading: Ref<boolean> = ref(true);
 let stepsItems: Ref<{ label: string; to: string }[]> = ref([]);
 let currentStep: Ref<number> = ref(0);
 let showSidebar: Ref<boolean> = ref(false);
-let creatorInvalidEntity: Ref<boolean> = ref(false);
 let creatorValidity: Ref<{ key: string; valid: boolean }[]> = ref([]);
 let shape: Ref<FormGenerator | undefined> = ref();
 let targetShape: Ref<TTIriRef | undefined> = ref();
@@ -108,10 +106,9 @@ let groups: Ref<PropertyGroup[]> = ref([]);
 let valueVariableMap: Ref<Map<string, any>> = ref(new Map<string, any>());
 
 provide(injectionKeys.editorValidity, { validity: creatorValidity, updateValidity, removeValidity });
-provide(injectionKeys.invalidEditorEntity, creatorInvalidEntity);
 
-provide(injectionKeys.editorEntity, { editorEntity, updateEntity });
-provide(injectionKeys.valueVariableMap, valueVariableMap);
+provide(injectionKeys.editorEntity, { editorEntity, updateEntity, deleteEntityKey });
+provide(injectionKeys.valueVariableMap, { valueVariableMap, updateValueVariableMap });
 
 onMounted(async () => {
   loading.value = true;
@@ -125,13 +122,6 @@ onMounted(async () => {
 });
 
 watch(
-  () => _.cloneDeep(creatorValidity.value),
-  (newValue: { key: string; valid: boolean }[]) => {
-    creatorInvalidEntity.value = newValue.every(item => item.valid);
-  }
-);
-
-watch(
   () => _.cloneDeep(editorEntity.value),
   (newValue: any) => {
     if (checkForChanges()) {
@@ -142,38 +132,21 @@ watch(
   }
 );
 
-watch([() => _.cloneDeep(editorEntity.value), () => _.cloneDeep(groups.value)], ([newEntity, newGroups]) => {
-  setValueVariableMap(newEntity, newGroups);
-});
-
 const entityService = new EntityService(axios);
+const filerService = new FilerService(axios);
+const currentUser = computed(() => store.state.currentUser).value;
+
+const debouncedFiler = debounce((entity: any) => {
+  fileChanges(entity);
+}, 500);
 
 async function getShape(type: string): Promise<void> {
   const shapeIri = await entityService.getShapeFromType(type);
   if (shapeIri) shape.value = await entityService.getShape(shapeIri["@id"]);
 }
 
-function setValueVariableMap(entity: any, groups: PropertyGroup[]) {
-  if (entity && groups.length) {
-    groups.forEach(group => {
-      if (isObjectHasKeys(group, ["property"])) {
-        group.property.forEach(property => {
-          if (property.builderChild && property.valueVariable) {
-            let value = undefined as any;
-            const found = entity[group.path["@id"]];
-            if (found) value = entity[group.path["@id"]][property.order - 1];
-            valueVariableMap.value.set(property.valueVariable + property.order, value);
-          } else if (property.valueVariable) {
-            const value = entity[property.path["@id"]];
-            valueVariableMap.value.set(property.valueVariable, value);
-          }
-        });
-      }
-      if (isObjectHasKeys(group, ["subGroup"])) {
-        setValueVariableMap(entity, group.subGroup);
-      }
-    });
-  }
+function updateValueVariableMap(key: string, value: any) {
+  valueVariableMap.value.set(key, value);
 }
 
 function updateValidity(data: { key: string; valid: boolean }) {
@@ -222,17 +195,10 @@ function setSteps() {
   }
 }
 
-// function getNameFromLabel(label: string) {
-//   if (!label) return "";
-//   return label.split("-")[1].trim();
-// }
-
 function processComponentType(type: TTIriRef) {
   switch (type["@id"]) {
     case IM.STEPS_GROUP_COMPONENT:
       return StepsGroup;
-    case IM.ARRAY_BUILDER_COMPONENT:
-      return ArrayBuilder;
     default:
       throw new Error("Invalid component type encountered in shape group" + type["@id"]);
   }
@@ -264,27 +230,44 @@ function beforeWindowUnload(e: any) {
 }
 
 function updateEntity(data: any) {
+  let wasUpdated = false;
   if (isArrayHasLength(data)) {
     data.forEach((item: any) => {
       if (isObjectHasKeys(item)) {
         for (const [key, value] of Object.entries(item)) {
           editorEntity.value[key] = value;
+          wasUpdated = true;
         }
       }
     });
   } else if (isObjectHasKeys(data)) {
     if (isObjectHasKeys(data, [RDF.TYPE])) {
-      if (!isObjectHasKeys(editorEntity.value, [RDF.TYPE])) updateType(data[RDF.TYPE]);
-      else if (editorEntity.value[RDF.TYPE] !== data[RDF.TYPE]) updateType(data[RDF.TYPE]);
+      if (!isObjectHasKeys(editorEntity.value, [RDF.TYPE])) {
+        updateType(data[RDF.TYPE]);
+        wasUpdated = true;
+      } else if (editorEntity.value[RDF.TYPE] !== data[RDF.TYPE]) {
+        updateType(data[RDF.TYPE]);
+        wasUpdated = true;
+      }
     } else {
       for (const [key, value] of Object.entries(data)) {
         editorEntity.value[key] = value;
+        wasUpdated = true;
       }
     }
   }
-  if (creatorInvalidEntity.value) {
-    isValidEntity(editorEntity.value);
+
+  if (wasUpdated && isValidEntity(editorEntity.value)) {
+    debouncedFiler(editorEntity.value);
   }
+}
+
+function deleteEntityKey(data: string) {
+  if (data) delete editorEntity.value[data];
+}
+
+function fileChanges(entity: any) {
+  filerService.fileEntity(entity, "http://endhealth.info/user/" + currentUser.id + "#", IM.UPDATE_ALL);
 }
 
 function checkForChanges() {
@@ -296,7 +279,7 @@ function checkForChanges() {
 }
 
 async function submit(): Promise<void> {
-  if (await isValidEntity(editorEntity.value)) {
+  if (isValidEntity(editorEntity.value)) {
     console.log("submit");
     await Swal.fire({
       icon: "info",
@@ -346,8 +329,8 @@ async function submit(): Promise<void> {
   }
 }
 
-async function isValidEntity(entity: any): Promise<boolean> {
-  return !isObjectHasKeys(entity) && creatorValidity.value.every(validity => validity.valid);
+function isValidEntity(entity: any): boolean {
+  return isObjectHasKeys(entity) && creatorValidity.value.every(validity => validity.valid);
 }
 
 function refreshCreator() {
@@ -365,6 +348,7 @@ function refreshCreator() {
     if (result.isConfirmed) {
       editorEntity.value = { ...editorEntityOriginal.value };
       currentStep.value = 0;
+      router.push(stepsItems.value[currentStep.value].to);
     }
   });
 }

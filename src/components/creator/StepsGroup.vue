@@ -8,15 +8,15 @@
 
 <script lang="ts">
 import ArrayBuilder from "@/components/shapeComponents/ArrayBuilder.vue";
+import ArrayBuilderWithDropdown from "../shapeComponents/ArrayBuilderWithDropdown.vue";
 import EntityComboBox from "../shapeComponents/EntityComboBox.vue";
 import EntityDropdown from "../shapeComponents/EntityDropdown.vue";
 import HtmlInput from "@/components/shapeComponents/HtmlInput.vue";
 import TextInput from "@/components/shapeComponents/TextInput.vue";
 import TextDisplay from "@/components/shapeComponents/TextDisplay.vue";
-import MembersBuilder from "../shapeComponents/MembersBuilder.vue";
 
 export default defineComponent({
-  components: { EntityComboBox, ArrayBuilder, EntityDropdown, HtmlInput, TextDisplay, TextInput, MembersBuilder }
+  components: { EntityComboBox, ArrayBuilder, ArrayBuilderWithDropdown, EntityDropdown, HtmlInput, TextDisplay, TextInput }
 });
 </script>
 
@@ -31,7 +31,8 @@ const { ComponentType, EditorMode } = Enums;
 const { IM, RDF, RDFS } = Vocabulary;
 const {
   DataTypeCheckers: { isObjectHasKeys },
-  TypeGuards: { isPropertyGroup, isPropertyShape }
+  TypeGuards: { isPropertyGroup, isPropertyShape },
+  EditorMethods: { processComponentType }
 } = Helpers;
 const { QueryService } = Services;
 
@@ -41,45 +42,30 @@ const props = defineProps({
 });
 watch(
   () => props.shape,
-  async () => {
-    if (props.shape && props.shape.property) properties.value = props.shape.property;
-    else if (props.shape && props.shape.subGroup) properties.value = props.shape.subGroup;
-    else properties.value = [];
+  newValue => {
+    setProperties(newValue);
   }
 );
 
 const editorEntity = inject(injectionKeys.editorEntity)?.editorEntity.value;
 
-let properties: Ref<PropertyShape[] | PropertyGroup[]> = ref([...props.shape.property]);
+let properties: Ref<PropertyShape[] | PropertyGroup[]> = ref([]);
 
-function processComponentType(type: TTIriRef): any {
-  switch (type["@id"]) {
-    case IM.TEXT_DISPLAY_COMPONENT:
-      return ComponentType.TEXT_DISPLAY;
-    case IM.TEXT_INPUT_COMPONENT:
-      return ComponentType.TEXT_INPUT;
-    case IM.HTML_INPUT_COMPONENT:
-      return ComponentType.HTML_INPUT;
-    case IM.ARRAY_BUILDER_COMPONENT:
-      return ComponentType.ARRAY_BUILDER;
-    case IM.ENTITY_SEARCH_COMPONENT:
-      return ComponentType.ENTITY_SEARCH;
-    case IM.ENTITY_COMBOBOX_COMPONENT:
-      return ComponentType.ENTITY_COMBOBOX;
-    case IM.ENTITY_DROPDOWN_COMPONENT:
-      return ComponentType.ENTITY_DROPDOWN;
-    case IM.MEMBERS_BUILDER:
-      return ComponentType.MEMBERS_BUILDER;
-    default:
-      throw new Error("Invalid component type encountered in shape group" + type["@id"]);
-  }
-}
+onMounted(() => {
+  setProperties(props.shape);
+});
 
 function processEntityValue(property: PropertyShape | PropertyGroup) {
-  if (isPropertyShape(property) && isObjectHasKeys(editorEntity, [property.path["@id"]])) {
+  if (isObjectHasKeys(property, ["path"]) && isObjectHasKeys(editorEntity, [property.path["@id"]])) {
     return editorEntity[property.path["@id"]];
   }
   return undefined;
+}
+
+function setProperties(shape: PropertyGroup) {
+  if (isObjectHasKeys(shape, ["property"])) properties.value = shape.property;
+  else if (isObjectHasKeys(shape, ["subGroup"])) properties.value = shape.subGroup;
+  else properties.value = [];
 }
 </script>
 
@@ -98,11 +84,13 @@ function processEntityValue(property: PropertyShape | PropertyGroup) {
 
 .property-container {
   width: 100%;
-  /* max-height: 100%; */
+  flex: 0 1 auto;
+  max-height: 100%;
   display: flex;
   flex-flow: row;
   justify-content: center;
-  /* overflow: auto; */
+  align-content: flex-start;
+  overflow: auto;
   padding: 2rem 0 0 0;
 }
 </style>

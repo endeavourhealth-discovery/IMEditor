@@ -1,7 +1,6 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import Editor from "../views/Editor.vue";
 import Creator from "../views/Creator.vue";
-import Query from "@/views/Query.vue";
 import TypeSelector from "@/components/creator/TypeSelector.vue";
 import StepsGroup from "@/components/creator/StepsGroup.vue";
 import { AccessDenied, SnomedLicense, Services, PageNotFound, EntityNotFound, Helpers, Config } from "im-library";
@@ -43,15 +42,6 @@ const routes: Array<RouteRecordRaw> = [
       requiresLicense: true
     },
     children: []
-  },
-  {
-    path: "/query",
-    name: "Query",
-    component: Query,
-    meta: {
-      requiresAuth: true,
-      requiresLicense: true
-    }
   },
   {
     path: "/workflow",

@@ -6,7 +6,7 @@
         ref="miniSearchInput"
         type="text"
         v-model="searchTerm"
-        @input="search"
+        @input="debounceForSearch"
         @keyup.enter="search"
         @focus="showOverlay"
         @change="showOverlay"
@@ -68,7 +68,9 @@ const emit = defineEmits({
 });
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
+const editorEntity = inject(injectionKeys.editorEntity)?.editorEntity;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
+const valueVariableMapUpdate = inject(injectionKeys.valueVariableMap)?.updateValueVariableMap;
 
 const entityService = new EntityService(axios);
 const queryService = new QueryService(axios);
@@ -92,6 +94,7 @@ let searchResults: Ref<ConceptSummary[]> = ref([]);
 let label = ref("");
 let key = ref("");
 let invalid = ref(false);
+let debounce = ref(0);
 
 const miniSearchOP = ref();
 const treeOP = ref();
@@ -108,21 +111,15 @@ async function init() {
   label.value = props.shape.name;
 }
 
-//function debounceForSearch(): void {
-//   clearTimeout(this.debounce);
-//   debounce.value = window.setTimeout(() => {
-//     search();
-//   }, 600);
-// }
-
-//function checkKey(event: any) {
-//   if (event.code === "Enter") {
-//     search();
-//   }
-// }
+function debounceForSearch(): void {
+  clearTimeout(debounce.value);
+  debounce.value = window.setTimeout(() => {
+    search();
+  }, 600);
+}
 
 async function search(): Promise<void> {
-  if (searchTerm.value.length > 0) {
+  if (searchTerm.value.length > 2) {
     loading.value = true;
     let query = {} as QueryRequest;
     if (isObjectHasKeys(props.shape, ["select", "argument"])) {
@@ -174,22 +171,30 @@ async function updateSelectedResult(data: ConceptSummary | TTIriRef) {
   }
   if (!props.shape.builderChild && key.value) {
     updateEntity();
-    await updateValidity();
   } else {
     emit("updateClicked", selectedResult.value);
   }
+  await updateValidity();
+  updateValueVariableMap(selectedResult.value);
   hideOverlay();
 }
 
 function updateEntity() {
   const result = {} as any;
   result[key.value] = selectedResult.value;
-  if (entityUpdate) entityUpdate(result);
+  if (entityUpdate && !props.shape.builderChild) entityUpdate(result);
+}
+
+function updateValueVariableMap(data: TTIriRef) {
+  if (!props.shape.valueVariable) return;
+  let mapKey = props.shape.valueVariable;
+  if (props.shape.builderChild) mapKey = mapKey + props.shape.order;
+  if (valueVariableMapUpdate) valueVariableMapUpdate(mapKey, data);
 }
 
 async function updateValidity() {
-  if (isObjectHasKeys(props.shape, ["validation"])) {
-    invalid.value = !(await queryService.checkValidation(selectedResult.value, props.shape.validation["@id"]));
+  if (isObjectHasKeys(props.shape, ["validation"]) && editorEntity) {
+    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], editorEntity.value));
   } else {
     invalid.value = !defaultValidity();
   }

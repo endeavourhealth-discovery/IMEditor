@@ -22,35 +22,25 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { ref } from "vue";
 import InfoSideBar from "@/components/infobar/InfoSideBar.vue";
 
-export default defineComponent({
-  name: "Workflow",
-  components: {
-    InfoSideBar
-  },
-  data() {
-    return {
-      showInfo: false,
-      selectedConceptIri: ""
-    };
-  },
-  methods: {
-    updateSelected(selectedIri: string) {
-      this.selectedConceptIri = selectedIri;
-    },
+let showInfo = ref(false);
+let selectedConceptIri = ref("");
 
-    showDetails(selectedIri: string) {
-      this.selectedConceptIri = selectedIri;
-      this.showInfo = true;
-    },
-    hideDetails() {
-      this.showInfo = false;
-    }
-  }
-});
+function updateSelected(selectedIri: string) {
+  selectedConceptIri.value = selectedIri;
+}
+
+function showDetails(selectedIri: string) {
+  selectedConceptIri.value = selectedIri;
+  showInfo.value = true;
+}
+
+function hideDetails() {
+  showInfo.value = false;
+}
 </script>
 
 <style scoped lang="scss">

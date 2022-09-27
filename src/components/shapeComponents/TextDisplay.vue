@@ -33,35 +33,38 @@ const props = defineProps({
 });
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
+const editorEntity = inject(injectionKeys.editorEntity)?.editorEntity;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
-const valueVariableMap = inject(injectionKeys.valueVariableMap);
+const valueVariableMap = inject(injectionKeys.valueVariableMap)?.valueVariableMap;
+const valueVariableMapUpdate = inject(injectionKeys.valueVariableMap)?.updateValueVariableMap;
+if (valueVariableMap) {
+  watch(
+    () => _.cloneDeep(valueVariableMap.value),
+    async () => await init()
+  );
+}
 
 const queryService = new QueryService(axios);
 
-let key = props.shape.path["@id"];
+let key = props.shape.path["@id"] == IM.ID ? IM.IRI : props.shape.path["@id"];
 let loading = ref(false);
 
 let invalid = ref(false);
 
 let userInput = ref("");
-watch([() => props.value, () => props.shape], async ([newPropsValue, newShapeValue]) => {
+watch([() => _.cloneDeep(props.value), () => _.cloneDeep(props.shape)], async ([newPropsValue, newShapeValue]) => {
   if (newPropsValue && newShapeValue) userInput.value = newPropsValue;
   else userInput.value = await processPropertyValue(newShapeValue);
 });
 watch(userInput, async newValue => {
   if (newValue) {
-    updateEntity();
+    updateEntity(newValue);
+    updateValueVariableMap(newValue);
     await updateValidity();
   }
 });
 onMounted(async () => {
-  if (props.value) userInput.value = props.value;
-  else {
-    loading.value = true;
-    const result = await processPropertyValue(props.shape);
-    if (result) userInput.value = result;
-    loading.value = false;
-  }
+  await init();
 });
 
 watch(
@@ -75,6 +78,16 @@ watch(
   }
 );
 
+async function init() {
+  if (props.value) userInput.value = props.value;
+  else {
+    loading.value = true;
+    const result = await processPropertyValue(props.shape);
+    if (result) userInput.value = result;
+    loading.value = false;
+  }
+}
+
 function compareMaps(map1: Map<string, any>, map2: Map<string, any>) {
   let testValue;
   if (map1.size !== map2.size) return false;
@@ -86,7 +99,6 @@ function compareMaps(map1: Map<string, any>, map2: Map<string, any>) {
 }
 
 async function processPropertyValue(property: PropertyShape): Promise<string> {
-  if (props.mode === EditorMode.EDIT) return "";
   if (isObjectHasKeys(property, ["isIri"])) {
     return property.isIri["@id"];
   }
@@ -109,25 +121,32 @@ function processArguments(property: PropertyShape) {
   property.argument.forEach(arg => {
     let key = "";
     let value: any;
-    if (arg.parameter === "this") key = property.path["@id"];
+    if (arg.parameter === "this") key = props.shape.path["@id"] == IM.ID ? IM.IRI : props.shape.path["@id"];
     else key = arg.parameter;
     if (arg.valueIri) value = arg.valueIri;
     else if (arg.valueVariable) value = valueVariableMap?.value.get(arg.valueVariable);
-    else if (arg.valueText) value = arg.valueText;
+    else if (arg.valueData) value = arg.valueData;
     result.set(key, value);
   });
   return result;
 }
 
-function updateEntity() {
+function updateEntity(data: string) {
   const result = {} as any;
-  result[key] = userInput.value;
+  result[key] = data;
   if (entityUpdate) entityUpdate(result);
 }
 
+function updateValueVariableMap(data: string) {
+  if (!props.shape.valueVariable) return;
+  let mapKey = props.shape.valueVariable;
+  if (props.shape.builderChild) mapKey = mapKey + props.shape.order;
+  if (valueVariableMapUpdate) valueVariableMapUpdate(mapKey, data);
+}
+
 async function updateValidity() {
-  if (isObjectHasKeys(props.shape, ["validation"])) {
-    invalid.value = !(await queryService.checkValidation(userInput, props.shape.validation["@id"]));
+  if (isObjectHasKeys(props.shape, ["validation"]) && editorEntity) {
+    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], editorEntity.value));
   } else {
     invalid.value = !defaultValidation();
   }

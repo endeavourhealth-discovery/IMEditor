@@ -6,9 +6,7 @@
           <span class="pi pi-times"></span>
         </button>
       </template>
-      <template #header>
-        Please select an item to display
-      </template>
+      <template #header> Please select an item to display </template>
     </Panel>
   </div>
   <div id="concept-main-container" v-else>
@@ -49,12 +47,15 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { onMounted, onUnmounted, Ref, ref, watch } from "vue";
 import Definition from "./infoSideBar/Definition.vue";
 import PanelHeader from "./infoSideBar/PanelHeader.vue";
+import _ from "lodash";
 import { DefinitionConfig, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
-import { Vocabulary, Helpers, Models } from "im-library";
+import { Vocabulary, Helpers, Models, Services } from "im-library";
+import { useRouter } from "vue-router";
+import axios from "axios";
 const { IM, RDF, RDFS } = Vocabulary;
 const {
   ConceptTypeMethods: { isQuery },
@@ -62,188 +63,189 @@ const {
   ContainerDimensionGetters: { getContainerElementOptimalHeight },
   Sorters: { byOrder }
 } = Helpers;
+const { ConfigService, EntityService, LoggerService } = Services;
 
-export default defineComponent({
-  name: "InfoSideBar",
-  emits: {
-    closeBar: () => true
-  },
-  props: ["selectedConceptIri"],
-  components: {
-    PanelHeader,
-    Definition
-  },
+const props = defineProps({
+  selectedConceptIri: { type: String, required: true }
+});
 
-  watch: {
-    async selectedConceptIri() {
-      if (this.selectedConceptIri) await this.init();
-    }
-  },
-  async mounted() {
-    this.setContentHeight();
-    window.addEventListener("resize", this.onResize);
-    await this.init();
-    this.setContentHeight();
-  },
-  beforeUnmount() {
-    window.removeEventListener("resize", this.onResize);
-  },
-  data() {
-    return {
-      loading: false,
-      concept: {} as any,
-      definitionText: "",
-      types: [] as TTIriRef[],
-      header: "",
-      contentHeight: "",
-      contentHeightValue: 0,
-      configs: [] as DefinitionConfig[],
-      conceptAsString: "",
-      terms: [] as any[] | undefined,
-      profile: {} as Models.Query.Profile,
-      isQuery: false,
-      children: {} as any,
-      totalCount: 0
-    };
-  },
-  methods: {
-    closeBar() {
-      this.$emit("closeBar");
-    },
-    onResize(): void {
-      this.setContentHeight();
-    },
+const emit = defineEmits({
+  closeBar: () => true
+});
 
-    directToEditRoute(): void {
-      this.$router.push({
-        name: "Edit",
-        params: { iri: this.concept["@id"] }
-      });
-    },
+watch(
+  () => props.selectedConceptIri,
+  async newValue => {
+    if (newValue) await init();
+  }
+);
 
-    directToCreateRoute(): void {
-      this.$router.push({ name: "Create" });
-    },
+const router = useRouter();
+const entityService = new EntityService(axios);
+const configService = new ConfigService(axios);
 
-    async getConcept(iri: string): Promise<void> {
-      const predicates = this.configs
-        .filter((c: DefinitionConfig) => c.type !== "Divider")
-        .filter((c: DefinitionConfig) => c.predicate !== "subtypes")
-        .filter((c: DefinitionConfig) => c.predicate !== "inferred")
-        .filter((c: DefinitionConfig) => c.predicate !== "termCodes")
-        .filter((c: DefinitionConfig) => c.predicate !== "@id")
-        .filter((c: DefinitionConfig) => c.predicate !== "None")
-        .filter((c: DefinitionConfig) => c.predicate !== undefined)
-        .map((c: DefinitionConfig) => c.predicate);
-      predicates.push(IM.DEFINITION);
+let loading = ref(false);
+let concept: Ref<any> = ref({});
+let definitionText = ref("");
+let types: Ref<TTIriRef[]> = ref([]);
+let header = ref("");
+let contentHeight = ref("");
+let contentHeightValue = ref(0);
+let configs: Ref<DefinitionConfig[]> = ref([]);
+let conceptAsString = ref("");
+let terms: Ref<any[] | undefined> = ref([]);
+let profile = ref({} as Models.Query.Profile);
+// let isQuery = ref(false);
+let children: Ref<any> = ref({});
+let totalCount = ref(0);
 
-      this.concept = await this.$entityService.getPartialEntity(iri, predicates);
+onMounted(async () => {
+  setContentHeight();
+  window.addEventListener("resize", onResize);
+  await init();
+  setContentHeight();
+});
 
-      this.concept["@id"] = iri;
-      this.children = await this.$entityService.getPagedChildren(iri, 1, 10);
-      this.totalCount = this.children["totalCount"];
-      this.concept["subtypes"] = this.children.result;
+onUnmounted(() => {
+  window.removeEventListener("resize", onResize);
+});
 
-      this.concept["termCodes"] = await this.$entityService.getEntityTermCodes(iri);
+function closeBar() {
+  emit("closeBar");
+}
 
-      await this.hydrateDefinition();
+function onResize(): void {
+  setContentHeight();
+}
 
-      if (isQuery(this.concept[RDF.TYPE])) {
-        this.isQuery = true;
-        this.profile = new Models.Query.Profile(this.concept);
-      } else {
-        this.isQuery = false;
-        this.profile = {} as Models.Query.Profile;
-      }
-    },
-    async hydrateDefinition() {
-      if (this.concept[IM.DEFINITION]) {
-        const def = this.concept[IM.DEFINITION];
-        const iris: any[] = this.getIris(def);
-        const ttiris = await this.$entityService.getNames(iris.map(i => i["@id"]));
+function directToEditRoute(): void {
+  router.push({
+    name: "Edit",
+    params: { iri: concept.value["@id"] }
+  });
+}
 
-        this.setIriNames(iris, ttiris);
+function directToCreateRoute(): void {
+  router.push({ name: "Create" });
+}
 
-        this.concept[IM.DEFINITION] = JSON.stringify(def);
-      }
-    },
-    getIris(def: any): string[] {
-      const result = [];
+async function getConcept(iri: string): Promise<void> {
+  const predicates = configs.value
+    .filter((c: DefinitionConfig) => c.type !== "Divider")
+    .filter((c: DefinitionConfig) => c.predicate !== "subtypes")
+    .filter((c: DefinitionConfig) => c.predicate !== "inferred")
+    .filter((c: DefinitionConfig) => c.predicate !== "termCodes")
+    .filter((c: DefinitionConfig) => c.predicate !== "@id")
+    .filter((c: DefinitionConfig) => c.predicate !== "None")
+    .filter((c: DefinitionConfig) => c.predicate !== undefined)
+    .map((c: DefinitionConfig) => c.predicate);
+  predicates.push(IM.DEFINITION);
 
-      for (const k of Object.keys(def)) {
-        if (def[k]["@id"]) {
-          result.push(def[k]);
-        } else if (typeof def[k] === "object") {
-          this.getIris(def[k]).forEach(i => result.push(i));
-        }
-      }
+  concept.value = await entityService.getPartialEntity(iri, predicates);
 
-      return result;
-    },
-    setIriNames(iris: TTIriRef[], ttIris: TTIriRef[]) {
-      for (const i of iris) {
-        const match = ttIris.find(t => t["@id"] === i["@id"]);
-        if (match) {
-          i["name"] = match.name;
-        }
-      }
-    },
-    async getInferred(iri: string): Promise<void> {
-      const result = await this.$entityService.getDefinitionBundle(iri);
-      if (isObjectHasKeys(result, ["entity"]) && isObjectHasKeys(result.entity, [RDFS.SUBCLASS_OF, IM.ROLE_GROUP])) {
-        const roleGroup = result.entity[IM.ROLE_GROUP];
-        delete result.entity[IM.ROLE_GROUP];
-        const newRoleGroup: any = {};
-        newRoleGroup[IM.ROLE_GROUP] = roleGroup;
-        result.entity[RDFS.SUBCLASS_OF].push(newRoleGroup);
-      }
-      this.concept["inferred"] = result;
-    },
+  concept.value["@id"] = iri;
+  children.value = await entityService.getPagedChildren(iri, 1, 10);
+  totalCount.value = children.value["totalCount"];
+  concept.value["subtypes"] = children.value.result;
 
-    async getConfig(): Promise<void> {
-      const definitionConfig = await this.$configService.getComponentLayout("definition");
-      const summaryConfig = await this.$configService.getComponentLayout("summary");
-      this.configs = definitionConfig.concat(summaryConfig);
+  concept.value["termCodes"] = await entityService.getEntityTermCodes(iri);
 
-      if (this.configs.every(config => isObjectHasKeys(config, ["order"]))) {
-        this.configs.sort(byOrder);
-      } else {
-        this.$loggerService.error(undefined, "Failed to sort config for definition component layout. One or more config items are missing 'order' property.");
-      }
-    },
+  await hydrateDefinition();
 
-    async init(): Promise<void> {
-      this.loading = true;
-      await this.getConfig();
-      await this.getConcept(this.selectedConceptIri);
-      await this.getInferred(this.selectedConceptIri);
-      await this.getTerms(this.selectedConceptIri);
-      this.types = isObjectHasKeys(this.concept, [RDF.TYPE]) ? this.concept[RDF.TYPE] : ([] as TTIriRef[]);
-      this.header = this.concept[RDFS.LABEL];
-      this.loading = false;
-    },
+  if (isQuery(concept.value[RDF.TYPE])) {
+    profile.value = new Models.Query.Profile(concept.value);
+  } else {
+    profile.value = {} as Models.Query.Profile;
+  }
+}
 
-    async getTerms(iri: string) {
-      const entity = await this.$entityService.getPartialEntity(iri, [IM.HAS_TERM_CODE]);
-      this.terms = isObjectHasKeys(entity, [IM.HAS_TERM_CODE])
-        ? (entity[IM.HAS_TERM_CODE] as []).map(term => {
-            return { name: term[RDFS.LABEL], code: term[IM.CODE] };
-          })
-        : undefined;
-    },
+async function hydrateDefinition() {
+  if (concept.value[IM.DEFINITION]) {
+    const def = concept.value[IM.DEFINITION];
+    const iris: any[] = getIris(def);
+    const ttiris = await entityService.getNames(iris.map(i => i["@id"]));
 
-    setContentHeight(): void {
-      const calcHeight = getContainerElementOptimalHeight("concept-main-container", ["p-panel-header", "p-tabview-nav-container"], true, 4, 1);
-      if (!calcHeight.length) {
-        this.contentHeight = "height: 700px; max-height: 700px;";
-        this.contentHeightValue = 800;
-      } else {
-        this.contentHeight = "height: " + calcHeight + ";" + "max-height: " + calcHeight + ";";
-        this.contentHeightValue = parseInt(calcHeight, 10);
-      }
+    setIriNames(iris, ttiris);
+
+    concept.value[IM.DEFINITION] = JSON.stringify(def);
+  }
+}
+
+function getIris(def: any): string[] {
+  const result = [];
+  for (const k of Object.keys(def)) {
+    if (def[k]["@id"]) {
+      result.push(def[k]);
+    } else if (typeof def[k] === "object") {
+      getIris(def[k]).forEach(i => result.push(i));
     }
   }
-});
+  return result;
+}
+
+function setIriNames(iris: TTIriRef[], ttIris: TTIriRef[]) {
+  for (const i of iris) {
+    const match = ttIris.find(t => t["@id"] === i["@id"]);
+    if (match) {
+      i["name"] = match.name;
+    }
+  }
+}
+
+async function getInferred(iri: string): Promise<void> {
+  const result = await entityService.getDefinitionBundle(iri);
+  if (isObjectHasKeys(result, ["entity"]) && isObjectHasKeys(result.entity, [RDFS.SUBCLASS_OF, IM.ROLE_GROUP])) {
+    const roleGroup = result.entity[IM.ROLE_GROUP];
+    delete result.entity[IM.ROLE_GROUP];
+    const newRoleGroup: any = {};
+    newRoleGroup[IM.ROLE_GROUP] = roleGroup;
+    result.entity[RDFS.SUBCLASS_OF].push(newRoleGroup);
+  }
+  concept.value["inferred"] = result;
+}
+
+async function getConfig(): Promise<void> {
+  const definitionConfig = await configService.getComponentLayout("definition");
+  const summaryConfig = await configService.getComponentLayout("summary");
+  configs.value = definitionConfig.concat(summaryConfig);
+
+  if (configs.value.every(config => isObjectHasKeys(config, ["order"]))) {
+    configs.value.sort(byOrder);
+  } else {
+    LoggerService.error(undefined, "Failed to sort config for definition component layout. One or more config items are missing 'order' property.");
+  }
+}
+
+async function init(): Promise<void> {
+  loading.value = true;
+  await getConfig();
+  await getConcept(props.selectedConceptIri);
+  await getInferred(props.selectedConceptIri);
+  await getTerms(props.selectedConceptIri);
+  types.value = isObjectHasKeys(concept.value, [RDF.TYPE]) ? concept.value[RDF.TYPE] : ([] as TTIriRef[]);
+  header.value = concept.value[RDFS.LABEL];
+  loading.value = false;
+}
+
+async function getTerms(iri: string) {
+  const entity = await entityService.getPartialEntity(iri, [IM.HAS_TERM_CODE]);
+  terms.value = isObjectHasKeys(entity, [IM.HAS_TERM_CODE])
+    ? (entity[IM.HAS_TERM_CODE] as []).map(term => {
+        return { name: term[RDFS.LABEL], code: term[IM.CODE] };
+      })
+    : undefined;
+}
+
+function setContentHeight(): void {
+  const calcHeight = getContainerElementOptimalHeight("concept-main-container", ["p-panel-header", "p-tabview-nav-container"], true, 4, 1);
+  if (!calcHeight.length) {
+    contentHeight.value = "height: 700px; max-height: 700px;";
+    contentHeightValue.value = 800;
+  } else {
+    contentHeight.value = "height: " + calcHeight + ";" + "max-height: " + calcHeight + ";";
+    contentHeightValue.value = parseInt(calcHeight, 10);
+  }
+}
 </script>
 <style scoped>
 #concept-main-container {

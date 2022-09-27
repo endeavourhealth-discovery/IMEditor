@@ -1,13 +1,15 @@
 <template>
   <div class="type-selector">
-    <span class="text">Select entity type:</span>
     <div v-if="loading" class="loading-container">
       <ProgressSpinner />
     </div>
-    <div v-else class="type-buttons-container">
-      <button v-for="typee in typeOptions" class="custom-button" @click="typeSelected(typee)">
-        <span>{{ typee.name }}</span>
-      </button>
+    <div v-else class="header-content-container">
+      <span class="text">Select entity type:</span>
+      <div class="type-buttons-container">
+        <button v-for="typee in typeOptions" class="custom-button" @click="typeSelected(typee)">
+          <span>{{ typee.name }}</span>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -49,6 +51,11 @@ function typeSelected(data: EntityReferenceNode) {
 
 <style scoped>
 .type-selector {
+  width: 100%;
+  height: 100%;
+}
+
+.header-content-container {
   width: 100%;
   height: 100%;
   display: flex;

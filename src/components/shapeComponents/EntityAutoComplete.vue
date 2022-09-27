@@ -71,8 +71,8 @@
 import { PropType, watch, ref, Ref, onMounted, inject, onBeforeUnmount } from "vue";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import axios from "axios";
-import SearchMiniOverlay from "@/components/edit/memberEditor/builder/entity/SearchMiniOverlay.vue";
-import QuantifierTree from "@/components/edit/memberEditor/builder/quantifier/QuantifierTree.vue";
+import SearchMiniOverlay from "@/components/shapeComponents/builder/entity/SearchMiniOverlay.vue";
+import QuantifierTree from "@/components/shapeComponents/builder/quantifier/QuantifierTree.vue";
 import _ from "lodash";
 import { Vocabulary, Helpers, Enums, Models, Services } from "im-library";
 import {
@@ -85,7 +85,7 @@ import {
   PropertyShape,
   QueryRequest
 } from "im-library/dist/types/interfaces/Interfaces";
-import injectionKeys from "@/injectionKeys/injectionKeys.js";
+import injectionKeys from "@/injectionKeys/injectionKeys";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject },
   TypeGuards: { isTTIriRef },
@@ -116,8 +116,10 @@ const emit = defineEmits({
 });
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
+const editorEntity = inject(injectionKeys.editorEntity)?.editorEntity;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
-const valueVariableMap = inject(injectionKeys.valueVariableMap);
+const valueVariableMap = inject(injectionKeys.valueVariableMap)?.valueVariableMap;
+const valueVariableMapUpdate = inject(injectionKeys.valueVariableMap)?.updateValueVariableMap;
 
 watch(
   () => _.cloneDeep(valueVariableMap?.value),
@@ -245,7 +247,15 @@ async function itemSelected(value: ConceptSummary) {
     } else {
       emit("updateClicked", summaryToTTIriRef(value));
     }
+    updateValueVariableMap(value);
   }
+}
+
+function updateValueVariableMap(data: ConceptSummary) {
+  if (!props.shape.valueVariable) return;
+  let mapKey = props.shape.valueVariable;
+  if (props.shape.builderChild) mapKey = mapKey + props.shape.order;
+  if (valueVariableMapUpdate) valueVariableMapUpdate(mapKey, summaryToTTIriRef(data));
 }
 
 function summaryToTTIriRef(summary: ConceptSummary) {
@@ -255,12 +265,12 @@ function summaryToTTIriRef(summary: ConceptSummary) {
 function updateEntity(value: ConceptSummary) {
   const result = {} as any;
   result[key.value] = summaryToTTIriRef(value);
-  if (entityUpdate) entityUpdate(result);
+  if (entityUpdate && !props.shape.builderChild) entityUpdate(result);
 }
 
 async function updateValidity(value: ConceptSummary) {
-  if (isObjectHasKeys(props.shape, ["validation"])) {
-    invalid.value = !(await queryService.checkValidation(value, props.shape.validation["@id"]));
+  if (isObjectHasKeys(props.shape, ["validation"]) && editorEntity) {
+    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], editorEntity.value));
   } else {
     invalid.value = !defaultValidity();
   }

@@ -1,64 +1,13 @@
 import store from "@/store/index";
 import { flushPromises } from "@vue/test-utils";
 import AuthService from "@/services/AuthService";
-import { Vocabulary, Models, Services } from "im-library";
-import { expect, vi } from "vitest";
+import { Config, Vocabulary, Models, Services } from "im-library";
+import { setupServer } from "msw/node";
+import { afterAll, beforeAll, vi } from "vitest";
+import IMLibrary from "im-library";
 const { IM } = Vocabulary;
 const { User, CustomAlert } = Models;
 const { LoggerService } = Services;
-
-describe("state", () => {
-  beforeEach(() => {
-    vi.resetAllMocks();
-    window.sessionStorage.clear();
-  });
-
-  afterAll(() => {
-    window.sessionStorage.clear();
-  });
-
-  it("should start with the correct values", () => {
-    expect(Object.keys(store.state)).toStrictEqual([
-      "arrayObjectNameListboxWithLabelStartExpanded",
-      "history",
-      "recentLocalActivity",
-      "currentUser",
-      "filterDefaults",
-      "isLoggedIn",
-      "snomedLicenseAccepted",
-      "editorIri",
-      "snomedReturnUrl",
-      "authReturnUrl",
-      "editorSavedEntity",
-      "tagSeverityMatches",
-      "textDefinitionStartExpanded",
-      "filterOptions",
-      "selectedFilters",
-      "quickFiltersStatus",
-      "creatorInvalidEntity",
-      "creatorValidity",
-      "editorInvalidEntity",
-      "editorValidity",
-      "refreshTree",
-      "blockedIris"
-    ]);
-    expect(store.state.history).toEqual([]);
-    expect(store.state.currentUser).toEqual({});
-    expect(store.state.isLoggedIn).toBeFalsy();
-    expect(store.state.snomedLicenseAccepted).toBeNull();
-    expect(store.state.editorIri).toBeNull();
-    expect(store.state.editorSavedEntity).toBeNull();
-    expect(store.state.selectedFilters).toEqual({
-      status: [],
-      schemes: [],
-      types: [],
-      sortDirection: "",
-      sortField: ""
-    });
-    expect(store.state.filterOptions).toStrictEqual({ status: [], schemes: [], types: [], sortDirections: [], sortFields: [] });
-    expect(store.state.quickFiltersStatus).toEqual(new Map());
-  });
-});
 
 describe("mutations", () => {
   it("can updateHistory", () => {
@@ -133,54 +82,22 @@ describe("mutations", () => {
 });
 
 describe("actions", () => {
+  // block real fetch requests with msw intercept server
+  const restHandlers = [];
+  const server = setupServer(...restHandlers);
+  beforeAll(() => {
+    server.listen({ onUnhandledRequest: "error" });
+  });
+  afterAll(() => {
+    server.close();
+  });
+  afterEach(() => {
+    server.resetHandlers();
+  });
+
   it("can fetchBlockedIris", async () => {
     store.dispatch("fetchBlockedIris");
-    expect(store.state.blockedIris).toStrictEqual([
-      "http://www.w3.org/2001/XMLSchema#string",
-      "http://www.w3.org/2001/XMLSchema#boolean",
-      "http://www.w3.org/2001/XMLSchema#float",
-      "http://www.w3.org/2001/XMLSchema#double",
-      "http://www.w3.org/2001/XMLSchema#decimal",
-      "http://www.w3.org/2001/XMLSchema#dateTime",
-      "http://www.w3.org/2001/XMLSchema#duration",
-      "http://www.w3.org/2001/XMLSchema#hexBinary",
-      "http://www.w3.org/2001/XMLSchema#base64Binary",
-      "http://www.w3.org/2001/XMLSchema#anyURI",
-      "http://www.w3.org/2001/XMLSchema#ID",
-      "http://www.w3.org/2001/XMLSchema#IDREF",
-      "http://www.w3.org/2001/XMLSchema#ENTITY",
-      "http://www.w3.org/2001/XMLSchema#NOTATION",
-      "http://www.w3.org/2001/XMLSchema#normalizedString",
-      "http://www.w3.org/2001/XMLSchema#token",
-      "http://www.w3.org/2001/XMLSchema#language",
-      "http://www.w3.org/2001/XMLSchema#IDREFS",
-      "http://www.w3.org/2001/XMLSchema#ENTITIES",
-      "http://www.w3.org/2001/XMLSchema#NMTOKEN",
-      "http://www.w3.org/2001/XMLSchema#NMTOKENS",
-      "http://www.w3.org/2001/XMLSchema#Name",
-      "http://www.w3.org/2001/XMLSchema#QName",
-      "http://www.w3.org/2001/XMLSchema#NCName",
-      "http://www.w3.org/2001/XMLSchema#integer",
-      "http://www.w3.org/2001/XMLSchema#nonNegativeInteger",
-      "http://www.w3.org/2001/XMLSchema#positiveInteger",
-      "http://www.w3.org/2001/XMLSchema#nonPositiveInteger",
-      "http://www.w3.org/2001/XMLSchema#negativeInteger",
-      "http://www.w3.org/2001/XMLSchema#byte",
-      "http://www.w3.org/2001/XMLSchema#int",
-      "http://www.w3.org/2001/XMLSchema#long",
-      "http://www.w3.org/2001/XMLSchema#short",
-      "http://www.w3.org/2001/XMLSchema#unsignedByte",
-      "http://www.w3.org/2001/XMLSchema#unsignedInt",
-      "http://www.w3.org/2001/XMLSchema#unsignedLong",
-      "http://www.w3.org/2001/XMLSchema#unsignedShort",
-      "http://www.w3.org/2001/XMLSchema#date",
-      "http://www.w3.org/2001/XMLSchema#time",
-      "http://www.w3.org/2001/XMLSchema#gYearMonth",
-      "http://www.w3.org/2001/XMLSchema#gYear",
-      "http://www.w3.org/2001/XMLSchema#gMonthDay",
-      "http://www.w3.org/2001/XMLSchema#gDay",
-      "http://www.w3.org/2001/XMLSchema#gMonth"
-    ]);
+    expect(store.state.blockedIris).toStrictEqual(Config.XmlSchemaDatatypes);
   });
 
   it("can logoutCurrentUser ___ 200", async () => {
