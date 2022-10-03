@@ -3,30 +3,20 @@ import App from "@/App.vue";
 import Toast from "primevue/toast";
 import store from "@/store/index";
 import { flushPromises, shallowMount } from "@vue/test-utils";
-import * as IMLibrary from "im-library";
 import { setupServer } from "msw/node";
 import { afterAll, beforeAll, vi } from "vitest";
+import { Services } from "im-library";
+const { EntityService, Env } = Services;
 
-vi.mock("im-library");
+const mockAdd = vi.fn();
+
+vi.mock("primevue/usetoast", () => ({
+  useToast: () => ({
+    add: mockAdd
+  })
+}));
 
 describe("router", () => {
-  // block real fetch requests with msw intercept server
-  const restHandlers = [];
-  const server = setupServer(...restHandlers);
-  beforeAll(() => {
-    server.listen({ onUnhandledRequest: "error" });
-  });
-  afterAll(() => {
-    server.close();
-  });
-  afterEach(() => {
-    server.resetHandlers();
-  });
-
-  beforeEach(() => {
-    console.log = vi.fn();
-  });
-
   afterEach(() => {
     vi.resetAllMocks();
   });
@@ -44,7 +34,8 @@ describe("router", () => {
       wrapper = shallowMount(App, {
         global: {
           components: { Toast },
-          plugins: [router, store]
+          plugins: [router, store],
+          stubs: { ReleaseNotes: true }
         }
       });
 
@@ -63,20 +54,22 @@ describe("router", () => {
 
   describe("router ___ snomed", () => {
     let wrapper;
+    let iriExistsSpy;
 
     beforeEach(async () => {
       vi.resetAllMocks();
       window.sessionStorage.clear();
+      iriExistsSpy = vi.spyOn(EntityService.prototype, "iriExists").mockResolvedValue(true);
       store.commit("updateSnomedLicenseAccepted", "true");
       store.dispatch = vi.fn().mockResolvedValue({ authenticated: true });
-      IMLibrary.Services.EntityService.iriExists = vi.fn().mockResolvedValue(true);
       router.push("/");
       await router.isReady();
 
       wrapper = shallowMount(App, {
         global: {
           components: { Toast },
-          plugins: [router, store]
+          plugins: [router, store],
+          stubs: { ReleaseNotes: true }
         }
       });
 
@@ -88,6 +81,7 @@ describe("router", () => {
     it("routes to home if snomedAccepted ___ true", async () => {
       router.push({ name: "Editor", params: { selectedIri: "http://snomed.info/sct#298382003" } });
       await flushPromises();
+      expect(store.state.editorIri).toBe("http://snomed.info/sct#298382003");
       expect(wrapper.vm.$route.path).toBe("/editor/http:%2F%2Fsnomed.info%2Fsct%23298382003");
     });
   });
@@ -106,7 +100,8 @@ describe("router", () => {
       wrapper = shallowMount(App, {
         global: {
           components: { Toast },
-          plugins: [router, store]
+          plugins: [router, store],
+          stubs: { ReleaseNotes: true }
         }
       });
 
@@ -122,29 +117,30 @@ describe("router", () => {
       window.location = mockLocation;
       router.push({ name: "Editor", params: { selectedIri: "http://snomed.info/sct#298382003" } });
       await flushPromises();
-      expect(window.location.href).toBe(
-        IMLibrary.Services.Env.AUTH_URL + "login?returnUrl=" + IMLibrary.Services.Env.EDITOR_URL + "editor/http:%2F%2Fsnomed.info%2Fsct%23298382003"
-      );
+      expect(window.location.href).toBe(Env.AUTH_URL + "login?returnUrl=" + Env.EDITOR_URL + "editor/http:%2F%2Fsnomed.info%2Fsct%23298382003");
       window.location = location;
     });
   });
 
   describe("router ___ auth", () => {
     let wrapper;
+    let iriExistsSpy;
 
     beforeEach(async () => {
       vi.resetAllMocks();
+      iriExistsSpy = vi.spyOn(EntityService.prototype, "iriExists").mockResolvedValue(true);
       window.sessionStorage.clear();
       store.state.snomedLicenseAccepted = "true";
       store.dispatch = vi.fn().mockResolvedValue({ authenticated: true });
-      IMLibrary.Services.EntityService.iriExists = vi.fn().mockResolvedValue(true);
+      store.commit = vi.fn();
       router.push("/");
       await router.isReady();
 
       wrapper = shallowMount(App, {
         global: {
           components: { Toast },
-          plugins: [router, store]
+          plugins: [router, store],
+          stubs: { ReleaseNotes: true }
         }
       });
 
@@ -156,6 +152,7 @@ describe("router", () => {
     it("routes to path if auth true", async () => {
       router.push({ name: "Editor", params: { selectedIri: "http://snomed.info/sct#298382003" } });
       await flushPromises();
+      expect(store.commit).toHaveBeenCalledWith("updateEditorIri", "http://snomed.info/sct#298382003");
       expect(wrapper.vm.$route.path).toBe("/editor/http:%2F%2Fsnomed.info%2Fsct%23298382003");
     });
   });
@@ -169,13 +166,15 @@ describe("router", () => {
       store.state.snomedLicenseAccepted = "true";
       store.state.blockedIris = ["http://www.w3.org/2001/XMLSchema#string"];
       store.dispatch = vi.fn().mockResolvedValue({ authenticated: true });
+      store.commit = vi.fn();
       router.push("/");
       await router.isReady();
 
       wrapper = shallowMount(App, {
         global: {
           components: { Toast },
-          plugins: [router, store]
+          plugins: [router, store],
+          stubs: { ReleaseNotes: true }
         }
       });
 
@@ -187,27 +186,30 @@ describe("router", () => {
     it("doesn't route if iri is blocked", async () => {
       router.push({ name: "Editor", params: { selectedIri: "http://www.w3.org/2001/XMLSchema#string" } });
       await flushPromises();
-      expect(wrapper.vm.$route.path).toBe("/editor/http:%2F%2Fwww.w3.org%2F2001%2FXMLSchema%23string");
+      expect(store.commit).not.toHaveBeenCalledWith("updateEditorIri", "http://www.w3.org/2001/XMLSchema#string");
+      expect(wrapper.vm.$route.path).toBe("/");
     });
   });
 
   describe("router ___ entity", () => {
     let wrapper;
+    let iriExistsSpy;
 
     beforeEach(async () => {
       vi.resetAllMocks();
+      iriExistsSpy = vi.spyOn(EntityService.prototype, "iriExists").mockResolvedValue(true);
       window.sessionStorage.clear();
       store.state.snomedLicenseAccepted = "true";
       store.commit = vi.fn();
       store.dispatch = vi.fn().mockResolvedValue({ authenticated: true });
-      IMLibrary.Services.EntityService.iriExists = vi.fn().mockResolvedValue(true);
       router.push("/");
       await router.isReady();
 
       wrapper = shallowMount(App, {
         global: {
           components: { Toast },
-          plugins: [router, store]
+          plugins: [router, store],
+          stubs: { ReleaseNotes: true }
         }
       });
 
@@ -219,7 +221,6 @@ describe("router", () => {
     it("updates editorIri on entity routing", async () => {
       router.push({ name: "Editor", params: { selectedIri: "http://snomed.info/sct#298382003" } });
       await flushPromises();
-      expect(store.commit).toHaveBeenCalledTimes(3);
       expect(store.commit).toHaveBeenCalledWith("updateEditorIri", "http://snomed.info/sct#298382003");
       expect(wrapper.vm.$route.path).toBe("/editor/http:%2F%2Fsnomed.info%2Fsct%23298382003");
     });

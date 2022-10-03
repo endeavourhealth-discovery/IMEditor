@@ -14,23 +14,16 @@ vi.mock("vuex", () => ({
 
 const mockDispatch = vi.fn();
 
+const mockAdd = vi.fn();
+
+vi.mock("primevue/usetoast", () => ({
+  useToast: () => ({
+    add: mockAdd
+  })
+}));
+
 describe("App.vue", () => {
   let wrapper;
-
-  const restHandlers = [];
-  const server = setupServer(...restHandlers);
-
-  beforeAll(() => {
-    server.listen({ onUnhandledRequest: "error" });
-  });
-
-  afterAll(() => {
-    server.close();
-  });
-
-  afterEach(() => {
-    server.resetHandlers();
-  });
 
   beforeEach(() => {
     vi.resetAllMocks();
