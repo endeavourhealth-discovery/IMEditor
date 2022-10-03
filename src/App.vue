@@ -28,6 +28,8 @@ setupExternalErrorHandler();
 
 provide("axios", axios);
 
+const appVersion = __APP_VERSION__;
+
 const toast = useToast();
 const router = useRouter();
 const route = useRoute();
