@@ -58,7 +58,7 @@ export default defineComponent({
 import { computed, defineComponent, inject, onBeforeUnmount, onMounted, onUnmounted, provide, ref, Ref, watch } from "vue";
 import SideBar from "@/components/creator/SideBar.vue";
 import injectionKeys from "@/injectionKeys/injectionKeys";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { useConfirm } from "primevue/useconfirm";
 import { FormGenerator, PropertyGroup, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 import _ from "lodash";
@@ -79,6 +79,7 @@ const { Env, EntityService } = Services;
 const { EditorMode } = Enums;
 
 const router = useRouter();
+const route = useRoute();
 const confirm = useConfirm();
 
 onBeforeUnmount(() => {
@@ -224,13 +225,14 @@ function removeEroneousKeys() {
 function setSteps() {
   stepsItems.value = [];
   const editorRoute = router.options.routes.find(r => r.name === "Editor");
+  const currentPath = route.fullPath;
   if (editorRoute) {
     groups.value.forEach(group => {
       const component = processComponentType(group.componentType);
       if (editorRoute.children?.findIndex(route => route.name === group.name) === -1) {
         editorRoute.children?.push({ path: group.name, name: group.name, component: component });
       }
-      stepsItems.value.push({ label: group.name, to: "/editor/" + group.name });
+      stepsItems.value.push({ label: group.name, to: currentPath + "/" + group.name });
     });
     router.addRoute(editorRoute);
   }
