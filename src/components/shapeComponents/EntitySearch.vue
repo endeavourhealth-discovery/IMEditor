@@ -140,8 +140,8 @@ async function search(): Promise<void> {
     }
     controller.value = new AbortController();
     if (controller.value) {
-      const result = await queryService.entityQuery(query, controller.value);
-      if (result) searchResults.value = result;
+      const result = await queryService.queryIM(query, controller.value);
+      if (result) searchResults.value = result.entities;
       else searchResults.value = [];
     }
     loading.value = false;

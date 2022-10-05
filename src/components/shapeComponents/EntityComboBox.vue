@@ -96,9 +96,9 @@ async function getDropdownOptions(): Promise<TTIriRef[]> {
     const args = processArguments(props.shape);
     const replacedArgs = mapToObject(args);
     const queryRequest = { argument: replacedArgs, queryIri: props.shape.select[0] } as QueryRequest;
-    const result = await queryService.entityQuery(queryRequest);
+    const result = await queryService.queryIM(queryRequest);
     if (result)
-      return result.map((item: any) => {
+      return result.entities.map((item: any) => {
         return { "@id": item["@id"], name: item[RDFS.LABEL] };
       });
     else return [];

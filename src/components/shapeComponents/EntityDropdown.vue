@@ -66,9 +66,9 @@ async function getDropdownOptions() {
     const args = processArguments(props.shape);
     const replacedArgs = mapToObject(args);
     const query = { argument: replacedArgs, queryIri: props.shape.select[0] } as QueryRequest;
-    const result = await queryService.entityQuery(query);
+    const result = await queryService.queryIM(query);
     if (result)
-      return result.map((item: any) => {
+      return result.entities.map((item: any) => {
         return { "@id": item.iri, name: item.name };
       });
     else return [];

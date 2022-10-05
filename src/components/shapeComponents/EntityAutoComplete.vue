@@ -221,9 +221,9 @@ async function getAutocompleteOptions() {
     }
     controller.value = new AbortController();
     if (controller.value) {
-      const result = await queryService.entityQuery(query, controller.value);
+      const result = await queryService.queryIM(query, controller.value);
       if (result) {
-        autocompleteOptions.value = result;
+        autocompleteOptions.value = result.entities;
       } else {
         autocompleteOptions.value = [];
       }
