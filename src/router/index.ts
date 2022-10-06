@@ -16,7 +16,8 @@ import { nextTick } from "vue";
 const { EntityService } = Services;
 
 const {
-  DataTypeCheckers: { isObjectHasKeys }
+  DataTypeCheckers: { isObjectHasKeys },
+  Converters: { urlToIri }
 } = Helpers;
 
 const entityService = new EntityService(axios);
@@ -106,12 +107,19 @@ router.beforeEach(async (to, from) => {
     store.commit("updateSnomedReturnUrl", currentUrl);
     store.commit("updateAuthReturnUrl", currentUrl);
   }
-  const iri = to.params.selectedIri as string;
-  if (iri && Config.XmlSchemaDatatypes.includes(iri)) {
+  const iri = to.params.selectedIri;
+  if (iri && typeof iri === "string" && Config.XmlSchemaDatatypes.includes(iri)) {
     return false;
   }
-  if (to.name?.toString() == "Editor") {
+  if (to.name?.toString() == "Editor" && iri && typeof iri === "string") {
     if (iri) store.commit("updateEditorIri", iri);
+    try {
+      if (!(await entityService.iriExists(urlToIri(iri)))) {
+        router.push({ name: "EntityNotFound" });
+      }
+    } catch (_error) {
+      router.push({ name: "EntityNotFound" });
+    }
   }
   if (to.matched.some((record: any) => record.meta.requiresAuth)) {
     const res = await store.dispatch("authenticateCurrentUser");
@@ -130,23 +138,16 @@ router.beforeEach(async (to, from) => {
     }
   }
 
-  if (to.name === "Editor" && isObjectHasKeys(to.params, ["selectedIri"])) {
-    const iri = to.params.selectedIri as string;
-    try {
-      new URL(iri);
-      if (!(await entityService.iriExists(iri))) {
-        router.push({ name: "EntityNotFound" });
-      }
-    } catch (_error) {
-      router.push({ name: "EntityNotFound" });
-    }
-  }
-
   if (to.name === "PageNotFound" && to.path.startsWith("/creator/")) {
     router.push({ name: "Creator" });
   }
   if (to.name === "PageNotFound" && to.path.startsWith("/editor/")) {
-    router.push({ name: "Editor" });
+    const urlSections = to.path.split("/");
+    if (urlSections.length > 2) {
+      const selectedIriParam = to.path.split("/")[2];
+      if (!selectedIriParam) router.push({ name: "EntityNotFound" });
+      else router.push({ name: "Editor", params: { selectedIri: urlToIri(selectedIriParam) } });
+    } else router.push({ name: "Editor" });
   }
 
   return true;
