@@ -13,7 +13,7 @@ import { Enums, Helpers, Services, Vocabulary } from "im-library";
 import store from "@/store";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";
-import { PropertyShape, TTIriRef, QueryRequest } from "im-library/dist/types/interfaces/Interfaces";
+import { PropertyShape, TTIriRef, QueryRequest, Query } from "im-library/dist/types/interfaces/Interfaces";
 import axios from "axios";
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength },
@@ -65,8 +65,11 @@ async function getDropdownOptions() {
   if (isObjectHasKeys(props.shape, ["select", "argument"])) {
     const args = processArguments(props.shape);
     const replacedArgs = mapToObject(args);
-    const query = { argument: replacedArgs, queryIri: props.shape.select[0] } as QueryRequest;
-    const result = await queryService.queryIM(query);
+    const queryRequest = {} as QueryRequest;
+    queryRequest.argument = replacedArgs;
+    const query = { "@id": props.shape.select[0]["@id"] } as Query;
+    queryRequest.query = query;
+    const result = await queryService.queryIM(queryRequest);
     if (result)
       return result.entities.map((item: any) => {
         return { "@id": item.iri, name: item.name };

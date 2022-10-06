@@ -43,7 +43,8 @@ import {
   SearchRequest,
   ConceptSummary,
   PropertyShape,
-  QueryRequest
+  QueryRequest,
+  Query
 } from "im-library/dist/types/interfaces/Interfaces";
 import { Helpers, Models, Enums, Services } from "im-library";
 import store from "@/store";
@@ -121,17 +122,20 @@ function debounceForSearch(): void {
 async function search(): Promise<void> {
   if (searchTerm.value.length > 2) {
     loading.value = true;
-    let query = {} as QueryRequest;
+    let queryRequest = {} as QueryRequest;
+    let query = {} as Query;
     if (isObjectHasKeys(props.shape, ["select", "argument"])) {
       const args = processArguments(props.shape);
       const replacedArgs = mapToObject(args);
-      query.argument = replacedArgs;
-      query.textSearch = searchTerm.value;
-      query.queryIri = props.shape.select[0];
+      queryRequest.argument = replacedArgs;
+      queryRequest.textSearch = searchTerm.value;
+      query["@id"] = props.shape.select[0]["@id"];
+      queryRequest.query = query;
     }
     if (isObjectHasKeys(props.shape, ["select"])) {
-      query.textSearch = searchTerm.value;
-      query.queryIri = props.shape.select[0];
+      queryRequest.textSearch = searchTerm.value;
+      query["@id"] = props.shape.select[0]["@id"];
+      queryRequest.query = query;
     }
     if (!isObjectHasKeys(query, ["queryIri"])) throw new Error("No queryIri found for entity search");
 
@@ -140,7 +144,7 @@ async function search(): Promise<void> {
     }
     controller.value = new AbortController();
     if (controller.value) {
-      const result = await queryService.queryIM(query, controller.value);
+      const result = await queryService.queryIM(queryRequest, controller.value);
       if (result) searchResults.value = result.entities;
       else searchResults.value = [];
     }
@@ -206,13 +210,11 @@ function defaultValidity() {
 }
 
 function showTreeDialog(event: any): void {
-  const x = treeOP.value as any;
-  if (x) x.show(event);
+  treeOP.value.show(event);
 }
 
 function hideTreeOverlay(): void {
-  const x = treeOP.value as any;
-  if (x) x.hide();
+  treeOP.value.hide();
 }
 
 function dropReceived(event: any) {

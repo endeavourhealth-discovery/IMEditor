@@ -83,7 +83,8 @@ import {
   SearchRequest,
   ConceptSummary,
   PropertyShape,
-  QueryRequest
+  QueryRequest,
+  Query
 } from "im-library/dist/types/interfaces/Interfaces";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 const {
@@ -207,12 +208,14 @@ function getAssociatedProperty() {
 
 async function getAutocompleteOptions() {
   if (associatedProperty.value) {
-    let query = {} as QueryRequest;
+    let queryRequest = {} as QueryRequest;
+    let query = {} as Query;
     if (isObjectHasKeys(props.shape, ["select", "argument"])) {
       const args = processArguments(props.shape, valueVariableMap?.value);
       const replacedArgs = mapToObject(args);
-      query.argument = replacedArgs;
-      query.queryIri = props.shape.select[0];
+      queryRequest.argument = replacedArgs;
+      query["@id"] = props.shape.select[0]["@id"];
+      queryRequest.query = query;
     } else {
       throw new Error("EntityAutoComplete is missing 'select' or 'argument' in propertyShape object");
     }
@@ -221,7 +224,7 @@ async function getAutocompleteOptions() {
     }
     controller.value = new AbortController();
     if (controller.value) {
-      const result = await queryService.queryIM(query, controller.value);
+      const result = await queryService.queryIM(queryRequest, controller.value);
       if (result) {
         autocompleteOptions.value = result.entities;
       } else {

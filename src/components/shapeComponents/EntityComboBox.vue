@@ -25,7 +25,7 @@
 import { ref, Ref, watch, onMounted, inject, PropType } from "vue";
 import { Enums, Helpers, Services, Vocabulary } from "im-library";
 import injectionKeys from "@/injectionKeys/injectionKeys";
-import { PropertyShape, TTIriRef, QueryRequest } from "im-library/dist/types/interfaces/Interfaces";
+import { PropertyShape, TTIriRef, QueryRequest, Query } from "im-library/dist/types/interfaces/Interfaces";
 import axios from "axios";
 
 const { RDFS } = Vocabulary;
@@ -95,7 +95,11 @@ async function getDropdownOptions(): Promise<TTIriRef[]> {
   if (isObjectHasKeys(props.shape, ["select", "argument"])) {
     const args = processArguments(props.shape);
     const replacedArgs = mapToObject(args);
-    const queryRequest = { argument: replacedArgs, queryIri: props.shape.select[0] } as QueryRequest;
+    const queryRequest = {} as QueryRequest;
+    const query = {} as Query;
+    query["@id"] = props.shape.select[0]["@id"];
+    queryRequest.argument = replacedArgs;
+    queryRequest.query = query;
     const result = await queryService.queryIM(queryRequest);
     if (result)
       return result.entities.map((item: any) => {
