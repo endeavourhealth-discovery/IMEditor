@@ -137,7 +137,7 @@ async function search(): Promise<void> {
       query["@id"] = props.shape.select[0]["@id"];
       queryRequest.query = query;
     }
-    if (!isObjectHasKeys(query, ["queryIri"])) throw new Error("No queryIri found for entity search");
+    if (!isObjectHasKeys(query, ["@id"])) throw new Error("No query iri found for entity search");
 
     if (!isObject(controller.value)) {
       controller.value.abort();

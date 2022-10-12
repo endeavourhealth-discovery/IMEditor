@@ -95,7 +95,7 @@ function addNextClicked(item: any): void {
 
 <style scoped>
 .builder-child-container {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   display: flex;
   flex-flow: row nowrap;
   justify-content: flex-start;
