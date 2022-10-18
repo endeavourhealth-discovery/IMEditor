@@ -1,804 +1,849 @@
 export default {
   CONCEPT_SHAPE: {
-    "@id": "im:Editor_ConceptShape",
-    "rdf:type": [
-      {
-        "@id": "im:FormGenerator"
-      }
-    ],
-    "rdfs:label": "Editor - Concept shape",
-    "rdfs:comment": "Form editor for a concept",
-    "im:targetShape": {
-      "@id": "im:ConceptShape"
+    "@id": "http://endhealth.info/im#Editor_ConceptShape",
+    status: {
+      name: "Active",
+      "@id": "http://endhealth.info/im#Active"
     },
-    "im:isContainedIn": [
+    label: "Editor - Concept shape",
+    comment: "Form editor for a concept",
+    targetShape: {
+      name: "Concept shape",
+      "@id": "http://endhealth.info/im#ConceptShape"
+    },
+    type: [
       {
-        "@id": "im:ModelDataModels"
+        name: "Form generator",
+        "@id": "http://endhealth.info/im#FormGenerator"
       }
     ],
-    "sh:group": [
+    isContainedIn: [
       {
-        "rdfs:label": "Property group - Summary details",
-        "sh:order": 1,
-        "sh:maxCount": 1,
-        "sh:property": [
+        name: "Data models for IM itself",
+        "@id": "http://endhealth.info/im#ModelDataModels"
+      }
+    ],
+    group: [
+      {
+        label: "Property group - Summary details",
+        name: "Summary details",
+        order: 1,
+        minCount: 1,
+        maxCount: 1,
+        path: {
+          name: "type",
+          "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+        },
+        property: [
           {
-            "rdfs:comment": "A property that auto generates the type as  concept type",
-            "sh:order": 1,
-            "sh:function": {
-              "@id": "im:Function_GetAdditionalAllowableTypes"
+            comment: "A property that auto generates the type as  concept type",
+            name: "type",
+            order: 1,
+            minCount: 1,
+            componentType: {
+              "@id": "http://endhealth.info/im#entityComboBox"
             },
-            "sh:name": "type",
-            "sh:path": {
-              "@id": "rdf:type"
+            path: {
+              name: "type",
+              "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
             },
-            "im:argument": [
+            function: {
+              "@id": "http://endhealth.info/im#Function_GetAdditionalAllowableTypes"
+            },
+            argument: [
               {
-                "im:valueIri": {
-                  "@id": "im:Concept"
-                },
-                "sh:parameter": "entityIri"
+                parameter: "entityIri",
+                valueIri: {
+                  name: "Terminology Concept",
+                  "@id": "http://endhealth.info/im#Concept"
+                }
               }
             ],
-            "im:isIri": {
-              "@id": "im:Concept"
-            },
-            "sh:minCount": 1,
-            "im:componentType": {
-              "@id": "im:entityComboBox"
+            isIri: {
+              name: "Terminology Concept",
+              "@id": "http://endhealth.info/im#Concept"
             }
           },
           {
-            "rdfs:comment": "A property that auto generates a concept iri from the snomed extension",
-            "sh:order": 2,
-            "sh:name": "iri",
-            "sh:maxCount": 1,
-            "sh:path": {
-              "@id": "im:id"
+            comment: "A property that auto generates a concept iri from the snomed extension",
+            name: "iri",
+            order: 2,
+            minCount: 1,
+            maxCount: 1,
+            componentType: {
+              "@id": "http://endhealth.info/im#textDisplay"
             },
-            "sh:minCount": 1,
-            "im:componentType": {
-              "@id": "im:textDisplay"
+            path: {
+              "@id": "http://endhealth.info/im#id"
             },
-            "im:valueVariable": "conceptIri",
-            "sh:class": {
-              "@id": "im:Concept"
+            function: {
+              name: "Snomed concept generator",
+              "@id": "http://endhealth.info/im#Function_SnomedConceptGenerator"
             },
-            "sh:function": {
-              "@id": "im:Function_SnomedConceptGenerator"
-            }
+            valueVariable: "conceptIri"
           },
           {
-            "rdfs:comment": "Property that derives a concept code from the concept iri",
-            "sh:order": 3,
-            "sh:name": "code",
-            "sh:maxCount": 1,
-            "sh:path": {
-              "@id": "im:code"
+            comment: "Property that derives a concept code from the concept iri",
+            name: "code",
+            order: 3,
+            minCount: 1,
+            maxCount: 1,
+            componentType: {
+              "@id": "http://endhealth.info/im#textDisplay"
             },
-            "im:argument": [
+            path: {
+              name: "code",
+              "@id": "http://endhealth.info/im#code"
+            },
+            function: {
+              name: "Local name retriever",
+              "@id": "http://endhealth.info/im#Function_LocalNameRetriever"
+            },
+            argument: [
               {
-                "sh:parameter": "entityIri",
-                "im:valueVariable": "conceptIri"
+                parameter: "entityIri",
+                valueVariable: "conceptIri"
               },
               {
-                "sh:parameter": "fieldName",
-                "im:valueData": "code"
+                parameter: "fieldName",
+                valueData: "code"
               }
-            ],
-            "sh:minCount": 1,
-            "im:componentType": {
-              "@id": "im:textDisplay"
+            ]
+          },
+          {
+            comment: "name or main term of concept",
+            name: "Concept name",
+            order: 4,
+            minCount: 1,
+            maxCount: 1,
+            componentType: {
+              "@id": "http://endhealth.info/im#textInput"
             },
-            "sh:dataType": {
-              "@id": "xsd:string"
-            },
-            "sh:function": {
-              "@id": "im:Function_LocalNameRetriever"
+            path: {
+              name: "label",
+              "@id": "http://www.w3.org/2000/01/rdf-schema#label"
             }
           },
           {
-            "rdfs:comment": "name or main term of concept",
-            "sh:order": 4,
-            "sh:name": "Concept name",
-            "sh:maxCount": 1,
-            "sh:path": {
-              "@id": "rdfs:label"
+            comment: "optional description",
+            name: "Concept description",
+            order: 5,
+            minCount: 1,
+            maxCount: 1,
+            componentType: {
+              "@id": "http://endhealth.info/im#htmlInput"
             },
-            "sh:minCount": 1,
-            "im:componentType": {
-              "@id": "im:textInput"
+            path: {
+              name: "comment",
+              "@id": "http://www.w3.org/2000/01/rdf-schema#comment"
             },
-            "sh:dataType": {
-              "@id": "xsd:string"
+            datatype: {
+              name: "string",
+              "@id": "http://www.w3.org/2001/XMLSchema#string"
             }
           },
           {
-            "rdfs:comment": "optional description",
-            "sh:order": 5,
-            "sh:datatype": {
-              "@id": "xsd:string"
+            comment: "selects the status with a default of draft",
+            name: "status",
+            order: 6,
+            minCount: 1,
+            maxCount: 1,
+            componentType: {
+              "@id": "http://endhealth.info/im#entityComboBox"
             },
-            "sh:name": "Concept description",
-            "sh:maxCount": 1,
-            "sh:path": {
-              "@id": "rdfs:comment"
+            path: {
+              name: "status",
+              "@id": "http://endhealth.info/im#status"
             },
-            "sh:minCount": 1,
-            "im:componentType": {
-              "@id": "im:htmlInput"
-            }
-          },
-          {
-            "rdfs:comment": "selects the status with a default of draft",
-            "sh:order": 6,
-            "sh:select": [
+            select: [
               {
-                "@id": "im:Query_GetIsas"
+                "@id": "http://endhealth.info/im#Query_GetIsas"
               }
             ],
-            "sh:name": "status",
-            "sh:maxCount": 1,
-            "sh:path": {
-              "@id": "im:status"
-            },
-            "im:argument": [
+            argument: [
               {
-                "im:valueIri": {
-                  "@id": "im:Status"
-                },
-                "sh:parameter": "this"
-              }
-            ],
-            "im:isIri": {
-              "@id": "im:Draft"
-            },
-            "sh:minCount": 1,
-            "im:componentType": {
-              "@id": "im:entityComboBox"
-            },
-            "sh:class": {
-              "@id": "im:Status"
-            }
-          }
-        ],
-        "im:name": "Summary details",
-        "sh:minCount": 1,
-        "im:componentType": {
-          "@id": "im:stepsGroup"
-        }
-      },
-      {
-        "rdfs:label": "Property group - Sub class steps",
-        "sh:order": 2,
-        "sh:maxCount": 1,
-        "im:name": "Subclass of",
-        "im:subGroup": [
-          {
-            "rdfs:label": "Property group - Sub type array builder",
-            "sh:order": 1,
-            "sh:path": {
-              "@id": "rdfs:subClassOf"
-            },
-            "im:validation": {
-              "@id": "im:Validation_hasParent"
-            },
-            "im:validationErrorMessage": "Entity is missing a parent. Add a parent to 'SubclassOf' or 'isContainedIn'.",
-            "sh:property": [
-              {
-                "rdfs:comment": "selects an entity based on select query",
-                "sh:order": 1,
-                "sh:select": [
-                  {
-                    "@id": "im:Query_SearchConcepts"
-                  }
-                ],
-                "im:builderChild": true,
-                "sh:name": "Entity",
-                "sh:path": {
-                  "@id": "rdfs:subClassOf"
-                },
-                "sh:minCount": 1,
-                "im:componentType": {
-                  "@id": "im:entitySearch"
-                },
-                "sh:class": {
-                  "@id": "im:Concept"
+                parameter: "this",
+                valueIri: {
+                  name: "Activity status",
+                  "@id": "http://endhealth.info/im#Status"
                 }
               }
             ],
-            "im:name": "Subclass of",
-            "sh:minCount": 1,
-            "im:componentType": {
-              "@id": "im:arrayBuilder"
+            isIri: {
+              name: "Draft",
+              "@id": "http://endhealth.info/im#Draft"
             }
           }
         ],
-        "sh:minCount": 1,
-        "im:componentType": {
-          "@id": "im:stepsGroup"
+        componentType: {
+          "@id": "http://endhealth.info/im#stepsGroup"
         }
       },
       {
-        "rdfs:label": "Property group - Is contained in steps",
-        "sh:order": 3,
-        "sh:maxCount": 1,
-        "im:name": "Is contained in",
-        "im:subGroup": [
+        label: "Property group - Sub class steps",
+        name: "Subclass of",
+        order: 2,
+        minCount: 1,
+        maxCount: 1,
+        path: {
+          name: "subClassOf",
+          "@id": "http://www.w3.org/2000/01/rdf-schema#subClassOf"
+        },
+        componentType: {
+          "@id": "http://endhealth.info/im#stepsGroup"
+        },
+        subGroup: [
           {
-            "rdfs:label": "Property group - Is contained in array builder",
-            "sh:order": 1,
-            "sh:path": {
-              "@id": "im:isContainedIn"
-            },
-            "sh:property": [
+            label: "Property group - Sub type array builder",
+            name: "Subclass of",
+            order: 1,
+            minCount: 1,
+            property: [
               {
-                "rdfs:comment": "selects an entity based on select query",
-                "sh:order": 1,
-                "sh:select": [
+                comment: "selects an entity based on select query",
+                name: "Entity",
+                order: 1,
+                minCount: 1,
+                componentType: {
+                  "@id": "http://endhealth.info/im#entitySearch"
+                },
+                path: {
+                  name: "subClassOf",
+                  "@id": "http://www.w3.org/2000/01/rdf-schema#subClassOf"
+                },
+                select: [
                   {
-                    "@id": "im:Query_SearchConcepts"
+                    name: "Search for concepts",
+                    "@id": "http://endhealth.info/im#Query_SearchConcepts"
                   }
                 ],
-                "im:builderChild": true,
-                "sh:name": "Entity",
-                "sh:path": {
-                  "@id": "im:isContainedIn"
-                },
-                "sh:minCount": 1,
-                "im:componentType": {
-                  "@id": "im:entitySearch"
-                },
-                "sh:class": {
-                  "@id": "im:Concept"
-                }
+                builderChild: true
               }
             ],
-            "im:name": "Is contained in",
-            "sh:minCount": 0,
-            "im:validation": {
-              "@id": "im:Validation_hasParent"
+            componentType: {
+              "@id": "http://endhealth.info/im#arrayBuilder"
             },
-            "im:validationErrorMessage": "Entity is missing a parent. Add a parent to 'SubclassOf' or 'isContainedIn'.",
-            "im:componentType": {
-              "@id": "im:arrayBuilder"
-            }
+            path: {
+              name: "subClassOf",
+              "@id": "http://www.w3.org/2000/01/rdf-schema#subClassOf"
+            },
+            validation: {
+              "@id": "http://endhealth.info/im#Validation_hasParent"
+            },
+            validationErrorMessage: "Entity is missing a parent. Add a parent to 'SubclassOf' or 'isContainedIn'."
           }
-        ],
-        "sh:minCount": 1,
-        "im:componentType": {
-          "@id": "im:stepsGroup"
-        }
+        ]
       },
       {
-        "rdfs:label": "Property group - Role group steps",
-        "sh:order": 4,
-        "im:name": "Role group",
-        "im:subGroup": [
+        label: "Property group - Is contained in steps",
+        name: "Is contained in",
+        order: 3,
+        minCount: 1,
+        maxCount: 1,
+        path: {
+          name: "is Contained In",
+          "@id": "http://endhealth.info/im#isContainedIn"
+        },
+        componentType: {
+          "@id": "http://endhealth.info/im#stepsGroup"
+        },
+        subGroup: [
           {
-            "rdfs:label": "Property Group - Role group array builder",
-            "sh:order": 1,
-            "sh:maxCount": 1,
-            "sh:path": {
-              "@id": "im:roleGroup"
-            },
-            "im:subGroup": [
+            label: "Property group - Is contained in array builder",
+            name: "Is contained in",
+            order: 1,
+            minCount: 0,
+            property: [
               {
-                "rdfs:label": "Property Group - Role group component group",
-                "im:name": "Property refinement",
-                "sh:order": 1,
-                "sh:minCount": 1,
-                "im:componentType": {
-                  "@id": "im:componentGroup"
+                comment: "selects an entity based on select query",
+                name: "Entity",
+                order: 1,
+                minCount: 1,
+                componentType: {
+                  "@id": "http://endhealth.info/im#entitySearch"
                 },
-                "sh:path": {
-                  "@id": "im:roleGroup"
+                path: {
+                  name: "is Contained In",
+                  "@id": "http://endhealth.info/im#isContainedIn"
                 },
-                "sh:property": [
+                select: [
                   {
-                    "rdfs:comment": "selects a property from allowable range from selected concept",
-                    "sh:order": 1,
-                    "sh:select": [
+                    name: "Search for concepts",
+                    "@id": "http://endhealth.info/im#Query_SearchConcepts"
+                  }
+                ],
+                builderChild: true
+              }
+            ],
+            componentType: {
+              "@id": "http://endhealth.info/im#arrayBuilder"
+            },
+            path: {
+              name: "is Contained In",
+              "@id": "http://endhealth.info/im#isContainedIn"
+            },
+            validation: {
+              "@id": "http://endhealth.info/im#Validation_hasParent"
+            },
+            validationErrorMessage: "Entity is missing a parent. Add a parent to 'SubclassOf' or 'isContainedIn'."
+          }
+        ]
+      },
+      {
+        label: "Property group - Role group steps",
+        name: "Role group",
+        order: 4,
+        minCount: 0,
+        path: {
+          name: "role group",
+          "@id": "http://endhealth.info/im#roleGroup"
+        },
+        componentType: {
+          "@id": "http://endhealth.info/im#stepsGroup"
+        },
+        subGroup: [
+          {
+            label: "Property Group - Role group array builder",
+            name: "Role group",
+            order: 1,
+            minCount: 0,
+            maxCount: 1,
+            componentType: {
+              "@id": "http://endhealth.info/im#arrayBuilder"
+            },
+            subGroup: [
+              {
+                label: "Property Group - Role group component group",
+                name: "Property refinement",
+                order: 1,
+                minCount: 1,
+                property: [
+                  {
+                    comment: "selects a property from allowable range from selected concept",
+                    name: "Property",
+                    order: 1,
+                    minCount: 1,
+                    componentType: {
+                      "@id": "http://endhealth.info/im#entityAutoComplete"
+                    },
+                    path: {
+                      name: "role group",
+                      "@id": "http://endhealth.info/im#roleGroup"
+                    },
+                    select: [
                       {
-                        "@id": "im:Query_AllowableProperties"
+                        name: "Query -allowable properties for a concept",
+                        "@id": "http://endhealth.info/im#Query_AllowableProperties"
                       }
                     ],
-                    "im:builderChild": true,
-                    "sh:path": {
-                      "@id": "im:roleGroup"
-                    },
-                    "im:argument": [
+                    argument: [
                       {
-                        "sh:parameter": "entityIri",
-                        "im:valueVariable": "conceptIri"
+                        parameter: "entityIri",
+                        valueVariable: "conceptIri"
                       }
                     ],
-                    "im:name": "Property",
-                    "sh:minCount": 1,
-                    "im:componentType": {
-                      "@id": "im:entityAutoComplete"
-                    },
-                    "im:valueVariable": "propertyIri"
+                    valueVariable: "propertyIri",
+                    builderChild: true
                   },
                   {
-                    "rdfs:comment": "Selects a quantifier from allowable range from property",
-                    "sh:order": 2,
-                    "sh:select": [
-                      {
-                        "@id": "im:Query_AllowableRanges"
-                      }
-                    ],
-                    "im:builderChild": true,
-                    "sh:path": {
-                      "@id": "im:roleGroup"
+                    comment: "Selects a quantifier from allowable range from property",
+                    name: "Quantifier",
+                    order: 2,
+                    minCount: 1,
+                    componentType: {
+                      "@id": "http://endhealth.info/im#entityAutoComplete"
                     },
-                    "im:argument": [
+                    path: {
+                      name: "role group",
+                      "@id": "http://endhealth.info/im#roleGroup"
+                    },
+                    select: [
                       {
-                        "sh:parameter": "entityIri",
-                        "im:valueVariable": "propertyIri"
+                        name: "Query -allowable ranges for a property",
+                        "@id": "http://endhealth.info/im#Query_AllowableRanges"
                       }
                     ],
-                    "im:name": "Quantifier",
-                    "sh:minCount": 1,
-                    "im:componentType": {
-                      "@id": "im:entityAutoComplete"
-                    }
+                    argument: [
+                      {
+                        parameter: "entityIri",
+                        valueVariable: "propertyIri"
+                      }
+                    ],
+                    builderChild: true
                   }
-                ]
+                ],
+                componentType: {
+                  "@id": "http://endhealth.info/im#componentGroup"
+                },
+                path: {
+                  name: "role group",
+                  "@id": "http://endhealth.info/im#roleGroup"
+                }
               }
             ],
-            "im:name": "Role group",
-            "sh:minCount": 0,
-            "im:componentType": {
-              "@id": "im:arrayBuilder"
+            path: {
+              name: "role group",
+              "@id": "http://endhealth.info/im#roleGroup"
             }
           }
-        ],
-        "sh:minCount": 0,
-        "im:componentType": {
-          "@id": "im:stepsGroup"
-        }
+        ]
       }
-    ]
+    ],
+    scheme: {
+      name: "London Discovery Snomed extension code scheme and graph",
+      "@id": "http://endhealth.info/im#"
+    },
+    iri: "http://endhealth.info/im#Editor_ConceptShape"
   },
   CONCEPT_SET_SHAPE: {
-    "@id": "im:Editor_ConceptSetShape",
-    "rdf:type": [
-      {
-        "@id": "im:FormGenerator"
-      }
-    ],
-    "rdfs:label": "Editor - Concept set shape",
-    "rdfs:comment": "Form editor for a concept set",
-    "im:targetShape": {
-      "@id": "im:SetShape"
+    "@id": "http://endhealth.info/im#Editor_ConceptSetShape",
+    status: {
+      name: "Active",
+      "@id": "http://endhealth.info/im#Active"
     },
-    "im:isContainedIn": [
+    label: "Editor - Concept set shape",
+    comment: "Form editor for a concept set",
+    targetShape: {
+      name: "Set shape",
+      "@id": "http://endhealth.info/im#SetShape"
+    },
+    type: [
       {
-        "@id": "im:ModelDataModels"
+        name: "Form generator",
+        "@id": "http://endhealth.info/im#FormGenerator"
       }
     ],
-    "sh:group": [
+    isContainedIn: [
       {
-        "rdfs:label": "Property group - Summary details",
-        "im:name": "Summary details",
-        "sh:order": 1,
-        "sh:minCount": 1,
-        "sh:maxCount": 1,
-        "im:componentType": {
-          "@id": "im:stepsGroup"
+        name: "Data models for IM itself",
+        "@id": "http://endhealth.info/im#ModelDataModels"
+      }
+    ],
+    group: [
+      {
+        label: "Property group - Summary details",
+        name: "Summary details",
+        order: 1,
+        minCount: 1,
+        maxCount: 1,
+        path: {
+          name: "type",
+          "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
         },
-        "sh:property": [
+        property: [
           {
-            "rdfs:comment": "A property that auto generates the type as  concept type",
-            "sh:order": 1,
-            "sh:function": {
-              "@id": "im:Function_GetAdditionalAllowableTypes"
+            comment: "A property that auto generates the type as  concept type",
+            name: "type",
+            order: 1,
+            minCount: 1,
+            componentType: {
+              "@id": "http://endhealth.info/im#entityComboBox"
             },
-            "sh:name": "type",
-            "sh:path": {
-              "@id": "rdf:type"
+            path: {
+              name: "type",
+              "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
             },
-            "im:argument": [
+            function: {
+              "@id": "http://endhealth.info/im#Function_GetAdditionalAllowableTypes"
+            },
+            argument: [
               {
-                "im:valueIri": {
-                  "@id": "im:ConceptSet"
-                },
-                "sh:parameter": "entityIri"
-              }
-            ],
-            "im:isIri": {
-              "@id": "im:ConceptSet"
-            },
-            "sh:minCount": 1,
-            "im:componentType": {
-              "@id": "im:entityComboBox"
-            }
-          },
-          {
-            "rdfs:comment": "A property that auto generates a concept iri from the snomed extension",
-            "sh:order": 2,
-            "sh:name": "iri",
-            "sh:maxCount": 1,
-            "sh:path": {
-              "@id": "im:id"
-            },
-            "sh:minCount": 1,
-            "im:componentType": {
-              "@id": "im:textDisplay"
-            },
-            "im:valueVariable": "conceptIri",
-            "sh:class": {
-              "@id": "im:Concept"
-            },
-            "sh:function": {
-              "@id": "im:Function_SnomedConceptGenerator"
-            }
-          },
-          {
-            "rdfs:comment": "Property that derives a concept code from the concept iri",
-            "sh:order": 3,
-            "sh:name": "code",
-            "sh:maxCount": 1,
-            "sh:path": {
-              "@id": "im:code"
-            },
-            "im:argument": [
-              {
-                "sh:parameter": "entityIri",
-                "im:valueVariable": "conceptIri"
-              },
-              {
-                "sh:parameter": "fieldName",
-                "im:valueData": "code"
-              }
-            ],
-            "sh:minCount": 1,
-            "im:componentType": {
-              "@id": "im:textDisplay"
-            },
-            "sh:dataType": {
-              "@id": "xsd:string"
-            },
-            "sh:function": {
-              "@id": "im:Function_LocalNameRetriever"
-            }
-          },
-          {
-            "rdfs:comment": "name or main term of concept",
-            "sh:order": 4,
-            "sh:name": "Concept name",
-            "sh:maxCount": 1,
-            "sh:path": {
-              "@id": "rdfs:label"
-            },
-            "sh:minCount": 1,
-            "im:componentType": {
-              "@id": "im:textInput"
-            },
-            "sh:dataType": {
-              "@id": "xsd:string"
-            }
-          },
-          {
-            "rdfs:comment": "optional description",
-            "sh:order": 5,
-            "sh:datatype": {
-              "@id": "xsd:string"
-            },
-            "sh:name": "Concept description",
-            "sh:maxCount": 1,
-            "sh:path": {
-              "@id": "rdfs:comment"
-            },
-            "sh:minCount": 1,
-            "im:componentType": {
-              "@id": "im:htmlInput"
-            }
-          },
-          {
-            "rdfs:comment": "selects the status with a default of draft",
-            "sh:order": 6,
-            "sh:select": [
-              {
-                "@id": "im:Query_GetIsas"
-              }
-            ],
-            "sh:name": "status",
-            "sh:maxCount": 1,
-            "sh:path": {
-              "@id": "im:status"
-            },
-            "im:argument": [
-              {
-                "im:valueIri": {
-                  "@id": "im:Status"
-                },
-                "sh:parameter": "this"
-              }
-            ],
-            "im:isIri": {
-              "@id": "im:Draft"
-            },
-            "sh:minCount": 1,
-            "im:componentType": {
-              "@id": "im:entityComboBox"
-            },
-            "sh:class": {
-              "@id": "im:Status"
-            }
-          }
-        ]
-      },
-      {
-        "rdfs:label": "Property group - Sub class steps",
-        "sh:order": 2,
-        "sh:maxCount": 0,
-        "im:name": "Subclass of",
-        "im:subGroup": [
-          {
-            "rdfs:label": "Property group - Sub type array builder",
-            "sh:order": 1,
-            "sh:path": {
-              "@id": "rdfs:subClassOf"
-            },
-            "im:validation": {
-              "@id": "im:Validation_hasParent"
-            },
-            "im:validationErrorMessage": "Entity is missing a parent. Add a parent to 'SubclassOf' or 'isContainedIn'.",
-            "sh:property": [
-              {
-                "rdfs:comment": "selects an entity based on select query",
-                "sh:order": 1,
-                "sh:select": [
-                  {
-                    "@id": "im:Query_SearchConcepts"
-                  }
-                ],
-                "im:builderChild": true,
-                "sh:name": "Entity",
-                "sh:path": {
-                  "@id": "rdfs:subClassOf"
-                },
-                "sh:minCount": 1,
-                "im:componentType": {
-                  "@id": "im:entitySearch"
-                },
-                "sh:class": {
-                  "@id": "im:ConceptSet"
+                parameter: "entityIri",
+                valueIri: {
+                  name: "Concept Set",
+                  "@id": "http://endhealth.info/im#ConceptSet"
                 }
               }
             ],
-            "im:name": "Subclass of",
-            "sh:minCount": 1,
-            "im:componentType": {
-              "@id": "im:arrayBuilder"
+            isIri: {
+              name: "Concept Set",
+              "@id": "http://endhealth.info/im#ConceptSet"
+            }
+          },
+          {
+            comment: "A property that auto generates a concept iri from the snomed extension",
+            name: "iri",
+            order: 2,
+            minCount: 1,
+            maxCount: 1,
+            componentType: {
+              "@id": "http://endhealth.info/im#textDisplay"
+            },
+            path: {
+              "@id": "http://endhealth.info/im#id"
+            },
+            function: {
+              name: "Snomed concept generator",
+              "@id": "http://endhealth.info/im#Function_SnomedConceptGenerator"
+            },
+            valueVariable: "conceptIri"
+          },
+          {
+            comment: "Property that derives a concept code from the concept iri",
+            name: "code",
+            order: 3,
+            minCount: 1,
+            maxCount: 1,
+            componentType: {
+              "@id": "http://endhealth.info/im#textDisplay"
+            },
+            path: {
+              name: "code",
+              "@id": "http://endhealth.info/im#code"
+            },
+            function: {
+              name: "Local name retriever",
+              "@id": "http://endhealth.info/im#Function_LocalNameRetriever"
+            },
+            argument: [
+              {
+                parameter: "entityIri",
+                valueVariable: "conceptIri"
+              },
+              {
+                parameter: "fieldName",
+                valueData: "code"
+              }
+            ]
+          },
+          {
+            comment: "name or main term of concept",
+            name: "Concept name",
+            order: 4,
+            minCount: 1,
+            maxCount: 1,
+            componentType: {
+              "@id": "http://endhealth.info/im#textInput"
+            },
+            path: {
+              name: "label",
+              "@id": "http://www.w3.org/2000/01/rdf-schema#label"
+            }
+          },
+          {
+            comment: "optional description",
+            name: "Concept description",
+            order: 5,
+            minCount: 1,
+            maxCount: 1,
+            componentType: {
+              "@id": "http://endhealth.info/im#htmlInput"
+            },
+            path: {
+              name: "comment",
+              "@id": "http://www.w3.org/2000/01/rdf-schema#comment"
+            },
+            datatype: {
+              name: "string",
+              "@id": "http://www.w3.org/2001/XMLSchema#string"
+            }
+          },
+          {
+            comment: "selects the status with a default of draft",
+            name: "status",
+            order: 6,
+            minCount: 1,
+            maxCount: 1,
+            componentType: {
+              "@id": "http://endhealth.info/im#entityComboBox"
+            },
+            path: {
+              name: "status",
+              "@id": "http://endhealth.info/im#status"
+            },
+            select: [
+              {
+                "@id": "http://endhealth.info/im#Query_GetIsas"
+              }
+            ],
+            argument: [
+              {
+                parameter: "this",
+                valueIri: {
+                  name: "Activity status",
+                  "@id": "http://endhealth.info/im#Status"
+                }
+              }
+            ],
+            isIri: {
+              name: "Draft",
+              "@id": "http://endhealth.info/im#Draft"
             }
           }
         ],
-        "sh:minCount": 1,
-        "im:componentType": {
-          "@id": "im:stepsGroup"
+        componentType: {
+          "@id": "http://endhealth.info/im#stepsGroup"
         }
       },
       {
-        "rdfs:label": "Property group - Contained in steps",
-        "im:name": "isContainedIn",
-        "sh:order": 3,
-        "sh:maxCount": 1,
-        "sh:minCount": 0,
-        "im:componentType": {
-          "@id": "im:stepsGroup"
+        label: "Property group - Sub class steps",
+        name: "Subclass of",
+        order: 2,
+        minCount: 1,
+        maxCount: 0,
+        path: {
+          name: "subClassOf",
+          "@id": "http://www.w3.org/2000/01/rdf-schema#subClassOf"
         },
-        "im:subGroup": [
+        componentType: {
+          "@id": "http://endhealth.info/im#stepsGroup"
+        },
+        subGroup: [
           {
-            "rdfs:label": "Property group - contained in array builder",
-            "im:name": "isContainedIn",
-            "sh:order": 1,
-            "sh:minCount": 1,
-            "im:componentType": {
-              "@id": "im:arrayBuilder"
-            },
-            "im:validation": {
-              "@id": "im:Validation_hasParent"
-            },
-            "im:validationErrorMessage": "Entity is missing a parent. Add a parent to 'SubclassOf' or 'isContainedIn'.",
-            "sh:path": [
+            label: "Property group - Sub type array builder",
+            name: "Subclass of",
+            order: 1,
+            minCount: 1,
+            property: [
               {
-                "@id": "im:isContainedIn"
+                comment: "selects an entity based on select query",
+                name: "Entity",
+                order: 1,
+                minCount: 1,
+                componentType: {
+                  "@id": "http://endhealth.info/im#entitySearch"
+                },
+                path: {
+                  name: "subClassOf",
+                  "@id": "http://www.w3.org/2000/01/rdf-schema#subClassOf"
+                },
+                select: [
+                  {
+                    name: "Search for concepts",
+                    "@id": "http://endhealth.info/im#Query_SearchConcepts"
+                  }
+                ],
+                builderChild: true
               }
             ],
-            "sh:property": [
-              {
-                "rdfs:comment": "selects an entity based on select query",
-                "sh:name": "Entity",
-                "sh:order": 1,
-                "sh:minCount": 1,
-                "im:builderChild": true,
-                "im:componentType": {
-                  "@id": "im:entitySearch"
-                },
-                "sh:select": [
-                  {
-                    "@id": "im:Query_SearchAll"
-                  }
-                ],
-                "sh:path": [
-                  {
-                    "@id": "im:isContainedIn"
-                  }
-                ],
-                "sh:class": [
-                  {
-                    "@id": "im:Folder"
-                  },
-                  {
-                    "@id": "im:ConceptSet"
-                  }
-                ]
-              }
-            ]
+            componentType: {
+              "@id": "http://endhealth.info/im#arrayBuilder"
+            },
+            path: {
+              name: "subClassOf",
+              "@id": "http://www.w3.org/2000/01/rdf-schema#subClassOf"
+            },
+            validation: {
+              "@id": "http://endhealth.info/im#Validation_hasParent"
+            },
+            validationErrorMessage: "Entity is missing a parent. Add a parent to 'SubclassOf' or 'isContainedIn'."
           }
         ]
       },
       {
-        "rdfs:label": "Property group - Members steps",
-        "im:name": "Members",
-        "sh:order": 4,
-        "sh:minCount": 0,
-        "sh:maxCount": 1,
-        "im:componentType": {
-          "@id": "im:stepsGroup"
+        label: "Property group - Contained in steps",
+        name: "Is contained in",
+        order: 3,
+        minCount: 0,
+        maxCount: 1,
+        path: {
+          name: "is Contained In",
+          "@id": "http://endhealth.info/im#isContainedIn"
         },
-        "im:subGroup": [
+        componentType: {
+          "@id": "http://endhealth.info/im#stepsGroup"
+        },
+        subGroup: [
           {
-            "rdfs:label": "Property group - members array builder",
-            "im:name": "definition",
-            "sh:order": 1,
-            "sh:minCount": 1,
-            "im:componentType": {
-              "@id": "im:arrayBuilder"
-            },
-            "im:validation": {
-              "@id": "im:Validation_hasParent"
-            },
-            "im:validationErrorMessage": "Entity is missing a parent. Add a parent to 'SubclassOf' or 'isContainedIn'.",
-            "sh:path": [
+            label: "Property group - contained in array builder",
+            name: "isContainedIn",
+            order: 1,
+            minCount: 1,
+            property: [
               {
-                "@id": "im:definition"
+                comment: "selects an entity based on select query",
+                name: "Entity",
+                order: 1,
+                minCount: 1,
+                componentType: {
+                  "@id": "http://endhealth.info/im#entitySearch"
+                },
+                path: {
+                  name: "is Contained In",
+                  "@id": "http://endhealth.info/im#isContainedIn"
+                },
+                select: [
+                  {
+                    name: "Search for concepts",
+                    "@id": "http://endhealth.info/im#Query_SearchAll"
+                  }
+                ],
+                builderChild: true
               }
             ],
-            "im:subGroup": [
+            componentType: {
+              "@id": "http://endhealth.info/im#arrayBuilder"
+            },
+            path: {
+              name: "is Contained In",
+              "@id": "http://endhealth.info/im#isContainedIn"
+            },
+            validation: {
+              "@id": "http://endhealth.info/im#Validation_hasParent"
+            },
+            validationErrorMessage: "Entity is missing a parent. Add a parent to 'SubclassOf' or 'isContainedIn'."
+          }
+        ]
+      },
+      {
+        label: "Property group - Members steps",
+        name: "Members",
+        order: 4,
+        minCount: 0,
+        maxCount: 1,
+        path: {
+          name: "definition",
+          "@id": "http://endhealth.info/im#definition"
+        },
+        componentType: {
+          "@id": "http://endhealth.info/im#stepsGroup"
+        },
+        subGroup: [
+          {
+            label: "Property group - members array builder",
+            name: "definition",
+            order: 1,
+            minCount: 1,
+            componentType: {
+              "@id": "http://endhealth.info/im#arrayBuilder"
+            },
+            subGroup: [
               {
-                "rdfs:label": "Members builder",
-                "im:name": "Members",
-                "sh:order": 1,
-                "sh:minCount": 1,
-                "sh:maxCount": 1,
-                "im:componentType": {
-                  "@id": "im:arrayBuilderWithDropdown"
-                },
-                "im:builderChild": true,
-                "im:function": {
-                  "@id": "im:Function_GetLogicOptions"
-                },
-                "im:valueIri": {
-                  "@id": "shacl:or"
-                },
-                "sh:path": [
+                label: "Members builder",
+                name: "Members",
+                order: 1,
+                minCount: 1,
+                maxCount: 1,
+                property: [
                   {
-                    "@id": "im:definition"
+                    comment: "selects an entity based on select query",
+                    name: "Entity",
+                    order: 1,
+                    minCount: 1,
+                    componentType: {
+                      "@id": "http://endhealth.info/im#entitySearch"
+                    },
+                    path: {
+                      name: "definition",
+                      "@id": "http://endhealth.info/im#definition"
+                    },
+                    select: [
+                      {
+                        name: "Search for concepts",
+                        "@id": "http://endhealth.info/im#Query_SearchConcepts"
+                      }
+                    ],
+                    valueVariable: "memberIri",
+                    builderChild: true
                   }
                 ],
-                "im:validation": {
-                  "@id": "im:Validation_isDefinition"
+                componentType: {
+                  "@id": "http://endhealth.info/im#arrayBuilderWithDropdown"
                 },
-                "im:validationErrorMessage": "Not a valid definition",
-                "sh:property": [
+                subGroup: [
                   {
-                    "rdfs:comment": "selects an entity based on select query",
-                    "sh:name": "Entity",
-                    "sh:order": 1,
-                    "sh:minCount": 1,
-                    "im:componentType": {
-                      "@id": "im:entitySearch"
-                    },
-                    "sh:path": [
+                    label: "Property Group - refinement component group",
+                    name: "Member refinement",
+                    order: 1,
+                    minCount: 0,
+                    property: [
                       {
-                        "@id": "im:definition"
-                      }
-                    ],
-                    "sh:select": [
-                      {
-                        "@id": "im:Query_SearchConcepts"
-                      }
-                    ],
-                    "sh:class": [
-                      {
-                        "@id": "im:Concept"
-                      }
-                    ],
-                    "im:builderChild": true,
-                    "im:valueVariable": "memberIri"
-                  }
-                ],
-                "sh:subGroup": [
-                  {
-                    "rdfs:label": "Property Group - refinement component group",
-                    "im:name": "Member refinement",
-                    "sh:order": 1,
-                    "sh:minCount": 0,
-                    "im:builderChild": true,
-                    "im:componentType": {
-                      "@id": "im:componentGroup"
-                    },
-                    "sh:path": [
-                      {
-                        "@id": "im:definition"
-                      }
-                    ],
-                    "sh:property": [
-                      {
-                        "rdfs:comment": "selects a property from allowable range from selected concept",
-                        "sh:order": 1,
-                        "sh:select": [
-                          {
-                            "@id": "im:Query_AllowableProperties"
-                          }
-                        ],
-                        "im:builderChild": true,
-                        "sh:path": [
-                          {
-                            "@id": "im:definition"
-                          }
-                        ],
-                        "im:argument": [
-                          {
-                            "sh:parameter": "entityIri",
-                            "im:valueVariable": "memberIri"
-                          }
-                        ],
-                        "im:name": "Property",
-                        "sh:minCount": 1,
-                        "im:componentType": {
-                          "@id": "im:entityAutoComplete"
+                        comment: "selects a property from allowable range from selected concept",
+                        name: "Property",
+                        order: 1,
+                        minCount: 1,
+                        componentType: {
+                          "@id": "http://endhealth.info/im#entityAutoComplete"
                         },
-                        "im:valueVariable": "propertyIri"
+                        path: {
+                          name: "definition",
+                          "@id": "http://endhealth.info/im#definition"
+                        },
+                        select: [
+                          {
+                            name: "Query -allowable properties for a concept",
+                            "@id": "http://endhealth.info/im#Query_AllowableProperties"
+                          }
+                        ],
+                        argument: [
+                          {
+                            parameter: "entityIri",
+                            valueVariable: "memberIri"
+                          }
+                        ],
+                        valueVariable: "propertyIri",
+                        builderChild: true
                       },
                       {
-                        "rdfs:comment": "Selects a quantifier from allowable range from property",
-                        "sh:order": 2,
-                        "sh:select": [
+                        comment: "Selects a quantifier from allowable range from property",
+                        name: "Quantifier",
+                        order: 2,
+                        minCount: 1,
+                        componentType: {
+                          "@id": "http://endhealth.info/im#entityAutoComplete"
+                        },
+                        path: {
+                          name: "role group",
+                          "@id": "http://endhealth.info/im#roleGroup"
+                        },
+                        select: [
                           {
-                            "@id": "im:Query_AllowableRanges"
+                            name: "Query -allowable ranges for a property",
+                            "@id": "http://endhealth.info/im#Query_AllowableRanges"
                           }
                         ],
-                        "im:builderChild": true,
-                        "sh:path": [
+                        argument: [
                           {
-                            "@id": "im:roleGroup"
+                            parameter: "entityIri",
+                            valueVariable: "propertyIri"
                           }
                         ],
-                        "im:argument": [
-                          {
-                            "sh:parameter": "entityIri",
-                            "im:valueVariable": "propertyIri"
-                          }
-                        ],
-                        "im:name": "Quantifier",
-                        "sh:minCount": 1,
-                        "im:componentType": {
-                          "@id": "im:entityAutoComplete"
-                        }
+                        builderChild: true
                       }
-                    ]
+                    ],
+                    componentType: {
+                      "@id": "http://endhealth.info/im#componentGroup"
+                    },
+                    path: {
+                      name: "definition",
+                      "@id": "http://endhealth.info/im#definition"
+                    },
+                    builderChild: true
                   }
-                ]
+                ],
+                path: {
+                  name: "definition",
+                  "@id": "http://endhealth.info/im#definition"
+                },
+                validation: {
+                  "@id": "http://endhealth.info/im#Validation_isDefinition"
+                },
+                validationErrorMessage: "Not a valid definition",
+                function: {
+                  "@id": "http://endhealth.info/im#Function_GetLogicOptions"
+                },
+                valueIri: {
+                  "@id": "shacl:or"
+                },
+                builderChild: true
               }
-            ]
+            ],
+            path: {
+              name: "definition",
+              "@id": "http://endhealth.info/im#definition"
+            },
+            validation: {
+              "@id": "http://endhealth.info/im#Validation_hasParent"
+            },
+            validationErrorMessage: "Entity is missing a parent. Add a parent to 'SubclassOf' or 'isContainedIn'."
           }
         ]
       }
-    ]
+    ],
+    scheme: {
+      name: "London Discovery Snomed extension code scheme and graph",
+      "@id": "http://endhealth.info/im#"
+    },
+    iri: "http://endhealth.info/im#Editor_ConceptSetShape"
   }
 };

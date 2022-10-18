@@ -70,14 +70,14 @@ describe("setupShape", async () => {
     });
 
     it("gets shape from a type iri ___ success", async () => {
-      getShapeFromTypeSpy.mockResolvedValue(testData.CONCEPT_SHAPE["@id"]);
+      getShapeFromTypeSpy.mockResolvedValue({ "@id": testData.CONCEPT_SHAPE["@id"] });
       getShapeSpy.mockResolvedValue(testData.CONCEPT_SHAPE);
       const shape = await getShape("testTypeIri");
       expect(shape).toEqual(testData.CONCEPT_SHAPE);
     });
 
     it("gets shape from a type iri ___ fail", async () => {
-      getShapeFromTypeSpy.mockResolvedValue(undefined);
+      getShapeFromTypeSpy.mockResolvedValue({});
       getShapeSpy.mockResolvedValue(testData.CONCEPT_SHAPE);
       const shape = await getShape("testTypeIri");
       expect(shape).toEqual({});
@@ -88,9 +88,14 @@ describe("setupShape", async () => {
     it("adds missing groups to the existing shape", () => {
       const startShape = { ...testData.CONCEPT_SHAPE };
       const shapeToAdd = { ...testData.CONCEPT_SET_SHAPE };
-      expect(startShape["sh:group"].length).toBe(4);
+      expect(startShape.group.length).toBe(4);
       addToShape(startShape, shapeToAdd);
-      expect(startShape["sh:group"].length).toBe(5);
+      expect(startShape.group.length).toBe(5);
+      expect(startShape.group[0]).toEqual(testData.CONCEPT_SHAPE.group[0]);
+      expect(startShape.group[1]).toEqual(testData.CONCEPT_SHAPE.group[1]);
+      expect(startShape.group[2]).toEqual(testData.CONCEPT_SHAPE.group[2]);
+      expect(startShape.group[3]).toEqual(testData.CONCEPT_SHAPE.group[3]);
+      expect(startShape.group[4]).toEqual(testData.CONCEPT_SET_SHAPE.group[3]);
     });
   });
 });

@@ -55,14 +55,13 @@ const dropdownOptions: Ref<TTIriRef[]> = ref([]);
 const fixedOption: Ref<TTIriRef> = ref({} as TTIriRef);
 const loading = ref(false);
 const selectedEntities: Ref<TTIriRef[]> = ref([]);
+let invalid = ref(false);
 
 let key = props.shape.path["@id"];
 
 watch(selectedEntities, async newValue => {
-  if (isArrayHasLength(newValue)) {
-    updateEntity(newValue);
-    updateValueVariableMap(newValue);
-    await updateValidity(newValue);
+  if (!loading.value && isArrayHasLength(newValue)) {
+    await updateAll(newValue);
   }
 });
 
@@ -70,26 +69,42 @@ onMounted(async () => {
   loading.value = true;
   dropdownOptions.value = await getDropdownOptions();
 
-  if (props.value && isArrayHasLength(props.value)) selectedEntities.value = props.value;
-
-  if (isObjectHasKeys(props.shape, ["isIri"])) processFixedValue();
-
+  processPropsValue();
+  await updateAll(selectedEntities.value);
   loading.value = false;
 });
 
-function processFixedValue() {
-  fixedOption.value = props.shape.isIri;
-  dropdownOptions.value = dropdownOptions.value.filter(o => o["@id"] != fixedOption.value["@id"]);
-  selectedEntities.value = selectedEntities.value.filter(o => o["@id"] != fixedOption.value["@id"]);
-
-  if (!props.value || !props?.value.find(p => p["@id"] === fixedOption.value["@id"])) {
-    let update: any = {};
-    update[key] = props.value ? props.value.concat(fixedOption.value) : [fixedOption.value];
-    if (entityUpdate) entityUpdate(update);
+function processPropsValue() {
+  if (!props.value) {
+    selectedEntities.value = [];
+    return;
+  }
+  if (isObjectHasKeys(props.shape, ["isIri"])) {
+    selectedEntities.value = props.value.filter(o => o["@id"] !== props.shape.isIri["@id"]);
+    const foundFixedOption = dropdownOptions.value.find(o => o["@id"] === props.shape.isIri["@id"]);
+    if (!foundFixedOption) {
+      throw new Error("shape isIri value did not match any dropdown option");
+      return;
+    } else {
+      fixedOption.value = foundFixedOption;
+      dropdownOptions.value = dropdownOptions.value.filter(o => o["@id"] != fixedOption.value["@id"]);
+    }
+  } else {
+    selectedEntities.value = [...props.value];
   }
 }
 
-let invalid = ref(false);
+function combineSelectedAndFixed(selected: TTIriRef[], fixed: TTIriRef) {
+  let combined: TTIriRef[] = [...selected];
+  if (fixed["@id"]) combined.push(fixed);
+  return combined;
+}
+
+async function updateAll(selected: TTIriRef[]) {
+  updateEntity(combineSelectedAndFixed(selected, fixedOption.value));
+  updateValueVariableMap(combineSelectedAndFixed(selected, fixedOption.value));
+  await updateValidity(combineSelectedAndFixed(selected, fixedOption.value));
+}
 
 async function getDropdownOptions(): Promise<TTIriRef[]> {
   if (isObjectHasKeys(props.shape, ["select", "argument"])) {

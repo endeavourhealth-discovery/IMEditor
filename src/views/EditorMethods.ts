@@ -12,51 +12,53 @@ const { IM, RDFS, RDF } = Vocabulary;
 const { EntityService } = Services;
 
 const entityService = new EntityService(axios);
-const router = useRouter();
-const route = useRoute();
-const store = useStore();
 
 export function setupShape() {
+  const router = useRouter();
+  const route = useRoute();
   let shape: Ref<FormGenerator | undefined> = ref();
   let targetShape: Ref<TTIriRef | undefined> = ref();
   let groups: Ref<PropertyGroup[]> = ref([]);
   let stepsItems: Ref<{ label: string; to: string }[]> = ref([]);
 
   async function getShapesCombined(types: TTIriRef[]) {
-    let shapeCombined: any = {};
+    let shapeCombined: FormGenerator = {} as FormGenerator;
     for (const type of types) {
       const typeShape = await getShape(type["@id"]);
-      if (isObjectHasKeys(typeShape, ["group"])) addToShape(shapeCombined, typeShape);
+      if (isObjectHasKeys(shapeCombined, ["group"])) addToShape(shapeCombined, typeShape);
+      else shapeCombined = typeShape;
     }
     shape.value = { ...shapeCombined };
   }
 
-  function addToShape(shape: any, shapeToAdd: any) {
+  function addToShape(shape: FormGenerator, shapeToAdd: FormGenerator) {
     for (const groupToAdd of shapeToAdd.group) {
-      if (isObjectHasKeys(shape, ["group"]) && !shape.group.includes((group: any) => group.name === groupToAdd.name)) {
+      if (!shape.group.some((group: PropertyGroup) => group.path["@id"] === groupToAdd.path["@id"])) {
         groupToAdd.order = shape.group.length + 1;
         shape.group.push(groupToAdd);
-      } else shape = shapeToAdd;
+      }
     }
   }
 
   async function getShape(type: string): Promise<any> {
     let newShape = {};
     const shapeIri = await entityService.getShapeFromType(type);
-    if (shapeIri) newShape = await entityService.getShape(shapeIri["@id"]);
+    if (isObjectHasKeys(shapeIri)) newShape = await entityService.getShape(shapeIri["@id"]);
     return newShape;
   }
 
   function processShape(shape: FormGenerator) {
-    targetShape.value = shape.targetShape;
-    groups.value = shape.group;
-    setSteps();
+    if (shape.group && shape.targetShape) {
+      targetShape.value = shape.targetShape;
+      groups.value = shape.group;
+      setSteps();
+    }
   }
 
   function setSteps() {
     stepsItems.value = [];
     const editorRoute = router.options.routes.find(r => r.name === "Editor");
-    const currentPath = route.fullPath;
+    const currentPath = removeUrlSubroute(route.fullPath);
     if (editorRoute) {
       groups.value.forEach(group => {
         const component = processComponentType(group.componentType);
@@ -67,6 +69,12 @@ export function setupShape() {
       });
       router.addRoute(editorRoute);
     }
+  }
+
+  function removeUrlSubroute(url: string) {
+    const splitString = url.split("/");
+    if (splitString.length >= 3) return splitString[0] + "/" + splitString[1] + "/" + splitString[2];
+    else return url;
   }
 
   function processComponentType(type: TTIriRef) {
@@ -82,6 +90,7 @@ export function setupShape() {
 }
 
 export function setupEntity() {
+  const store = useStore();
   let editorEntityOriginal: Ref<any> = ref({});
   let editorEntity: Ref<any> = ref({});
   let entityName = ref("");
@@ -118,5 +127,6 @@ export function setupEntity() {
     if (isObjectHasKeys(result, [IM.IM_1_SCHEME])) delete result[IM.IM_1_SCHEME];
     return result;
   }
+
   return { editorEntity, editorEntityOriginal, fetchEntity, processEntity, editorIri, editorSavedEntity, entityName, hasType };
 }
