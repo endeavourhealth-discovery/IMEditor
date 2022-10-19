@@ -20,6 +20,8 @@
           @addClicked="addItemWrapper"
           @updateClicked="updateItemWrapper"
           @addNextOptionsClicked="addItemWrapper"
+          @moveUpClicked="moveItemUp"
+          @moveDownClicked="moveItemDown"
         />
       </template>
     </div>
@@ -115,13 +117,27 @@ function createDefaultBuild() {
     if (isObjectHasKeys(props.shape, ["property"])) {
       props.shape.property.forEach(property => {
         build.value.push(
-          generateNewComponent(ComponentType.BUILDER_CHILD_WRAPPER, property.order - 1, undefined, property, { minus: true, plus: true }, props.mode)
+          generateNewComponent(
+            ComponentType.BUILDER_CHILD_WRAPPER,
+            property.order - 1,
+            undefined,
+            property,
+            { minus: true, plus: true, up: true, down: true },
+            props.mode
+          )
         );
       });
     } else if (isObjectHasKeys(props.shape, ["subGroup"])) {
       props.shape.subGroup.forEach(subGroup => {
         build.value.push(
-          generateNewComponent(ComponentType.BUILDER_CHILD_WRAPPER, subGroup.order - 1, undefined, subGroup, { minus: true, plus: true }, props.mode)
+          generateNewComponent(
+            ComponentType.BUILDER_CHILD_WRAPPER,
+            subGroup.order - 1,
+            undefined,
+            subGroup,
+            { minus: true, plus: true, up: true, down: true },
+            props.mode
+          )
         );
       });
     }
@@ -135,7 +151,9 @@ function processChild(child: any, position: number) {
     isObjectHasKeys(props.shape, ["property"]) ? props.shape.property[0] : props.shape.subGroup[0],
     {
       minus: true,
-      plus: true
+      plus: true,
+      up: true,
+      down: true
     },
     props.mode
   );
@@ -184,7 +202,7 @@ function addItemWrapper(data: { selectedType: Enums.ComponentType; position: num
   if (data.selectedType !== ComponentType.BUILDER_CHILD_WRAPPER) {
     data.selectedType = ComponentType.BUILDER_CHILD_WRAPPER;
   }
-  if (shape) addItem(data, build.value, { minus: true, plus: true }, shape, props.mode);
+  if (shape) addItem(data, build.value, { minus: true, plus: true, up: true, down: true }, shape, props.mode);
 }
 
 function deleteItem(data: ComponentDetails): void {
@@ -212,6 +230,26 @@ function getNextComponentOptions() {
       return { type: processComponentType(property.componentType), name: property.name };
     });
   else return;
+}
+
+function moveItemUp(item: ComponentDetails) {
+  if (item.position === 0) return;
+  const found = build.value.find(o => o.position === item.position);
+  if (found) {
+    build.value.splice(item.position, 1);
+    build.value.splice(item.position - 1, 0, found);
+  }
+  updatePositions(build.value);
+}
+
+function moveItemDown(item: ComponentDetails) {
+  if (item.position === build.value.length - 1) return;
+  const found = build.value.find(o => o.position === item.position);
+  if (found) {
+    build.value.splice(item.position, 1);
+    build.value.splice(item.position + 1, 0, found);
+    updatePositions(build.value);
+  }
 }
 </script>
 
