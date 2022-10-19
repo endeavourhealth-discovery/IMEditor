@@ -64,11 +64,12 @@ import { FormGenerator, PropertyGroup, TTIriRef } from "im-library/dist/types/in
 import _ from "lodash";
 import axios from "axios";
 import Swal from "sweetalert2";
-import store from "@/store";
 import ConfirmDialog from "primevue/confirmdialog";
+import { setupEntity, setupShape } from "./EditorMethods";
+import { useStore } from "vuex";
 import "vue-json-pretty/lib/styles.css";
 import { Enums, Vocabulary, Helpers, Services } from "im-library";
-const { IM, RDF, RDFS } = Vocabulary;
+const { IM, RDF, RDFS, SHACL } = Vocabulary;
 const {
   ConceptTypeMethods: { isValueSet },
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys },
@@ -81,6 +82,7 @@ const { EditorMode } = Enums;
 const router = useRouter();
 const route = useRoute();
 const confirm = useConfirm();
+const store = useStore();
 
 onBeforeUnmount(() => {
   confirmLeavePage();
@@ -90,22 +92,14 @@ onUnmounted(() => {
   window.removeEventListener("beforeunload", beforeWindowUnload);
 });
 
-const hasType = computed<boolean>(() => {
-  return isObjectHasKeys(editorEntity.value, [RDF.TYPE]) && isArrayHasLength(editorEntity.value[RDF.TYPE]);
-});
+const { editorEntity, editorEntityOriginal, fetchEntity, processEntity, editorIri, editorSavedEntity, entityName } = setupEntity();
+const { setSteps, shape, stepsItems, getShape, getShapesCombined, groups, processComponentType, processShape, addToShape } = setupShape();
 
-let editorEntityOriginal: Ref<any> = ref({});
-let editorEntity: Ref<any> = ref({});
 let loading = ref(true);
-let stepsItems: Ref<{ label: string; to: string }[]> = ref([]);
 let currentStep = ref(0);
 let showSidebar = ref(false);
 let editorValidity: Ref<{ key: string; valid: boolean }[]> = ref([]);
-let shape: Ref<FormGenerator | undefined> = ref();
-let targetShape: Ref<TTIriRef | undefined> = ref();
-let groups: Ref<PropertyGroup[]> = ref([]);
 let valueVariableMap: Ref<Map<string, any>> = ref(new Map<string, any>());
-let entityName = ref("");
 
 provide(injectionKeys.editorValidity, { validity: editorValidity, updateValidity, removeValidity });
 
@@ -115,8 +109,8 @@ provide(injectionKeys.valueVariableMap, { valueVariableMap, updateValueVariableM
 onMounted(async () => {
   loading.value = true;
   await fetchEntity();
-  if (isObjectHasKeys(editorEntityOriginal.value)) {
-    await getShape(editorEntityOriginal.value[RDF.TYPE][0]["@id"]);
+  if (isObjectHasKeys(editorEntityOriginal.value, [RDF.TYPE])) {
+    await getShapesCombined(editorEntityOriginal.value[RDF.TYPE]);
     if (shape.value) processShape(shape.value);
     router.push(stepsItems.value[0].to);
   } else window.location.href = Env.DIRECTORY_URL;
@@ -136,42 +130,13 @@ watch(
 
 const entityService = new EntityService(axios);
 
-const editorIri = computed(() => store.state.editorIri).value;
-const editorSavedEntity = computed(() => store.state.editorSavedEntity).value;
-
-async function fetchEntity(): Promise<void> {
-  if (editorIri) {
-    if (isObjectHasKeys(editorSavedEntity, [IM.ID]) && editorSavedEntity[IM.ID] === editorIri) {
-      editorEntity.value = editorSavedEntity;
-      return;
-    }
-    const fullEntity = await entityService.getFullEntity(editorIri);
-    if (isObjectHasKeys(fullEntity)) {
-      const processedEntity = processEntity(fullEntity);
-      editorEntityOriginal.value = processedEntity;
-      editorEntity.value = { ...editorEntityOriginal.value };
-      entityName.value = editorEntityOriginal.value[RDFS.LABEL];
-    }
+function findPrimaryType(types: TTIriRef[]): TTIriRef {
+  if (types.length === 1) return types[0];
+  if (types.findIndex(type => type["@id"] === SHACL.NODESHAPE)) {
+    const found = types.find(type => type["@id"] === SHACL.NODESHAPE);
+    if (found) return found;
   }
-}
-
-function processEntity(entity: any) {
-  const result = { ...entity } as any;
-  if (isObjectHasKeys(result, ["@id"])) {
-    result[IM.ID] = result["@id"];
-    delete result["@id"];
-  }
-  if (isObjectHasKeys(result, [IM.IM_1_ID])) delete result[IM.IM_1_ID];
-  if (isObjectHasKeys(result, [IM.IM_1_SCHEME])) delete result[IM.IM_1_SCHEME];
-  return result;
-}
-
-async function getShape(type: string): Promise<void> {
-  let localType;
-  if (hasType.value) localType = editorEntity.value[RDF.TYPE][0]["@id"];
-  else localType = type;
-  const shapeIri = await entityService.getShapeFromType(localType);
-  if (shapeIri) shape.value = await entityService.getShape(shapeIri["@id"]);
+  return types[0];
 }
 
 function updateValueVariableMap(key: string, value: any) {
@@ -193,17 +158,11 @@ function stepsClicked(event: any) {
   currentStep.value = event.target.innerHTML - 1;
 }
 
-function processShape(shape: FormGenerator) {
-  targetShape.value = shape.targetShape;
-  groups.value = shape.group;
-  setSteps();
-}
-
-async function updateType(typeIri: string) {
+async function updateType(types: TTIriRef[]) {
   loading.value = true;
-  await getShape(typeIri);
+  await getShapesCombined(types);
   if (shape.value) processShape(shape.value);
-  editorEntity.value[RDF.TYPE] = typeIri;
+  editorEntity.value[RDF.TYPE] = types;
   // removeEroneousKeys();
   loading.value = false;
 }
@@ -219,31 +178,6 @@ function removeEroneousKeys() {
     if (!shapeKeys.includes(key)) {
       delete editorEntity.value[key];
     }
-  }
-}
-
-function setSteps() {
-  stepsItems.value = [];
-  const editorRoute = router.options.routes.find(r => r.name === "Editor");
-  const currentPath = route.fullPath;
-  if (editorRoute) {
-    groups.value.forEach(group => {
-      const component = processComponentType(group.componentType);
-      if (editorRoute.children?.findIndex(route => route.name === group.name) === -1) {
-        editorRoute.children?.push({ path: group.name, name: group.name, component: component });
-      }
-      stepsItems.value.push({ label: group.name, to: currentPath + "/" + group.name });
-    });
-    router.addRoute(editorRoute);
-  }
-}
-
-function processComponentType(type: TTIriRef) {
-  switch (type["@id"]) {
-    case IM.STEPS_GROUP_COMPONENT:
-      return StepsGroup;
-    default:
-      throw new Error("Invalid component type encountered in shape group" + type["@id"]);
   }
 }
 
@@ -284,7 +218,7 @@ function updateEntity(data: any) {
   } else if (isObjectHasKeys(data)) {
     if (isObjectHasKeys(data, [RDF.TYPE])) {
       if (!isObjectHasKeys(editorEntity.value, [RDF.TYPE])) updateType(data[RDF.TYPE]);
-      else if (editorEntity.value[RDF.TYPE] !== data[RDF.TYPE]) updateType(data[RDF.TYPE]);
+      else if (JSON.stringify(editorEntity.value[RDF.TYPE]) !== JSON.stringify(data[RDF.TYPE])) updateType(data[RDF.TYPE]);
     } else {
       for (const [key, value] of Object.entries(data)) {
         editorEntity.value[key] = value;
@@ -428,6 +362,15 @@ defineExpose({ confirmLeavePage });
   justify-content: flex-start;
   overflow: auto;
   position: relative;
+}
+
+.sidebar-container {
+  width: 50vw;
+  height: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-start;
+  padding-top: 3rem;
 }
 
 .steps-content {

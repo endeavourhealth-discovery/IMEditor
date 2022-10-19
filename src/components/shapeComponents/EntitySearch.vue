@@ -46,7 +46,7 @@ import {
   QueryRequest,
   Query
 } from "im-library/dist/types/interfaces/Interfaces";
-import { Helpers, Models, Enums, Services } from "im-library";
+import { Helpers, Models, Enums, Services, Vocabulary } from "im-library";
 import store from "@/store";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 const {
@@ -57,6 +57,7 @@ const {
 } = Helpers;
 const { ComponentType, BuilderType, SortBy } = Enums;
 const { EntityService, QueryService } = Services;
+const { IM, RDF, RDFS } = Vocabulary;
 
 const props = defineProps({
   value: { type: Object as PropType<TTIriRef>, required: false },
@@ -145,11 +146,25 @@ async function search(): Promise<void> {
     controller.value = new AbortController();
     if (controller.value) {
       const result = await queryService.queryIM(queryRequest, controller.value);
-      if (result) searchResults.value = result.entities;
-      else searchResults.value = [];
+      if (result && isObjectHasKeys(result, ["entities"])) {
+        searchResults.value = convertToConceptSummary(result.entities);
+      } else searchResults.value = [];
     }
     loading.value = false;
   }
+}
+
+function convertToConceptSummary(results: any[]) {
+  return results.map(result => {
+    const conceptSummary = {} as ConceptSummary;
+    conceptSummary.iri = result["@id"];
+    conceptSummary.name = result[RDFS.LABEL];
+    conceptSummary.code = result[IM.CODE];
+    conceptSummary.entityType = result[RDF.TYPE];
+    conceptSummary.scheme = result[IM.SCHEME];
+    conceptSummary.status = result[IM.HAS_STATUS];
+    return conceptSummary;
+  });
 }
 
 function hideOverlay(): void {
