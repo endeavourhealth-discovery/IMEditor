@@ -1,17 +1,9 @@
 <template>
   <div class="query-builder-main-wrapper">
     <div class="query-builder-main-container">
-      <TabView ref="tabview">
-        <TabPanel header="Edit">
-          <div class="tab-content-container">
-            <div class="property-container"><SetDefinitionForm :clauses="clauses" /></div>
-          </div>
-        </TabPanel>
-        <TabPanel header="IM query">
-          <div class="tab-panel"><vue-json-pretty class="json" :path="'res'" :show-length="true" :data="imquery" /></div>
-        </TabPanel>
-      </TabView>
-
+      <div class="tab-content-container">
+        <div class="property-container"><SetDefinitionForm :clauses="clauses" /></div>
+      </div>
       <Dialog
         :header="queryLoading ? 'Results' : 'Results: ' + testQueryResults.length"
         v-model:visible="showDialog"
@@ -39,12 +31,21 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch, Ref } from "vue";
+import { onMounted, ref, watch, Ref, PropType } from "vue";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import SetDefinitionForm from "./SetDefinitionForm.vue";
-import { Helpers, Vocabulary, Services } from "im-library";
-import { QueryObject, QueryRequest, Refinement, SearchRequest, SetQueryObject, TTAlias, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { Helpers, Vocabulary, Services, Enums } from "im-library";
+import {
+  PropertyGroup,
+  QueryObject,
+  QueryRequest,
+  Refinement,
+  SearchRequest,
+  SetQueryObject,
+  TTAlias,
+  TTIriRef
+} from "im-library/dist/types/interfaces/Interfaces";
 import axios from "axios";
 import _ from "lodash";
 import { Query } from "im-library/dist/types/models/modules/AutoGen";
@@ -53,6 +54,12 @@ const { isObjectHasKeys, isArrayHasLength, isObject } = Helpers.DataTypeCheckers
 const { IM, RDFS, SHACL } = Vocabulary;
 const { EntityService, QueryService, LoggerService } = Services;
 const toast = useToast();
+
+const props = defineProps({
+  shape: { type: Object as PropType<PropertyGroup>, required: true },
+  mode: { type: String as PropType<Enums.EditorMode>, required: true },
+  value: { type: Object as PropType<any>, required: false }
+});
 
 const entityService = new EntityService(axios);
 const queryService = new QueryService(axios);
@@ -67,6 +74,8 @@ watch(
   () => _.cloneDeep(clauses.value),
   () => {
     imquery.value = buildIMQuery(clauses.value);
+    if (props.value) props.value[props.shape.path["@id"]] = imquery.value;
+    console.log(props.value);
   }
 );
 
