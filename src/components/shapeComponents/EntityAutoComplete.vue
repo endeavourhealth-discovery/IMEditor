@@ -2,10 +2,10 @@
   <div class="autocomplete-container">
     <div class="label-container">
       <span class="float-text">{{ shape.name }}</span>
-      <!-- <div v-if="loading" class="loading-container">
-        <ProgressSpinner style="width:1.5rem;height:1.5rem;" strokeWidth="6" />
-      </div> -->
-      <div class="input-treebutton-container">
+      <div v-if="loading" class="loading-container">
+        <ProgressSpinner style="width: 1.5rem; height: 1.5rem" strokeWidth="6" />
+      </div>
+      <div v-else class="input-treebutton-container">
         <AutoComplete
           ref="miniSearchInput"
           v-model="selectedResult"
@@ -15,7 +15,7 @@
           field="name"
           forceSelection
           placeholder="Search"
-          :disabled="invalidAssociatedProperty"
+          :disabled="invalidAssociatedProperty || disabled"
           class="search-input"
           @drop.prevent
         >
@@ -25,7 +25,6 @@
             </div>
           </template>
         </AutoComplete>
-        <Button :disabled="!selectedResult" icon="fa-solid fa-sitemap" @click="showTreeDialog($event)" />
       </div>
       <small v-if="invalidAssociatedProperty" class="validate-error">Missing property for refinement. Please select a property first.</small>
     </div>
@@ -62,17 +61,12 @@
       </div>
     </div>
   </OverlayPanel>
-  <!-- <OverlayPanel class="tree-op" ref="treeOP" :showCloseIcon="true" :dismissable="true">
-    <QuantifierTree :isAs="isAs" :quantifier="selectedResult" @treeNodeSelected="updateSelectedResult" />
-  </OverlayPanel> -->
 </template>
 
 <script setup lang="ts">
 import { PropType, watch, ref, Ref, onMounted, inject, onBeforeUnmount } from "vue";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import axios from "axios";
-import SearchMiniOverlay from "@/components/shapeComponents/builder/entity/SearchMiniOverlay.vue";
-import QuantifierTree from "@/components/shapeComponents/builder/quantifier/QuantifierTree.vue";
 import _ from "lodash";
 import { Vocabulary, Helpers, Enums, Models, Services } from "im-library";
 import {
@@ -95,14 +89,15 @@ const {
   Transforms: { mapToObject },
   ConceptTypeMethods: { getNamesAsStringFromTypes }
 } = Helpers;
-const { IM, RDFS } = Vocabulary;
+const { IM, RDFS, RDF } = Vocabulary;
 const { ComponentType, SortBy } = Enums;
 const { EntityService, QueryService } = Services;
 
 const props = defineProps({
   shape: { type: Object as PropType<PropertyShape>, required: true },
   mode: { type: String as PropType<Enums.EditorMode>, required: true },
-  value: { type: Object as PropType<TTIriRef>, required: false }
+  value: { type: Object as PropType<TTIriRef>, required: false },
+  disabled: { type: Boolean, required: false, default: false }
 });
 
 watch(
@@ -158,7 +153,7 @@ onBeforeUnmount(() => {
 });
 
 watch(selectedResult, (newValue, oldValue) => {
-  if (newValue && _.isEqual(newValue, oldValue)) {
+  if (newValue && !_.isEqual(newValue, oldValue)) {
     itemSelected(newValue);
   }
 });
@@ -198,6 +193,8 @@ function getAssociatedProperty() {
       } else {
         invalidAssociatedProperty.value = true;
       }
+    } else if (isObjectHasKeys(props.shape.argument[0], ["valueIri"])) {
+      associatedProperty.value = props.shape.argument[0].valueIri["@id"];
     } else {
       invalidAssociatedProperty.value = false;
     }
@@ -225,13 +222,26 @@ async function getAutocompleteOptions() {
     controller.value = new AbortController();
     if (controller.value) {
       const result = await queryService.queryIM(queryRequest, controller.value);
-      if (result) {
-        autocompleteOptions.value = result.entities;
+      if (result && isObjectHasKeys(result, ["entities"])) {
+        autocompleteOptions.value = convertToConceptSummary(result.entities).sort(byName);
       } else {
         autocompleteOptions.value = [];
       }
     }
   }
+}
+
+function convertToConceptSummary(results: any[]) {
+  return results.map(result => {
+    const conceptSummary = {} as ConceptSummary;
+    conceptSummary.iri = result["@id"];
+    conceptSummary.name = result[RDFS.LABEL];
+    conceptSummary.code = result[IM.CODE];
+    conceptSummary.entityType = result[RDF.TYPE];
+    conceptSummary.scheme = result[IM.SCHEME];
+    conceptSummary.status = result[IM.HAS_STATUS];
+    return conceptSummary;
+  });
 }
 
 function searchOptions(event: any) {
@@ -244,7 +254,7 @@ function searchOptions(event: any) {
 
 async function itemSelected(value: ConceptSummary) {
   if (isObjectHasKeys(value)) {
-    if (key.value) {
+    if (!props.shape.builderChild && key.value) {
       updateEntity(value);
       await updateValidity(value);
     } else {
@@ -285,27 +295,23 @@ function defaultValidity() {
 }
 
 function showTreeDialog(event: any): void {
-  const x = treeOP.value as any;
-  if (x) x.show(event, event.target);
+  treeOP.value.show(event, event.target);
 }
 
 function hideTreeOverlay(): void {
-  const x = treeOP as any;
-  if (x) x.hide();
+  treeOP.value.hide();
 }
 
 function showOptionsOverlay(event: any, data?: any) {
   if (data) {
-    const x: any = optionsOP.value;
     optionsOverlayLocation.value = event;
-    x.show(optionsOverlayLocation.value);
+    optionsOP.value.show(optionsOverlayLocation.value);
     hoveredResult.value = data;
   }
 }
 
 function hideOptionsOverlay(event: any): void {
-  const x: any = optionsOP.value;
-  x.hide(event);
+  optionsOP.value.hide(event);
   optionsOverlayLocation.value = {};
 }
 </script>

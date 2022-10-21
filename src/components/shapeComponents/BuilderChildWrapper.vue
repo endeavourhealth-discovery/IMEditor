@@ -1,6 +1,6 @@
 <template>
   <div class="builder-child-container" :id="id">
-    <component :is="processComponentType(shape.componentType)" :shape="shape" :mode="mode" @updateClicked="updateClicked" :value="value" />
+    <component :is="processComponentType(shape.componentType)" :shape="shape" :mode="mode" @updateClicked="updateClicked" :value="value" :position="position" />
     <AddDeleteButtons
       :show="{ minus: showButtons.minus, plus: showButtons.plus }"
       :position="position"
@@ -17,9 +17,10 @@ import EntitySearch from "./EntitySearch.vue";
 import EntityAutoComplete from "./EntityAutoComplete.vue";
 import ComponentGroup from "./ComponentGroup.vue";
 import ArrayBuilderWithDropdown from "./ArrayBuilderWithDropdown.vue";
+import PropertyBuilder from "./PropertyBuilder.vue";
 
 export default defineComponent({
-  components: { EntitySearch, EntityAutoComplete, ComponentGroup, ArrayBuilderWithDropdown }
+  components: { EntitySearch, EntityAutoComplete, ComponentGroup, ArrayBuilderWithDropdown, PropertyBuilder }
 });
 </script>
 
@@ -27,7 +28,7 @@ export default defineComponent({
 import { computed, PropType, watch, onMounted, ref, Ref, defineComponent } from "vue";
 import _ from "lodash";
 import AddDeleteButtons from "@/components/shapeComponents/AddDeleteButtons.vue";
-import UpDownButtons from "@/components/shapeComponents/builder/UpDownButtons.vue";
+import UpDownButtons from "@/components/shapeComponents/UpDownButtons.vue";
 import { ComponentDetails, PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 import { Helpers, Models, Enums, Services } from "im-library";
 const {
