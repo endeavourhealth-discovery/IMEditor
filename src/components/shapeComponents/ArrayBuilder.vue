@@ -81,10 +81,16 @@ watch([() => _.cloneDeep(props.value), () => _.cloneDeep(props.shape)], () => {
 watch(
   () => _.cloneDeep(build.value),
   async newValue => {
-    if (entityUpdate && isArrayHasLength(newValue)) updateEntity();
-    if (validityUpdate) await updateValidity();
+    if (finishedChildLoading()) {
+      if (entityUpdate && isArrayHasLength(newValue)) updateEntity();
+      if (validityUpdate) await updateValidity();
+    }
   }
 );
+
+function finishedChildLoading() {
+  return !build.value.some(c => (isObjectHasKeys(c.value) && !isObjectHasKeys(c.json)) || (isArrayHasLength(c.value) && !isObjectHasKeys(c.json)));
+}
 
 function init() {
   key = props.shape.path["@id"];
