@@ -1,13 +1,14 @@
 <template>
   <div class="builder-child-container" :id="id">
-    <component :is="processComponentType(shape.componentType)" :shape="shape" :mode="mode" @updateClicked="updateClicked" :value="value" />
+    <component :is="processComponentType(shape.componentType)" :shape="shape" :mode="mode" @updateClicked="updateClicked" :value="value" :position="position" />
     <AddDeleteButtons
-      :show="showButtons"
+      :show="{ minus: showButtons.minus, plus: showButtons.plus }"
       :position="position"
       :options="nextComponentOptions"
       @deleteClicked="deleteClicked"
       @addNextClicked="addNextClicked"
     />
+    <UpDownButtons :show="{ up: showButtons.up, down: showButtons.down }" :position="position" @moveUpClicked="upClicked" @moveDownClicked="downClicked" />
   </div>
 </template>
 
@@ -16,9 +17,10 @@ import EntitySearch from "./EntitySearch.vue";
 import EntityAutoComplete from "./EntityAutoComplete.vue";
 import ComponentGroup from "./ComponentGroup.vue";
 import ArrayBuilderWithDropdown from "./ArrayBuilderWithDropdown.vue";
+import PropertyBuilder from "./PropertyBuilder.vue";
 
 export default defineComponent({
-  components: { EntitySearch, EntityAutoComplete, ComponentGroup, ArrayBuilderWithDropdown }
+  components: { EntitySearch, EntityAutoComplete, ComponentGroup, ArrayBuilderWithDropdown, PropertyBuilder }
 });
 </script>
 
@@ -26,6 +28,7 @@ export default defineComponent({
 import { computed, PropType, watch, onMounted, ref, Ref, defineComponent } from "vue";
 import _ from "lodash";
 import AddDeleteButtons from "@/components/shapeComponents/AddDeleteButtons.vue";
+import UpDownButtons from "@/components/shapeComponents/UpDownButtons.vue";
 import { ComponentDetails, PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 import { Helpers, Models, Enums, Services } from "im-library";
 const {
@@ -38,7 +41,7 @@ const props = defineProps({
   id: { type: String, required: true },
   position: { type: Number, required: true },
   value: { type: Object as PropType<any>, required: false },
-  showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean }>, required: true },
+  showButtons: { type: Object as PropType<{ minus: boolean; plus: boolean; up: boolean; down: boolean }>, required: true },
   shape: { type: Object as PropType<PropertyShape>, required: true },
   mode: { type: String as PropType<Enums.EditorMode>, required: true },
   nextComponentOptions: { type: Array as PropType<{ type: Enums.ComponentType; name: string }[]>, required: true }
@@ -48,7 +51,9 @@ const emit = defineEmits({
   updateClicked: (_payload: ComponentDetails) => true,
   addNextOptionsClicked: (_payload: any) => true,
   deleteClicked: (_payload: any) => true,
-  addClicked: (_payload: any) => true
+  addClicked: (_payload: any) => true,
+  moveUpClicked: (_payload: any) => true,
+  moveDownClicked: (_payload: any) => true
 });
 
 function createEntity(data?: any): ComponentDetails {
@@ -83,6 +88,14 @@ function deleteClicked(): void {
 
 function updateClicked(data: any): void {
   emit("updateClicked", createEntity(data));
+}
+
+function upClicked(): void {
+  emit("moveUpClicked", createEntity());
+}
+
+function downClicked(): void {
+  emit("moveDownClicked", createEntity());
 }
 
 function addNextClicked(item: any): void {
