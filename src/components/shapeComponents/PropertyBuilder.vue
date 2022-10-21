@@ -21,7 +21,7 @@ import { Enums, Helpers, Services, Vocabulary } from "im-library";
 import axios from "axios";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 const { SHACL, IM, RDFS, RDF } = Vocabulary;
-const { EntityService } = Services;
+const { EntityService, QueryService } = Services;
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
@@ -33,12 +33,17 @@ const props = defineProps({
   position: { type: Number, required: true }
 });
 
+const emit = defineEmits({
+  updateClicked: (_payload: Property) => true
+});
+
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
 const editorEntity = inject(injectionKeys.editorEntity)?.editorEntity;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
 const valueVariableMapUpdate = inject(injectionKeys.valueVariableMap)?.updateValueVariableMap;
 
 const entityService = new EntityService(axios);
+const queryService = new QueryService(axios);
 
 const propertyPath: Ref<TTIriRef> = ref({} as TTIriRef);
 const propertyRange: Ref<TTIriRef | undefined> = ref(undefined);
@@ -46,12 +51,17 @@ const inheritedFrom: Ref<TTIriRef | undefined> = ref(undefined);
 const required = ref(false);
 const unique = ref(false);
 const loading = ref(true);
+const invalid = ref(false);
 
-watch([propertyPath, propertyRange, inheritedFrom, required, unique], () => {
-  if (!loading.value) {
-    // updateAll();
+watch(
+  [propertyPath, propertyRange, inheritedFrom, required, unique],
+  ([newPath, newRange, newInherited, newRequired, newUnique], [oldPath, oldRange, oldInherited, oldRequired, oldUnique]) => {
+    if (!loading.value) {
+      // if (!(newPath === oldPath && newRange === oldRange && newInherited === oldInherited && newRequired === oldRequired && newUnique === oldUnique))
+      updateAll();
+    }
   }
-});
+);
 
 let key = props.shape.path["@id"];
 
@@ -96,7 +106,7 @@ watch(
   }
 );
 
-onMounted(() => {
+onMounted(async () => {
   loading.value = true;
   processProps();
   loading.value = false;
@@ -124,8 +134,6 @@ function processProps() {
 }
 
 async function updatePath(data: any) {
-  console.log("pathUpdated");
-  console.log(data);
   await getRange(data["@id"]);
 }
 
@@ -137,28 +145,78 @@ async function getRange(iri: string) {
 }
 
 function updateRange(data: any) {
-  console.log("range updated");
-  console.log(data);
+  propertyRange.value = data;
 }
 
-// async function updateAll() {
-//   updateEntity(combineSelectedAndFixed(selected, fixedOption.value));
-//   updateValueVariableMap(combineSelectedAndFixed(selected, fixedOption.value));
-//   await updateValidity(combineSelectedAndFixed(selected, fixedOption.value));
-// }
+async function updateAll() {
+  const property = await createProperty();
+  if (!props.shape.builderChild) {
+    updateEntity(property);
+  } else {
+    emit("updateClicked", property);
+  }
+  updateValueVariableMap(property);
+  await updateValidity();
+}
 
-// async function createProperty() {
-//   const property = {} as Property
-//   property['http://www.w3.org/ns/shacl#path'] = [propertyPath.value]
-//   if (propertyRange.value){
-//     const type = await entityService.getPartialEntity(propertyRange.value['@id'], [RDF.TYPE])
-//     if (type[RDF.TYPE]) {
-//       switch(type[RDF.TYPE]) {
-//         case :
-//       }
-//     }
-//   }
-// }
+async function createProperty() {
+  const property = {} as Property;
+  property["http://www.w3.org/ns/shacl#path"] = [propertyPath.value];
+  await setRange(property);
+  if (inheritedFrom.value) property["http://endhealth.info/im#inheritedFrom"] = [inheritedFrom.value];
+  if (required.value) property["http://www.w3.org/ns/shacl#minCount"] = 1;
+  else property["http://www.w3.org/ns/shacl#minCount"] = 0;
+  if (unique.value) property["http://www.w3.org/ns/shacl#maxCount"] = 1;
+  else property["http://www.w3.org/ns/shacl#maxCount"] = 0;
+  return property;
+}
+
+async function setRange(property: Property) {
+  if (propertyRange.value) {
+    const primativeTypes = await entityService.getEntityChildren(IM.STATUS);
+    if (primativeTypes && primativeTypes.find(p => p["@id"] === propertyRange.value["@id"])) {
+      property["http://www.w3.org/ns/shacl#datatype"] = [propertyRange.value];
+    } else {
+      const type = await entityService.getPartialEntity(propertyRange.value["@id"], [RDF.TYPE]);
+      if (type[RDF.TYPE]) {
+        switch (type[RDF.TYPE]) {
+          case IM.CONCEPT:
+          case IM.CONCEPT_SET:
+            property["http://www.w3.org/ns/shacl#class"] = [propertyRange.value];
+            break;
+          default:
+            property["http://www.w3.org/ns/shacl#node"] = [propertyRange.value];
+        }
+      }
+    }
+  }
+}
+
+function updateEntity(data: Property) {
+  const result = {} as any;
+  result[key] = data;
+  if (entityUpdate) entityUpdate(result);
+}
+
+function updateValueVariableMap(data: Property) {
+  if (!props.shape.valueVariable) return;
+  let mapKey = props.shape.valueVariable;
+  if (props.shape.builderChild) mapKey = mapKey + props.shape.order;
+  if (valueVariableMapUpdate) valueVariableMapUpdate(mapKey, data);
+}
+
+async function updateValidity() {
+  if (isObjectHasKeys(props.shape, ["validation"]) && editorEntity) {
+    invalid.value = !(await queryService.checkValidation(props.shape.validation["@id"], editorEntity.value));
+  } else {
+    invalid.value = !defaultValidity();
+  }
+  if (validityUpdate) validityUpdate({ key: key, valid: !invalid.value });
+}
+
+function defaultValidity() {
+  return true;
+}
 </script>
 
 <style scoped></style>
