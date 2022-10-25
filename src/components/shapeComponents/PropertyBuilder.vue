@@ -67,11 +67,6 @@ let key = props.shape.path["@id"];
 
 const order = computed(() => props.position);
 
-const dropdownOptions = [
-  { "@id": SHACL.NODE, name: "Node" },
-  { "@id": SHACL.DATATYPE, name: "Data type" },
-  { "@id": SHACL.CLASS, name: "Class" }
-];
 const propertyPathShape = {
   comment: "selects an entity based on select query",
   name: "Path",
@@ -101,8 +96,8 @@ watch(propertyPath, newValue => {
 
 watch(
   () => _.cloneDeep(props.value),
-  () => {
-    processProps();
+  (newValue, oldValue) => {
+    if (JSON.stringify(newValue) !== JSON.stringify(oldValue)) processProps();
   }
 );
 
@@ -110,6 +105,7 @@ onMounted(async () => {
   loading.value = true;
   processProps();
   loading.value = false;
+  await updateAll();
 });
 
 function processProps() {
