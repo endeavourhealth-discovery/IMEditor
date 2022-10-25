@@ -82,7 +82,6 @@ watch(
   () => {
     imquery.value = buildIMQuery(clauses.value);
     if (props.value) props.value[props.shape.path["@id"]] = imquery.value;
-    console.log(props.value);
   }
 );
 
