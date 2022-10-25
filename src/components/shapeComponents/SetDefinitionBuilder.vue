@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch, Ref, PropType } from "vue";
+import { onMounted, ref, watch, Ref, PropType, inject } from "vue";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 import SetDefinitionForm from "./SetDefinitionForm.vue";
@@ -50,6 +50,7 @@ import axios from "axios";
 import _ from "lodash";
 import { Query } from "im-library/dist/types/models/modules/AutoGen";
 import { useToast } from "primevue/usetoast";
+import injectionKeys from "@/injectionKeys/injectionKeys";
 const { isObjectHasKeys, isArrayHasLength, isObject } = Helpers.DataTypeCheckers;
 const { IM, RDFS, SHACL } = Vocabulary;
 const { EntityService, QueryService, LoggerService } = Services;
@@ -70,6 +71,12 @@ const defaultTTAlias = { includeSubtypes: true } as TTAlias;
 const clauses: Ref<SetQueryObject[]> = ref([]);
 const queryLoading: Ref<boolean> = ref(false);
 
+const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
+const editorEntity = inject(injectionKeys.editorEntity)?.editorEntity;
+const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
+
+const key = props.shape.path["@id"];
+
 watch(
   () => _.cloneDeep(clauses.value),
   () => {
@@ -79,9 +86,22 @@ watch(
   }
 );
 
+watch(
+  () => _.cloneDeep(imquery.value),
+  async newValue => {
+    if (entityUpdate) updateEntity();
+  }
+);
+
 onMounted(() => {
   addConcept();
 });
+
+function updateEntity() {
+  const result = {} as any;
+  result[key] = imquery.value;
+  if (entityUpdate) entityUpdate(result);
+}
 
 function buildIMQuery(clauses: SetQueryObject[]): any {
   const imquery = {

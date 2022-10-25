@@ -484,3 +484,9 @@ defineExpose({ confirmLeavePage });
   justify-content: flex-end;
 }
 </style>
+
+<style>
+.p-steps-number {
+  z-index: 0 !important;
+}
+</style>
