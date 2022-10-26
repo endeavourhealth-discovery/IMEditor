@@ -75,16 +75,45 @@ let build: Ref<ComponentDetails[]> = ref([]);
 onMounted(() => {
   init();
 });
-watch([() => _.cloneDeep(props.value), () => _.cloneDeep(props.shape)], () => {
-  init();
+
+watch([() => _.cloneDeep(props.value), () => _.cloneDeep(props.shape)], ([newPropsValue, newPropsShape], [oldPropsValue, oldPropsShape]) => {
+  // updateBuildLength();
+  if (JSON.stringify(newPropsValue) !== JSON.stringify(oldPropsValue)) updateBuildPropsValue();
+  if (JSON.stringify(newPropsShape) !== JSON.stringify(oldPropsShape)) updateBuildShape();
 });
+
 watch(
   () => _.cloneDeep(build.value),
   async newValue => {
-    if (entityUpdate && isArrayHasLength(newValue)) updateEntity();
-    if (validityUpdate) await updateValidity();
+    if (!loading.value && finishedChildLoading()) {
+      if (entityUpdate && isArrayHasLength(newValue)) updateEntity();
+      if (validityUpdate) await updateValidity();
+    }
   }
 );
+
+function updateBuildPropsValue() {
+  if (props.value && isArrayHasLength(props.value))
+    props.value.forEach((v, i) => {
+      if (build.value[i].value !== v) build.value[i].value = v;
+    });
+}
+
+function updateBuildShape() {
+  build.value.forEach(b => {
+    if (b.shape !== props.shape) b.shape = props.shape;
+  });
+}
+
+// function updateBuildLength() {
+//   if (props.value && isArrayHasLength(props.value) && props.value.length !== build.value.length) {
+//     if (props.value.length > build.value.length) build.value.p
+// }
+// }
+
+function finishedChildLoading() {
+  return !build.value.some(c => (isObjectHasKeys(c.value) && !isObjectHasKeys(c.json)) || (isArrayHasLength(c.value) && !isObjectHasKeys(c.json)));
+}
 
 function init() {
   key = props.shape.path["@id"];
