@@ -60,6 +60,7 @@ import _ from "lodash";
 import store from "@/store";
 import axios from "axios";
 import Swal from "sweetalert2";
+import { setupShape, setupEntity } from "./EditorMethods";
 import { useConfirm } from "primevue/useconfirm";
 import { useRouter } from "vue-router";
 import injectionKeys from "@/injectionKeys/injectionKeys";
@@ -93,16 +94,14 @@ const hasType = computed<boolean>(() => {
   return isObjectHasKeys(editorEntity.value, [RDF.TYPE]);
 });
 
-let editorEntityOriginal: Ref<any> = ref({});
-let editorEntity: Ref<any> = ref({});
+const { editorEntity, editorEntityOriginal, fetchEntity, processEntity, editorIri, editorSavedEntity, entityName } = setupEntity();
+const { setCreatorSteps, shape, stepsItems, getShape, getShapesCombined, groups, processComponentType, processShape, addToShape } = setupShape();
+
 let loading: Ref<boolean> = ref(true);
-let stepsItems: Ref<{ label: string; to: string }[]> = ref([]);
 let currentStep: Ref<number> = ref(0);
 let showSidebar: Ref<boolean> = ref(false);
 let creatorValidity: Ref<{ key: string; valid: boolean }[]> = ref([]);
-let shape: Ref<FormGenerator | undefined> = ref();
 let targetShape: Ref<TTIriRef | undefined> = ref();
-let groups: Ref<PropertyGroup[]> = ref([]);
 let valueVariableMap: Ref<Map<string, any>> = ref(new Map<string, any>());
 
 provide(injectionKeys.editorValidity, { validity: creatorValidity, updateValidity, removeValidity });
@@ -114,7 +113,7 @@ onMounted(async () => {
   loading.value = true;
   if (props.type) {
     await getShape(props.type["@id"]);
-    if (shape.value) processShape(shape.value);
+    if (shape.value) processShape(shape.value, EditorMode.CREATE);
   } else {
     router.push({ name: "TypeSelector" });
   }
@@ -140,11 +139,6 @@ const debouncedFiler = debounce((entity: any) => {
   fileChanges(entity);
 }, 500);
 
-async function getShape(type: string): Promise<void> {
-  const shapeIri = await entityService.getShapeFromType(type);
-  if (shapeIri) shape.value = await entityService.getShape(shapeIri["@id"]);
-}
-
 function updateValueVariableMap(key: string, value: any) {
   valueVariableMap.value.set(key, value);
 }
@@ -164,44 +158,13 @@ function stepsClicked(event: any) {
   currentStep.value = event.target.innerHTML - 1;
 }
 
-function processShape(shape: FormGenerator) {
-  targetShape.value = shape.targetShape;
-  groups.value = shape.group;
-  setSteps();
-}
-
 async function updateType(types: TTIriRef[]) {
   loading.value = true;
-  await getShape(types[0]["@id"]);
-  if (shape.value) processShape(shape.value);
+  await getShapesCombined(types);
+  if (shape.value) processShape(shape.value, EditorMode.CREATE);
   editorEntity.value[RDF.TYPE] = types;
   loading.value = false;
-  stepsForward();
-}
-
-function setSteps() {
-  stepsItems.value = [];
-  stepsItems.value.push({ label: "Type", to: "/creator/type" });
-  const creatorRoute = router.options.routes.find(r => r.name === "Creator");
-  if (creatorRoute) {
-    groups.value.forEach(group => {
-      const component = processComponentType(group.componentType);
-      if (creatorRoute.children?.findIndex(route => route.name === group.name) === -1) {
-        creatorRoute.children?.push({ path: group.name, name: group.name, component: component });
-      }
-      stepsItems.value.push({ label: group.name, to: "/creator/" + group.name });
-    });
-    router.addRoute(creatorRoute);
-  }
-}
-
-function processComponentType(type: TTIriRef) {
-  switch (type["@id"]) {
-    case IM.STEPS_GROUP_COMPONENT:
-      return StepsGroup;
-    default:
-      throw new Error("Invalid component type encountered in shape group" + type["@id"]);
-  }
+  if (currentStep.value === 0) stepsForward();
 }
 
 function confirmLeavePage() {
@@ -245,7 +208,7 @@ function updateEntity(data: any) {
       if (!isObjectHasKeys(editorEntity.value, [RDF.TYPE])) {
         updateType(data[RDF.TYPE]);
         wasUpdated = true;
-      } else if (editorEntity.value[RDF.TYPE] !== data[RDF.TYPE]) {
+      } else if (JSON.stringify(editorEntity.value[RDF.TYPE]) !== JSON.stringify(data[RDF.TYPE])) {
         updateType(data[RDF.TYPE]);
         wasUpdated = true;
       }
@@ -330,7 +293,7 @@ async function submit(): Promise<void> {
 }
 
 function isValidEntity(entity: any): boolean {
-  return isObjectHasKeys(entity) && creatorValidity.value.every(validity => validity.valid);
+  return isObjectHasKeys(entity) && entity["@id"] && creatorValidity.value.every(validity => validity.valid);
 }
 
 function refreshCreator() {

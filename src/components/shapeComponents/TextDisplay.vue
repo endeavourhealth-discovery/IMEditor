@@ -40,7 +40,9 @@ const valueVariableMapUpdate = inject(injectionKeys.valueVariableMap)?.updateVal
 if (valueVariableMap) {
   watch(
     () => _.cloneDeep(valueVariableMap.value),
-    async () => await init()
+    async () => {
+      if (props.shape.argument && props.shape.argument.some(a => a.valueVariable)) await init();
+    }
   );
 }
 
