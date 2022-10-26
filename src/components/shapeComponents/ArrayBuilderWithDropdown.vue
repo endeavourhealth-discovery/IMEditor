@@ -33,7 +33,6 @@
 
 <script lang="ts">
 import BuilderDropdownChildWrapper from "./BuilderDropdownChildWrapper.vue";
-import { emit } from "process";
 
 export default defineComponent({
   components: { BuilderDropdownChildWrapper }
@@ -111,12 +110,16 @@ watch(
 watch(
   () => _.cloneDeep(build.value),
   async () => {
-    if (!loading.value) {
+    if (!loading.value && finishedChildLoading()) {
       if (entityUpdate) updateEntity();
       if (validityUpdate) await updateValidity();
     }
   }
 );
+
+function finishedChildLoading() {
+  return !build.value.some(c => (isObjectHasKeys(c.value) && !isObjectHasKeys(c.json)) || (isArrayHasLength(c.value) && !isObjectHasKeys(c.json)));
+}
 
 function hasValidOptionKey(value: any) {
   const found = dropdownOptions.value.find(option => option["@id"] === Object.keys(value)[0]);

@@ -93,7 +93,7 @@ onUnmounted(() => {
 });
 
 const { editorEntity, editorEntityOriginal, fetchEntity, processEntity, editorIri, editorSavedEntity, entityName } = setupEntity();
-const { setSteps, shape, stepsItems, getShape, getShapesCombined, groups, processComponentType, processShape, addToShape } = setupShape();
+const { setEditorSteps, shape, stepsItems, getShape, getShapesCombined, groups, processComponentType, processShape, addToShape } = setupShape();
 
 let loading = ref(true);
 let currentStep = ref(0);
@@ -111,7 +111,7 @@ onMounted(async () => {
   await fetchEntity();
   if (isObjectHasKeys(editorEntityOriginal.value, [RDF.TYPE])) {
     await getShapesCombined(editorEntityOriginal.value[RDF.TYPE]);
-    if (shape.value) processShape(shape.value);
+    if (shape.value) processShape(shape.value, EditorMode.EDIT);
     router.push(stepsItems.value[0].to);
   } else window.location.href = Env.DIRECTORY_URL;
   loading.value = false;
@@ -161,7 +161,7 @@ function stepsClicked(event: any) {
 async function updateType(types: TTIriRef[]) {
   loading.value = true;
   await getShapesCombined(types);
-  if (shape.value) processShape(shape.value);
+  if (shape.value) processShape(shape.value, EditorMode.EDIT);
   editorEntity.value[RDF.TYPE] = types;
   // removeEroneousKeys();
   loading.value = false;
