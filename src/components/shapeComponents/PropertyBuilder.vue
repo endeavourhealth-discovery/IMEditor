@@ -17,7 +17,7 @@ import { PropertyGroup, PropertyShape, TTIriRef, Property } from "im-library/dis
 import { computed, inject, onMounted, PropType, Ref, ref, watch } from "vue";
 import EntityAutoComplete from "./EntityAutoComplete.vue";
 import _ from "lodash";
-import { Enums, Helpers, Services, Vocabulary } from "im-library";
+import { Config, Enums, Helpers, Services, Vocabulary } from "im-library";
 import axios from "axios";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 const { SHACL, IM, RDFS, RDF } = Vocabulary;
@@ -25,6 +25,7 @@ const { EntityService, QueryService } = Services;
 const {
   DataTypeCheckers: { isObjectHasKeys }
 } = Helpers;
+const { XmlSchemaDatatypes } = Config;
 
 const props = defineProps({
   shape: { type: Object as PropType<PropertyShape>, required: true },
@@ -67,29 +68,29 @@ let key = props.shape.path["@id"];
 
 const order = computed(() => props.position);
 
-const propertyPathShape = {
+const propertyPathShape: PropertyShape = {
   comment: "selects an entity based on select query",
   name: "Path",
-  componentType: IM.ENTITY_AUTO_COMPLETE_COMPONENT,
+  componentType: { "@id": IM.ENTITY_AUTO_COMPLETE_COMPONENT },
   path: props.shape.path,
   builderChild: true,
   order: 1,
   select: [{ "@id": "http://endhealth.info/im#Query_GetIsas" }],
   argument: [{ valueIri: { "@id": IM.DATAMODEL_PROPERTY }, parameter: "this" }]
-};
-const propertyRangeShape = ref({
+} as PropertyShape;
+const propertyRangeShape: Ref<PropertyShape> = ref({
   comment: "selects an entity based on select query",
   name: "Range",
   order: 1,
-  componentType: IM.ENTITY_AUTO_COMPLETE_COMPONENT,
+  componentType: { "@id": IM.ENTITY_AUTO_COMPLETE_COMPONENT },
   path: props.shape.path,
   select: [{ name: "Search for concepts", "@id": "http://endhealth.info/im#Query_AllowableRanges" }],
   argument: [{ valueIri: { "@id": propertyPath.value["@id"] }, parameter: "this" }],
   builderChild: true
-});
+} as PropertyShape);
 
 watch(propertyPath, newValue => {
-  if (newValue["@id"]) {
+  if (newValue["@id"] && propertyRangeShape.value.argument[0] && propertyRangeShape.value.argument[0].valueIri) {
     propertyRangeShape.value.argument[0].valueIri["@id"] = newValue["@id"];
   }
 });
@@ -169,8 +170,7 @@ async function createProperty() {
 
 async function setRange(property: Property) {
   if (propertyRange.value) {
-    const primativeTypes = await entityService.getEntityChildren(IM.STATUS);
-    if (primativeTypes && primativeTypes.find(p => p["@id"] === propertyRange.value["@id"])) {
+    if (XmlSchemaDatatypes.find(p => p === propertyRange.value["@id"])) {
       property["http://www.w3.org/ns/shacl#datatype"] = [propertyRange.value];
     } else {
       const type = await entityService.getPartialEntity(propertyRange.value["@id"], [RDF.TYPE]);
