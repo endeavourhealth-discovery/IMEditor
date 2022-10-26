@@ -202,7 +202,6 @@ function generateBuildAsJson() {
 let invalid = ref(false);
 
 function updateEntity() {
-  console.log("updating entity");
   const value = generateBuildAsJson();
   const result = {} as any;
   result[key] = value;
@@ -247,10 +246,7 @@ function deleteItem(data: ComponentDetails): void {
 }
 
 function updateItemWrapper(data: ComponentDetails) {
-  console.log("updating array");
-  console.log(data);
   updateItem(data, build.value);
-  console.log(build.value);
 }
 
 function getNextComponentOptions() {
