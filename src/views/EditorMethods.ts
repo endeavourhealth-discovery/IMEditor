@@ -1,6 +1,6 @@
 import { computed, Ref, ref } from "vue";
 import { FormGenerator, PropertyGroup, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
-import { Helpers, Services, Vocabulary } from "im-library";
+import { Enums, Helpers, Services, Vocabulary } from "im-library";
 import axios from "axios";
 import StepsGroup from "@/components/creator/StepsGroup.vue";
 import { useStore } from "vuex";
@@ -10,6 +10,7 @@ const {
 } = Helpers;
 const { IM, RDFS, RDF } = Vocabulary;
 const { EntityService } = Services;
+const { EditorMode } = Enums;
 
 const entityService = new EntityService(axios);
 
@@ -47,15 +48,16 @@ export function setupShape() {
     return newShape;
   }
 
-  function processShape(shape: FormGenerator) {
+  function processShape(shape: FormGenerator, mode: Enums.EditorMode) {
     if (shape.group && shape.targetShape) {
       targetShape.value = shape.targetShape;
       groups.value = shape.group;
-      setSteps();
+      if (mode === EditorMode.EDIT) setEditorSteps();
+      if (mode === EditorMode.CREATE) setCreatorSteps();
     }
   }
 
-  function setSteps() {
+  function setEditorSteps() {
     stepsItems.value = [];
     const editorRoute = router.options.routes.find(r => r.name === "Editor");
     const currentPath = removeUrlSubroute(route.fullPath);
@@ -68,6 +70,22 @@ export function setupShape() {
         stepsItems.value.push({ label: group.name, to: currentPath + "/" + group.name });
       });
       router.addRoute(editorRoute);
+    }
+  }
+
+  function setCreatorSteps() {
+    stepsItems.value = [];
+    stepsItems.value.push({ label: "Type", to: "/creator/type" });
+    const creatorRoute = router.options.routes.find(r => r.name === "Creator");
+    if (creatorRoute) {
+      groups.value.forEach(group => {
+        const component = processComponentType(group.componentType);
+        if (creatorRoute.children?.findIndex(route => route.name === group.name) === -1) {
+          creatorRoute.children?.push({ path: group.name, name: group.name, component: component });
+        }
+        stepsItems.value.push({ label: group.name, to: "/creator/" + group.name });
+      });
+      router.addRoute(creatorRoute);
     }
   }
 
@@ -86,7 +104,19 @@ export function setupShape() {
     }
   }
 
-  return { shape, targetShape, groups, addToShape, getShape, getShapesCombined, stepsItems, processShape, setSteps, processComponentType };
+  return {
+    shape,
+    targetShape,
+    groups,
+    addToShape,
+    getShape,
+    getShapesCombined,
+    stepsItems,
+    processShape,
+    setEditorSteps,
+    setCreatorSteps,
+    processComponentType
+  };
 }
 
 export function setupEntity() {
