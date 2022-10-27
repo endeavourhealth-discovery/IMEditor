@@ -291,7 +291,7 @@ async function submit(): Promise<void> {
 }
 
 async function isValidEntity(entity: any): Promise<boolean> {
-  return !isObjectHasKeys(entity) && editorValidity.value.every(validity => validity.valid);
+  return isObjectHasKeys(entity) && editorValidity.value.every(validity => validity.valid);
 }
 
 function refreshEditor() {

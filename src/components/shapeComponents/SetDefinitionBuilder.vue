@@ -52,6 +52,7 @@ import { Query } from "im-library/dist/types/models/modules/AutoGen";
 import { useToast } from "primevue/usetoast";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 const { isObjectHasKeys, isArrayHasLength, isObject } = Helpers.DataTypeCheckers;
+const { isPropertyShape, isPropertyGroup } = Helpers.TypeGuards;
 const { IM, RDFS, SHACL } = Vocabulary;
 const { EntityService, QueryService, LoggerService } = Services;
 const toast = useToast();
@@ -76,7 +77,7 @@ const editorEntity = inject(injectionKeys.editorEntity)?.editorEntity;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
 
 const key = props.shape.path["@id"];
-const value = JSON.parse(props.value);
+const value = props.value ? JSON.parse(props.value) : {};
 
 watch(
   () => _.cloneDeep(clauses.value),
@@ -88,19 +89,28 @@ watch(
 watch(
   () => _.cloneDeep(imquery.value),
   async newValue => {
-    if (entityUpdate) updateEntity();
+    updateEntity();
+    updateValidity();
   }
 );
 
 onMounted(() => {
-  if (value) getClauses(value);
+  if (isObjectHasKeys(value)) getClauses(value);
   else addConcept();
 });
 
+async function updateValidity() {
+  if (validityUpdate) {
+    validityUpdate({ key: key, valid: true });
+  }
+}
+
 function updateEntity() {
-  const result = {} as any;
-  result[key] = imquery.value;
-  if (entityUpdate) entityUpdate(result);
+  if (entityUpdate) {
+    const result = {} as any;
+    result[key] = imquery.value;
+    entityUpdate(result);
+  }
 }
 
 function getClauses(value: Query) {

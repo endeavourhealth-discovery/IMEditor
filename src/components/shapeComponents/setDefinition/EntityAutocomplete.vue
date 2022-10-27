@@ -28,7 +28,7 @@ const abortController = ref(new AbortController());
 const selectedEntity: Ref<TTIriRef[]> = ref([] as TTIriRef[]);
 
 onMounted(() => {
-  selectedEntity.value = [{ "@id": props.ttAlias["@id"], name: props.ttAlias.name }];
+  if (isObjectHasKeys(props.ttAlias, ["@id", "name"])) selectedEntity.value = [{ "@id": props.ttAlias["@id"], name: props.ttAlias.name }];
 });
 
 function handleChange(event: any) {
