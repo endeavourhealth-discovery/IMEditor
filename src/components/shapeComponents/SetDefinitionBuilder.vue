@@ -67,7 +67,7 @@ const entityService = new EntityService(axios);
 const queryService = new QueryService(axios);
 const testQueryResults: Ref<TTIriRef[]> = ref([]);
 const showDialog: Ref<boolean> = ref(false);
-const imquery: Ref<Query> = ref({} as Query);
+const imquery: Ref<QueryRequest> = ref({} as QueryRequest);
 const defaultTTAlias = { includeSubtypes: true } as TTAlias;
 const clauses: Ref<SetQueryObject[]> = ref([]);
 const queryLoading: Ref<boolean> = ref(false);
@@ -108,7 +108,7 @@ async function updateValidity() {
 function updateEntity() {
   if (entityUpdate) {
     const result = {} as any;
-    result[key] = imquery.value;
+    result[key] = JSON.stringify(imquery.value.query);
     entityUpdate(result);
   }
 }
