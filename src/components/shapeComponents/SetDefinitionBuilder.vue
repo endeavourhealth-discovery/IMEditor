@@ -76,12 +76,12 @@ const editorEntity = inject(injectionKeys.editorEntity)?.editorEntity;
 const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
 
 const key = props.shape.path["@id"];
+const value = JSON.parse(props.value);
 
 watch(
   () => _.cloneDeep(clauses.value),
   () => {
     imquery.value = buildIMQuery(clauses.value);
-    if (props.value) props.value[props.shape.path["@id"]] = imquery.value;
   }
 );
 
@@ -93,13 +93,36 @@ watch(
 );
 
 onMounted(() => {
-  addConcept();
+  if (value) getClauses(value);
+  else addConcept();
 });
 
 function updateEntity() {
   const result = {} as any;
   result[key] = imquery.value;
   if (entityUpdate) entityUpdate(result);
+}
+
+function getClauses(value: Query) {
+  if (isArrayHasLength(value?.where?.from)) {
+    for (const from of value.where.from) {
+      const clause = { concept: from, include: true, refinements: [] } as SetQueryObject;
+      clauses.value.push(clause);
+    }
+  }
+
+  if (isArrayHasLength(value?.where?.notExist?.from)) {
+    for (const from of value.where.notExist.from) {
+      const clause = { concept: from, include: false, refinements: [] } as SetQueryObject;
+      clauses.value.push(clause);
+    }
+  }
+
+  if (isArrayHasLength(value?.where?.and)) {
+    for (const and of value.where.and) {
+      clauses.value[0].refinements.push({ property: and.property, is: and.is });
+    }
+  }
 }
 
 function buildIMQuery(clauses: SetQueryObject[]): any {
