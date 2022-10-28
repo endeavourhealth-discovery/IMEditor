@@ -28,7 +28,8 @@ const { IM } = Vocabulary;
 const props = defineProps({
   shape: { type: Object as PropType<PropertyShape>, required: true },
   mode: { type: String as PropType<Enums.EditorMode>, required: true },
-  value: { type: Object as PropType<TTIriRef>, required: false }
+  value: { type: Object as PropType<TTIriRef>, required: false },
+  position: { type: Number, required: false }
 });
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;

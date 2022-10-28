@@ -1,14 +1,16 @@
 <template>
   <div class="property-builder">
-    <div>Property builder</div>
-    <div>Order: {{ order }}</div>
-    <EntityAutoComplete :value="propertyPath" :shape="propertyPathShape" :mode="mode" @updateClicked="updatePath" :disabled="!!inheritedFrom" />
-    <EntityAutoComplete :value="propertyRange" :shape="propertyRangeShape" :mode="mode" @updateClicked="updateRange" />
-    <Tag v-if="inheritedFrom" value="Inherited" />
-    <label for="required">Required</label>
-    <Checkbox name="required" value="Required" v-model="required" :binary="true" />
-    <label for="unique">Unique</label>
-    <Checkbox name="unique" value="Unique" v-model="unique" :binary="true" />
+    <div class="title-container"><span class="title">Property builder</span></div>
+    <div class="content=container">
+      <div>Order: {{ order }}</div>
+      <EntityAutoComplete :value="propertyPath" :shape="propertyPathShape" :mode="mode" @updateClicked="updatePath" :disabled="!!inheritedFrom" />
+      <EntityAutoComplete :value="propertyRange" :shape="propertyRangeShape" :mode="mode" @updateClicked="updateRange" />
+      <Tag v-if="inheritedFrom" value="Inherited" />
+      <label for="required">Required</label>
+      <Checkbox name="required" value="Required" v-model="required" :binary="true" />
+      <label for="unique">Unique</label>
+      <Checkbox name="unique" value="Unique" v-model="unique" :binary="true" />
+    </div>
   </div>
 </template>
 
