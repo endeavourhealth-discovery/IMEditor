@@ -78,14 +78,14 @@ onMounted(() => {
 
 watch([() => _.cloneDeep(props.value), () => _.cloneDeep(props.shape)], ([newPropsValue, newPropsShape], [oldPropsValue, oldPropsShape]) => {
   // updateBuildLength();
-  if (JSON.stringify(newPropsValue) !== JSON.stringify(oldPropsValue)) updateBuildPropsValue();
-  if (JSON.stringify(newPropsShape) !== JSON.stringify(oldPropsShape)) updateBuildShape();
+  if (JSON.stringify(newPropsValue) !== JSON.stringify(oldPropsValue) && build.value.length) updateBuildPropsValue();
+  if (JSON.stringify(newPropsShape.path["@id"]) !== JSON.stringify(oldPropsShape.path["@id"])) init();
 });
 
 watch(
   () => _.cloneDeep(build.value),
   async newValue => {
-    if (!loading.value && finishedChildLoading()) {
+    if (!loading.value && finishedChildLoading.value) {
       if (entityUpdate && isArrayHasLength(newValue)) updateEntity();
       if (validityUpdate) await updateValidity();
     }
@@ -95,15 +95,16 @@ watch(
 function updateBuildPropsValue() {
   if (props.value && isArrayHasLength(props.value))
     props.value.forEach((v, i) => {
-      if (build.value[i].value !== v) build.value[i].value = v;
+      if (build.value[i] && build.value[i].value !== v) build.value[i].value = v;
     });
 }
 
-function updateBuildShape() {
-  build.value.forEach(b => {
-    if (b.shape !== props.shape) b.shape = props.shape;
-  });
-}
+// function updateBuildShape() {
+//   build.value.forEach(b => {
+//     if (b.shape !== (isObjectHasKeys(props.shape, ["property"]) ? props.shape.property[0] : props.shape.subGroup[0]))
+//       b.shape = isObjectHasKeys(props.shape, ["property"]) ? props.shape.property[0] : props.shape.subGroup[0];
+//   });
+// }
 
 // function updateBuildLength() {
 //   if (props.value && isArrayHasLength(props.value) && props.value.length !== build.value.length) {
@@ -111,9 +112,9 @@ function updateBuildShape() {
 // }
 // }
 
-function finishedChildLoading() {
-  return !build.value.some(c => (isObjectHasKeys(c.value) && !isObjectHasKeys(c.json)) || (isArrayHasLength(c.value) && !isObjectHasKeys(c.json)));
-}
+const finishedChildLoading = computed(
+  () => !build.value.some(c => (isObjectHasKeys(c.value) && !isObjectHasKeys(c.json)) || (isArrayHasLength(c.value) && !isObjectHasKeys(c.json)))
+);
 
 function init() {
   key = props.shape.path["@id"];

@@ -1,14 +1,16 @@
 <template>
   <div class="property-builder">
-    <div>Property builder</div>
-    <div>Order: {{ order }}</div>
-    <EntityAutoComplete :value="propertyPath" :shape="propertyPathShape" :mode="mode" @updateClicked="updatePath" :disabled="!!inheritedFrom" />
-    <EntityAutoComplete :value="propertyRange" :shape="propertyRangeShape" :mode="mode" @updateClicked="updateRange" />
-    <Tag v-if="inheritedFrom" value="Inherited" />
-    <label for="required">Required</label>
-    <Checkbox name="required" value="Required" v-model="required" :binary="true" />
-    <label for="unique">Unique</label>
-    <Checkbox name="unique" value="Unique" v-model="unique" :binary="true" />
+    <div class="title-container"><span class="title">Property builder</span></div>
+    <div class="content=container">
+      <div>Order: {{ order }}</div>
+      <EntityAutoComplete :value="propertyPath" :shape="propertyPathShape" :mode="mode" @updateClicked="updatePath" :disabled="!!inheritedFrom" />
+      <EntityAutoComplete :value="propertyRange" :shape="propertyRangeShape" :mode="mode" @updateClicked="updateRange" />
+      <Tag v-if="inheritedFrom" value="Inherited" />
+      <label for="required">Required</label>
+      <Checkbox name="required" value="Required" v-model="required" :binary="true" />
+      <label for="unique">Unique</label>
+      <Checkbox name="unique" value="Unique" v-model="unique" :binary="true" />
+    </div>
   </div>
 </template>
 
@@ -111,18 +113,38 @@ onMounted(async () => {
 
 function processProps() {
   if (props.value) {
-    if (props.value["http://www.w3.org/ns/shacl#path"] && props.value["http://www.w3.org/ns/shacl#path"].length === 1)
+    if (isObjectHasKeys(props.value, ["http://www.w3.org/ns/shacl#path"]) && props.value["http://www.w3.org/ns/shacl#path"].length === 1)
       propertyPath.value = props.value["http://www.w3.org/ns/shacl#path"][0];
-    if (props.value["http://www.w3.org/ns/shacl#node"] && props.value["http://www.w3.org/ns/shacl#node"].length === 1)
+    if (
+      isObjectHasKeys(props.value, ["http://www.w3.org/ns/shacl#node"]) &&
+      _.isArray(props.value["http://www.w3.org/ns/shacl#node"]) &&
+      props.value["http://www.w3.org/ns/shacl#node"].length === 1
+    )
       propertyRange.value = props.value["http://www.w3.org/ns/shacl#node"][0];
-    if (props.value["http://www.w3.org/ns/shacl#datatype"] && props.value["http://www.w3.org/ns/shacl#datatype"].length === 1)
+    if (
+      isObjectHasKeys(props.value, ["http://www.w3.org/ns/shacl#datatype"]) &&
+      _.isArray(props.value["http://www.w3.org/ns/shacl#datatype"]) &&
+      props.value["http://www.w3.org/ns/shacl#datatype"].length === 1
+    )
       propertyRange.value = props.value["http://www.w3.org/ns/shacl#datatype"][0];
-    if (props.value["http://www.w3.org/ns/shacl#class"] && props.value["http://www.w3.org/ns/shacl#class"].length === 1)
+    if (
+      isObjectHasKeys(props.value, ["http://www.w3.org/ns/shacl#class"]) &&
+      _.isArray(props.value["http://www.w3.org/ns/shacl#class"]) &&
+      props.value["http://www.w3.org/ns/shacl#class"].length === 1
+    )
       propertyRange.value = props.value["http://www.w3.org/ns/shacl#class"][0];
-    if (props.value["http://endhealth.info/im#inheritedFrom"] && props.value["http://endhealth.info/im#inheritedFrom"].length === 1)
+    if (
+      isObjectHasKeys(props.value, ["http://endhealth.info/im#inheritedFrom"]) &&
+      _.isArray(props.value["http://endhealth.info/im#inheritedFrom"]) &&
+      props.value["http://endhealth.info/im#inheritedFrom"].length === 1
+    )
       inheritedFrom.value = props.value["http://endhealth.info/im#inheritedFrom"][0];
-    if (props.value["http://www.w3.org/ns/shacl#minCount"]) required.value = props.value["http://www.w3.org/ns/shacl#minCount"] > 0;
-    if (props.value["http://www.w3.org/ns/shacl#maxCount"]) unique.value = !(props.value["http://www.w3.org/ns/shacl#maxCount"] > 0);
+    if (isObjectHasKeys(props.value, ["http://www.w3.org/ns/shacl#minCount"]) && typeof props.value["http://www.w3.org/ns/shacl#minCount"] === "number")
+      required.value = props.value["http://www.w3.org/ns/shacl#minCount"] > 0;
+    else required.value = false;
+    if (isObjectHasKeys(props.value, ["http://www.w3.org/ns/shacl#maxCount"]) && typeof props.value["http://www.w3.org/ns/shacl#maxCount"] === "number")
+      unique.value = props.value["http://www.w3.org/ns/shacl#maxCount"] !== 0;
+    else unique.value = false;
   } else {
     propertyPath.value = {} as TTIriRef;
     propertyRange.value = undefined;

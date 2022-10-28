@@ -16,6 +16,18 @@ const mockDispatch = vi.fn();
 
 const mockAdd = vi.fn();
 
+const mockPush = vi.fn();
+const mockGo = vi.fn();
+const mockRoute = { name: "Concept" };
+
+vi.mock("vue-router", () => ({
+  useRouter: () => ({
+    push: mockPush,
+    go: mockGo
+  }),
+  useRoute: () => mockRoute
+}));
+
 vi.mock("primevue/usetoast", () => ({
   useToast: () => ({
     add: mockAdd
@@ -30,7 +42,7 @@ describe("App.vue", () => {
     wrapper = shallowMount(App, {
       global: {
         components: { Toast, ProgressSpinner },
-        stubs: ["router-link", "router-view"]
+        stubs: ["router-link", "router-view", "ReleaseNotes"]
       }
     });
   });

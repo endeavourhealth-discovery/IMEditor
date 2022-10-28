@@ -24,7 +24,8 @@ const { EditorMode } = Enums;
 const props = defineProps({
   shape: { type: Object as PropType<PropertyShape>, required: true },
   mode: { type: String as PropType<Enums.EditorMode>, required: true },
-  value: { type: String, default: "" }
+  value: { type: String, default: "" },
+  position: { type: Number, required: false }
 });
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;

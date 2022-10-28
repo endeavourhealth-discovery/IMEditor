@@ -22,10 +22,12 @@ describe("router", () => {
   });
   describe("router ___ no snomed", () => {
     let wrapper;
+    let iriExistsSpy;
 
     beforeEach(async () => {
       vi.resetAllMocks();
       window.sessionStorage.clear();
+      iriExistsSpy = vi.spyOn(EntityService.prototype, "iriExists").mockResolvedValue(true);
       store.commit("updateSnomedLicenseAccepted", "false");
       store.dispatch = vi.fn().mockResolvedValue({ authenticated: true });
       router.push("/");
@@ -88,11 +90,13 @@ describe("router", () => {
 
   describe("router ___ no auth", () => {
     let wrapper;
+    let iriExistsSpy;
 
     beforeEach(async () => {
       vi.resetAllMocks();
       window.sessionStorage.clear();
       store.state.snomedLicenseAccepted = "true";
+      iriExistsSpy = vi.spyOn(EntityService.prototype, "iriExists").mockResolvedValue(true);
       store.dispatch = vi.fn().mockResolvedValue({ authenticated: false });
       router.push("/");
       await router.isReady();
@@ -159,11 +163,13 @@ describe("router", () => {
 
   describe("router ___ blockedIri", () => {
     let wrapper;
+    let iriExistsSpy;
 
     beforeEach(async () => {
       vi.resetAllMocks();
       window.sessionStorage.clear();
       store.state.snomedLicenseAccepted = "true";
+      iriExistsSpy = vi.spyOn(EntityService.prototype, "iriExists").mockResolvedValue(true);
       store.state.blockedIris = ["http://www.w3.org/2001/XMLSchema#string"];
       store.dispatch = vi.fn().mockResolvedValue({ authenticated: true });
       store.commit = vi.fn();
