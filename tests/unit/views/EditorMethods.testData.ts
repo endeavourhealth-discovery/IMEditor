@@ -845,5 +845,91 @@ export default {
       "@id": "http://endhealth.info/im#"
     },
     iri: "http://endhealth.info/im#Editor_ConceptSetShape"
+  },
+  ENTITY: {
+    "@id": "http://snomed.info/sct#31739005",
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#type": [
+      {
+        "@id": "http://endhealth.info/im#Concept",
+        name: "Terminology Concept"
+      }
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#label": "Lateral abnormal curvature (morphologic abnormality)",
+    "http://endhealth.info/im#status": [
+      {
+        "@id": "http://endhealth.info/im#Active",
+        name: "Active"
+      }
+    ],
+    "http://endhealth.info/im#isA": [
+      {
+        "@id": "http://snomed.info/sct#49755003",
+        name: "Morphologically abnormal structure (morphologic abnormality)"
+      },
+      {
+        "@id": "http://snomed.info/sct#6081001",
+        name: "Deformity (morphologic abnormality)"
+      },
+      {
+        "@id": "http://snomed.info/sct#46360000",
+        name: "Abnormal curvature (morphologic abnormality)"
+      },
+      {
+        "@id": "http://snomed.info/sct#107658001",
+        name: "Mechanical abnormality (morphologic abnormality)"
+      },
+      {
+        "@id": "http://snomed.info/sct#399984000",
+        name: "Abnormal shape (morphologic abnormality)"
+      },
+      {
+        "@id": "http://snomed.info/sct#123037004",
+        name: "Body structure (body structure)"
+      },
+      {
+        "@id": "http://snomed.info/sct#118956008",
+        name: "Body structure, altered from its original anatomical structure (morphologic abnormality)"
+      },
+      {
+        "@id": "http://snomed.info/sct#31739005",
+        name: "Lateral abnormal curvature (morphologic abnormality)"
+      }
+    ],
+    "http://endhealth.info/im#im1Id": "SN_31739005",
+    "http://www.w3.org/2000/01/rdf-schema#subClassOf": [
+      {
+        "@id": "http://snomed.info/sct#46360000",
+        name: "Abnormal curvature (morphologic abnormality)"
+      }
+    ],
+    "http://endhealth.info/im#code": "31739005",
+    "http://endhealth.info/im#scheme": [
+      {
+        iri: "http://endhealth.info/emis#",
+        name: "EMIS (including Read) codes"
+      }
+    ],
+    "http://endhealth.info/im#hasTermCode": [
+      {
+        "http://www.w3.org/2000/01/rdf-schema#label": "Lateral abnormal curvature",
+        "http://endhealth.info/im#status": [
+          {
+            "@id": "http://endhealth.info/im#Active",
+            name: "Active"
+          }
+        ],
+        "http://endhealth.info/im#code": "53028019"
+      },
+      {
+        "http://www.w3.org/2000/01/rdf-schema#label": "Lateral abnormal curvature (morphologic abnormality)",
+        "http://endhealth.info/im#status": [
+          {
+            "@id": "http://endhealth.info/im#Active",
+            name: "Active"
+          }
+        ],
+        "http://endhealth.info/im#code": "762942013"
+      }
+    ]
   }
 };

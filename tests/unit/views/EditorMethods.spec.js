@@ -1,7 +1,9 @@
 import { afterAll, vi } from "vitest";
-import { Services, Vocabulary } from "im-library";
+import { Enums, Services, Vocabulary } from "im-library";
 import { fakerFactory } from "../../../src/mocks/factory";
 import testData from "./EditorMethods.testData";
+import { mount } from "vue-composable-tester";
+import { provide } from "vue";
 const { EntityService } = Services;
 const { IM } = Vocabulary;
 
@@ -59,8 +61,6 @@ describe("processEntity", () => {
 describe("setupShape", async () => {
   let getShapeFromTypeSpy;
   let getShapeSpy;
-  const { setupShape } = await import("../../../src/views/EditorMethods");
-  const { getShape, getShapesCombined, addToShape, processShape, processComponentType, setSteps, shape, targetShape, groups, stepsItems } = setupShape();
 
   describe("getShape", () => {
     beforeEach(() => {
@@ -70,22 +70,64 @@ describe("setupShape", async () => {
     });
 
     it("gets shape from a type iri ___ success", async () => {
+      const { setupShape } = await import("../../../src/views/EditorMethods");
+      const {
+        getShape,
+        getShapesCombined,
+        addToShape,
+        processShape,
+        processComponentType,
+        setEditorSteps,
+        setCreatorSteps,
+        shape,
+        targetShape,
+        groups,
+        stepsItems
+      } = setupShape();
       getShapeFromTypeSpy.mockResolvedValue({ "@id": testData.CONCEPT_SHAPE["@id"] });
       getShapeSpy.mockResolvedValue(testData.CONCEPT_SHAPE);
-      const shape = await getShape("testTypeIri");
-      expect(shape).toEqual(testData.CONCEPT_SHAPE);
+      const newShape = await getShape("testTypeIri");
+      expect(newShape).toEqual(testData.CONCEPT_SHAPE);
     });
 
     it("gets shape from a type iri ___ fail", async () => {
+      const { setupShape } = await import("../../../src/views/EditorMethods");
+      const {
+        getShape,
+        getShapesCombined,
+        addToShape,
+        processShape,
+        processComponentType,
+        setEditorSteps,
+        setCreatorSteps,
+        shape,
+        targetShape,
+        groups,
+        stepsItems
+      } = setupShape();
       getShapeFromTypeSpy.mockResolvedValue({});
       getShapeSpy.mockResolvedValue(testData.CONCEPT_SHAPE);
-      const shape = await getShape("testTypeIri");
-      expect(shape).toEqual({});
+      const newShape = await getShape("testTypeIri");
+      expect(newShape).toEqual({});
     });
   });
 
   describe("addToShape", () => {
-    it("adds missing groups to the existing shape", () => {
+    it("adds missing groups to the existing shape", async () => {
+      const { setupShape } = await import("../../../src/views/EditorMethods");
+      const {
+        getShape,
+        getShapesCombined,
+        addToShape,
+        processShape,
+        processComponentType,
+        setEditorSteps,
+        setCreatorSteps,
+        shape,
+        targetShape,
+        groups,
+        stepsItems
+      } = setupShape();
       const startShape = { ...testData.CONCEPT_SHAPE };
       const shapeToAdd = { ...testData.CONCEPT_SET_SHAPE };
       expect(startShape.group.length).toBe(4);
@@ -98,4 +140,22 @@ describe("setupShape", async () => {
       expect(startShape.group[4]).toEqual(testData.CONCEPT_SET_SHAPE.group[3]);
     });
   });
+
+  // describe("processShape", () => {
+  //   it("sets targetShape, sets groups and calls a steps setter ___ editor", async () => {
+  //     const addRouteMock = vi.fn();
+  //     vi.doMock("vue-router", () => ({
+  //       useRouter: () => ({ options: { routes: [{ name: "Editor" }] }, addRoute: addRouteMock }),
+  //       useRoute: () => ({ fullPath: "/editor/http:%2F%2Fendhealth.info%2Fim%23CSET_OralNSAIDs/Summary details", name: "Editor" })
+  //     }));
+  //     const { setupShape } = await import("../../../src/views/EditorMethods");
+  //     const { result } = mount(() => setupShape());
+  //     const startShape = { ...testData.CONCEPT_SHAPE };
+  //     const entity = { ...testData.ENTITY };
+  //     result.processShape(startShape, Enums.EditorMode.EDIT, entity);
+  //     expect(result.targetShape.value).toDeepEqual(startShape);
+  //     expect(result.groups.value).toDeepEqual(startShape.group);
+  //     expect(addRouteMock).toHaveBeenCalled();
+  //   });
+  // });
 });
