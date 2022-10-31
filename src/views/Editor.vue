@@ -110,7 +110,7 @@ onMounted(async () => {
   await fetchEntity();
   if (isObjectHasKeys(editorEntityOriginal.value, [RDF.TYPE])) {
     await getShapesCombined(editorEntityOriginal.value[RDF.TYPE]);
-    if (shape.value) processShape(shape.value, EditorMode.EDIT);
+    if (shape.value) processShape(shape.value, EditorMode.EDIT, editorEntity.value);
     router.push(stepsItems.value[0].to);
   } else window.location.href = Env.DIRECTORY_URL;
   loading.value = false;
@@ -160,7 +160,7 @@ function stepsClicked(event: any) {
 async function updateType(types: TTIriRef[]) {
   loading.value = true;
   await getShapesCombined(types);
-  if (shape.value) processShape(shape.value, EditorMode.EDIT);
+  if (shape.value) processShape(shape.value, EditorMode.EDIT, editorEntity.value);
   editorEntity.value[RDF.TYPE] = types;
   // removeEroneousKeys();
   loading.value = false;
