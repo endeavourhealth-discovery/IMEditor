@@ -1,5 +1,5 @@
 import { computed, Ref, ref } from "vue";
-import { FormGenerator, PropertyGroup, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { FormGenerator, PropertyGroup, TTIriRef, Namespace } from "im-library/dist/types/interfaces/Interfaces";
 import { Enums, Helpers, Services, Vocabulary } from "im-library";
 import axios from "axios";
 import StepsGroup from "@/components/creator/StepsGroup.vue";
@@ -48,8 +48,21 @@ export function setupShape() {
     return newShape;
   }
 
-  function processShape(shape: FormGenerator, mode: Enums.EditorMode) {
+  function processShape(shape: FormGenerator, mode: Enums.EditorMode, entity: any) {
     if (shape.group && shape.targetShape) {
+      const validMappingSchemes = ["http://endhealth.info/emis#", "http://endhealth.info/tpp#"];
+      if (shape.group.findIndex(group => group.path["@id"] === IM.MAPPED_TO) !== -1) {
+        if (
+          isObjectHasKeys(entity, [RDF.TYPE, IM.SCHEME]) &&
+          entity[RDF.TYPE].findIndex((type: TTIriRef) => type["@id"] === IM.CONCEPT) !== -1 &&
+          !validMappingSchemes.includes(entity[IM.SCHEME][0]["@id"])
+        ) {
+          shape.group.splice(
+            shape.group.findIndex(group => group.path["@id"] === IM.MAPPED_TO),
+            1
+          );
+        }
+      }
       targetShape.value = shape.targetShape;
       groups.value = shape.group;
       if (mode === EditorMode.EDIT) setEditorSteps();
