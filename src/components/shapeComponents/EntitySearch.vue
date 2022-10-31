@@ -62,7 +62,8 @@ const { IM, RDF, RDFS } = Vocabulary;
 const props = defineProps({
   value: { type: Object as PropType<TTIriRef>, required: false },
   shape: { type: Object as PropType<PropertyShape>, required: true },
-  mode: { type: String as PropType<Enums.EditorMode>, required: true }
+  mode: { type: String as PropType<Enums.EditorMode>, required: true },
+  position: { type: Number, required: false }
 });
 
 const emit = defineEmits({

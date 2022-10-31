@@ -4,7 +4,7 @@
       <template #content>
         <div class="topbar-content">
           <span class="title"><strong>IM Editor:</strong></span>
-          <span class="entity-name" v-tooltip="{ value: entityName, class: 'name-tooltip' }">{{ entityName }}</span>
+          <span class="entity-name" v-tooltip="{ value: entityName, class: 'name-tooltip' }" data-testid="entity-title-name">{{ entityName }}</span>
         </div>
       </template>
     </TopBar>
@@ -18,9 +18,7 @@
           <div v-else class="steps-content">
             <Steps :model="stepsItems" :readonly="false" @click="stepsClicked" />
             <router-view v-slot="{ Component }">
-              <keep-alive>
-                <component :is="Component" :shape="groups.length ? groups[currentStep] : undefined" :mode="EditorMode.EDIT" />
-              </keep-alive>
+              <component :is="Component" :shape="groups.length ? groups[currentStep] : undefined" :mode="EditorMode.EDIT" />
             </router-view>
           </div>
           <Divider v-if="showSidebar" layout="vertical" />
@@ -31,14 +29,15 @@
             class="p-button-rounded p-button-info p-button-outlined sidebar-toggle"
             :label="showSidebar ? 'hide sidebar' : 'show sidebar'"
             @click="showSidebar = !showSidebar"
+            data-testid="show-sidebar-button"
           />
         </div>
         <div class="button-bar" id="editor-button-bar">
-          <Button :disabled="currentStep === 0" icon="pi pi-angle-left" label="Back" @click="stepsBack" />
-          <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="router.go(-1)" />
-          <Button icon="pi pi-refresh" label="Reset" class="p-button-warning" @click="refreshEditor" />
-          <Button icon="pi pi-check" label="Save" class="save-button" @click="submit" />
-          <Button :disabled="currentStep >= stepsItems.length - 1" icon="pi pi-angle-right" label="Next" @click="stepsForward" />
+          <Button :disabled="currentStep === 0" icon="pi pi-angle-left" label="Back" @click="stepsBack" data-testid="back-button" />
+          <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="router.go(-1)" data-testid="cancel-button" />
+          <Button icon="pi pi-refresh" label="Reset" class="p-button-warning" @click="refreshEditor" data-testid="refresh-button" />
+          <Button icon="pi pi-check" label="Save" class="save-button" @click="submit" data-testid="submit-button" />
+          <Button :disabled="currentStep >= stepsItems.length - 1" icon="pi pi-angle-right" label="Next" @click="stepsForward" data-testid="forward-button" />
         </div>
       </div>
     </div>

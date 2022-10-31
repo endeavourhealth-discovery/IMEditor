@@ -97,7 +97,8 @@ const props = defineProps({
   shape: { type: Object as PropType<PropertyShape>, required: true },
   mode: { type: String as PropType<Enums.EditorMode>, required: true },
   value: { type: Object as PropType<TTIriRef>, required: false },
-  disabled: { type: Boolean, required: false, default: false }
+  disabled: { type: Boolean, required: false, default: false },
+  position: { type: Number, required: false }
 });
 
 watch(
@@ -172,7 +173,7 @@ async function init() {
 
 function getAssociatedProperty() {
   if (isObjectHasKeys(props.shape, ["argument"])) {
-    if (isArrayHasLength(props.shape.argument) && isObjectHasKeys(props.shape.argument[0], ["valueVariable"])) {
+    if (isArrayHasLength(props.shape.argument) && isObjectHasKeys(props.shape.argument[0], ["valueVariable"]) && props.shape.argument[0].valueVariable) {
       invalidAssociatedProperty.value = false;
       if (props.shape.builderChild) {
         if (
@@ -193,7 +194,7 @@ function getAssociatedProperty() {
       } else {
         invalidAssociatedProperty.value = true;
       }
-    } else if (isObjectHasKeys(props.shape.argument[0], ["valueIri"])) {
+    } else if (isObjectHasKeys(props.shape.argument[0], ["valueIri"]) && props.shape.argument[0].valueIri) {
       associatedProperty.value = props.shape.argument[0].valueIri["@id"];
     } else {
       invalidAssociatedProperty.value = false;
