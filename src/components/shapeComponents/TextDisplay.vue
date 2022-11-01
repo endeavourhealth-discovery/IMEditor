@@ -49,7 +49,7 @@ if (valueVariableMap) {
 
 const queryService = new QueryService(axios);
 
-let key = props.shape.path["@id"] == IM.ID ? IM.IRI : props.shape.path["@id"];
+let key = props.shape.path["@id"];
 let loading = ref(false);
 
 let invalid = ref(false);

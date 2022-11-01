@@ -124,7 +124,6 @@ onMounted(async () => {
     await getShapesCombined(editorEntity.value[RDF.TYPE]);
     if (shape.value) processShape(shape.value, EditorMode.CREATE, editorEntity.value);
     await nextTick();
-    currentStep.value = 1;
     router.push(stepsItems.value[1].to);
   } else {
     router.push({ name: "TypeSelector" });
@@ -151,7 +150,8 @@ async function showEntityFoundWarning() {
   }).then(async result => {
     if (result.isConfirmed) {
       editorEntityOriginal.value = {};
-      editorEntity.value = _.cloneDeep(creatorSavedEntity.value);
+      editorEntity.value = _.cloneDeep(processEntity(creatorSavedEntity.value));
+      currentStep.value = 1;
     } else {
       await Swal.fire({
         title: "Delete saved entity",
