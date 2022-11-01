@@ -8,6 +8,12 @@
       </template>
     </TopBar>
     <ConfirmDialog />
+    <TestQueryResults
+      v-if="showTestQueryResults"
+      :showDialog="showTestQueryResults"
+      :imquery="JSON.parse(editorEntity[IM.DEFINITION])"
+      @close-dialog="showTestQueryResults = false"
+    />
     <div id="creator-main-container">
       <div class="content-buttons-container">
         <div class="content-sidebar-container">
@@ -35,6 +41,7 @@
         <div class="button-bar" id="creator-button-bar">
           <Button :disabled="currentStep === 0" icon="pi pi-angle-left" label="Back" @click="stepsBack" />
           <Button icon="pi pi-refresh" label="Reset" class="p-button-warning" @click="refreshCreator" />
+          <Button v-if="groups[currentStep - 1]?.name === 'Members'" icon="pi pi-bolt" label="Test query" class="p-button-help" @click="testQuery" />
           <Button icon="pi pi-check" label="Create" class="p-button-success save-button" @click="submit" />
           <Button :disabled="currentStep >= stepsItems.length - 1" icon="pi pi-angle-right" label="Next" @click="stepsForward" />
         </div>
@@ -65,6 +72,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { useRouter } from "vue-router";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import { FormGenerator, PropertyGroup, PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import TestQueryResults from "../components/shapeComponents/setDefinition/TestQueryResults.vue";
 
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength },
@@ -103,6 +111,7 @@ let showSidebar: Ref<boolean> = ref(false);
 let creatorValidity: Ref<{ key: string; valid: boolean }[]> = ref([]);
 let targetShape: Ref<TTIriRef | undefined> = ref();
 let valueVariableMap: Ref<Map<string, any>> = ref(new Map<string, any>());
+const showTestQueryResults: Ref<boolean> = ref(false);
 
 provide(injectionKeys.editorValidity, { validity: creatorValidity, updateValidity, removeValidity });
 
@@ -290,6 +299,10 @@ async function submit(): Promise<void> {
       confirmButtonColor: "#689F38"
     });
   }
+}
+
+function testQuery() {
+  if (editorEntity?.value?.[IM.DEFINITION]) showTestQueryResults.value = true;
 }
 
 function isValidEntity(entity: any): boolean {

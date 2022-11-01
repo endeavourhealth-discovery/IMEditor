@@ -9,6 +9,12 @@
       </template>
     </TopBar>
     <ConfirmDialog></ConfirmDialog>
+    <TestQueryResults
+      v-if="showTestQueryResults"
+      :showDialog="showTestQueryResults"
+      :imquery="JSON.parse(editorEntity[IM.DEFINITION])"
+      @close-dialog="showTestQueryResults = false"
+    />
     <div id="editor-main-container">
       <div class="content-buttons-container">
         <div class="content-sidebar-container">
@@ -35,6 +41,7 @@
         <div class="button-bar" id="editor-button-bar">
           <Button :disabled="currentStep === 0" icon="pi pi-angle-left" label="Back" @click="stepsBack" data-testid="back-button" />
           <Button icon="pi pi-times" label="Cancel" class="p-button-secondary" @click="router.go(-1)" data-testid="cancel-button" />
+          <Button v-if="groups[currentStep]?.name === 'Members'" icon="pi pi-bolt" label="Test query" class="p-button-help" @click="testQuery" />
           <Button icon="pi pi-refresh" label="Reset" class="p-button-warning" @click="refreshEditor" data-testid="refresh-button" />
           <Button icon="pi pi-check" label="Save" class="save-button" @click="submit" data-testid="submit-button" />
           <Button :disabled="currentStep >= stepsItems.length - 1" icon="pi pi-angle-right" label="Next" @click="stepsForward" data-testid="forward-button" />
@@ -56,10 +63,11 @@ export default defineComponent({
 <script setup lang="ts">
 import { computed, defineComponent, inject, onBeforeUnmount, onMounted, onUnmounted, provide, ref, Ref, watch } from "vue";
 import SideBar from "@/components/creator/SideBar.vue";
+import TestQueryResults from "../components/shapeComponents/setDefinition/TestQueryResults.vue";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import { useRouter, useRoute } from "vue-router";
 import { useConfirm } from "primevue/useconfirm";
-import { FormGenerator, PropertyGroup, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { FormGenerator, PropertyGroup, QueryRequest, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 import _ from "lodash";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -99,6 +107,7 @@ let currentStep = ref(0);
 let showSidebar = ref(false);
 let editorValidity: Ref<{ key: string; valid: boolean }[]> = ref([]);
 let valueVariableMap: Ref<Map<string, any>> = ref(new Map<string, any>());
+const showTestQueryResults: Ref<boolean> = ref(false);
 
 provide(injectionKeys.editorValidity, { validity: editorValidity, updateValidity, removeValidity });
 
@@ -293,6 +302,10 @@ async function isValidEntity(entity: any): Promise<boolean> {
   return isObjectHasKeys(entity) && editorValidity.value.every(validity => validity.valid);
 }
 
+function testQuery() {
+  if (editorEntity?.value?.[IM.DEFINITION]) showTestQueryResults.value = true;
+}
+
 function refreshEditor() {
   Swal.fire({
     icon: "warning",
@@ -321,11 +334,6 @@ function stepsBack() {
 function stepsForward() {
   currentStep.value++;
   if (currentStep.value < stepsItems.value.length) router.push(stepsItems.value[currentStep.value].to);
-}
-
-function handleClick(data: any) {
-  console.log("click");
-  console.log(data);
 }
 
 defineExpose({ confirmLeavePage });
