@@ -53,7 +53,7 @@ export default defineComponent({
 </script>
 
 <script setup lang="ts">
-import { onUnmounted, onBeforeUnmount, onMounted, computed, ref, Ref, watch, inject, defineComponent, PropType, provide } from "vue";
+import { onUnmounted, onBeforeUnmount, onMounted, computed, ref, Ref, watch, inject, defineComponent, PropType, provide, nextTick } from "vue";
 import { Enums, Helpers, Vocabulary, Services } from "im-library";
 import SideBar from "@/components/creator/SideBar.vue";
 import _ from "lodash";
@@ -123,6 +123,8 @@ onMounted(async () => {
   } else if (isObjectHasKeys(editorEntity.value, [RDF.TYPE])) {
     await getShapesCombined(editorEntity.value[RDF.TYPE]);
     if (shape.value) processShape(shape.value, EditorMode.CREATE, editorEntity.value);
+    await nextTick();
+    currentStep.value = 1;
     router.push(stepsItems.value[1].to);
   } else {
     router.push({ name: "TypeSelector" });
@@ -131,35 +133,42 @@ onMounted(async () => {
 });
 
 async function showEntityFoundWarning() {
-  confirm.require({
-    message: "Local saved entity found. Would you like to continue creating entity with iri: " + creatorSavedEntity.value["@id"] + "?",
-    header: "Unsaved existing creator entity found!",
-    icon: "pi pi-exclamation-circle",
-    accept: async () => {
+  await Swal.fire({
+    title: "Unsaved creator entity found",
+    html:
+      "<span>Local saved entity found. Would you like to continue creating this entity?</span><br/><br/><span>iri: " +
+      creatorSavedEntity.value["@id"] +
+      "</span><br/><span>name: " +
+      creatorSavedEntity.value[RDFS.LABEL] +
+      "</span>",
+    showCloseButton: false,
+    showCancelButton: true,
+    cancelButtonText: "No",
+    confirmButtonText: "Yes",
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    reverseButtons: true
+  }).then(async result => {
+    if (result.isConfirmed) {
       editorEntityOriginal.value = {};
       editorEntity.value = _.cloneDeep(creatorSavedEntity.value);
-      await getShapesCombined(editorEntity.value[RDF.TYPE]);
-      if (shape.value) processShape(shape.value, EditorMode.CREATE, editorEntity.value);
-      router.push(stepsItems.value[1].to);
-    },
-    reject: () => {
-      showDeleteEntityFoundWarning();
-    }
-  });
-}
-
-function showDeleteEntityFoundWarning() {
-  confirm.require({
-    message: "Continuing will delete locally saved entity with iri: " + creatorSavedEntity.value[IM.ID] + ". Are you sure you want to continue?",
-    header: "Delete saved entity",
-    icon: "pi pi-exclamation-triangle",
-    acceptClass: "p-button-danger",
-    accept: () => {
-      editorEntityOriginal.value = {};
-      editorEntity.value = {};
-    },
-    reject: () => {
-      showEntityFoundWarning();
+    } else {
+      await Swal.fire({
+        title: "Delete saved entity",
+        text: "Continuing will delete locally saved entity with iri: " + creatorSavedEntity.value["@id"] + ". Are you sure you want to continue?",
+        showCloseButton: false,
+        showCancelButton: true,
+        cancelButtonText: "Cancel",
+        confirmButtonText: "Delete local entity",
+        confirmButtonColor: "#EF4444"
+      }).then(async result => {
+        if (result.isConfirmed) {
+          editorEntityOriginal.value = {};
+          editorEntity.value = {};
+        } else {
+          await showEntityFoundWarning();
+        }
+      });
     }
   });
 }
