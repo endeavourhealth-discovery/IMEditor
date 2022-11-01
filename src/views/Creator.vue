@@ -57,8 +57,8 @@ import { onUnmounted, onBeforeUnmount, onMounted, computed, ref, Ref, watch, inj
 import { Enums, Helpers, Vocabulary, Services } from "im-library";
 import SideBar from "@/components/creator/SideBar.vue";
 import _ from "lodash";
-import store from "@/store";
 import axios from "axios";
+import { useStore } from "vuex";
 import Swal from "sweetalert2";
 import { setupShape, setupEntity } from "./EditorMethods";
 import { useConfirm } from "primevue/useconfirm";
@@ -80,7 +80,10 @@ const { ComponentType, EditorMode } = Enums;
 const props = defineProps({ type: { type: Object as PropType<TTIriRef>, required: false } });
 
 const router = useRouter();
+const store = useStore();
 const confirm = useConfirm();
+
+const creatorSavedEntity = computed(() => store.state.creatorSavedEntity);
 
 onBeforeUnmount(() => {
   confirmLeavePage();
@@ -111,14 +114,55 @@ provide(injectionKeys.valueVariableMap, { valueVariableMap, updateValueVariableM
 
 onMounted(async () => {
   loading.value = true;
+  if (isObjectHasKeys(creatorSavedEntity.value, ["@id"])) {
+    await showEntityFoundWarning();
+  }
   if (props.type) {
     await getShape(props.type["@id"]);
-    if (shape.value) processShape(shape.value, EditorMode.CREATE);
+    if (shape.value) processShape(shape.value, EditorMode.CREATE, editorEntity.value);
+  } else if (isObjectHasKeys(editorEntity.value, [RDF.TYPE])) {
+    await getShapesCombined(editorEntity.value[RDF.TYPE]);
+    if (shape.value) processShape(shape.value, EditorMode.CREATE, editorEntity.value);
+    router.push(stepsItems.value[1].to);
   } else {
     router.push({ name: "TypeSelector" });
   }
   loading.value = false;
 });
+
+async function showEntityFoundWarning() {
+  confirm.require({
+    message: "Local saved entity found. Would you like to continue creating entity with iri: " + creatorSavedEntity.value["@id"] + "?",
+    header: "Unsaved existing creator entity found!",
+    icon: "pi pi-exclamation-circle",
+    accept: async () => {
+      editorEntityOriginal.value = {};
+      editorEntity.value = _.cloneDeep(creatorSavedEntity.value);
+      await getShapesCombined(editorEntity.value[RDF.TYPE]);
+      if (shape.value) processShape(shape.value, EditorMode.CREATE, editorEntity.value);
+      router.push(stepsItems.value[1].to);
+    },
+    reject: () => {
+      showDeleteEntityFoundWarning();
+    }
+  });
+}
+
+function showDeleteEntityFoundWarning() {
+  confirm.require({
+    message: "Continuing will delete locally saved entity with iri: " + creatorSavedEntity.value[IM.ID] + ". Are you sure you want to continue?",
+    header: "Delete saved entity",
+    icon: "pi pi-exclamation-triangle",
+    acceptClass: "p-button-danger",
+    accept: () => {
+      editorEntityOriginal.value = {};
+      editorEntity.value = {};
+    },
+    reject: () => {
+      showEntityFoundWarning();
+    }
+  });
+}
 
 watch(
   () => _.cloneDeep(editorEntity.value),
@@ -161,7 +205,7 @@ function stepsClicked(event: any) {
 async function updateType(types: TTIriRef[]) {
   loading.value = true;
   await getShapesCombined(types);
-  if (shape.value) processShape(shape.value, EditorMode.CREATE);
+  if (shape.value) processShape(shape.value, EditorMode.CREATE, editorEntity.value);
   editorEntity.value[RDF.TYPE] = types;
   loading.value = false;
   if (currentStep.value === 0) stepsForward();
@@ -219,9 +263,8 @@ function updateEntity(data: any) {
       }
     }
   }
-
   if (wasUpdated && isValidEntity(editorEntity.value)) {
-    debouncedFiler(editorEntity.value);
+    store.commit("updateCreatorSavedEntity", editorEntity.value);
   }
 }
 
@@ -257,8 +300,10 @@ async function submit(): Promise<void> {
       allowOutsideClick: () => !Swal.isLoading(),
       preConfirm: async () => {
         const res = await entityService.createEntity(editorEntity.value);
-        if (res) return res;
-        else Swal.showValidationMessage("Error creating entity from server.");
+        if (res) {
+          store.commit("updateCreatorSavedEntity", undefined);
+          return res;
+        } else Swal.showValidationMessage("Error creating entity from server.");
       }
     }).then((result: any) => {
       if (result.isConfirmed) {

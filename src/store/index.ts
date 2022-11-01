@@ -22,7 +22,8 @@ export default createStore({
     editorIri: localStorage.getItem("editorSelectedIri") as string,
     snomedReturnUrl: "",
     authReturnUrl: "",
-    editorSavedEntity: localStorage.getItem("editorUpdatedEntity") as any,
+    editorSavedEntity: JSON.parse(localStorage.getItem("editorSavedEntity") || "{}") as any,
+    creatorSavedEntity: JSON.parse(localStorage.getItem("creatorSavedEntity") || "{}") as any,
     tagSeverityMatches: [
       { "@id": IM.ACTIVE, severity: "success" },
       { "@id": IM.DRAFT, severity: "warning" },
@@ -118,7 +119,13 @@ export default createStore({
     },
     updateEditorSavedEntity(state, entity) {
       state.editorSavedEntity = entity;
-      localStorage.setItem("editorSavedEntity", entity);
+      if (entity) localStorage.setItem("editorSavedEntity", JSON.stringify(entity));
+      else localStorage.removeItem("editorSavedEntity");
+    },
+    updateCreatorSavedEntity(state, entity) {
+      state.creatorSavedEntity = entity;
+      if (entity) localStorage.setItem("creatorSavedEntity", JSON.stringify(entity));
+      else localStorage.removeItem("creatorSavedEntity");
     },
     updateFilterDefaults(state, defaults) {
       state.filterDefaults = defaults;
