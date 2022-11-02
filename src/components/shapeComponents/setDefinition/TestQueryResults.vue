@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { QueryRequest, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
+import { Query, QueryRequest, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 import { onMounted, PropType, ref, Ref } from "vue";
 import { Services, Helpers } from "im-library";
 import axios from "axios";
@@ -35,7 +35,7 @@ const queryLoading: Ref<boolean> = ref(false);
 const testQueryResults: Ref<TTIriRef[]> = ref([]);
 
 const props = defineProps({
-  imquery: { type: Object as PropType<QueryRequest>, required: false },
+  imquery: { type: Object as PropType<Query>, required: true },
   showDialog: { type: Boolean, required: true }
 });
 
@@ -51,7 +51,7 @@ function close() {
 
 async function testQuery() {
   queryLoading.value = true;
-  const result = await queryService.queryIM({ query: props.imquery } as unknown as QueryRequest);
+  const result = await queryService.queryIM({ query: props.imquery } as QueryRequest);
   if (isArrayHasLength(result.entities)) {
     testQueryResults.value = await entityService.getNames(result.entities.map(entity => entity["@id"]));
   }

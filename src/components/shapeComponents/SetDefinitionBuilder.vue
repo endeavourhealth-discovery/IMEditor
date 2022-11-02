@@ -9,9 +9,8 @@ import { onMounted, ref, watch, Ref, PropType, inject } from "vue";
 import "vue-json-pretty/lib/styles.css";
 import SetDefinitionForm from "./SetDefinitionForm.vue";
 import { Helpers, Enums } from "im-library";
-import { PropertyGroup, QueryRequest, Refinement, SetQueryObject, TTAlias } from "im-library/dist/types/interfaces/Interfaces";
+import { PropertyGroup, Refinement, SetQueryObject, TTAlias, Query } from "im-library/dist/types/interfaces/Interfaces";
 import _ from "lodash";
-import { Query } from "im-library/dist/types/models/modules/AutoGen";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 const { isObjectHasKeys, isArrayHasLength } = Helpers.DataTypeCheckers;
 
@@ -21,7 +20,7 @@ const props = defineProps({
   value: { type: Object as PropType<any>, required: false }
 });
 
-const imquery: Ref<QueryRequest> = ref({} as QueryRequest);
+const imquery: Ref<Query> = ref({} as Query);
 const defaultTTAlias = { includeSubtypes: true } as TTAlias;
 const clauses: Ref<SetQueryObject[]> = ref([]);
 
@@ -49,7 +48,7 @@ watch(
 
 onMounted(() => {
   if (isObjectHasKeys(value)) getClauses(value);
-  else addConcept();
+  else addClause();
 });
 
 async function updateValidity() {
@@ -61,7 +60,7 @@ async function updateValidity() {
 function updateEntity() {
   if (entityUpdate) {
     const result = {} as any;
-    result[key] = JSON.stringify(imquery.value.query);
+    result[key] = JSON.stringify(imquery.value);
     entityUpdate(result);
   }
 }
@@ -89,7 +88,7 @@ function getClauses(value: Query) {
 }
 
 function buildIMQuery(clauses: SetQueryObject[]): any {
-  const imquery = {
+  const newQuery = {
     where: {
       from: [] as any[]
     }
@@ -97,32 +96,32 @@ function buildIMQuery(clauses: SetQueryObject[]): any {
 
   for (const clause of clauses) {
     if (clause.include) {
-      if (!isObjectHasKeys(imquery.where, ["from"])) {
-        imquery.where.from = [] as any;
+      if (!isObjectHasKeys(newQuery.where, ["from"])) {
+        newQuery.where.from = [] as any;
       }
-      imquery.where.from.push(clause.concept);
+      newQuery.where.from.push(clause.concept);
     } else if (!clause.include) {
-      if (!isObjectHasKeys(imquery.where, ["notExists"])) {
-        imquery.where.notExist = {
+      if (!isObjectHasKeys(newQuery.where, ["notExists"])) {
+        newQuery.where.notExist = {
           from: [] as any[]
         };
       }
-      imquery.where.notExist.from.push(clause.concept);
+      newQuery.where.notExist.from.push(clause.concept);
     }
 
     if (isArrayHasLength(clause.refinements)) {
-      imquery.where.path = "http://endhealth.info/im#roleGroup";
-      imquery.where.and = [] as any[];
+      newQuery.where.path = "http://endhealth.info/im#roleGroup";
+      newQuery.where.and = [] as any[];
     }
 
     for (const refinement of clause.refinements) {
-      imquery.where.and.push(refinement);
+      newQuery.where.and.push(refinement);
     }
   }
-  return { query: imquery };
+  return newQuery;
 }
 
-function addConcept() {
+function addClause() {
   const newObject = {
     include: true,
     concept: { ...defaultTTAlias },
