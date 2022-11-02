@@ -146,10 +146,10 @@ export function setupEntity() {
 
   async function fetchEntity(): Promise<void> {
     if (editorIri) {
-      // if (isObjectHasKeys(editorSavedEntity, [IM.ID]) && editorSavedEntity[IM.ID] === editorIri) {
-      //   editorEntity.value = editorSavedEntity;
-      //   return;
-      // }
+      if (isObjectHasKeys(editorSavedEntity, ["@id"]) && editorSavedEntity[IM.ID] === editorIri) {
+        editorEntity.value = editorSavedEntity;
+        return;
+      }
       const fullEntity = await entityService.getFullEntity(editorIri);
       if (isObjectHasKeys(fullEntity)) {
         const processedEntity = processEntity(fullEntity);

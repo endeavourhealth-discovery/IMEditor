@@ -75,7 +75,7 @@ const {
   EntityValidator: { hasValidIri, hasValidName, hasValidParents, hasValidStatus, hasValidTypes },
   Converters: { iriToUrl }
 } = Helpers;
-const { Env, EntityService } = Services;
+const { DirectService, Env, EntityService } = Services;
 const { EditorMode } = Enums;
 
 const router = useRouter();
@@ -128,6 +128,7 @@ watch(
 );
 
 const entityService = new EntityService(axios);
+const directService = new DirectService(store);
 
 function findPrimaryType(types: TTIriRef[]): TTIriRef {
   if (types.length === 1) return types[0];
@@ -224,6 +225,7 @@ function updateEntity(data: any) {
       }
     }
   }
+  store.commit("updateEditorSavedEntity", editorEntity.value);
 }
 
 function deleteEntityKey(data: string) {
@@ -254,8 +256,10 @@ async function submit(): Promise<void> {
       allowOutsideClick: () => !Swal.isLoading(),
       preConfirm: async () => {
         const res = await entityService.updateEntity(editorEntity.value);
-        if (res) return res;
-        else Swal.showValidationMessage("Error saving entity to server.");
+        if (res) {
+          store.commit("updateEditorSavedEntity", undefined);
+          return res;
+        } else Swal.showValidationMessage("Error saving entity to server.");
       }
     }).then(async (result: any) => {
       if (result.isConfirmed) {
@@ -270,7 +274,7 @@ async function submit(): Promise<void> {
           cancelButtonColor: "#607D8B"
         }).then(async (result: any) => {
           if (result.isConfirmed) {
-            window.location.href = Env.VIEWER_URL + "concept?selectedIri=" + iriToUrl(editorEntity.value["@id"]);
+            directService.directTo(Env.VIEWER_URL, "concept?selectedIri=" + iriToUrl(editorEntity.value["@id"]));
           } else {
             await fetchEntity();
           }
