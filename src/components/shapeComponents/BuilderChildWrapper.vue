@@ -1,14 +1,35 @@
 <template>
-  <div class="builder-child-container" :id="id">
-    <component :is="processComponentType(shape.componentType)" :shape="shape" :mode="mode" @updateClicked="updateClicked" :value="value" :position="position" />
-    <AddDeleteButtons
-      :show="{ minus: showButtons.minus, plus: showButtons.plus }"
-      :position="position"
-      :options="nextComponentOptions"
-      @deleteClicked="deleteClicked"
-      @addNextClicked="addNextClicked"
-    />
-    <UpDownButtons :show="{ up: showButtons.up, down: showButtons.down }" :position="position" @moveUpClicked="upClicked" @moveDownClicked="downClicked" />
+  <div class="builder-child">
+    <div class="builder-child-wrapper">
+      <AddDeleteButtons
+        :show="{ minus: showButtons.minus, plus: false }"
+        :position="position"
+        :options="nextComponentOptions"
+        @deleteClicked="deleteClicked"
+        @addNextClicked="addNextClicked"
+      />
+
+      <div class="builder-child-container" :id="id">
+        <component
+          :is="processComponentType(shape.componentType)"
+          :shape="shape"
+          :mode="mode"
+          @updateClicked="updateClicked"
+          :value="value"
+          :position="position"
+        />
+        <UpDownButtons :show="{ up: showButtons.up, down: showButtons.down }" :position="position" @moveUpClicked="upClicked" @moveDownClicked="downClicked" />
+      </div>
+    </div>
+    <div class="indented-add-button">
+      <AddDeleteButtons
+        :show="{ minus: false, plus: showButtons.plus }"
+        :position="position"
+        :options="nextComponentOptions"
+        @deleteClicked="deleteClicked"
+        @addNextClicked="addNextClicked"
+      />
+    </div>
   </div>
 </template>
 
@@ -111,16 +132,13 @@ function addNextClicked(item: any): void {
   flex: 0 1 auto;
   display: flex;
   flex-flow: row nowrap;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 1rem;
+  align-items: baseline;
   width: 100%;
 }
 
 .label-container {
   flex: 1 1 auto;
   padding: 1rem;
-  border: 1px solid #ffc952;
   border-radius: 3px;
   position: relative;
   min-width: 15rem;
@@ -147,5 +165,23 @@ function addNextClicked(item: any): void {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.builder-child-wrapper {
+  /* flex: 1 1 auto; */
+  /* display: flex; */
+  /* flex-flow: row nowrap; */
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  overflow: auto;
+}
+
+.builder-child {
+  align-self: center;
+}
+
+.indented-add-button {
+  align-self: flex-start;
 }
 </style>

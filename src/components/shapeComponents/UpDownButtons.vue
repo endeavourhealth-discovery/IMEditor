@@ -32,7 +32,7 @@ function moveDownClicked() {
 <style scoped>
 .buttons-container {
   display: flex;
-  flex-flow: column nowrap;
+  flex-flow: row nowrap;
   justify-content: center;
   gap: 0.5rem;
 }

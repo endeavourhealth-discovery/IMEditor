@@ -1,18 +1,17 @@
 <template>
   <div class="array-builder-container">
-    <h3>{{ shape.name }}:</h3>
     <div v-if="loading" class="loading-container">
       <ProgressSpinner />
     </div>
     <div v-else class="children-container" :class="invalid && 'invalid'">
       <small v-if="invalid" class="validate-error">{{ validationErrorMessage }}</small>
-      <template v-for="item of build" :key="item.id">
+      <template v-for="(item, index) in build" :key="item.id">
         <component
           :is="item.type"
           :value="item.value"
           :id="item.id"
           :position="item.position"
-          :showButtons="item.showButtons"
+          :showButtons="index === build.length - 1 ? item.showButtons : { minus: true, plus: false, up: true, down: true }"
           :shape="item.shape"
           :mode="mode"
           :nextComponentOptions="getNextComponentOptions()"
@@ -299,7 +298,6 @@ function moveItemDown(item: ComponentDetails) {
 }
 .children-container {
   padding: 1rem;
-  border: 1px solid #dee2e6;
   border-radius: 3px;
   flex: 1 1 auto;
   display: flex;
@@ -307,9 +305,6 @@ function moveItemDown(item: ComponentDetails) {
   justify-content: flex-start;
   gap: 1rem;
   overflow: auto;
-}
-.invalid {
-  border-color: #e24c4c;
 }
 
 .validate-error {

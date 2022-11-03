@@ -87,8 +87,7 @@ function setProperties(shape: PropertyGroup) {
 .label-container {
   flex: 0 1 auto;
   padding: 1rem;
-  border: 1px solid #ffc952;
-  border-radius: 3px;
+    border-radius: 3px;
   position: relative;
   min-width: 15rem;
   display: flex;

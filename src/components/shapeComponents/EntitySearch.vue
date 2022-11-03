@@ -1,7 +1,6 @@
 <template>
   <div class="entity-search-item-container">
     <div class="label-container">
-      <span class="float-text">{{ label }}</span>
       <InputText
         ref="miniSearchInput"
         type="text"
@@ -256,7 +255,6 @@ function dropReceived(event: any) {
 .label-container {
   flex: 0 1 auto;
   padding: 1rem;
-  border: 1px solid #ffc952;
   border-radius: 3px;
   position: relative;
   min-width: 15rem;
