@@ -1,10 +1,16 @@
 <template>
   <AutoComplete :multiple="true" v-model="selectedEntity" :suggestions="suggestions" @complete="searchEntity($event)" @item-select="handleChange">
-    <template #item="slotProps"> {{ slotProps.item.name }} - {{ slotProps.item["@id"] }} </template>
+    <template #item="slotProps">
+      <div class="autocomplete-suggestion">
+        {{ slotProps.item.name }} - {{ slotProps.item["@id"] }}
+        <Button icon="fa-solid fa-sitemap" class="find-in-tree-button p-button-sm p-button-text" v-tooltip="'Find in tree'" @click="findInTree(slotProps.item['@id'])" />
+      </div>
+    </template>
     <template #chip="slotProps">
       <div v-tooltip.right="slotProps.value['@id']">{{ slotProps.value.name }}</div>
     </template>
   </AutoComplete>
+  <Button icon="fa-solid fa-sitemap" v-tooltip="'Find in tree'" @click="findInTree" />
 </template>
 
 <script setup lang="ts">
@@ -13,9 +19,11 @@ import { onMounted, PropType, Ref, ref, watch } from "vue";
 import { Services, Enums, Helpers, Config } from "im-library";
 import axios from "axios";
 import _ from "lodash";
+import { useStore } from "vuex";
 const { EntityService } = Services;
 const { isObject, isObjectHasKeys, isArrayHasLength } = Helpers.DataTypeCheckers;
 
+const store = useStore();
 const props = defineProps({
   ttAlias: { type: Object as PropType<TTAlias>, required: true },
   parentClauseIri: { type: String, required: false },
@@ -35,6 +43,14 @@ function handleChange(event: any) {
   selectedEntity.value = [event.value];
   props.ttAlias["@id"] = event.value["@id"];
   props.ttAlias.name = event.value.name;
+}
+
+function findInTree(iri: string) {
+  if (iri) {
+    store.commit("updateFindInTreeIri", iri);
+  } else if (isArrayHasLength(selectedEntity.value)) {
+    store.commit("updateFindInTreeIri", selectedEntity.value[0]["@id"]);
+  }
 }
 
 async function searchEntity(searchTerm: any): Promise<void> {
@@ -67,4 +83,16 @@ async function searchEntity(searchTerm: any): Promise<void> {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.autocomplete-suggestion {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: baseline;
+}
+
+.find-in-tree-button {
+  z-index: 999;
+
+}
+
+</style>

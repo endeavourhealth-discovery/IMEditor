@@ -93,7 +93,7 @@ const router = useRouter();
 const toast = useToast();
 const entityService = new EntityService(axios);
 
-const treeIri: ComputedRef<string> = computed(() => store.state.treeIri);
+const treeIri: ComputedRef<string> = computed(() => store.state.findInTreeIri);
 
 let selected: Ref<any> = ref({});
 let selectedNode: Ref<any> = ref({});
