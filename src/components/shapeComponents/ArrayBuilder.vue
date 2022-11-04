@@ -11,7 +11,11 @@
           :value="item.value"
           :id="item.id"
           :position="item.position"
-          :showButtons="index === build.length - 1 ? item.showButtons : { minus: true, plus: false, up: true, down: true }"
+          :showButtons="
+            index !== build.length - 1
+              ? { minus: item.showButtons?.minus, plus: false, up: item.showButtons?.up, down: item.showButtons?.down }
+              : item.showButtons
+          "
           :shape="item.shape"
           :mode="mode"
           :nextComponentOptions="getNextComponentOptions()"

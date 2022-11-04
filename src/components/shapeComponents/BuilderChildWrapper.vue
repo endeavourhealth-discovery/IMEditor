@@ -31,6 +31,7 @@
       />
     </div>
   </div>
+
 </template>
 
 <script lang="ts">
@@ -168,9 +169,6 @@ function addNextClicked(item: any): void {
 }
 
 .builder-child-wrapper {
-  /* flex: 1 1 auto; */
-  /* display: flex; */
-  /* flex-flow: row nowrap; */
   display: flex;
   flex-flow: row nowrap;
   justify-content: flex-start;
@@ -179,9 +177,5 @@ function addNextClicked(item: any): void {
 
 .builder-child {
   align-self: center;
-}
-
-.indented-add-button {
-  align-self: flex-start;
 }
 </style>

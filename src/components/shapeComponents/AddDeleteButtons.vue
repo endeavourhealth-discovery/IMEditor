@@ -70,10 +70,7 @@ function setMenuOptions() {
 
 <style scoped>
 .switch-button-container {
-  /* order: 2; */
   display: flex;
-  flex-flow: column nowrap;
-  justify-content: center;
   align-items: center;
 }
 
