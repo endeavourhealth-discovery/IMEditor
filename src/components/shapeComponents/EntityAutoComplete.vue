@@ -128,7 +128,6 @@ const queryService = new QueryService(axios);
 const entityService = new EntityService(axios);
 
 const miniSearchOP = ref();
-const treeOP = ref();
 const optionsOP = ref();
 
 onMounted(async () => {
@@ -292,14 +291,6 @@ async function updateValidity(value: ConceptSummary) {
 
 function defaultValidity() {
   return true;
-}
-
-function showTreeDialog(event: any): void {
-  treeOP.value.show(event, event.target);
-}
-
-function hideTreeOverlay(): void {
-  treeOP.value.hide();
 }
 
 function showOptionsOverlay(event: any, data?: any) {

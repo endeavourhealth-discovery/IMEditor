@@ -41,7 +41,6 @@ export default defineComponent({
 <script setup lang="ts">
 import { ref, Ref, watch, computed, onMounted, inject, PropType, defineComponent } from "vue";
 import { Enums, Helpers, Services, Vocabulary } from "im-library";
-import store from "@/store";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";
 import { ComponentDetails, EntityReferenceNode, Namespace, PropertyGroup, PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
