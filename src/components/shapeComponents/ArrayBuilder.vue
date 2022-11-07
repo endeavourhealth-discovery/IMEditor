@@ -11,11 +11,7 @@
           :value="item.value"
           :id="item.id"
           :position="item.position"
-          :showButtons="
-            index !== build.length - 1
-              ? { minus: item.showButtons?.minus, plus: false, up: item.showButtons?.up, down: item.showButtons?.down }
-              : item.showButtons
-          "
+          :showButtons="item.showButtons"
           :shape="item.shape"
           :mode="mode"
           :nextComponentOptions="getNextComponentOptions()"
@@ -42,7 +38,6 @@ export default defineComponent({
 <script setup lang="ts">
 import { ref, Ref, watch, computed, onMounted, inject, PropType, defineComponent } from "vue";
 import { Enums, Helpers, Services, Vocabulary } from "im-library";
-import store from "@/store";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";
 import { ComponentDetails, EntityReferenceNode, Namespace, PropertyGroup, PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
@@ -55,7 +50,7 @@ const {
 } = Helpers;
 const { QueryService } = Services;
 const { BuilderType, ComponentType } = Enums;
-const { IM } = Vocabulary;
+const { IM, RDF, RDFS } = Vocabulary;
 
 const props = defineProps({
   shape: { type: Object as PropType<PropertyGroup>, required: true },
@@ -155,7 +150,7 @@ function createDefaultBuild() {
             property.order - 1,
             undefined,
             property,
-            { minus: true, plus: true, up: true, down: true },
+            setButtonsByTypeAndPath(property.order - 1, true),
             props.mode
           )
         );
@@ -168,7 +163,7 @@ function createDefaultBuild() {
             subGroup.order - 1,
             undefined,
             subGroup,
-            { minus: true, plus: true, up: true, down: true },
+            setButtonsByTypeAndPath(subGroup.order - 1, true),
             props.mode
           )
         );
@@ -182,14 +177,33 @@ function processChild(child: any, position: number) {
     position,
     child,
     isObjectHasKeys(props.shape, ["property"]) ? props.shape.property[0] : props.shape.subGroup[0],
-    {
-      minus: true,
-      plus: true,
-      up: true,
-      down: true
-    },
+    setButtonsByTypeAndPath(position, true),
     props.mode
   );
+}
+
+function setButtonsByTypeAndPath(position: number, isNewItem: boolean): { minus: boolean; plus: boolean; up: boolean; down: boolean } {
+  const path = props.shape.path["@id"];
+  const types: TTIriRef[] = editorEntity?.value[RDF.TYPE];
+  if (path === RDFS.SUBCLASS_OF) {
+    return addButtonOnlyIfLast(position, isNewItem);
+  } else if (path === IM.IS_CONTAINED_IN) {
+    return addButtonOnlyIfLast(position, isNewItem);
+  } else if (path === IM.ROLE_GROUP) {
+    return addButtonOnlyIfLast(position, isNewItem);
+  } else {
+    return { minus: true, plus: true, up: true, down: true };
+  }
+}
+
+function addButtonOnlyIfLast(position: number, isNewItem: boolean) {
+  if (isNewItem && position !== build.value.length) return { minus: true, plus: false, up: false, down: false };
+  else if (!isNewItem && position !== build.value.length - 1) return { minus: true, plus: false, up: false, down: false };
+  else return { minus: true, plus: true, up: false, down: false };
+}
+
+function updateButtons() {
+  build.value.forEach(child => (child.showButtons = setButtonsByTypeAndPath(child.position, false)));
 }
 
 function generateBuildAsJson() {
@@ -235,7 +249,8 @@ function addItemWrapper(data: { selectedType: Enums.ComponentType; position: num
   if (data.selectedType !== ComponentType.BUILDER_CHILD_WRAPPER) {
     data.selectedType = ComponentType.BUILDER_CHILD_WRAPPER;
   }
-  if (shape) addItem(data, build.value, { minus: true, plus: true, up: true, down: true }, shape, props.mode);
+  if (shape) addItem(data, build.value, setButtonsByTypeAndPath(data.position, true), shape, props.mode);
+  updateButtons();
 }
 
 function deleteItem(data: ComponentDetails): void {
@@ -247,6 +262,7 @@ function deleteItem(data: ComponentDetails): void {
     return;
   }
   updatePositions(build.value);
+  updateButtons();
 }
 
 function updateItemWrapper(data: ComponentDetails) {
