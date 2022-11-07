@@ -3,14 +3,24 @@
     <template #item="slotProps">
       <div class="autocomplete-suggestion">
         {{ slotProps.item.name }} - {{ slotProps.item["@id"] }}
-        <Button icon="fa-solid fa-sitemap" class="find-in-tree-button p-button-sm p-button-text" v-tooltip="'Find in tree'" @click="findInTree(slotProps.item['@id'])" />
+        <Button
+          icon="fa-solid fa-sitemap"
+          class="find-in-tree-button p-button-sm p-button-text"
+          v-tooltip="'Find in tree'"
+          @click="findInTree(slotProps.item['@id'])"
+        />
       </div>
     </template>
     <template #chip="slotProps">
       <div v-tooltip.right="slotProps.value['@id']">{{ slotProps.value.name }}</div>
     </template>
   </AutoComplete>
-  <Button icon="fa-solid fa-sitemap" v-tooltip="'Find in tree'" @click="findInTree" />
+  <Button
+    :disabled="!isArrayHasLength(selectedEntity) || !selectedEntity?.[0]?.['@id']"
+    icon="fa-solid fa-sitemap"
+    v-tooltip="'Find in tree'"
+    @click="findInTree(selectedEntity?.[0]?.['@id'])"
+  />
 </template>
 
 <script setup lang="ts">
@@ -46,11 +56,7 @@ function handleChange(event: any) {
 }
 
 function findInTree(iri: string) {
-  if (iri) {
-    store.commit("updateFindInTreeIri", iri);
-  } else if (isArrayHasLength(selectedEntity.value)) {
-    store.commit("updateFindInTreeIri", selectedEntity.value[0]["@id"]);
-  }
+  if (iri) store.commit("updateFindInTreeIri", iri);
 }
 
 async function searchEntity(searchTerm: any): Promise<void> {
@@ -92,7 +98,5 @@ async function searchEntity(searchTerm: any): Promise<void> {
 
 .find-in-tree-button {
   z-index: 999;
-
 }
-
 </style>

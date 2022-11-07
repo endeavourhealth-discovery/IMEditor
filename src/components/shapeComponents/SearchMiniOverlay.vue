@@ -29,6 +29,11 @@
           </div>
         </template>
       </Column>
+      <Column>
+        <template #body="slotProps">
+          <Button :disabled="!slotProps.data.iri" icon="fa-solid fa-sitemap" @click="findInTree(slotProps.data.iri)" />
+        </template>
+      </Column>
     </DataTable>
 
     <OverlayPanel ref="detailsOP" id="overlay-panel" style="width: 25vw" :dismissable="true">
@@ -80,6 +85,7 @@
 
 <script setup lang="ts">
 import { defineComponent, PropType, ref, watch } from "vue";
+import store from "@/store";
 import { Helpers, Models } from "im-library";
 import { ConceptSummary, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 const {
@@ -139,6 +145,10 @@ function getConceptTypes(concept: ConceptSummary): any {
       return type.name;
     })
     .join(", ");
+}
+
+function findInTree(iri: string) {
+  if (iri) store.commit("updateFindInTreeIri", iri);
 }
 </script>
 

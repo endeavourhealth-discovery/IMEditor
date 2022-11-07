@@ -17,14 +17,11 @@
         @dragover.prevent
         @drop="dropReceived"
       />
-      <Button :disabled="!selectedResult['@id']" icon="fa-solid fa-sitemap" @click="showTreeDialog($event)" />
+      <Button :disabled="!selectedResult['@id']" icon="fa-solid fa-sitemap" @click="findInTree(selectedResult['@id'])" />
     </div>
   </div>
   <OverlayPanel class="search-op" ref="miniSearchOP" :showCloseIcon="true" :dismissable="true">
     <SearchMiniOverlay :searchTerm="searchTerm" :searchResults="searchResults" :loading="loading" @searchResultSelected="updateSelectedResult" />
-  </OverlayPanel>
-  <OverlayPanel class="tree-op" ref="treeOP" :showCloseIcon="true" :dismissable="true">
-    <EntityMiniTree :selectedEntity="selectedResult" @treeNodeSelected="updateSelectedResult" />
   </OverlayPanel>
 </template>
 
@@ -222,6 +219,10 @@ async function updateValidity() {
 
 function defaultValidity() {
   return isTTIriRef(selectedResult.value);
+}
+
+function findInTree(iri: string) {
+  if (iri) store.commit("updateFindInTreeIri", iri);
 }
 
 function showTreeDialog(event: any): void {
