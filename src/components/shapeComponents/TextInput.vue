@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { ref, Ref, watch, computed, onMounted, inject, PropType } from "vue";
-import store from "@/store";
+import { useStore } from "vuex";
 import axios from "axios";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";

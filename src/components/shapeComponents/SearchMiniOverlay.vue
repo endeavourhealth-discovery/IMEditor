@@ -85,12 +85,14 @@
 
 <script setup lang="ts">
 import { defineComponent, PropType, ref, watch } from "vue";
-import store from "@/store";
+import { useStore } from "vuex";
 import { Helpers, Models } from "im-library";
 import { ConceptSummary, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 const {
   ConceptTypeMethods: { getFAIconFromType, getColourFromType }
 } = Helpers;
+
+const store = useStore();
 
 const props = defineProps({
   searchTerm: { type: String, required: false },
