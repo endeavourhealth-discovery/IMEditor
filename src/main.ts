@@ -80,7 +80,7 @@ import Steps from "primevue/steps";
 import Chip from "primevue/chip";
 import Chips from "primevue/chips";
 import InputNumber from "primevue/inputnumber";
-import ToggleButton from "primevue/togglebutton";
+import ToggleButton from 'primevue/togglebutton';
 
 import { Amplify, Auth } from "aws-amplify";
 import awsconfig from "./aws-exports";

@@ -1,16 +1,13 @@
 <template>
   <div class="property-builder">
-    <div class="title-container"><span class="title">Property builder</span></div>
-    <div class="content=container">
-      <div>Order: {{ order }}</div>
+    <div class="content-container">
       <EntityAutoComplete :value="propertyPath" :shape="propertyPathShape" :mode="mode" @updateClicked="updatePath" :disabled="!!inheritedFrom" />
+      <i class="icon pi pi-arrow-right" />
       <EntityAutoComplete :value="propertyRange" :shape="propertyRangeShape" :mode="mode" @updateClicked="updateRange" />
       <Tag v-if="inheritedFrom" value="Inherited" />
-      <label for="required">Required</label>
-      <Checkbox name="required" value="Required" v-model="required" :binary="true" />
-      <label for="unique">Unique</label>
-      <Checkbox name="unique" value="Unique" v-model="unique" :binary="true" />
-    </div>
+      <ToggleButton v-model="required" onLabel="Required" offLabel="Not required" onIcon="pi pi-check" offIcon="pi pi-times" />
+      <ToggleButton v-model="unique" onLabel="Unique" offLabel="Not unique" onIcon="pi pi-check" offIcon="pi pi-times" />
+          </div>
   </div>
 </template>
 
@@ -237,4 +234,15 @@ function defaultValidity() {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.content-container {
+  display: flex;
+  flex-flow: row wrap;
+  /* border: solid 1px; */
+  align-items: baseline;
+}
+
+.p-togglebutton {
+  margin-right: 1rem;
+}
+</style>

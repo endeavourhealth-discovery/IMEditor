@@ -1,7 +1,6 @@
 <template>
   <div class="entity-search-item-container">
     <div class="label-container">
-      <span class="float-text">{{ label }}</span>
       <InputText
         ref="miniSearchInput"
         type="text"
@@ -18,14 +17,11 @@
         @dragover.prevent
         @drop="dropReceived"
       />
-      <Button :disabled="!selectedResult['@id']" icon="fa-solid fa-sitemap" @click="showTreeDialog($event)" />
+      <Button :disabled="!selectedResult['@id']" icon="fa-solid fa-sitemap" @click="findInTree(selectedResult['@id'])" />
     </div>
   </div>
   <OverlayPanel class="search-op" ref="miniSearchOP" :showCloseIcon="true" :dismissable="true">
     <SearchMiniOverlay :searchTerm="searchTerm" :searchResults="searchResults" :loading="loading" @searchResultSelected="updateSelectedResult" />
-  </OverlayPanel>
-  <OverlayPanel class="tree-op" ref="treeOP" :showCloseIcon="true" :dismissable="true">
-    <EntityMiniTree :selectedEntity="selectedResult" @treeNodeSelected="updateSelectedResult" />
   </OverlayPanel>
 </template>
 
@@ -47,7 +43,7 @@ import {
   Query
 } from "im-library/dist/types/interfaces/Interfaces";
 import { Helpers, Models, Enums, Services, Vocabulary } from "im-library";
-import store from "@/store";
+import { useStore } from "vuex";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject },
@@ -58,6 +54,8 @@ const {
 const { ComponentType, BuilderType, SortBy } = Enums;
 const { EntityService, QueryService } = Services;
 const { IM, RDF, RDFS } = Vocabulary;
+
+const store = useStore();
 
 const props = defineProps({
   value: { type: Object as PropType<TTIriRef>, required: false },
@@ -100,7 +98,6 @@ let invalid = ref(false);
 let debounce = ref(0);
 
 const miniSearchOP = ref();
-const treeOP = ref();
 
 async function init() {
   if (isObjectHasKeys(props.shape, ["path"])) key.value = props.shape.path["@id"];
@@ -225,12 +222,8 @@ function defaultValidity() {
   return isTTIriRef(selectedResult.value);
 }
 
-function showTreeDialog(event: any): void {
-  treeOP.value.show(event);
-}
-
-function hideTreeOverlay(): void {
-  treeOP.value.hide();
+function findInTree(iri: string) {
+  if (iri) store.commit("updateFindInTreeIri", iri);
 }
 
 function dropReceived(event: any) {
@@ -257,7 +250,6 @@ function dropReceived(event: any) {
 .label-container {
   flex: 0 1 auto;
   padding: 1rem;
-  border: 1px solid #ffc952;
   border-radius: 3px;
   position: relative;
   min-width: 15rem;

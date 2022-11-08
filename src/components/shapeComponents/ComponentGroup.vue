@@ -1,7 +1,6 @@
 <template>
   <div class="component-group-container">
     <div class="label-container">
-      <span class="float-text">{{ shape.name }}</span>
       <div v-for="(property, index) in properties" class="components-container">
         <component :is="processComponentType(property.componentType)" :shape="property" :value="processEntityValue(property)" :mode="mode" />
       </div>
@@ -81,18 +80,18 @@ function setProperties(shape: PropertyGroup) {
 
 .components-container {
   display: flex;
-  flex-flow: row;
+  flex-flow: column;
+  align-items: baseline;
 }
 
 .label-container {
   flex: 0 1 auto;
   padding: 1rem;
-  border: 1px solid #ffc952;
   border-radius: 3px;
   position: relative;
   min-width: 15rem;
   display: flex;
-  flex-flow: column nowrap;
+  flex-flow: row nowrap;
   justify-content: flex-start;
   align-items: flex-start;
   overflow: auto;

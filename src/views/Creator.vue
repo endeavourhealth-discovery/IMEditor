@@ -327,7 +327,7 @@ async function submit(): Promise<void> {
       if (result.isConfirmed) {
         Swal.fire({
           title: "Success",
-          text: "Entity" + editorEntity.value["@id"] + " has been created.",
+          text: "Entity: " + editorEntity.value["http://endhealth.info/im#id"] + " has been created.",
           icon: "success",
           showCancelButton: true,
           reverseButtons: true,
@@ -336,9 +336,9 @@ async function submit(): Promise<void> {
           cancelButtonColor: "#607D8B"
         }).then((result: any) => {
           if (result.isConfirmed) {
-            window.location.href = Env.VIEWER_URL + "concept?selectedIri=" + iriToUrl(editorEntity.value["@id"]);
+            window.location.href = Env.VIEWER_URL + "concept?selectedIri=" + iriToUrl(editorEntity.value["http://endhealth.info/im#id"]);
           } else {
-            router.push({ name: "Editor", params: { selectedIri: editorEntity.value["@id"] } });
+            router.push({ name: "Editor", params: { selectedIri: editorEntity.value["http://endhealth.info/im#id"] } });
           }
         });
       }
@@ -360,7 +360,7 @@ function testQuery() {
 }
 
 function isValidEntity(entity: any): boolean {
-  return isObjectHasKeys(entity) && entity["@id"] && creatorValidity.value.every(validity => validity.valid);
+  return isObjectHasKeys(entity) && entity["http://endhealth.info/im#id"] && creatorValidity.value.every(validity => validity.valid);
 }
 
 function refreshCreator() {
