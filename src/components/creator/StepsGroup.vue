@@ -15,9 +15,20 @@ import HtmlInput from "@/components/shapeComponents/HtmlInput.vue";
 import TextInput from "@/components/shapeComponents/TextInput.vue";
 import TextDisplay from "@/components/shapeComponents/TextDisplay.vue";
 import SetDefinitionBuilder from "@/components/shapeComponents/SetDefinitionBuilder.vue";
+import ToggleableComponent from "../shapeComponents/ToggleableComponent.vue";
 
 export default defineComponent({
-  components: { EntityComboBox, ArrayBuilder, ArrayBuilderWithDropdown, SetDefinitionBuilder, EntityDropdown, HtmlInput, TextDisplay, TextInput }
+  components: {
+    EntityComboBox,
+    ArrayBuilder,
+    ArrayBuilderWithDropdown,
+    SetDefinitionBuilder,
+    EntityDropdown,
+    HtmlInput,
+    TextDisplay,
+    TextInput,
+    ToggleableComponent
+  }
 });
 </script>
 
@@ -91,7 +102,7 @@ function setProperties(shape: PropertyGroup) {
   flex-flow: row;
   justify-content: center;
   align-content: flex-start;
-  overflow: auto;
-  padding: 2rem 0 0 0;
+  /* overflow: auto; */
+  /* padding: 2rem 0 0 0; */
 }
 </style>

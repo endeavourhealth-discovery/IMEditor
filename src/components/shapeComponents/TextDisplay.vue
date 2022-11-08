@@ -166,6 +166,7 @@ function defaultValidation() {
   flex-flow: row nowrap;
   width: 25rem;
   align-items: center;
+  padding: 2rem 0 0 0;
 }
 .p-float-label {
   flex: 1 1 auto;

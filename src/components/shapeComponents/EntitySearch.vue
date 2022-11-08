@@ -244,6 +244,7 @@ function dropReceived(event: any) {
   justify-content: flex-start;
   align-items: center;
   gap: 1rem;
+  max-width: 100%;
 }
 
 .label-container {

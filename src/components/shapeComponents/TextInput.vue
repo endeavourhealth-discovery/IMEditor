@@ -81,6 +81,9 @@ function defaultValidation(string: string) {
 </script>
 
 <style scoped>
+.string-single-select-container {
+  padding: 2rem 0 0 0;
+}
 .input-text {
   width: 25rem;
   text-overflow: ellipsis;
