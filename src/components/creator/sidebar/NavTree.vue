@@ -237,7 +237,6 @@ function selectKey(selectedKey: string) {
 async function findPathToNode(iri: string) {
   loading.value = true;
   const path = await entityService.getPathBetweenNodes(iri, IM.MODULE_IM);
-
   // Recursively expand
   let n = root.value.find(c => path.find(p => p["@id"] === c.data));
   let i = 0;
@@ -246,7 +245,7 @@ async function findPathToNode(iri: string) {
     while (n && n.data != path[0]["@id"] && i++ < 50) {
       await selectAndExpand(n);
       // Find relevant child
-      n = n.children.find(c => path.find(p => p["@id"] === c.data));
+      n = await locateChildInLoadMore(n, path);
     }
     if (n && n.data === path[0]["@id"]) {
       await selectAndExpand(n);
@@ -270,6 +269,20 @@ async function findPathToNode(iri: string) {
   }
   scrollToHighlighted();
   loading.value = false;
+}
+
+async function locateChildInLoadMore(n: TreeNode, path: TTIriRef[]): Promise<TreeNode | undefined> {
+  if (n.children.find(c => c.data === "loadMore")) {
+    const found = n.children.find(c => path.find(p => p["@id"] === c.data));
+    if (found) {
+      return n.children.find(c => path.find(p => p["@id"] === c.data));
+    } else {
+      await loadMoreChildren(n);
+      return await locateChildInLoadMore(n, path);
+    }
+  } else {
+    return n.children.find(c => path.find(p => p["@id"] === c.data));
+  }
 }
 
 async function selectAndExpand(node: any) {
