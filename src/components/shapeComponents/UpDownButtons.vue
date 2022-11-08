@@ -1,7 +1,7 @@
 <template>
   <div class="buttons-container">
-    <Button v-if="show.up" icon="fa-solid fa-chevron-up" class="p-button-rounded p-button-outlined" @click="moveUpClicked" />
-    <Button v-if="show.down" icon="fa-solid fa-chevron-down" class="p-button-rounded p-button-outlined" @click="moveDownClicked" />
+    <Button v-if="show.up" icon="pi pi-chevron-up" class="p-button-rounded p-button-text" @click="moveUpClicked" />
+    <Button v-if="show.down" icon="pi pi-chevron-down" class="p-button-rounded p-button-text" @click="moveDownClicked" />
   </div>
 </template>
 
@@ -32,7 +32,7 @@ function moveDownClicked() {
 <style scoped>
 .buttons-container {
   display: flex;
-  flex-flow: column nowrap;
+  flex-flow: row nowrap;
   justify-content: center;
   gap: 0.5rem;
 }

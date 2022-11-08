@@ -46,7 +46,8 @@ export default createStore({
     },
     quickFiltersStatus: new Map<string, boolean>(),
     refreshTree: false as boolean,
-    blockedIris: [] as string[]
+    blockedIris: [] as string[],
+    findInTreeIri: "",
   },
   mutations: {
     updateRecentLocalActivity(state, recentActivityItem: RecentActivityItem) {
@@ -135,6 +136,9 @@ export default createStore({
     },
     updateBlockedIris(state, data) {
       state.blockedIris = data;
+    },
+    updateFindInTreeIri(state, findInTreeIri) {
+      state.findInTreeIri = findInTreeIri;
     }
   },
   actions: {

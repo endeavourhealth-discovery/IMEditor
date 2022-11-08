@@ -1,7 +1,6 @@
 <template>
   <div class="autocomplete-container">
     <div class="label-container">
-      <span class="float-text">{{ shape.name }}</span>
       <div v-if="loading" class="loading-container">
         <ProgressSpinner style="width: 1.5rem; height: 1.5rem" strokeWidth="6" />
       </div>
@@ -129,7 +128,6 @@ const queryService = new QueryService(axios);
 const entityService = new EntityService(axios);
 
 const miniSearchOP = ref();
-const treeOP = ref();
 const optionsOP = ref();
 
 onMounted(async () => {
@@ -295,14 +293,6 @@ function defaultValidity() {
   return true;
 }
 
-function showTreeDialog(event: any): void {
-  treeOP.value.show(event, event.target);
-}
-
-function hideTreeOverlay(): void {
-  treeOP.value.hide();
-}
-
 function showOptionsOverlay(event: any, data?: any) {
   if (data) {
     optionsOverlayLocation.value = event;
@@ -338,7 +328,6 @@ function hideOptionsOverlay(event: any): void {
 .label-container {
   flex: 0 1 auto;
   padding: 1rem;
-  border: 1px solid #ffc952;
   border-radius: 3px;
   position: relative;
   min-width: 15rem;

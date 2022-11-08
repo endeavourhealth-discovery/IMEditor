@@ -9,7 +9,6 @@
 
 <script setup lang="ts">
 import { ref, Ref, watch, computed, onMounted, inject, PropType } from "vue";
-import store from "@/store";
 import axios from "axios";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";
@@ -84,6 +83,7 @@ function htmlToText(text: string): string {
 <style scoped>
 .html-input-container {
   width: 25rem;
+  padding: 2rem 0 0 0;
 }
 .input-html {
   width: 100%;

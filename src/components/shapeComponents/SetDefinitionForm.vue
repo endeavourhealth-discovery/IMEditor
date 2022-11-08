@@ -43,7 +43,7 @@
       <Button icon="pi pi-cog" label="Add refinement" class="p-button-warning" @click="addRefinement(clauseIndex)" />
     </ul>
     <div class="rule-button">
-      <Button v-if="clauseIndex === clauses.length - 1" icon="pi pi-plus" label="Add rule" class="p-button-success" @click="addConcept" />
+      <Button v-if="clauseIndex === clauses.length - 1" icon="pi pi-plus" label="Add concept" class="p-button-success" @click="addConcept" />
     </div>
   </div>
 </template>

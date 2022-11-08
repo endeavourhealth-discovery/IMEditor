@@ -106,7 +106,6 @@ function addNextClicked(item: any): void {
 .label-container {
   flex: 1 1 auto;
   padding: 1rem;
-  border: 1px solid #ffc952;
   border-radius: 3px;
   position: relative;
   min-width: 15rem;

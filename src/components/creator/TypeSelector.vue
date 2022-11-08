@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 import { computed, ref, Ref, onMounted, inject } from "vue";
-import store from "@/store";
+import { useStore } from "vuex";
 import { Config, Vocabulary, Services } from "im-library";
 import { EntityReferenceNode, TTIriRef, ConceptSummary } from "im-library/dist/types/interfaces/Interfaces";
 import injectionKeys from "@/injectionKeys/injectionKeys";

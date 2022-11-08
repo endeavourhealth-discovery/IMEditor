@@ -1,8 +1,8 @@
 <template>
   <div class="switch-button-container">
     <div class="buttons-container">
-      <Button v-if="show.minus" icon="fa-solid fa-minus" class="p-button-rounded p-button-outlined p-button-danger" @click="deleteClicked" />
-      <Button v-if="show.plus" icon="fa-solid fa-plus" class="p-button-rounded p-button-outlined p-button-success" @click="addNextClicked" />
+      <Button v-if="show.minus" icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text" @click="deleteClicked" />
+      <Button v-if="show.plus" icon="pi pi-plus" label="Add" class="p-button-success" @click="addNextClicked" />
     </div>
     <Menu ref="optionsMenu" :model="menuOptions" :popup="true" />
   </div>
@@ -70,10 +70,7 @@ function setMenuOptions() {
 
 <style scoped>
 .switch-button-container {
-  order: 2;
   display: flex;
-  flex-flow: column nowrap;
-  justify-content: center;
   align-items: center;
 }
 

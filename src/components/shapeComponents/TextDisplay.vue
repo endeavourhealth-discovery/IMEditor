@@ -12,7 +12,6 @@
 
 <script setup lang="ts">
 import { ref, Ref, watch, computed, onMounted, inject, PropType } from "vue";
-import store from "@/store";
 import axios from "axios";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";
@@ -167,6 +166,7 @@ function defaultValidation() {
   flex-flow: row nowrap;
   width: 25rem;
   align-items: center;
+  padding: 2rem 0 0 0;
 }
 .p-float-label {
   flex: 1 1 auto;

@@ -274,7 +274,7 @@ async function submit(): Promise<void> {
       if (result.isConfirmed) {
         Swal.fire({
           title: "Success",
-          text: "Entity" + editorEntity.value["@id"] + " has been updated.",
+          text: "Entity: " + editorEntity.value["http://endhealth.info/im#id"] + " has been updated.",
           icon: "success",
           showCancelButton: true,
           reverseButtons: true,
@@ -283,7 +283,7 @@ async function submit(): Promise<void> {
           cancelButtonColor: "#607D8B"
         }).then(async (result: any) => {
           if (result.isConfirmed) {
-            directService.directTo(Env.VIEWER_URL, "concept?selectedIri=" + iriToUrl(editorEntity.value["@id"]));
+            directService.directTo(Env.VIEWER_URL, "concept?selectedIri=" + iriToUrl(editorEntity.value["http://endhealth.info/im#id"]));
           } else {
             await fetchEntity();
           }

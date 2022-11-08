@@ -1,12 +1,11 @@
 <template>
   <div class="array-builder-container">
-    <h3>{{ shape.name }}:</h3>
     <div v-if="loading" class="loading-container">
       <ProgressSpinner />
     </div>
     <div v-else class="children-container" :class="invalid && 'invalid'">
       <small v-if="invalid" class="validate-error">{{ validationErrorMessage }}</small>
-      <template v-for="item of build" :key="item.id">
+      <template v-for="(item, index) in build" :key="item.id">
         <component
           :is="item.type"
           :value="item.value"
@@ -39,7 +38,7 @@ export default defineComponent({
 <script setup lang="ts">
 import { ref, Ref, watch, computed, onMounted, inject, PropType, defineComponent } from "vue";
 import { Enums, Helpers, Services, Vocabulary } from "im-library";
-import store from "@/store";
+import { useStore } from "vuex";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";
 import { ComponentDetails, EntityReferenceNode, Namespace, PropertyGroup, PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
@@ -52,7 +51,7 @@ const {
 } = Helpers;
 const { QueryService } = Services;
 const { BuilderType, ComponentType } = Enums;
-const { IM } = Vocabulary;
+const { IM, RDF, RDFS } = Vocabulary;
 
 const props = defineProps({
   shape: { type: Object as PropType<PropertyGroup>, required: true },
@@ -152,7 +151,7 @@ function createDefaultBuild() {
             property.order - 1,
             undefined,
             property,
-            { minus: true, plus: true, up: true, down: true },
+            setButtonsByTypeAndPath(property.order - 1, true),
             props.mode
           )
         );
@@ -165,7 +164,7 @@ function createDefaultBuild() {
             subGroup.order - 1,
             undefined,
             subGroup,
-            { minus: true, plus: true, up: true, down: true },
+            setButtonsByTypeAndPath(subGroup.order - 1, true),
             props.mode
           )
         );
@@ -179,14 +178,33 @@ function processChild(child: any, position: number) {
     position,
     child,
     isObjectHasKeys(props.shape, ["property"]) ? props.shape.property[0] : props.shape.subGroup[0],
-    {
-      minus: true,
-      plus: true,
-      up: true,
-      down: true
-    },
+    setButtonsByTypeAndPath(position, true),
     props.mode
   );
+}
+
+function setButtonsByTypeAndPath(position: number, isNewItem: boolean): { minus: boolean; plus: boolean; up: boolean; down: boolean } {
+  const path = props.shape.path["@id"];
+  const types: TTIriRef[] = editorEntity?.value[RDF.TYPE];
+  if (path === RDFS.SUBCLASS_OF) {
+    return addButtonOnlyIfLast(position, isNewItem);
+  } else if (path === IM.IS_CONTAINED_IN) {
+    return addButtonOnlyIfLast(position, isNewItem);
+  } else if (path === IM.ROLE_GROUP) {
+    return addButtonOnlyIfLast(position, isNewItem);
+  } else {
+    return { minus: true, plus: true, up: true, down: true };
+  }
+}
+
+function addButtonOnlyIfLast(position: number, isNewItem: boolean) {
+  if (isNewItem && position !== build.value.length) return { minus: true, plus: false, up: false, down: false };
+  else if (!isNewItem && position !== build.value.length - 1) return { minus: true, plus: false, up: false, down: false };
+  else return { minus: true, plus: true, up: false, down: false };
+}
+
+function updateButtons() {
+  build.value.forEach(child => (child.showButtons = setButtonsByTypeAndPath(child.position, false)));
 }
 
 function generateBuildAsJson() {
@@ -232,7 +250,8 @@ function addItemWrapper(data: { selectedType: Enums.ComponentType; position: num
   if (data.selectedType !== ComponentType.BUILDER_CHILD_WRAPPER) {
     data.selectedType = ComponentType.BUILDER_CHILD_WRAPPER;
   }
-  if (shape) addItem(data, build.value, { minus: true, plus: true, up: true, down: true }, shape, props.mode);
+  if (shape) addItem(data, build.value, setButtonsByTypeAndPath(data.position, true), shape, props.mode);
+  updateButtons();
 }
 
 function deleteItem(data: ComponentDetails): void {
@@ -244,6 +263,7 @@ function deleteItem(data: ComponentDetails): void {
     return;
   }
   updatePositions(build.value);
+  updateButtons();
 }
 
 function updateItemWrapper(data: ComponentDetails) {
@@ -299,7 +319,6 @@ function moveItemDown(item: ComponentDetails) {
 }
 .children-container {
   padding: 1rem;
-  border: 1px solid #dee2e6;
   border-radius: 3px;
   flex: 1 1 auto;
   display: flex;
@@ -307,9 +326,6 @@ function moveItemDown(item: ComponentDetails) {
   justify-content: flex-start;
   gap: 1rem;
   overflow: auto;
-}
-.invalid {
-  border-color: #e24c4c;
 }
 
 .validate-error {

@@ -80,6 +80,7 @@ import Steps from "primevue/steps";
 import Chip from "primevue/chip";
 import Chips from "primevue/chips";
 import InputNumber from "primevue/inputnumber";
+import ToggleButton from 'primevue/togglebutton';
 
 import { Amplify, Auth } from "aws-amplify";
 import awsconfig from "./aws-exports";
@@ -163,7 +164,8 @@ const app = createApp(App)
   .component("Chips", Chips)
   .component("Chip", Chip)
   .component("InputNumber", InputNumber)
-  .component("Steps", Steps);
+  .component("Steps", Steps)
+  .component("ToggleButton", ToggleButton);
 
 const vm = app.mount("#app");
 

@@ -4,7 +4,6 @@
       <ProgressSpinner />
     </div>
     <div v-else class="dropdown-children-container">
-      <!-- <h3>{{ shape.name }}:</h3> -->
       <Dropdown v-model="selectedOption" :options="dropdownOptions" optionLabel="name" placeholder="Select..." />
       <div class="children-container" :class="invalid && 'invalid'">
         <small v-if="invalid" class="validate-error">{{ validationErrorMessage }}</small>
@@ -42,7 +41,6 @@ export default defineComponent({
 <script setup lang="ts">
 import { ref, Ref, watch, computed, onMounted, inject, PropType, defineComponent } from "vue";
 import { Enums, Helpers, Services, Vocabulary } from "im-library";
-import store from "@/store";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import _ from "lodash";
 import { ComponentDetails, EntityReferenceNode, Namespace, PropertyGroup, PropertyShape, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
@@ -356,7 +354,6 @@ function moveItemDown(item: ComponentDetails) {
 }
 
 .dropdown-children-container {
-  border: 1px solid #dee2e6;
   border-radius: 3px;
   padding: 1rem;
   overflow: auto;
@@ -365,7 +362,6 @@ function moveItemDown(item: ComponentDetails) {
 .children-container {
   margin-left: 2rem;
   padding: 1rem;
-  border: 1px solid #dee2e6;
   border-radius: 3px;
   flex: 1 1 auto;
   display: flex;
