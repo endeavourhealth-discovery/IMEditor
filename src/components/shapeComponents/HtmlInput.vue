@@ -84,6 +84,7 @@ function htmlToText(text: string): string {
 <style scoped>
 .html-input-container {
   width: 25rem;
+  padding: 2rem 0 0 0;
 }
 .input-html {
   width: 100%;

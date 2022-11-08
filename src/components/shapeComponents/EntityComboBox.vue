@@ -164,6 +164,7 @@ function defaultValidity(data: TTIriRef[]) {
   width: 25rem;
   align-items: center;
   height: fit-content;
+  padding: 0.5rem 0 0 0;
 }
 
 .field {
