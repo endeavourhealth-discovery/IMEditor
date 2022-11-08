@@ -31,7 +31,6 @@
       />
     </div>
   </div>
-
 </template>
 
 <script lang="ts">
@@ -172,6 +171,7 @@ function addNextClicked(item: any): void {
   display: flex;
   flex-flow: row nowrap;
   justify-content: flex-start;
+  align-items: baseline;
   overflow: auto;
 }
 
