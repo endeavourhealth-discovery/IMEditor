@@ -1,5 +1,14 @@
 <template>
-  <AutoComplete :multiple="true" v-model="selectedEntity" :suggestions="suggestions" @complete="searchEntity($event)" @item-select="handleChange">
+  <AutoComplete
+    :multiple="true"
+    v-model="selectedEntity"
+    :suggestions="suggestions"
+    @complete="searchEntity($event)"
+    @item-select="handleChange"
+    @dragenter.prevent
+    @dragover.prevent
+    @drop="dropReceived"
+  >
     <template #item="slotProps">
       <div class="autocomplete-suggestion">
         {{ slotProps.item.name }} - {{ slotProps.item["@id"] }}
@@ -57,6 +66,15 @@ function handleChange(event: any) {
 
 function findInTree(iri: string) {
   if (iri) store.commit("updateFindInTreeIri", iri);
+}
+
+function dropReceived(event: any) {
+  const data = event.dataTransfer.getData("text/plain");
+  if (data) {
+    const json = JSON.parse(data);
+    const iriRef = { "@id": json.data, name: json.label };
+    handleChange({ value: iriRef });
+  }
 }
 
 async function searchEntity(searchTerm: any): Promise<void> {
