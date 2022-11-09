@@ -26,12 +26,8 @@
               {{ slotProps.data.name }}<br />
               <small style="color: lightgrey">{{ slotProps.data.name }}</small>
             </div>
+            <Button :disabled="!slotProps.data.iri" icon="fa-solid fa-sitemap" @click="findInTree(slotProps.data.iri)" />
           </div>
-        </template>
-      </Column>
-      <Column>
-        <template #body="slotProps">
-          <Button :disabled="!slotProps.data.iri" icon="fa-solid fa-sitemap" @click="findInTree(slotProps.data.iri)" />
         </template>
       </Column>
     </DataTable>
@@ -167,7 +163,7 @@ function findInTree(iri: string) {
 }
 .search-results-container ::v-deep(.p-datatable) {
   height: 40vh;
-  width: 20rem;
+  width: 30rem;
   display: flex;
   flex-flow: column;
   justify-content: space-between;
