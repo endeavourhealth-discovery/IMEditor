@@ -28,7 +28,7 @@
       <small v-if="invalidAssociatedProperty" class="validate-error">Missing property for refinement. Please select a property first.</small>
     </div>
   </div>
-  <OverlayPanel class="options-op" ref="optionsOP" :showCloseIcon="true" :dismissable="true" stype="width: 50vw" :breakpoints="{ '960px': '75vw' }">
+  <OverlayPanel class="options-op" ref="optionsOP" :dismissable="true" stype="width: 50vw" :breakpoints="{ '960px': '75vw' }">
     <div v-if="hoveredResult.name" class="flex flex-row justify-contents-start result-overlay" style="width: 100%; gap: 1rem">
       <div class="left-side" style="width: 50%">
         <p>
@@ -366,5 +366,14 @@ function hideOptionsOverlay(event: any): void {
   color: #e24c4c;
   font-size: 0.8rem;
   padding: 0 0 0.25rem 0;
+}
+
+.autocomplete-option {
+  all: unset;
+  z-index: -999;
+}
+.result-overlay {
+  all: unset;
+  z-index: 999;
 }
 </style>

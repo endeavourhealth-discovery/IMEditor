@@ -7,7 +7,7 @@
       <Tag v-if="inheritedFrom" value="Inherited" />
       <ToggleButton v-model="required" onLabel="Required" offLabel="Not required" onIcon="pi pi-check" offIcon="pi pi-times" />
       <ToggleButton v-model="unique" onLabel="Unique" offLabel="Not unique" onIcon="pi pi-check" offIcon="pi pi-times" />
-          </div>
+    </div>
   </div>
 </template>
 
