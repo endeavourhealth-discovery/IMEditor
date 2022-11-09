@@ -1,13 +1,18 @@
 <template>
-  <div class="set-definition-builder">
-    <SetDefinitionForm :clauses="clauses" />
+  <div class="set-definition-container">
+    <SelectButton v-model="builderMode" :options="builderModeOptions" class="set-definition-mode-select" />
+    <div class="set-definition-builder">
+      <SetDefinitionForm v-if="builderMode === 'Form'" :clauses="clauses" />
+      <SetDefinitionECL v-else="builderMode === 'ECL'" @ECLSubmitted="updateECL" />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, watch, Ref, PropType, inject } from "vue";
 import "vue-json-pretty/lib/styles.css";
-import SetDefinitionForm from "./SetDefinitionForm.vue";
+import SetDefinitionForm from "./setDefinition/SetDefinitionForm.vue";
+import SetDefinitionECL from "./setDefinition/SetDefinitionECL.vue";
 import { Helpers, Enums } from "im-library";
 import { PropertyGroup, Refinement, SetQueryObject, TTAlias, Query } from "im-library/dist/types/interfaces/Interfaces";
 import _ from "lodash";
@@ -20,9 +25,11 @@ const props = defineProps({
   value: { type: Object as PropType<any>, required: false }
 });
 
+const builderMode: Ref<string> = ref("Form");
 const imquery: Ref<Query> = ref({} as Query);
 const defaultTTAlias = { includeSubtypes: true } as TTAlias;
 const clauses: Ref<SetQueryObject[]> = ref([]);
+const builderModeOptions: Ref<string[]> = ref(["Form", "ECL"]);
 
 const entityUpdate = inject(injectionKeys.editorEntity)?.updateEntity;
 const editorEntity = inject(injectionKeys.editorEntity)?.editorEntity;
@@ -63,6 +70,12 @@ function updateEntity() {
     result[key] = JSON.stringify(imquery.value);
     entityUpdate(result);
   }
+}
+
+function updateECL(data: string): void {
+  // queryString.value = data;
+  // showDialog.value = false;
+  console.log(data);
 }
 
 function getClauses(value: Query) {
@@ -135,7 +148,19 @@ function addClause() {
 .set-definition-builder {
   display: flex;
   flex-flow: column nowrap;
-  justify-content: flex-start;
+  justify-content: center;
   overflow: auto;
+}
+
+.set-definition-container {
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  overflow: auto;
+}
+
+.set-definition-mode-select {
+  align-self: center;
+  padding: 2rem;
 }
 </style>

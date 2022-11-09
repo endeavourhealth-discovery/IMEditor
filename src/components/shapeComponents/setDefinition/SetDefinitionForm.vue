@@ -51,7 +51,7 @@
 <script setup lang="ts">
 import { SetQueryObject, TTAlias, Refinement } from "im-library/dist/types/interfaces/Interfaces";
 import { PropType } from "vue";
-import EntityAutocomplete from "./setDefinition/EntityAutocomplete.vue";
+import EntityAutocomplete from "./EntityAutocomplete.vue";
 import { Services } from "im-library";
 import axios from "axios";
 const queryService = new Services.QueryService(axios);
