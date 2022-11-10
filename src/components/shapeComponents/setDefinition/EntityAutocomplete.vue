@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { QueryObject, SearchRequest, SetQueryObject, TTAlias, TTIriRef } from "im-library/dist/types/interfaces/Interfaces";
 import { onMounted, PropType, Ref, ref, watch } from "vue";
-import { Services, Enums, Helpers, Config } from "im-library";
+import { Services, Enums, Helpers, Config, Vocabulary } from "im-library";
 import axios from "axios";
 import _ from "lodash";
 import { useStore } from "vuex";
@@ -54,9 +54,18 @@ const entityService = new EntityService(axios);
 const abortController = ref(new AbortController());
 const selectedEntity: Ref<TTIriRef[]> = ref([] as TTIriRef[]);
 
+watch(
+  () => _.cloneDeep(props.ttAlias),
+  () => populateTTAlias()
+);
+
 onMounted(() => {
-  if (isObjectHasKeys(props.ttAlias, ["@id", "name"])) selectedEntity.value = [{ "@id": props.ttAlias["@id"], name: props.ttAlias.name }];
+  populateTTAlias();
 });
+
+function populateTTAlias() {
+  if (isObjectHasKeys(props.ttAlias, ["@id", "name"])) selectedEntity.value = [{ "@id": props.ttAlias["@id"], name: props.ttAlias.name }];
+}
 
 function handleChange(event: any) {
   selectedEntity.value = [event.value];
