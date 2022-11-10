@@ -22,18 +22,13 @@
     </div>
     <div class="button-container">
       <Button label="ECL builder" @click="showBuilder" class="p-button-help" data-testid="builder-button" />
-      <Button label="Search" @click="search" class="p-button-primary" :disabled="!queryString.length" data-testid="search-button" />
-    </div>
-    <div class="results-container">
-      <p v-if="searchResults.length > 1000" class="result-summary" data-testid="search-count">{{ totalCount }} results found. Display limited to first 1000.</p>
-      <!-- <SearchResults :searchResults="searchResults" :loading="loading" /> -->
     </div>
   </div>
   <Builder :showDialog="showDialog" @ECLSubmitted="updateECL" @closeDialog="showDialog = false" :data-testid="'builder-visible-' + showDialog" />
 </template>
 
 <script setup lang="ts">
-import { Ref, ref, watch } from "vue";
+import { onMounted, Ref, ref, watch } from "vue";
 import Builder from "./ecl/ECLBuilder.vue";
 // import SearchResults from "@/components/eclSearch/SearchResults.vue";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
@@ -47,8 +42,15 @@ const {
 const { SetService, LoggerService } = Services;
 
 const emit = defineEmits({
-  openBar: () => true,
-  closeBar: () => true
+  updateECL: (_payload: string) => true
+});
+
+const props = defineProps({
+  ecl: { type: String, required: true }
+});
+
+onMounted(() => {
+  queryString.value = props.ecl;
 });
 
 const toast = useToast();
@@ -63,7 +65,10 @@ const eclError = ref(false);
 const loading = ref(false);
 const controller: Ref<AbortController> = ref({} as AbortController);
 
-watch(queryString, () => (eclError.value = false));
+watch(queryString, () => {
+  eclError.value = false;
+  emit("updateECL", queryString.value);
+});
 
 function updateECL(data: string): void {
   queryString.value = data;

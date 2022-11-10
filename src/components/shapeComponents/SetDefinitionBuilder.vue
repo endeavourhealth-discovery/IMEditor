@@ -3,7 +3,7 @@
     <SelectButton v-model="builderMode" :options="builderModeOptions" class="set-definition-mode-select" />
     <div class="set-definition-builder">
       <SetDefinitionForm v-if="builderMode === 'Form'" :clauses="clauses" />
-      <SetDefinitionECL v-else="builderMode === 'ECL'" @ECLSubmitted="updateECL" />
+      <SetDefinitionECL v-else="builderMode === 'ECL'" :ecl="ecl" @updateECL="updateECL" />
     </div>
   </div>
 </template>
@@ -13,10 +13,12 @@ import { onMounted, ref, watch, Ref, PropType, inject } from "vue";
 import "vue-json-pretty/lib/styles.css";
 import SetDefinitionForm from "./setDefinition/SetDefinitionForm.vue";
 import SetDefinitionECL from "./setDefinition/SetDefinitionECL.vue";
-import { Helpers, Enums } from "im-library";
+import { Helpers, Enums, Services } from "im-library";
 import { PropertyGroup, Refinement, SetQueryObject, TTAlias, Query } from "im-library/dist/types/interfaces/Interfaces";
 import _ from "lodash";
 import injectionKeys from "@/injectionKeys/injectionKeys";
+import axios from "axios";
+import { computed } from "@vue/reactivity";
 const { isObjectHasKeys, isArrayHasLength } = Helpers.DataTypeCheckers;
 
 const props = defineProps({
@@ -25,8 +27,11 @@ const props = defineProps({
   value: { type: Object as PropType<any>, required: false }
 });
 
+const setService = new Services.SetService(axios);
+
 const builderMode: Ref<string> = ref("Form");
 const imquery: Ref<Query> = ref({} as Query);
+const ecl: Ref<string> = ref("");
 const defaultTTAlias = { includeSubtypes: true } as TTAlias;
 const clauses: Ref<SetQueryObject[]> = ref([]);
 const builderModeOptions: Ref<string[]> = ref(["Form", "ECL"]);
@@ -38,16 +43,33 @@ const validityUpdate = inject(injectionKeys.editorValidity)?.updateValidity;
 const key = props.shape.path["@id"];
 const value = props.value ? JSON.parse(props.value) : {};
 
+watch(ecl, async () => {
+  if (builderMode.value === "ECL" && ecl.value) {
+    const eclQuery = await setService.getQueryFromECL(ecl.value);
+    if (eclQuery) {
+      clauses.value = [];
+      getClauses(eclQuery);
+    }
+  }
+});
+
 watch(
   () => _.cloneDeep(clauses.value),
-  () => {
+  async () => {
     imquery.value = buildIMQuery(clauses.value);
+    const convertedECL = await setService.getECLFromQuery(imquery.value);
+    if (convertedECL) {
+      const isValid = await setService.isValidECL(convertedECL);
+      if (isValid) {
+        ecl.value = convertedECL;
+      }
+    }
   }
 );
 
 watch(
   () => _.cloneDeep(imquery.value),
-  async newValue => {
+  async () => {
     updateEntity();
     updateValidity();
   }
@@ -72,10 +94,9 @@ function updateEntity() {
   }
 }
 
-function updateECL(data: string): void {
-  // queryString.value = data;
-  // showDialog.value = false;
-  console.log(data);
+async function updateECL(data: string): Promise<void> {
+  const isValid = await setService.isValidECL(data);
+  if (isValid) ecl.value = data;
 }
 
 function getClauses(value: Query) {
