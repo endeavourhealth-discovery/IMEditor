@@ -47,8 +47,8 @@ watch(ecl, async () => {
   if (builderMode.value === "ECL" && ecl.value) {
     const eclQuery = await setService.getQueryFromECL(ecl.value);
     if (eclQuery) {
-      clauses.value = [];
-      getClauses(eclQuery);
+      const constructedClauses = await setService.getSetQueryObjectFromQuery(eclQuery);
+      clauses.value = constructedClauses;
     }
   }
 });
@@ -56,12 +56,14 @@ watch(ecl, async () => {
 watch(
   () => _.cloneDeep(clauses.value),
   async () => {
-    imquery.value = buildIMQuery(clauses.value);
-    const convertedECL = await setService.getECLFromQuery(imquery.value);
-    if (convertedECL) {
-      const isValid = await setService.isValidECL(convertedECL);
-      if (isValid) {
-        ecl.value = convertedECL;
+    imquery.value = await setService.getQueryFromSetQueryObject(clauses.value);
+    if (builderMode.value === "Form") {
+      const convertedECL = await setService.getECLFromQuery(imquery.value);
+      if (convertedECL) {
+        const isValid = await setService.isValidECL(convertedECL);
+        if (isValid) {
+          ecl.value = convertedECL;
+        }
       }
     }
   }
@@ -75,9 +77,10 @@ watch(
   }
 );
 
-onMounted(() => {
-  if (isObjectHasKeys(value)) getClauses(value);
-  else addClause();
+onMounted(async () => {
+  if (isObjectHasKeys(value)) {
+    clauses.value = await setService.getSetQueryObjectFromQuery(value);
+  } else addClause();
 });
 
 async function updateValidity() {
@@ -97,62 +100,6 @@ function updateEntity() {
 async function updateECL(data: string): Promise<void> {
   const isValid = await setService.isValidECL(data);
   if (isValid) ecl.value = data;
-}
-
-function getClauses(value: Query) {
-  if (isArrayHasLength(value?.where?.from)) {
-    for (const from of value.where.from) {
-      const clause = { concept: from, include: true, refinements: [] } as SetQueryObject;
-      clauses.value.push(clause);
-    }
-  }
-
-  if (isArrayHasLength(value?.where?.notExist?.from)) {
-    for (const from of value.where.notExist.from) {
-      const clause = { concept: from, include: false, refinements: [] } as SetQueryObject;
-      clauses.value.push(clause);
-    }
-  }
-
-  if (isArrayHasLength(value?.where?.and)) {
-    for (const and of value.where.and) {
-      clauses.value[0].refinements.push({ property: and.property, is: and.is });
-    }
-  }
-}
-
-function buildIMQuery(clauses: SetQueryObject[]): any {
-  const newQuery = {
-    where: {
-      from: [] as any[]
-    }
-  } as any;
-
-  for (const clause of clauses) {
-    if (clause.include) {
-      if (!isObjectHasKeys(newQuery.where, ["from"])) {
-        newQuery.where.from = [] as any;
-      }
-      newQuery.where.from.push(clause.concept);
-    } else if (!clause.include) {
-      if (!isObjectHasKeys(newQuery.where, ["notExists"])) {
-        newQuery.where.notExist = {
-          from: [] as any[]
-        };
-      }
-      newQuery.where.notExist.from.push(clause.concept);
-    }
-
-    if (isArrayHasLength(clause.refinements)) {
-      newQuery.where.path = "http://endhealth.info/im#roleGroup";
-      newQuery.where.and = [] as any[];
-    }
-
-    for (const refinement of clause.refinements) {
-      newQuery.where.and.push(refinement);
-    }
-  }
-  return newQuery;
 }
 
 function addClause() {
