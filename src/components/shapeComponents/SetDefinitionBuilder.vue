@@ -18,8 +18,7 @@ import { PropertyGroup, Refinement, SetQueryObject, TTAlias, Query } from "im-li
 import _ from "lodash";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import axios from "axios";
-import { computed } from "@vue/reactivity";
-const { isObjectHasKeys, isArrayHasLength } = Helpers.DataTypeCheckers;
+const { isObjectHasKeys } = Helpers.DataTypeCheckers;
 
 const props = defineProps({
   shape: { type: Object as PropType<PropertyGroup>, required: true },

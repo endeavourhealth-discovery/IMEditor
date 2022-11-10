@@ -1,7 +1,5 @@
 <template>
   <div id="query-search-container">
-    <h3 class="title">Expression constraints language search</h3>
-    <h5 class="info">ECL expression:</h5>
     <div class="text-copy-container">
       <Textarea
         v-model="queryString"
@@ -10,27 +8,21 @@
         :class="eclError ? 'p-invalid' : ''"
         data-testid="query-string"
       />
-      <Button
-        :disabled="!queryString.length"
-        icon="fa-solid fa-copy"
-        v-tooltip.left="'Copy to clipboard'"
-        v-clipboard:copy="copyToClipboard()"
-        v-clipboard:success="onCopy"
-        v-clipboard:error="onCopyError"
-        data-testid="copy-to-clipboard-button"
-      />
     </div>
-    <div class="button-container">
-      <Button label="ECL builder" @click="showBuilder" class="p-button-help" data-testid="builder-button" />
-    </div>
+    <Button
+      icon="fa-solid fa-copy"
+      label="Copy to clipboard"
+      v-clipboard:copy="copyToClipboard()"
+      v-clipboard:success="onCopy"
+      v-clipboard:error="onCopyError"
+      data-testid="copy-to-clipboard-button"
+    />
   </div>
-  <Builder :showDialog="showDialog" @ECLSubmitted="updateECL" @closeDialog="showDialog = false" :data-testid="'builder-visible-' + showDialog" />
 </template>
 
 <script setup lang="ts">
 import { onMounted, Ref, ref, watch } from "vue";
 import Builder from "./ecl/ECLBuilder.vue";
-// import SearchResults from "@/components/eclSearch/SearchResults.vue";
 import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
 import { Helpers, Services } from "im-library";
 import { ConceptSummary } from "im-library/dist/types/interfaces/Interfaces";
@@ -116,7 +108,7 @@ function onCopyError(): void {
 #query-search-container {
   height: 100%;
   width: 100%;
-  /* overflow: auto; */
+  overflow: auto;
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-start;
@@ -146,8 +138,8 @@ function onCopyError(): void {
 }
 
 #query-string-container {
-  width: 100%;
-  height: 10rem;
+  width: 50rem;
+  height: 20rem;
   overflow: auto;
   flex-grow: 100;
 }
