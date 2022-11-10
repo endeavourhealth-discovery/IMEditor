@@ -1,9 +1,10 @@
 <template>
   <div class="entity-single-dropdown-container">
-    <span class="p-float-label">
+    <span class="p-float-label dropdown-container">
       <Dropdown class="entity-single-dropdown" :class="invalid && 'invalid'" v-model="selectedEntity" :options="dropdownOptions" optionLabel="name" />
       <label>{{ shape.name }}</label>
     </span>
+    <ProgressSpinner v-if="loading" class="loading-icon" stroke-width="8" />
   </div>
 </template>
 
@@ -22,12 +23,12 @@ const {
   Transforms: { mapToObject }
 } = Helpers;
 const { EntityService, QueryService } = Services;
-const { IM } = Vocabulary;
+const { IM, RDFS } = Vocabulary;
 
 const props = defineProps({
   shape: { type: Object as PropType<PropertyShape>, required: true },
   mode: { type: String as PropType<Enums.EditorMode>, required: true },
-  value: { type: Object as PropType<TTIriRef>, required: false },
+  value: { type: (Object as PropType<TTIriRef>) || (Array as PropType<TTIriRef[]>), required: false },
   position: { type: Number, required: false }
 });
 
@@ -40,17 +41,12 @@ const queryService = new QueryService(axios);
 const entityService = new EntityService(axios);
 
 const dropdownOptions: Ref<TTIriRef[]> = ref([]);
-onMounted(async () => {
-  dropdownOptions.value = await getDropdownOptions();
-  if (props.value) selectedEntity.value = props.value;
-});
+const loading = ref(false);
+const invalid = ref(false);
 
 let key = props.shape.path["@id"];
 
 let selectedEntity: Ref<TTIriRef | undefined> = ref();
-onMounted(() => {
-  if (props.value && isTTIriRef(props.value)) selectedEntity.value = props.value;
-});
 watch(selectedEntity, async newValue => {
   if (isTTIriRef(newValue)) {
     updateEntity(newValue);
@@ -59,7 +55,25 @@ watch(selectedEntity, async newValue => {
   }
 });
 
-let invalid = ref(false);
+onMounted(async () => {
+  loading.value = true;
+  dropdownOptions.value = await getDropdownOptions();
+  selectedEntity.value = setSelectedEntity();
+  loading.value = false;
+});
+
+function setSelectedEntity() {
+  if (isObjectHasKeys(props.shape, ["isIri"]) && props.shape.forceIsValue) {
+    const found = dropdownOptions.value.find(o => o["@id"] === props.shape.isIri["@id"]);
+    if (found) return found;
+  }
+  if (props.value && isTTIriRef(props.value)) return props.value;
+  else if (props.value && isArrayHasLength(props.value)) return props.value[0];
+  else if (isObjectHasKeys(props.shape, ["isIri"]) && props.shape.isIri["@id"]) {
+    const found = dropdownOptions.value.find(o => o["@id"] === props.shape.isIri["@id"]);
+    if (found) return found;
+  } else return undefined;
+}
 
 async function getDropdownOptions() {
   if (isObjectHasKeys(props.shape, ["select", "argument"])) {
@@ -72,7 +86,7 @@ async function getDropdownOptions() {
     const result = await queryService.queryIM(queryRequest);
     if (result)
       return result.entities.map((item: any) => {
-        return { "@id": item.iri, name: item.name };
+        return { "@id": item["@id"], name: item[RDFS.LABEL] };
       });
     else return [];
   } else if (isObjectHasKeys(props.shape, ["function"])) {
@@ -108,8 +122,30 @@ function defaultValidation(data: TTIriRef) {
 </script>
 
 <style scoped>
-.entity-single-dropdown {
+.entity-single-dropdown-container {
+  padding: 2rem 0 0 0;
+  display: flex;
+  flex-flow: row nowrap;
   width: 25rem;
+  align-items: center;
+  height: fit-content;
+}
+
+.dropdown-container {
+  flex: 1 1 auto;
+}
+
+.entity-single-dropdown {
+  width: 100%;
+}
+
+.loading-icon {
+  flex: 0 0 auto;
+}
+
+.p-progress-spinner {
+  width: 2rem;
+  height: 2rem;
 }
 .invalid {
   border-color: #e24c4c;
