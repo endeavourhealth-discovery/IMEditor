@@ -4,7 +4,7 @@
       <Textarea
         v-model="queryString"
         id="query-string-container"
-        placeholder="Enter expression here or use the ECL builder to generate your search..."
+        placeholder="Enter ECL text here..."
         :class="eclError ? 'p-invalid' : ''"
         data-testid="query-string"
       />
@@ -21,17 +21,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, Ref, ref, watch } from "vue";
-import Builder from "./ecl/ECLBuilder.vue";
-import { AbortController } from "abortcontroller-polyfill/dist/cjs-ponyfill";
-import { Helpers, Services } from "im-library";
-import { ConceptSummary } from "im-library/dist/types/interfaces/Interfaces";
+import { onMounted, ref, watch } from "vue";
+import { Services } from "im-library";
 import { useToast } from "primevue/usetoast";
-import axios from "axios";
-const {
-  DataTypeCheckers: { isObjectHasKeys, isObject }
-} = Helpers;
-const { SetService, LoggerService } = Services;
+const { LoggerService } = Services;
 
 const emit = defineEmits({
   updateECL: (_payload: string) => true
@@ -46,50 +39,13 @@ onMounted(() => {
 });
 
 const toast = useToast();
-
-const setService = new SetService(axios);
-
 const queryString = ref("");
-const showDialog = ref(false);
-const searchResults: Ref<ConceptSummary[]> = ref([]);
-const totalCount = ref(0);
 const eclError = ref(false);
-const loading = ref(false);
-const controller: Ref<AbortController> = ref({} as AbortController);
 
 watch(queryString, () => {
   eclError.value = false;
   emit("updateECL", queryString.value);
 });
-
-function updateECL(data: string): void {
-  queryString.value = data;
-  showDialog.value = false;
-}
-
-function showBuilder(): void {
-  showDialog.value = true;
-}
-
-async function search(): Promise<void> {
-  if (queryString.value) {
-    loading.value = true;
-    if (!isObject(controller.value)) {
-      controller.value.abort();
-    }
-    controller.value = new AbortController();
-    const result = await setService.ECLSearch(queryString.value, false, 1000, controller.value);
-    if (isObjectHasKeys(result, ["entities", "count", "page"])) {
-      searchResults.value = result.entities;
-      totalCount.value = result.count;
-    } else {
-      eclError.value = true;
-      searchResults.value = [];
-      totalCount.value = 0;
-    }
-    loading.value = false;
-  }
-}
 
 function copyToClipboard(): string {
   return queryString.value;
