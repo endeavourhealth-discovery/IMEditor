@@ -81,7 +81,7 @@ const {
   Converters: { iriToUrl },
   UtililityMethods: { debounce }
 } = Helpers;
-const { IM, RDF, RDFS } = Vocabulary;
+const { IM, RDF, RDFS, SHACL } = Vocabulary;
 const { EntityService, Env, FilerService } = Services;
 const { ComponentType, EditorMode } = Enums;
 
@@ -130,7 +130,7 @@ onMounted(async () => {
     await getShape(props.type["@id"]);
     if (shape.value) processShape(shape.value, EditorMode.CREATE, editorEntity.value);
   } else if (isObjectHasKeys(editorEntity.value, [RDF.TYPE])) {
-    await getShapesCombined(editorEntity.value[RDF.TYPE]);
+    await getShapesCombined(editorEntity.value[RDF.TYPE], findPrimaryType());
     if (shape.value) processShape(shape.value, EditorMode.CREATE, editorEntity.value);
     await nextTick();
     router.push(stepsItems.value[1].to);
@@ -220,9 +220,29 @@ function stepsClicked(event: any) {
   currentStep.value = event.target.innerHTML - 1;
 }
 
+function findPrimaryType(): TTIriRef | undefined {
+  if (!(isObjectHasKeys(editorEntity.value, [RDF.TYPE]) && isArrayHasLength(editorEntity.value[RDF.TYPE]))) return undefined;
+  if (
+    isObjectHasKeys(editorEntityOriginal, [RDF.TYPE]) &&
+    isArrayHasLength(editorEntityOriginal.value[RDF.TYPE]) &&
+    editorEntityOriginal.value[RDF.TYPE].length === 1 &&
+    isObjectHasKeys(editorEntity.value, [RDF.TYPE]) &&
+    isArrayHasLength(editorEntity.value[RDF.TYPE])
+  ) {
+    const found = editorEntity.value[RDF.TYPE].find((type: TTIriRef) => type === editorEntityOriginal.value[RDF.TYPE][0]);
+    if (found) return found;
+  }
+  if (editorEntity.value[RDF.TYPE].length === 1) return editorEntity.value[RDF.TYPE][0];
+  if (editorEntity.value[RDF.TYPE].findIndex((type: TTIriRef) => type["@id"] === SHACL.NODESHAPE)) {
+    const found = editorEntity.value[RDF.TYPE].find((type: TTIriRef) => type["@id"] === SHACL.NODESHAPE);
+    if (found) return found;
+  }
+  return editorEntity.value[0];
+}
+
 async function updateType(types: TTIriRef[]) {
   loading.value = true;
-  await getShapesCombined(types);
+  await getShapesCombined(types, findPrimaryType());
   if (shape.value) processShape(shape.value, EditorMode.CREATE, editorEntity.value);
   editorEntity.value[RDF.TYPE] = types;
   loading.value = false;

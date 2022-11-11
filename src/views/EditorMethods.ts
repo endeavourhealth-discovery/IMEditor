@@ -22,8 +22,13 @@ export function setupShape() {
   let groups: Ref<PropertyGroup[]> = ref([]);
   let stepsItems: Ref<{ label: string; to: string }[]> = ref([]);
 
-  async function getShapesCombined(types: TTIriRef[]) {
+  async function getShapesCombined(types: TTIriRef[], primaryType?: TTIriRef) {
     let shapeCombined: FormGenerator = {} as FormGenerator;
+    if (primaryType) {
+      types.sort(function (x, y) {
+        return x["@id"] == primaryType["@id"] ? -1 : y["@id"] == primaryType["@id"] ? 1 : 0;
+      });
+    }
     for (const type of types) {
       const typeShape = await getShape(type["@id"]);
       if (isObjectHasKeys(shapeCombined, ["group"])) addToShape(shapeCombined, typeShape);
