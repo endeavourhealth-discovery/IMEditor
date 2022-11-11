@@ -118,7 +118,7 @@ onMounted(async () => {
   loading.value = true;
   await fetchEntity();
   if (isObjectHasKeys(editorEntityOriginal.value, [RDF.TYPE])) {
-    await getShapesCombined(editorEntityOriginal.value[RDF.TYPE]);
+    await getShapesCombined(editorEntityOriginal.value[RDF.TYPE], findPrimaryType());
     if (shape.value) processShape(shape.value, EditorMode.EDIT, editorEntity.value);
     router.push(stepsItems.value[0].to);
   } else window.location.href = Env.DIRECTORY_URL;
@@ -139,13 +139,24 @@ watch(
 const entityService = new EntityService(axios);
 const directService = new DirectService(store);
 
-function findPrimaryType(types: TTIriRef[]): TTIriRef {
-  if (types.length === 1) return types[0];
-  if (types.findIndex(type => type["@id"] === SHACL.NODESHAPE)) {
-    const found = types.find(type => type["@id"] === SHACL.NODESHAPE);
+function findPrimaryType(): TTIriRef | undefined {
+  if (!(isObjectHasKeys(editorEntity.value, [RDF.TYPE]) && isArrayHasLength(editorEntity.value[RDF.TYPE]))) return undefined;
+  if (
+    isObjectHasKeys(editorEntityOriginal, [RDF.TYPE]) &&
+    isArrayHasLength(editorEntityOriginal.value[RDF.TYPE]) &&
+    editorEntityOriginal.value[RDF.TYPE].length === 1 &&
+    isObjectHasKeys(editorEntity.value, [RDF.TYPE]) &&
+    isArrayHasLength(editorEntity.value[RDF.TYPE])
+  ) {
+    const found = editorEntity.value[RDF.TYPE].find((type: TTIriRef) => type === editorEntityOriginal.value[RDF.TYPE][0]);
     if (found) return found;
   }
-  return types[0];
+  if (editorEntity.value[RDF.TYPE].length === 1) return editorEntity.value[RDF.TYPE][0];
+  if (editorEntity.value[RDF.TYPE].findIndex((type: TTIriRef) => type["@id"] === SHACL.NODESHAPE)) {
+    const found = editorEntity.value[RDF.TYPE].find((type: TTIriRef) => type["@id"] === SHACL.NODESHAPE);
+    if (found) return found;
+  }
+  return editorEntity.value[0];
 }
 
 function updateValueVariableMap(key: string, value: any) {
@@ -169,7 +180,7 @@ function stepsClicked(event: any) {
 
 async function updateType(types: TTIriRef[]) {
   loading.value = true;
-  await getShapesCombined(types);
+  await getShapesCombined(types, findPrimaryType());
   if (shape.value) processShape(shape.value, EditorMode.EDIT, editorEntity.value);
   editorEntity.value[RDF.TYPE] = types;
   // removeEroneousKeys();

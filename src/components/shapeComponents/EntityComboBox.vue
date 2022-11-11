@@ -25,6 +25,7 @@
 import { ref, Ref, watch, onMounted, inject, PropType } from "vue";
 import { Enums, Helpers, Services, Vocabulary } from "im-library";
 import injectionKeys from "@/injectionKeys/injectionKeys";
+import _ from "lodash";
 import { PropertyShape, TTIriRef, QueryRequest, Query } from "im-library/dist/types/interfaces/Interfaces";
 import axios from "axios";
 
@@ -33,7 +34,8 @@ const { RDFS } = Vocabulary;
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength },
   EditorMethods: { processArguments },
-  Transforms: { mapToObject }
+  Transforms: { mapToObject },
+  Sorters: { byName }
 } = Helpers;
 const { EntityService, QueryService } = Services;
 
@@ -61,7 +63,11 @@ let invalid = ref(false);
 let key = props.shape.path["@id"];
 
 watch(selectedEntities, async newValue => {
-  if (!loading.value && isArrayHasLength(newValue)) {
+  if (
+    !loading.value &&
+    isArrayHasLength(newValue) &&
+    !_.isEqual(combineSelectedAndFixed([...selectedEntities.value], { ...fixedOption.value }).sort(byName), editorEntity?.value[key])
+  ) {
     await updateAll(newValue);
   }
 });
@@ -71,7 +77,6 @@ onMounted(async () => {
   dropdownOptions.value = await getDropdownOptions();
 
   processPropsValue();
-  await updateAll(selectedEntities.value);
   loading.value = false;
 });
 
