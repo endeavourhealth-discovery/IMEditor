@@ -56,7 +56,7 @@ watch(
   () => _.cloneDeep(clauses.value),
   async () => {
     imquery.value = await setService.getQueryFromSetQueryObject(clauses.value);
-    if (builderMode.value === "Form") {
+    if (builderMode.value === "Form" && isValidQuery(clauses.value)) {
       const convertedECL = await setService.getECLFromQuery(imquery.value);
       if (convertedECL) {
         const isValid = await setService.isValidECL(convertedECL);
@@ -94,6 +94,14 @@ function updateEntity() {
     result[key] = JSON.stringify(imquery.value);
     entityUpdate(result);
   }
+}
+
+function isValidQuery(clauses: SetQueryObject[]) {
+  const conceptHasId = clauses.every(clause => isObjectHasKeys(clause?.concept, ["@id"]));
+  const refinementsHaveIds = clauses.every(clause =>
+    clause.refinements.every(refinement => isObjectHasKeys(refinement.property, ["@id"]) && isObjectHasKeys(refinement.is, ["@id"]))
+  );
+  return conceptHasId && refinementsHaveIds;
 }
 
 async function updateECL(data: string): Promise<void> {
