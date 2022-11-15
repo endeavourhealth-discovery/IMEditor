@@ -1,11 +1,11 @@
 <template>
   <div class="sidebar">
     <TabView :lazy="true">
-      <TabPanel header="JSON viewer">
-        <VueJsonPretty class="json" :path="'res'" :data="editorEntity" @click="handleClick" />
-      </TabPanel>
       <TabPanel header="NavTree">
         <NavTree />
+      </TabPanel>
+      <TabPanel header="JSON viewer">
+        <VueJsonPretty class="json" :path="'res'" :data="editorEntity" @click="handleClick" />
       </TabPanel>
     </TabView>
   </div>

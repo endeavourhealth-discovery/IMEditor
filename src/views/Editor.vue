@@ -34,7 +34,7 @@
           <Button
             class="p-button-rounded p-button-info p-button-outlined sidebar-toggle"
             :label="showSidebar ? 'hide sidebar' : 'show sidebar'"
-            @click="showSidebar = !showSidebar"
+            @click="onShowSidebar"
             data-testid="show-sidebar-button"
           />
         </div>
@@ -61,7 +61,7 @@ export default defineComponent({
 </script>
 
 <script setup lang="ts">
-import { computed, defineComponent, inject, onBeforeUnmount, onMounted, onUnmounted, provide, ref, Ref, watch } from "vue";
+import { computed, ComputedRef, defineComponent, inject, onBeforeUnmount, onMounted, onUnmounted, provide, ref, Ref, watch } from "vue";
 import SideBar from "@/components/creator/SideBar.vue";
 import TestQueryResults from "../components/shapeComponents/setDefinition/TestQueryResults.vue";
 import injectionKeys from "@/injectionKeys/injectionKeys";
@@ -102,11 +102,22 @@ onUnmounted(() => {
 const { editorEntity, editorEntityOriginal, fetchEntity, processEntity, editorIri, editorSavedEntity, entityName } = setupEntity();
 const { setEditorSteps, shape, stepsItems, getShape, getShapesCombined, groups, processComponentType, processShape, addToShape } = setupShape();
 
-let loading = ref(true);
-let currentStep = ref(0);
-let showSidebar = ref(false);
-let editorValidity: Ref<{ key: string; valid: boolean }[]> = ref([]);
-let valueVariableMap: Ref<Map<string, any>> = ref(new Map<string, any>());
+const treeIri: ComputedRef<string> = computed(() => store.state.findInTreeIri);
+
+watch(treeIri, (newValue, oldValue) => {
+  if ("" === oldValue && "" !== newValue) showSidebar.value = true;
+});
+
+function onShowSidebar() {
+  showSidebar.value = !showSidebar.value;
+  store.commit("updateFindInTreeIri", "");
+}
+
+const loading = ref(true);
+const currentStep = ref(0);
+const showSidebar = ref(false);
+const editorValidity: Ref<{ key: string; valid: boolean }[]> = ref([]);
+const valueVariableMap: Ref<Map<string, any>> = ref(new Map<string, any>());
 const showTestQueryResults: Ref<boolean> = ref(false);
 
 provide(injectionKeys.editorValidity, { validity: editorValidity, updateValidity, removeValidity });
