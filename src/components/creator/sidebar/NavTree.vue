@@ -107,7 +107,7 @@ const pageSize: number = 20;
 const navTreeOP = ref();
 
 watch(treeIri, async () => {
-  await findPathToNode(treeIri.value);
+  if (treeIri) await findPathToNode(treeIri.value);
 });
 
 onMounted(async () => {

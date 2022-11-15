@@ -35,7 +35,7 @@
           <Button
             class="p-button-rounded p-button-info p-button-outlined sidebar-toggle"
             :label="showSidebar ? 'hide sidebar' : 'show sidebar'"
-            @click="showSidebar = !showSidebar"
+            @click="onShowSidebar"
           />
         </div>
         <div class="button-bar" id="creator-button-bar">
@@ -60,7 +60,7 @@ export default defineComponent({
 </script>
 
 <script setup lang="ts">
-import { onUnmounted, onBeforeUnmount, onMounted, computed, ref, Ref, watch, inject, defineComponent, PropType, provide, nextTick } from "vue";
+import { onUnmounted, onBeforeUnmount, onMounted, computed, ref, Ref, watch, inject, defineComponent, PropType, provide, nextTick, ComputedRef } from "vue";
 import { Enums, Helpers, Vocabulary, Services } from "im-library";
 import SideBar from "@/components/creator/SideBar.vue";
 import _ from "lodash";
@@ -105,15 +105,26 @@ const hasType = computed<boolean>(() => {
   return isObjectHasKeys(editorEntity.value, [RDF.TYPE]);
 });
 
+const treeIri: ComputedRef<string> = computed(() => store.state.findInTreeIri);
+
+watch(treeIri, (newValue, oldValue) => {
+  if ("" === oldValue && "" !== newValue) showSidebar.value = true;
+});
+
+function onShowSidebar() {
+  showSidebar.value = !showSidebar.value;
+  store.commit("updateFindInTreeIri", "");
+}
+
 const { editorEntity, editorEntityOriginal, fetchEntity, processEntity, editorIri, editorSavedEntity, entityName } = setupEntity();
 const { setCreatorSteps, shape, stepsItems, getShape, getShapesCombined, groups, processComponentType, processShape, addToShape } = setupShape();
 
-let loading: Ref<boolean> = ref(true);
-let currentStep: Ref<number> = ref(0);
-let showSidebar: Ref<boolean> = ref(false);
-let creatorValidity: Ref<{ key: string; valid: boolean }[]> = ref([]);
-let targetShape: Ref<TTIriRef | undefined> = ref();
-let valueVariableMap: Ref<Map<string, any>> = ref(new Map<string, any>());
+const loading: Ref<boolean> = ref(true);
+const currentStep: Ref<number> = ref(0);
+const showSidebar: Ref<boolean> = ref(false);
+const creatorValidity: Ref<{ key: string; valid: boolean }[]> = ref([]);
+const targetShape: Ref<TTIriRef | undefined> = ref();
+const valueVariableMap: Ref<Map<string, any>> = ref(new Map<string, any>());
 const showTestQueryResults: Ref<boolean> = ref(false);
 
 provide(injectionKeys.editorValidity, { validity: creatorValidity, updateValidity, removeValidity });
