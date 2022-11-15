@@ -76,32 +76,37 @@ import { computed, ref, Ref, watch, ComputedRef, onMounted, onBeforeUnmount } fr
 import { useStore } from "vuex";
 import axios from "axios";
 import { useToast } from "primevue/usetoast";
-import { TreeNode, TTIriRef, EntityReferenceNode, ConceptSummary } from "im-library/dist/types/interfaces/Interfaces";
+import { TreeNode, TTIriRef, EntityReferenceNode, ConceptSummary, QueryRequest } from "im-library/dist/types/interfaces/Interfaces";
 import _ from "lodash";
 import { Vocabulary, Helpers, Services } from "im-library";
 import { useRouter } from "vue-router";
-const { IM } = Vocabulary;
+const { IM, RDFS, RDF } = Vocabulary;
 const {
   DataTypeCheckers: { isObjectHasKeys, isArrayHasLength, isObject },
   ConceptTypeMethods: { getColourFromType, getFAIconFromType, getNamesAsStringFromTypes },
   Sorters: { byKey }
 } = Helpers;
-const { EntityService } = Services;
+const { EntityService, QueryService } = Services;
 
 const store = useStore();
 const router = useRouter();
 const toast = useToast();
 const entityService = new EntityService(axios);
+const queryService = new QueryService(axios);
+
+const props = defineProps({
+  queryIri: { type: String, required: false }
+});
 
 const treeIri: ComputedRef<string> = computed(() => store.state.findInTreeIri);
 
-let selected: Ref<any> = ref({});
-let selectedNode: Ref<any> = ref({});
-let root: Ref<TreeNode[]> = ref([]);
-let loading = ref(true);
-let expandedKeys: Ref<any> = ref({});
-let hoveredResult: Ref<ConceptSummary> = ref({} as ConceptSummary);
-let overlayLocation: Ref<any> = ref({});
+const selected: Ref<any> = ref({});
+const selectedNode: Ref<any> = ref({});
+const root: Ref<TreeNode[]> = ref([]);
+const loading = ref(true);
+const expandedKeys: Ref<any> = ref({});
+const hoveredResult: Ref<ConceptSummary> = ref({} as ConceptSummary);
+const overlayLocation: Ref<any> = ref({});
 const pageSize: number = 20;
 
 const navTreeOP = ref();
@@ -128,7 +133,9 @@ async function init() {
 }
 
 async function addParentFoldersToRoot() {
-  const IMChildren = await entityService.getEntityChildren(IM.NAMESPACE + "InformationModel");
+  let IMChildren = [] as any[];
+  if (props.queryIri) IMChildren = await getEntitiesFromQueryIri();
+  else IMChildren = await entityService.getEntityChildren(IM.NAMESPACE + "InformationModel");
   for (let IMchild of IMChildren) {
     const hasNode = !!root.value.find(node => node.data === IMchild["@id"]);
     if (!hasNode) root.value.push(createTreeNode(IMchild.name, IMchild["@id"], IMchild.type, IMchild.hasGrandChildren, IMchild.orderNumber));
@@ -138,6 +145,25 @@ async function addParentFoldersToRoot() {
   favNode.typeIcon = ["fa-solid", "fa-star"];
   favNode.color = "#e39a36";
   root.value.push(favNode);
+}
+
+async function getEntitiesFromQueryIri() {
+  const queryRequest = {
+    query: {
+      "@id": props.queryIri
+    }
+  } as QueryRequest;
+  const queryResult = await queryService.queryIM(queryRequest);
+
+  return queryResult.entities.map(entity => {
+    return {
+      "@id": entity["@id"],
+      name: entity[RDFS.LABEL],
+      type: entity[RDF.TYPE],
+      order: entity[IM.ORDER],
+      hasGrandChildren: true
+    };
+  });
 }
 
 function createTreeNode(conceptName: string, conceptIri: string, conceptTypes: TTIriRef[], hasChildren: boolean, order?: number): TreeNode {

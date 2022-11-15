@@ -5,20 +5,22 @@
         <VueJsonPretty class="json" :path="'res'" :data="editorEntity" @click="handleClick" />
       </TabPanel>
       <TabPanel header="NavTree">
-        <NavTree />
+        <NavTree :queryIri="queryIri" />
       </TabPanel>
     </TabView>
   </div>
 </template>
 
 <script setup lang="ts">
-import { PropType } from "vue";
+import { PropType, Ref, ref } from "vue";
 import VueJsonPretty from "vue-json-pretty";
 import NavTree from "./sidebar/NavTree.vue";
 
 const props = defineProps({
   editorEntity: { type: Object as PropType<any>, required: true }
 });
+
+const queryIri: Ref<string> = ref("http://endhealth.info/im#TestQuery_TreeQueryIri");
 
 function handleClick(data: any) {
   console.log("click");
