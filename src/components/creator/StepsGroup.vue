@@ -15,6 +15,7 @@ import HtmlInput from "@/components/shapeComponents/HtmlInput.vue";
 import TextInput from "@/components/shapeComponents/TextInput.vue";
 import TextDisplay from "@/components/shapeComponents/TextDisplay.vue";
 import SetDefinitionBuilder from "@/components/shapeComponents/SetDefinitionBuilder.vue";
+import QueryDefinitionBuilder from "@/components/shapeComponents/QueryDefinitionBuilder.vue";
 import ToggleableComponent from "../shapeComponents/ToggleableComponent.vue";
 
 export default defineComponent({
@@ -23,6 +24,7 @@ export default defineComponent({
     ArrayBuilder,
     ArrayBuilderWithDropdown,
     SetDefinitionBuilder,
+    QueryDefinitionBuilder,
     EntityDropdown,
     HtmlInput,
     TextDisplay,
