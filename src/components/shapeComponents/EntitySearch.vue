@@ -179,7 +179,6 @@ function onFocus(event: any) {
   showOverlay(event);
   const queryTreeIri = getTreeQueryIri(props.shape.select);
   if (queryTreeIri) store.commit("updateΤreeQueryIri", queryTreeIri);
-  console.log(queryTreeIri);
 }
 
 async function updateSelectedResult(data: ConceptSummary | TTIriRef) {
