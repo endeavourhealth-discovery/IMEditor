@@ -1,5 +1,6 @@
 <template>
   <div class="flex flex-column justify-content-start" id="hierarchy-tree-bar-container">
+    <Button label="Reset tree view" icon="pi pi-undo" class="p-button-secondary reset-tree-view-button" @click="resetTreeView" />
     <Tree
       :value="root"
       selectionMode="single"
@@ -94,10 +95,7 @@ const toast = useToast();
 const entityService = new EntityService(axios);
 const queryService = new QueryService(axios);
 
-const props = defineProps({
-  queryIri: { type: String, required: false }
-});
-
+const queryIri: ComputedRef<string> = computed(() => store.state.treeQueryIri);
 const treeIri: ComputedRef<string> = computed(() => store.state.findInTreeIri);
 
 const selected: Ref<any> = ref({});
@@ -110,6 +108,10 @@ const overlayLocation: Ref<any> = ref({});
 const pageSize: number = 20;
 
 const navTreeOP = ref();
+
+watch(queryIri, async () => {
+  await init();
+});
 
 watch(treeIri, async () => {
   await findPathToNode(treeIri.value);
@@ -125,32 +127,35 @@ onBeforeUnmount(() => {
   }
 });
 
+async function resetTreeView() {
+  store.commit("updateΤreeQueryIri", "");
+  await init();
+}
+
 async function init() {
   loading.value = true;
   await addParentFoldersToRoot();
+  expandedKeys.value = { ...{} };
   if (treeIri.value) await findPathToNode(treeIri.value);
   loading.value = false;
 }
 
 async function addParentFoldersToRoot() {
+  root.value = [];
   let IMChildren = [] as any[];
-  if (props.queryIri) IMChildren = await getEntitiesFromQueryIri();
+  if (queryIri.value) IMChildren = await getEntitiesFromQueryIri();
   else IMChildren = await entityService.getEntityChildren(IM.NAMESPACE + "InformationModel");
   for (let IMchild of IMChildren) {
     const hasNode = !!root.value.find(node => node.data === IMchild["@id"]);
     if (!hasNode) root.value.push(createTreeNode(IMchild.name, IMchild["@id"], IMchild.type, IMchild.hasGrandChildren, IMchild.orderNumber));
   }
   root.value.sort(byKey);
-  const favNode = createTreeNode("Favourites", IM.NAMESPACE + "Favourites", [], false);
-  favNode.typeIcon = ["fa-solid", "fa-star"];
-  favNode.color = "#e39a36";
-  root.value.push(favNode);
 }
 
 async function getEntitiesFromQueryIri() {
   const queryRequest = {
     query: {
-      "@id": props.queryIri
+      "@id": queryIri.value
     }
   } as QueryRequest;
   const queryResult = await queryService.queryIM(queryRequest);
@@ -445,5 +450,9 @@ function dragStart(event: any, data: any) {
   cursor: grabbing;
   cursor: -moz-grabbing;
   cursor: -webkit-grabbing;
+}
+
+.reset-tree-view-button {
+  margin-bottom: 1rem;
 }
 </style>

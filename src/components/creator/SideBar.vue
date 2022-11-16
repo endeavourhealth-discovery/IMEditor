@@ -5,7 +5,7 @@
         <VueJsonPretty class="json" :path="'res'" :data="editorEntity" @click="handleClick" />
       </TabPanel>
       <TabPanel header="NavTree">
-        <NavTree :queryIri="queryIri" />
+        <NavTree />
       </TabPanel>
     </TabView>
   </div>
@@ -19,8 +19,6 @@ import NavTree from "./sidebar/NavTree.vue";
 const props = defineProps({
   editorEntity: { type: Object as PropType<any>, required: true }
 });
-
-const queryIri: Ref<string> = ref("http://endhealth.info/im#TestQuery_TreeQueryIri");
 
 function handleClick(data: any) {
   console.log("click");

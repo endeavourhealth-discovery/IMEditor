@@ -7,7 +7,7 @@
         v-model="searchTerm"
         @input="debounceForSearch"
         @keyup.enter="search"
-        @focus="showOverlay"
+        @focus="onFocus"
         @change="showOverlay"
         placeholder="Search"
         class="p-inputtext search-input"
@@ -48,7 +48,7 @@ import injectionKeys from "@/injectionKeys/injectionKeys";
 const {
   DataTypeCheckers: { isArrayHasLength, isObjectHasKeys, isObject },
   TypeGuards: { isTTIriRef },
-  EditorMethods: { processArguments },
+  EditorMethods: { processArguments, getTreeQueryIri },
   Transforms: { mapToObject }
 } = Helpers;
 const { ComponentType, BuilderType, SortBy } = Enums;
@@ -173,6 +173,13 @@ function hideOverlay(): void {
 function showOverlay(event: any): void {
   const x = miniSearchOP.value as any;
   if (x) x.show(event, event.target);
+}
+
+function onFocus(event: any) {
+  showOverlay(event);
+  const queryTreeIri = getTreeQueryIri(props.shape.select);
+  if (queryTreeIri) store.commit("updateΤreeQueryIri", queryTreeIri);
+  console.log(queryTreeIri);
 }
 
 async function updateSelectedResult(data: ConceptSummary | TTIriRef) {

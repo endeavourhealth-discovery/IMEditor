@@ -48,6 +48,7 @@ export default createStore({
     refreshTree: false as boolean,
     blockedIris: [] as string[],
     findInTreeIri: "",
+    treeQueryIri: ""
   },
   mutations: {
     updateRecentLocalActivity(state, recentActivityItem: RecentActivityItem) {
@@ -139,6 +140,9 @@ export default createStore({
     },
     updateFindInTreeIri(state, findInTreeIri) {
       state.findInTreeIri = findInTreeIri;
+    },
+    updateΤreeQueryIri(state, treeQueryIri) {
+      state.treeQueryIri = treeQueryIri;
     }
   },
   actions: {
