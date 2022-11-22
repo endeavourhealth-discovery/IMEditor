@@ -43,14 +43,23 @@
       <Button icon="pi pi-cog" label="Add refinement" class="p-button-warning" @click="addRefinement(clauseIndex)" />
     </ul>
     <div class="rule-button">
-      <Button v-if="clauseIndex === clauses.length - 1" icon="pi pi-plus" label="Add concept" class="p-button-success" @click="addConcept" />
+      <SplitButton
+        v-if="clauseIndex === clauses.length - 1"
+        icon="pi pi-plus"
+        label="Add concept"
+        class="p-button-success"
+        @click="addConcept"
+        :model="addButtonActions"
+      />
     </div>
   </div>
+  <AddByCodeList :showAddByList="showAddByList" @addCodeList="addCodeList" @close-dialog="showAddByList = false" />
 </template>
 
 <script setup lang="ts">
 import { SetQueryObject, TTAlias, Refinement } from "im-library/dist/types/interfaces/Interfaces";
-import { PropType } from "vue";
+import { PropType, Ref, ref } from "vue";
+import AddByCodeList from "./AddByCodeList.vue";
 import EntityAutocomplete from "./EntityAutocomplete.vue";
 import { Services } from "im-library";
 import axios from "axios";
@@ -65,7 +74,27 @@ const includeSubtypesOptions = [
   { name: "exclude subtypes", value: false }
 ];
 
+const addButtonActions = ref([
+  {
+    label: "Add by code list",
+    icon: "pi pi-upload",
+    command: () => {
+      showAddByList.value = true;
+    }
+  }
+]);
+
 const props = defineProps({ clauses: { type: Array as PropType<SetQueryObject[]>, required: true } });
+const showAddByList = ref(false);
+
+function addCodeList(selectedCodes: any[]) {
+  for (const selectedCode of selectedCodes) {
+    const newTTAlias = { "@id": selectedCode["@id"], name: selectedCode.name, includeSubtypes: true } as TTAlias;
+    addConcept(newTTAlias);
+  }
+
+  showAddByList.value = false;
+}
 
 function addRefinement(index: number) {
   const refinement = { property: { ...defaultTTAlias }, is: { ...defaultTTAlias } } as Refinement;
@@ -77,10 +106,10 @@ function removeClause(index: number) {
 function removeRefinement(clauseIndex: number, refinementIndex: number) {
   props.clauses[clauseIndex].refinements.splice(refinementIndex, 1);
 }
-function addConcept() {
+function addConcept(ttAlias?: TTAlias) {
   const newObject = {
     include: true,
-    concept: { ...defaultTTAlias },
+    concept: ttAlias || { ...defaultTTAlias },
     refinements: [] as Refinement[]
   } as SetQueryObject;
   props.clauses.push(newObject);
