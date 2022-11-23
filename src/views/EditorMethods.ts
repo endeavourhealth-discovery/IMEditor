@@ -38,12 +38,13 @@ export function setupShape() {
   }
 
   function addToShape(shape: FormGenerator, shapeToAdd: FormGenerator) {
-    for (const groupToAdd of shapeToAdd.group) {
-      if (!shape.group.some((group: PropertyGroup) => group.path["@id"] === groupToAdd.path["@id"])) {
-        groupToAdd.order = shape.group.length + 1;
-        shape.group.push(groupToAdd);
+    if (isArrayHasLength(shapeToAdd.group))
+      for (const groupToAdd of shapeToAdd.group) {
+        if (!shape.group.some((group: PropertyGroup) => group.path["@id"] === groupToAdd.path["@id"])) {
+          groupToAdd.order = shape.group.length + 1;
+          shape.group.push(groupToAdd);
+        }
       }
-    }
   }
 
   async function getShape(type: string): Promise<any> {
