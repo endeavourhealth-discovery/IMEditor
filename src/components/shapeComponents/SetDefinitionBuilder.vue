@@ -18,7 +18,7 @@ import { PropertyGroup, Refinement, SetQueryObject, TTAlias, Query } from "im-li
 import _ from "lodash";
 import injectionKeys from "@/injectionKeys/injectionKeys";
 import axios from "axios";
-const { isObjectHasKeys } = Helpers.DataTypeCheckers;
+const { isObjectHasKeys, isArrayHasLength } = Helpers.DataTypeCheckers;
 
 const props = defineProps({
   shape: { type: Object as PropType<PropertyGroup>, required: true },
@@ -56,7 +56,9 @@ watch(
   () => _.cloneDeep(clauses.value),
   async () => {
     imquery.value = await setService.getQueryFromSetQueryObject(clauses.value);
-    if (builderMode.value === "Form" && isValidQuery(clauses.value)) {
+
+    const queryIsNotDefault = JSON.stringify(imquery.value) !== JSON.stringify({ where: { from: [{ includeSubtypes: true }] } });
+    if (builderMode.value === "Form" && isValidQuery(clauses.value) && queryIsNotDefault) {
       const convertedECL = await setService.getECLFromQuery(imquery.value);
       if (convertedECL) {
         const isValid = await setService.isValidECL(convertedECL);
@@ -77,9 +79,11 @@ watch(
 );
 
 onMounted(async () => {
+  addClause();
   if (isObjectHasKeys(value)) {
-    clauses.value = await setService.getSetQueryObjectFromQuery(value);
-  } else addClause();
+    const setQueryObject = await setService.getSetQueryObjectFromQuery(value);
+    if (isArrayHasLength(setQueryObject)) clauses.value = setQueryObject;
+  }
 });
 
 async function updateValidity() {
